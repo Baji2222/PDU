@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_SVLAN
@@ -62,7 +62,7 @@ line level    source
   48   1          pUserSt->vs_priority = (pSmiSt[1] & 0x0070) >> 4;
   49   1          pUserSt->vs_force_fid = (pSmiSt[1] & 0x0080) >> 7;
   50   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 2   
 
   51   1          pUserSt->vs_svid = (pSmiSt[2] & 0x0FFF);
   52   1          pUserSt->vs_efiden = (pSmiSt[2] & 0x1000) >> 12;
@@ -126,7 +126,7 @@ line level    source
                */
               ret_t rtl8367c_setAsicSvlanUplinkPortMask(uint32 portMask)
               {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 3   
 
                   return rtl8367c_setAsicReg(RTL8367C_REG_SVLAN_UPLINK_PORTMASK, portMask);
               }
@@ -190,7 +190,7 @@ line level    source
                * Description:
                *      Set SVLAN priority field setting
                * Input:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 4   
 
                *      priSel  - S-priority assignment method, 0:internal priority 1:C-tag priority 2:using Svlan member 
              -configuration
@@ -254,7 +254,7 @@ line level    source
               }
               /* Function Name:
                *      rtl8367c_getAsicSvlanTrapPriority
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 5   
 
                * Description:
                *      Get trap to CPU priority assignment
@@ -318,7 +318,7 @@ line level    source
                               retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_SVLAN_PORTBASED_SVIDX_CTRL4, RTL8367C_VS_POR
              -T9_SVIDX_MASK,index);
                               break;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 6   
 
               
                           case 10:
@@ -382,7 +382,7 @@ line level    source
                   return retVal;
               
               }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 7   
 
               /* Function Name:
                *      rtl8367c_setAsicSvlanIngressUntag
@@ -446,7 +446,7 @@ line level    source
                *      pMode       - 0:Drop 1:Trap 2:Assign SVLAN
                * Output:
                *      None
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 8   
 
                * Return:
                *      RT_ERR_OK   - Success
@@ -510,7 +510,7 @@ line level    source
                * Output:
                *      None
                * Return:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 9   
 
                *      RT_ERR_OK                   - Success
                *      RT_ERR_SMI                  - SMI access error
@@ -574,7 +574,7 @@ line level    source
  528           * Note:
  529           *      None
  530           */
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 10  
 
  531          ret_t rtl8367c_getAsicSvlanMemberConfiguration(uint32 index,rtl8367c_svlan_memconf_t* pSvlanMemCfg)
  532          {
@@ -638,7 +638,7 @@ line level    source
                */
               ret_t rtl8367c_setAsicSvlanC2SConf(uint32 index, uint32 evid, uint32 portmask, uint32 svidx)
               {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 11  
 
                   ret_t retVal;
               
@@ -702,7 +702,7 @@ line level    source
               /* Function Name:
                *      rtl8367c_setAsicSvlanMC2SConf
                * Description:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 12  
 
                *      Set system MC2S content
                * Input:
@@ -766,7 +766,7 @@ line level    source
               ret_t rtl8367c_getAsicSvlanMC2SConf(uint32 index, rtl8367c_svlan_mc2s_t* pSvlanMc2sCfg)
               {
                   ret_t retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 13  
 
                   uint32 regData;
                   uint16 *accessPtr;
@@ -830,7 +830,7 @@ line level    source
               
                   regData = *accessPtr;
                   for(i = 0; i < 2; i++)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 14  
 
                   {
                       retVal = rtl8367c_setAsicReg(RTL8367C_SVLAN_S2C_ENTRY_BASE_REG(index) + i, regData);
@@ -894,7 +894,7 @@ line level    source
                * Description:
                *      Set downstream CVID decision by DMAC
                * Input:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 15  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 15  
 
                *      port        - Physical port number (0~7)
                *      enabled     - 0:disabled, 1:enabled
@@ -958,7 +958,7 @@ line level    source
                * Return:
                *      RT_ERR_OK                   - Success
                *      RT_ERR_SMI                  - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 16  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 16  
 
                *      RT_ERR_SVLAN_ENTRY_INDEX    - Invalid SVLAN index parameter
                * Note:
@@ -1022,7 +1022,7 @@ line level    source
                * Input:
                *      pIndex  - index SVLAN member configuration
                * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 17  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 17  
 
                *      None
                * Return:
@@ -1086,7 +1086,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    CONSTANT SIZE    =   ----    ----
    XDATA SIZE       =   ----      38
    PDATA SIZE       =   ----    ----
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/02/2026 17:57:26 PAGE 18  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SVLAN                                            11/03/2026 14:15:52 PAGE 18  
 
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----

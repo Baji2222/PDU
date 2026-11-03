@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 1   
+C51 COMPILER V9.60.0.0   SALLED                                                            11/03/2026 14:15:34 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALLED
@@ -62,7 +62,7 @@ line level    source
   49            * Function Declaration 
   50            */
   51          
-C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 2   
+C51 COMPILER V9.60.0.0   SALLED                                                            11/03/2026 14:15:34 PAGE 2   
 
   52          extern void setReg(uint16, uint16);
   53          extern uint16 getReg(uint16);
@@ -126,7 +126,7 @@ line level    source
                       break;
                   default:
                       return SAL_ERR_PARAMETER;
-C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 3   
+C51 COMPILER V9.60.0.0   SALLED                                                            11/03/2026 14:15:34 PAGE 3   
 
                   }
               
@@ -190,7 +190,7 @@ line level    source
                   default:
                       return SAL_ERR_PARAMETER;
                   }
-C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 4   
+C51 COMPILER V9.60.0.0   SALLED                                                            11/03/2026 14:15:34 PAGE 4   
 
               
                   tmp = getReg(0x1b03);
@@ -254,7 +254,7 @@ line level    source
  235           *      SAL_ERR_PARAMETER;
  236           * Note:
  237           *      None
-C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 5   
+C51 COMPILER V9.60.0.0   SALLED                                                            11/03/2026 14:15:34 PAGE 5   
 
  238           */
  239          int32 sal_led_forceMode_set(sal_port_t port, sal_led_force_t mode)
@@ -318,7 +318,7 @@ line level    source
               }
               #endif
  299          
-C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 6   
+C51 COMPILER V9.60.0.0   SALLED                                                            11/03/2026 14:15:34 PAGE 6   
 
 
 

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/03/2026 14:16:05 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYSLOGSEC
@@ -62,7 +62,7 @@ line level    source
   49           * Uses modern form layout with table-based design.
   50           */
   51          int32 get_syslogsec(struct http_request_s *pReq)
-C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/03/2026 14:16:05 PAGE 2   
 
   52          {
   53   1          sal_ipaddr_t    ip = 0;
@@ -126,7 +126,7 @@ line level    source
  111   1          WEB_PRINTF(pReq, "      <td>Server IP Address</td>\n");
  112   1          WEB_PRINTF(pReq, "      <td style=\"text-align:left;\"><input type=\"text\" size=\"16\" name=\"ip\" id
              -=\"ip\" value=\"%s\" maxlength=\"15\"></td>\n", ipStr);
-C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/03/2026 14:16:05 PAGE 3   
 
  113   1          WEB_PRINTF(pReq, "    </tr>\n");
  114   1      
@@ -190,7 +190,7 @@ line level    source
  171   2          }
  172   1          
  173   1          //Set the IP address here
-C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/03/2026 14:16:05 PAGE 4   
 
  174   1      
  175   1       //   snmp_trap_dst_ip_set(0, (u8_t *)&ip);

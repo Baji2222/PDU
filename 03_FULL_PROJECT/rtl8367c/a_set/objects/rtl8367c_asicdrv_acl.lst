@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_ACL
@@ -62,7 +62,7 @@ line level    source
   47   2              data_tmp = *(data_ptr + i);
   48   2      
   49   2              *(care_ptr + i) = care_tmp;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 2   
 
   50   2              *(data_ptr + i) = data_tmp;
   51   2          }
@@ -126,7 +126,7 @@ line level    source
  106   2          }
  107   1      
  108   1          care_ptr = (uint8*)&pAclSmi->care_bits_ext;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 3   
 
  109   1          data_ptr = (uint8*)&pAclSmi->data_bits_ext;
  110   1          care_tmp = *care_ptr & ~(*data_ptr);
@@ -190,7 +190,7 @@ line level    source
  168   1          pAclSmi[3] |= ((pAclUser->cvidx_cact & 0x0040) >> 6) << 3;
  169   1          pAclSmi[3] |= ((pAclUser->svidx_sact & 0x0040) >> 6) << 4;
  170   1          pAclSmi[3] |= ((pAclUser->aclmeteridx & 0x0040) >> 6) << 5;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 4   
 
  171   1          pAclSmi[3] |= ((pAclUser->fwdpmask & 0x0700) >> 8) << 6;
  172   1          pAclSmi[3] |= ((pAclUser->pridx & 0x0040) >> 6) << 9;
@@ -254,7 +254,7 @@ line level    source
  230           * Return:
  231           *      RT_ERR_OK       - Success
  232           *      RT_ERR_SMI      - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 5   
 
  233           *      RT_ERR_PORT_ID  - Invalid port number
  234           * Note:
@@ -318,7 +318,7 @@ line level    source
              -fields
  292           */
  293          ret_t rtl8367c_setAsicAclRule(uint32 index, rtl8367c_aclrule* pAclRule)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 6   
 
  294          {
  295   1          rtl8367c_aclrulesmi aclRuleSmi;
@@ -382,7 +382,7 @@ line level    source
  353   2              tableAddr++;
  354   2          }
  355   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_TABLE_ACCESS_WRDATA_REG(RTL8367C_ACLRULETBLEN), (0x0007 << 1
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 7   
 
              -), (aclRuleSmi.care_bits_ext.rule_info >> 1) & 0x0007);
  356   1          if(retVal != RT_ERR_OK)
@@ -446,7 +446,7 @@ line level    source
               #endif
  411   1      
  412   1          return RT_ERR_OK;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 8   
 
  413   1      }
  414          /* Function Name:
@@ -510,7 +510,7 @@ line level    source
  471   2              *tableAddr = regData;
  472   2      
  473   2              regAddr ++;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 9   
 
  474   2              tableAddr ++;
  475   2          }
@@ -574,7 +574,7 @@ line level    source
  530   1      
  531   1           _rtl8367c_aclRuleStSmi2User(pAclRule, &aclRuleSmi);
  532   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 10  
 
  533   1          return RT_ERR_OK;
  534   1      }
@@ -638,7 +638,7 @@ line level    source
  588   1      }
  589          /* Function Name:
  590           *      rtl8367c_setAsicAclTemplate
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 11  
 
  591           * Description:
  592           *      Set fields of a ACL Template
@@ -702,7 +702,7 @@ line level    source
  650   1          uint32 i;
  651   1          uint32 regData, regAddr;
  652   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 12  
 
  653   1          if(index >= RTL8367C_ACLTEMPLATENO)
  654   1              return RT_ERR_OUT_OF_RANGE;
@@ -766,7 +766,7 @@ line level    source
  712   1          {
  713   2              regData = *tableAddr;
  714   2              retVal = rtl8367c_setAsicReg(regAddr, regData);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 13  
 
  715   2              if(retVal != RT_ERR_OK)
  716   2                  return retVal;
@@ -830,7 +830,7 @@ line level    source
  773   1          regData = RTL8367C_TABLE_ACCESS_REG_DATA(TB_OP_READ, TB_TARGET_ACLACT);
  774   1          retVal = rtl8367c_setAsicRegBits(regAddr, RTL8367C_TABLE_TYPE_MASK | RTL8367C_COMMAND_TYPE_MASK, regDa
              -ta);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 14  
 
  775   1          if(retVal != RT_ERR_OK)
  776   1              return retVal;
@@ -894,7 +894,7 @@ line level    source
  832           *      rtl8367c_getAsicAclActCtrl
  833           * Description:
  834           *      Get ACL rule matched Action Control Bits
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 15  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 15  
 
  835           * Input:
  836           *      index       - ACL rule index (0-95) of 96 ACL rules
@@ -958,7 +958,7 @@ line level    source
               
                   retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_ACL_SDPORT_RANGE_ENTRY0_CTRL2 + index*3, RTL8367C_ACL_SD
              -PORT_RANGE_ENTRY0_CTRL2_MASK, type);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 16  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 16  
 
                   if(retVal != RT_ERR_OK)
                       return retVal;
@@ -1022,7 +1022,7 @@ line level    source
                *      type        - Range check type
                *      upperVid    - VID range upper bound
                *      lowerVid    - VID range lower bound
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 17  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 17  
 
                * Output:
                *      None
@@ -1086,7 +1086,7 @@ line level    source
                       return retVal;
               
                   *pType = (regData & RTL8367C_ACL_VID_RANGE_ENTRY0_CTRL1_CHECK0_TYPE_MASK) >> RTL8367C_ACL_VID_RANGE_EN
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 18  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 18  
 
              -TRY0_CTRL1_CHECK0_TYPE_OFFSET;
                   *pUpperVid = regData & RTL8367C_ACL_VID_RANGE_ENTRY0_CTRL1_CHECK0_HIGH_MASK;
@@ -1150,7 +1150,7 @@ line level    source
               
                   regData = (ipData>>16) & 0xFFFF;
                   retVal = rtl8367c_setAsicReg(RTL8367C_REG_ACL_IP_RANGE_ENTRY0_CTRL1 + index*5, regData);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 19  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 19  
 
                   if(retVal != RT_ERR_OK)
                       return retVal;
@@ -1214,7 +1214,7 @@ line level    source
                       return retVal;
               
                   ipData = (regData << 16) | ipData;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/02/2026 17:57:16 PAGE 20  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_ACL                                              11/03/2026 14:15:43 PAGE 20  
 
                   *pLowerIp = ipData;
               

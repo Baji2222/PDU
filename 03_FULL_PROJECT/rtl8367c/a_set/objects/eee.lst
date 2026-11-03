@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 1   
+C51 COMPILER V9.60.0.0   EEE                                                               11/03/2026 14:15:43 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EEE
@@ -62,7 +62,7 @@ line level    source
   49   1          RTK_CHK_INIT_STATE();
   50   1      
   51   1          if((retVal = rtl8367c_setAsicRegBit(0x0018, 10, 1)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 2   
+C51 COMPILER V9.60.0.0   EEE                                                               11/03/2026 14:15:43 PAGE 2   
 
   52   1              return retVal;
   53   1      
@@ -126,7 +126,7 @@ line level    source
  111   1          return RT_ERR_OK;
  112   1      }
  113          
-C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 3   
+C51 COMPILER V9.60.0.0   EEE                                                               11/03/2026 14:15:43 PAGE 3   
 
  114          #if 0 //NOT USED
               /* Function Name:
@@ -190,7 +190,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
-C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 4   
+C51 COMPILER V9.60.0.0   EEE                                                               11/03/2026 14:15:43 PAGE 4   
 
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----

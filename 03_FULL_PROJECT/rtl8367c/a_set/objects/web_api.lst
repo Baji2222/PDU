@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_API
@@ -62,7 +62,7 @@ line level    source
   49           *   src: pointer to the start of the string to convert
   50           *   last: pointer to the end of the string to convert
   51           *   dest: destination of the converted string to be placed
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 2   
 
   52           */
   53          // Unencode: Converts URL-encoded string to plain text
@@ -126,7 +126,7 @@ line level    source
  110   3      #if 1
  111   3                      //unencode(pReq->Var[i].pValue, pReq->Var[i].pValue + pReq->Var[i].vLen, &http_variable_va
              -lue[0]);
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 3   
 
  112   3                      unencode(pReq->pMethod + pReq->Var[i].name_offset + pReq->Var[i].value_offset, pReq->pMeth
              -od + pReq->Var[i].name_offset + pReq->Var[i].value_offset +  pReq->Var[i].value_length, &http_variable_value[0]);
@@ -190,7 +190,7 @@ line level    source
  170   2              lwps_send(pReq->socket_id, http_bufResponse, (http_pRespBuf - &http_bufResponse[0]));
  171   2          }
  172   1      
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 4   
 
  173   1          return SUCCESS;
  174   1      }
@@ -254,7 +254,7 @@ line level    source
  232   2              http_pRespBuf += sprintf(http_pRespBuf, "400 Bad request\r\n");
  233   2              break;
  234   2      
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 5   
 
  235   2          case HTTP_STATUS_UNAUTHORIZED:
  236   2              http_pRespBuf += sprintf(http_pRespBuf, "401 Unauthorized\r\n");
@@ -318,7 +318,7 @@ line level    source
  294   1      
  295   1          /* force close this connection at first time */
  296   1          if (http_pRespHeader == http_pRespBuf) {
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 6   
 
  297   2              http_pRespBuf += sprintf(http_pRespBuf, "Connection: close\r\n");
  298   2          }
@@ -382,7 +382,7 @@ line level    source
  355   1              
  356   1          if (size) {
  357   2              memcpy(http_pRespBuf, pData + (length - size), size);
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 7   
 
  358   2              http_pRespBuf += size;
  359   2          }
@@ -446,7 +446,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
-C51 COMPILER V9.60.0.0   WEB_API                                                           11/02/2026 17:57:29 PAGE 8   
+C51 COMPILER V9.60.0.0   WEB_API                                                           11/03/2026 14:15:55 PAGE 8   
 
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----

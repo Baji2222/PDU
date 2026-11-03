@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_LUT
@@ -62,7 +62,7 @@ line level    source
   48   3              }
   49   2              else
   50   2              {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 2   
 
   51   3                  pFdbSmi[0] = (pLutSt->sip & 0x0000FFFF);
   52   3                  pFdbSmi[1] = (pLutSt->sip & 0xFFFF0000) >> 16;
@@ -126,7 +126,7 @@ line level    source
  110   2              pFdbSmi[3] |= ((pLutSt->spa & 0x0008) >> 3) << 15;
  111   2      
  112   2              pFdbSmi[4] |= pLutSt->efid;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 3   
 
  113   2              pFdbSmi[4] |= (pLutSt->fid & 0x000F) << 3;
  114   2              pFdbSmi[4] |= (pLutSt->sa_en & 0x0001) << 7;
@@ -190,7 +190,7 @@ line level    source
  170   2              pLutSt->cvid_fid        = pFdbSmi[3] & 0x0FFF;
  171   2              pLutSt->lut_pri         = (pFdbSmi[5] & 0x000E) >> 1;
  172   2              pLutSt->fwd_en          = (pFdbSmi[5] & 0x0010) >> 4;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 4   
 
  173   2      
  174   2              pLutSt->mbr             = (pFdbSmi[4] & 0x00FF) | (((pFdbSmi[3] & 0xC000) >> 14) << 8) | (((pFdbSm
@@ -254,7 +254,7 @@ line level    source
                * Description:
                *      Get Lut IP multicast lookup function
                * Input:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 5   
 
                *      pEnabled - 1: enabled, 0: disabled
                * Output:
@@ -318,7 +318,7 @@ line level    source
  292           *             0: When DIP can be found in IPMC_GROUP_TABLE, use DIP+(SIP=0.0.0.0) Hash, otherwise use DIP
              -+SIP Hash.
  293           * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 6   
 
  294           *      None
  295           * Return:
@@ -382,7 +382,7 @@ line level    source
               }
               /* Function Name:
                *      rtl8367c_getAsicLutAgeTimerSpeed
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 7   
 
                * Description:
                *      Get LUT agging out speed
@@ -446,7 +446,7 @@ line level    source
                *      None
                * Return:
                *      RT_ERR_OK   - Success
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 8   
 
                *      RT_ERR_SMI  - SMI access error
                * Note:
@@ -510,7 +510,7 @@ line level    source
  473           * Return:
  474           *      RT_ERR_OK       - Success
  475           *      RT_ERR_SMI      - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 9   
 
  476           *      RT_ERR_PORT_ID  - Invalid port number
  477           * Note:
@@ -574,7 +574,7 @@ line level    source
               {
                   if(NULL == pNumber)
                       return RT_ERR_NULL_POINTER;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 10  
 
               
                   return rtl8367c_getAsicReg(RTL8367C_REG_LUT_SYS_LEARN_LIMITNO, pNumber);
@@ -638,7 +638,7 @@ line level    source
                *      RT_ERR_SMI          - SMI access error
                *      RT_ERR_NOT_ALLOWED  - Invalid learn over action
                * Note:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 11  
 
                *      None
                */
@@ -702,7 +702,7 @@ line level    source
                   if(retVal != RT_ERR_OK)
                       return retVal;
                   retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_LUT_LRN_SYS_LMT_CTRL, RTL8367C_LUT_SYSTEM_LEARN_PMASK1_M
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 12  
 
              -ASK, (portmask>>8) & 0x7);
                   if(retVal != RT_ERR_OK)
@@ -766,7 +766,7 @@ line level    source
  713           *      None
  714           */
  715          ret_t rtl8367c_setAsicL2LookupTb(rtl8367c_luttb *pL2Table)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 13  
 
  716          {
  717   1          ret_t retVal;
@@ -830,7 +830,7 @@ line level    source
  773   1          {
  774   2              retVal = rtl8367c_getAsicRegBit(RTL8367C_TABLE_ACCESS_STATUS_REG, RTL8367C_TABLE_LUT_ADDR_BUSY_FLA
              -G_OFFSET,&regData);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 14  
 
  775   2              if(retVal != RT_ERR_OK)
  776   2                  return retVal;
@@ -894,7 +894,7 @@ line level    source
  832   1          uint32 regData;
  833   1          uint16* accessPtr;
  834   1          uint32 i;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 15  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 15  
 
  835   1          uint16 smil2Table[RTL8367C_LUT_TABLE_SIZE];
  836   1          uint32 busyCounter;
@@ -958,7 +958,7 @@ line level    source
  893   2                  if(retVal != RT_ERR_OK)
  894   2                      return retVal;
  895   2      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 16  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 16  
 
  896   2                  tblCmd = tblCmd | ((pL2Table->spa << RTL8367C_TABLE_ACCESS_CTRL_SPA_OFFSET) & RTL8367C_TABLE_A
              -CCESS_CTRL_SPA_MASK);
@@ -1022,7 +1022,7 @@ line level    source
  950   1          {
  951   2              retVal = rtl8367c_getAsicReg(RTL8367C_TABLE_ACCESS_RDDATA_BASE + i, &regData);
  952   2              if(retVal != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 17  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 17  
 
  953   2                  return retVal;
  954   2      
@@ -1086,7 +1086,7 @@ line level    source
                *      None
                * Output:
                *      None
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 18  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 18  
 
                * Return:
                *      RT_ERR_OK       - Success
@@ -1150,7 +1150,7 @@ line level    source
 1072   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_FORCE_FLUSH_REG, RTL8367C_FORCE_FLUSH_PORTMASK_MASK, portmas
              -k & 0xff);
 1073   1          if(retVal != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 19  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 19  
 
 1074   1              return retVal;
 1075   1      
@@ -1214,7 +1214,7 @@ line level    source
 1132           */
 1133          ret_t rtl8367c_setAsicLutFlushMode(uint32 mode)
 1134          {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 20  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 20  
 
 1135   1          if( mode >= FLUSHMDOE_END )
 1136   1              return RT_ERR_NOT_ALLOWED;
@@ -1278,7 +1278,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_getAsicLutFlushType(uint32* pType)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 21  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 21  
 
               {
                   return rtl8367c_getAsicRegBit(RTL8367C_REG_L2_FLUSH_CTRL2, RTL8367C_LUT_FLUSH_TYPE_OFFSET,pType);
@@ -1342,7 +1342,7 @@ line level    source
 1256           *      RT_ERR_SMI      - SMI access error
 1257           *      RT_ERR_L2_FID   - Invalid FID (0~15)
 1258           * Note:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 22  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 22  
 
 1259           *      None
 1260           */
@@ -1406,7 +1406,7 @@ line level    source
                * Output:
                *      None
                * Return:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 23  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 23  
 
                *      RT_ERR_OK       - Success
                *      RT_ERR_SMI      - SMI access error
@@ -1470,7 +1470,7 @@ line level    source
                   regData = (ipData & 0x0000FFFF);
               
                   if( (retVal = rtl8367c_setAsicReg(regAddr, regData)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 24  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 24  
 
                       return retVal;
               
@@ -1534,7 +1534,7 @@ line level    source
                   if (NULL == pPmask)
                       return RT_ERR_NULL_POINTER;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 25  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 25  
 
                   /* Group address */
                   regAddr = RTL8367C_REG_IPMC_GROUP_ENTRY0_H + (index * 2);
@@ -1598,7 +1598,7 @@ line level    source
                   return rtl8367c_setAsicRegBit(RTL8367C_REG_LUT_CFG, RTL8367C_LINKDOWN_AGEOUT_OFFSET, enable ? 0 : 1);
               }
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 26  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 26  
 
               /* Function Name:
                *      rtl8367c_getAsicLutLinkDownForceAging
@@ -1662,7 +1662,7 @@ line level    source
                * Return:
                *      RT_ERR_OK               - Success
                *      RT_ERR_SMI              - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/02/2026 17:57:19 PAGE 27  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_LUT                                              11/03/2026 14:15:45 PAGE 27  
 
                *      RT_ERR_NULL_POINTER     - Null pointer
                * Note:

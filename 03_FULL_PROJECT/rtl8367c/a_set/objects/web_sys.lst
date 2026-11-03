@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/03/2026 14:16:02 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYS
@@ -62,7 +62,7 @@ line level    source
              -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
   49          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
   50          input[type=submit]{background:#f44336;color:#fff;border:0;padding:8px 16px;cursor:pointer;border-radius:3p
-C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/03/2026 14:16:02 PAGE 2   
 
              -x;font-weight:bold;margin-top:15px}\
   51          .msg{color:#444;margin-bottom:15px}\
@@ -126,7 +126,7 @@ line level    source
  107          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
  108          input[type=submit]{background:#f44336;color:#fff;border:0;padding:8px 16px;cursor:pointer;border-radius:3p
              -x;font-weight:bold;margin-top:15px}\
-C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/03/2026 14:16:02 PAGE 3   
 
  109          .msg{color:#444;margin-bottom:15px}\
  110          .warning{color:#f44336;font-size:12px;margin-top:10px}\
@@ -190,7 +190,7 @@ line level    source
              -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
  167          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
  168          .success{color:#4caf50;font-weight:bold;margin:10px 0}\
-C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/03/2026 14:16:02 PAGE 4   
 
  169          </style></head>\
  170          <body>\
@@ -254,7 +254,7 @@ line level    source
  228           * Saves current configuration to flash and displays confirmation.
  229           * Calls sal_flash_cfg_save() to persist configuration.
  230           * Shows success page after save operation completes.
-C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/03/2026 14:16:02 PAGE 5   
 
  231           * GET handler for save.cgi page.
  232           */
@@ -318,7 +318,7 @@ line level    source
  290   1      
  291   1          sal_flash_cfg_reset();
  292   1          
-C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/03/2026 14:16:02 PAGE 6   
 
  293   1          /* Reboot */
  294   1          //lws_reboot_timer = 2;

@@ -1,4 +1,4 @@
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     1
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     1
 
 
 MACRO ASSEMBLER A51 V8.2.7.0
@@ -65,7 +65,7 @@ LOC  OBJ            LINE     SOURCE
   0091                54     T2EX    BIT     090H.1
   00DD                55     EPFI    BIT     0D8H.5
   00D2                56     OV      BIT     0D0H.2
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     2
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     2
 
   00CA                57     RCAP2L  DATA    0CAH
   00C9                58     C_T2    BIT     0C8H.1
@@ -133,7 +133,7 @@ LOC  OBJ            LINE     SOURCE
   008E               120     TR1     BIT     088H.6
   00CA               121     TR2     BIT     0C8H.2
   00B8               122     PX0     BIT     0B8H.0
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     3
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     3
 
   00A0               123     INDACC_CMD      DATA    0A0H
   0095               124     GPIO_I  DATA    095H
@@ -201,7 +201,7 @@ LOC  OBJ            LINE     SOURCE
 0008 8DA3            186       MOV   INDACC_ADDR_L,R5
                      187     
                      188     ;       INDACC_CMD = 0x01;
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     4
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     4
 
                      189                             ; SOURCE LINE # 10
 000A 75A001          190             MOV     INDACC_CMD,#01H
@@ -269,7 +269,7 @@ LOC  OBJ            LINE     SOURCE
 000C 8DA5            252             MOV     INDACC_WDATA_L,R5
 000E 75A003          253             MOV     INDACC_CMD,#03H
 0011                 254     ?C0004:
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     5
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     5
 
                      255     ;     while(INDACC_STATUS);
 0011 00              256       NOP
@@ -293,7 +293,7 @@ LOC  OBJ            LINE     SOURCE
                      274     ; END OF _setReg
                      275     
                      276             END
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     6
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     6
 
 SYMBOL TABLE LISTING
 ------ ----- -------
@@ -361,7 +361,7 @@ INDACC_RDATA_H. . .  D ADDR   00A6H   A
 INDACC_RDATA_L. . .  D ADDR   00A7H   A   
 INDACC_STATUS . . .  D ADDR   00A1H   A   
 INDACC_WDATA_H. . .  D ADDR   00A4H   A   
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     7
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     7
 
 INDACC_WDATA_L. . .  D ADDR   00A5H   A   
 INT0. . . . . . . .  B ADDR   00B0H.2 A   
@@ -429,7 +429,7 @@ SMOD_1. . . . . . .  B ADDR   00D8H.7 A
 SP. . . . . . . . .  D ADDR   0081H   A   
 STATUS. . . . . . .  D ADDR   00C5H   A   
 SYNC_CTRL . . . . .  D ADDR   008EH   A   
-A51 MACRO ASSEMBLER  REG_ACC                                                              11/02/2026 17:56:56 PAGE     8
+A51 MACRO ASSEMBLER  REG_ACC                                                              11/03/2026 14:15:32 PAGE     8
 
 T0. . . . . . . . .  B ADDR   00B0H.4 A   
 T1. . . . . . . . .  B ADDR   00B0H.5 A   

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 1   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALLOOP
@@ -62,7 +62,7 @@ line level    source
   49          
   50           /* 
   51            * Macro Declaration 
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 2   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 2   
 
   52            */
   53           
@@ -126,7 +126,7 @@ line level    source
  111          #define RLDP_TX_PERIOD_MS    2000
  112          #define RLDP_REMOVE_CNT      1000 
  113          /* Function Name:
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 3   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 3   
 
  114           *      sal_loop_mode_set
  115           * Description:
@@ -190,7 +190,7 @@ line level    source
  173   2              act.actEnable[FILTER_ENACT_TRAP_CPU] = TRUE;
  174   2              act.actEnable[FILTER_ENACT_PRIORITY] = TRUE;
  175   2              act.filterPriority = 1;
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 4   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 4   
 
  176   2              act.actEnable[FILTER_ENACT_POLICING_0] = TRUE;
  177   2              act.filterPolicingIdx[0]=3;
@@ -254,7 +254,7 @@ line level    source
  235           /* Function Name:
  236            *      sal_loop_portStatus_get
  237            * Description:
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 5   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 5   
 
  238            *      Get loop status of a port
  239            * Input:
@@ -318,7 +318,7 @@ line level    source
  297           * Return:
  298           *      SAL_ERR_SUCCESS
  299           *      SAL_ERR_NULL_POINTER
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 6   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 6   
 
  300           * Note:
  301           *      None
@@ -382,7 +382,7 @@ line level    source
  359           
  360          /* Function Name:
  361           *      sal_loop_config_restore
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 7   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 7   
 
  362           * Description:
  363           *      Restore loop detection/prevention configuration from flash to system
@@ -446,7 +446,7 @@ line level    source
  421          sal_loop_recover_time_get(uint32 *pTime)
  422          {
  423   1          rlpp_recover_time_get(pTime);
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 8   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 8   
 
  424   1          return SAL_ERR_SUCCESS;
  425   1      }
@@ -510,7 +510,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
-C51 COMPILER V9.60.0.0   SALLOOP                                                           11/02/2026 17:57:00 PAGE 9   
+C51 COMPILER V9.60.0.0   SALLOOP                                                           11/03/2026 14:15:34 PAGE 9   
 
    BIT SIZE         =   ----    ----
    EDATA SIZE       =   ----    ----

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 1   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE TRUNK
@@ -62,7 +62,7 @@ line level    source
   48          {
   49   1          rtk_api_ret_t retVal;
   50   1          uint32 pmsk;
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 2   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 2   
 
   51   1          uint32 regValue, type, tmp;
   52   1      
@@ -126,7 +126,7 @@ line level    source
  108   2                  tmp |= 1;
  109   2              if(pmsk & 0x8)
  110   2                  tmp |=2;
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 3   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 3   
 
  111   2              if(pmsk & 0x80)
  112   2                  tmp |=8;
@@ -190,7 +190,7 @@ line level    source
  170           * Return:
  171           *      RT_ERR_OK           - OK
  172           *      RT_ERR_FAILED       - Failed
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 4   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 4   
 
  173           *      RT_ERR_SMI          - SMI access error
  174           *      RT_ERR_LA_TRUNK_ID  - Invalid trunking group
@@ -254,7 +254,7 @@ line level    source
               
                   if (trk_gid != RTK_WHOLE_SYSTEM)
                       return RT_ERR_LA_TRUNK_ID;
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 5   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 5   
 
               
                   if(NULL == pAlgo_bitmask)
@@ -318,7 +318,7 @@ line level    source
                * Return:
                *      RT_ERR_OK
                *      RT_ERR_FAILED
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 6   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 6   
 
                *      RT_ERR_UNIT_ID      - invalid unit id
                *      RT_ERR_LA_TRUNK_ID  - invalid trunk ID
@@ -382,7 +382,7 @@ line level    source
                   return RT_ERR_OK;
               }
               
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 7   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 7   
 
               /* Function Name:
                *      rtk_trunk_mode_get
@@ -446,7 +446,7 @@ line level    source
                   if(enable >= RTK_ENABLE_END)
                       return RT_ERR_INPUT;
               
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 8   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 8   
 
                   if ((retVal = rtl8367c_setAsicTrunkingFc((uint32)trk_gid, (uint32)enable)) != RT_ERR_OK)
                       return retVal;
@@ -510,7 +510,7 @@ line level    source
                * Note:
                *      Trunk group 0 & 1 shares the same hash mapping table.
                *      Trunk group 2 uses a independent table.
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 9   
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 9   
 
                */
               rtk_api_ret_t rtk_trunk_hashMappingTable_set(rtk_trunk_group_t trk_gid, rtk_trunk_hashVal2Port_t *pHash2Po
@@ -574,7 +574,7 @@ line level    source
                   rtk_api_ret_t retVal;
                   uint32 hashValue;
                   uint32 hashPort;
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 10  
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 10  
 
               
                   /* Check initialization state */
@@ -638,7 +638,7 @@ line level    source
               
                   if ((retVal = rtl8367c_getAsicQeueuEmptyStatus(&pmask)) != RT_ERR_OK)
                       return retVal;
-C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 11  
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/03/2026 14:15:41 PAGE 11  
 
               
                   if ((retVal = rtk_switch_portmask_P2L_get(pmask, pEmpty_portmask)) != RT_ERR_OK)

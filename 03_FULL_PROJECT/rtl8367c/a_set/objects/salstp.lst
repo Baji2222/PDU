@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 1   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALSTP
@@ -62,7 +62,7 @@ line level    source
   49          #define SAL_STP_BUPD_INDEX     0
   50           
   51           /* 
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 2   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 2   
 
   52            * Function Declaration 
   53            */
@@ -126,7 +126,7 @@ line level    source
                   if(rstp_get(&stp_desc) != LWPS_OK)
                       return SAL_ERR_FAILED;
               
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 3   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 3   
 
                   if(stp_desc.value == 0)
                       *pEnable = SAL_DISABLED;
@@ -190,7 +190,7 @@ line level    source
               int32 sal_stp_version_get(sal_stp_version_t *pVersion)
               {
                   st_desc_t stp_desc;
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 4   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 4   
 
                           
                   stp_desc.target = RSTP_GET_DESC_FORCE_VER;
@@ -254,7 +254,7 @@ line level    source
                */
               int32 sal_stp_priority_get(sal_stp_pri_t *pPriority)
               {
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 5   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 5   
 
                   st_desc_t stp_desc;
                               
@@ -318,7 +318,7 @@ line level    source
                 
               /* Function Name:
                *      sal_stp_timePara_get
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 6   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 6   
 
                * Description:
                *      Get maximum age, hello time, forward delay of stp/rstp.
@@ -382,7 +382,7 @@ line level    source
                       return SAL_ERR_NULL_POINTER;
                                       
                   stp_desc.target = RSTP_GET_DESC_THIS_IS_ROOT;
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 7   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 7   
 
                   if(rstp_get(&stp_desc) != LWPS_OK)
                       return SAL_ERR_FAILED;
@@ -446,7 +446,7 @@ line level    source
                   memcpy(pRootInfo->rootMac.octet, stp_desc.mac, 6);
                               
                   return SAL_ERR_SUCCESS;
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 8   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 8   
 
               }
                 
@@ -510,7 +510,7 @@ line level    source
                   stp_desc.target = RSTP_SET_DESC_PORT_ADMIN_RPC;
                   stp_desc.value = pPortPara->pathCost;
               
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 9   
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 9   
 
                   if(rstp_set(&stp_desc) != LWPS_OK)
                       return SAL_ERR_FAILED;
@@ -574,7 +574,7 @@ line level    source
                       return SAL_ERR_FAILED;
               
                   pPortPara->priority= stp_desc.value;
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 10  
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 10  
 
               
                   return SAL_ERR_SUCCESS;
@@ -638,7 +638,7 @@ line level    source
                   switch (stp_desc.value)
                   {
                   case RSTP_PORT_ROLE_DISABLE:
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 11  
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 11  
 
                       pPortStatus->role = SAL_STP_PORT_ROLE_DISABLE;
                       break;
@@ -702,7 +702,7 @@ line level    source
                   sal_stp_version_set(ver);
                   
                   sal_flash_stp_priority_get(&pri);
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 12  
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 12  
 
                   sal_stp_priority_set(pri);
                   
@@ -766,7 +766,7 @@ line level    source
  731   1          if(port >= SAL_MAX_PHY_PORT)
  732   1              return SAL_ERR_PARAMETER;
  733   1      #endif
-C51 COMPILER V9.60.0.0   SALSTP                                                            11/02/2026 17:57:08 PAGE 13  
+C51 COMPILER V9.60.0.0   SALSTP                                                            11/03/2026 14:15:39 PAGE 13  
 
  734   1      
  735   1          return rtl8367c_setAsicSpanningTreeStatus(port, msti, stp_state);

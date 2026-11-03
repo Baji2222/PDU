@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_FWD
@@ -62,7 +62,7 @@ line level    source
   49           * ------------------------------------
   50           * Converts jumbo frame code to actual byte size.
   51           * Maps SAL_JUMBO_FRAME_* constants to physical sizes.
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 2   
 
   52           * Returns 0 if frameCode is invalid or unknown.
   53           */
@@ -126,7 +126,7 @@ line level    source
  111           * Highlights currently selected size in dropdown.
  112           */
  113          int32 get_fwd_jumboframe(struct http_request_s *pReq)
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 3   
 
  114          {
  115   1          uint32 frameCode;
@@ -190,7 +190,7 @@ line level    source
  173   1          WEB_PRINTF(pReq, "</html>\n");
  174   1      
  175   1          WEB_END(pReq);
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 4   
 
  176   1      
  177   1          return SUCCESS;
@@ -254,7 +254,7 @@ line level    source
  235   1          WEB_PRINTF(pReq, "<fieldset>\n");
  236   1          WEB_PRINTF(pReq, "<legend>Storm Control Setting</legend>\n");
  237   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/fwd.cgi?page=storm_ctrl\">\n");
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 5   
 
  238   1      
  239   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
@@ -318,7 +318,7 @@ line level    source
  293   1          WEB_PRINTF(pReq, "  <br>\n");
  294   1      
  295   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 6   
 
  296   1          WEB_PRINTF(pReq, "    <tr>\n");
  297   1          WEB_PRINTF(pReq, "    <th align=\"center\" style=\"width:80px;\"> Port </th>\n");
@@ -382,7 +382,7 @@ line level    source
  355   2      
  356   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
  357   2              WEB_PRINTF(pReq, "    </tr>\n");
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 7   
 
  358   2      }
  359   1      
@@ -446,7 +446,7 @@ line level    source
  417   1          uint8           *pValue;    
  418   1          sal_pPortmask_t portmask, tmp;
  419   1          int32 ret;
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 8   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 8   
 
  420   1          int32           iValue, stormType;
  421   1          uint32          rate;
@@ -510,7 +510,7 @@ line level    source
  479   2              if (strncmp(pValue, "Trunk", 5) == 0)
  480   2              {
  481   3                  sal_trunk_port_get(atoi(pValue + 5) - 1, NULL, &portmask, NULL);
-C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 9   
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/03/2026 14:15:58 PAGE 9   
 
  482   3              }
  483   2          }

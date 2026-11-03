@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_PORT
@@ -62,7 +62,7 @@ line level    source
   49   2              {
   50   3                  sal_port_phyAbility_set(port_set[i], &ability_set[i]); 
   51   3              }
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 2   
 
   52   2              set_count = 0;
   53   2              set_flag = 0;
@@ -126,7 +126,7 @@ line level    source
  111   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
  112   1          WEB_PRINTF(pReq, "        <select name=\"portid\" multiple size=\"6\" >\n");
  113   1      
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 3   
 
  114   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
  115   2              if (!(sal_trunk_logicId_exist(port))) {
@@ -190,7 +190,7 @@ line level    source
  173          int32 get_portcurrstatus(struct http_request_s *pReq)
  174          {
  175   1          sal_phyAbility_t        ability;
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 4   
 
  176   1          sal_port_macStatus_t    status;
  177   1          sal_enable_t            enable;
@@ -254,7 +254,7 @@ line level    source
  235   3                  else if(ability.Half_100 == 1)
  236   3                  {
  237   4                      WEB_PRINTF(pReq, "100 Half");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 5   
 
  238   4                  }
  239   3                  else if(ability.Full_10==1)
@@ -318,7 +318,7 @@ line level    source
  297   4                      WEB_PRINTF(pReq, "Off");
  298   4                  }
  299   3                  else if (status.fc == SAL_PORT_FLOW_CTRL_ENABLE) {
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 6   
 
  300   4                      WEB_PRINTF(pReq, "On");
  301   4                  }
@@ -382,7 +382,7 @@ line level    source
  359   3              }
  360   2              else{
  361   3                  WEB_PRINTF(pReq, "%ld", ingress_spd);
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 7   
 
  362   3              }
  363   2      
@@ -446,7 +446,7 @@ line level    source
  421   1          WEB_PRINTF(pReq, "          document.getElementById('rate').disabled = true;\n");
  422   1          WEB_PRINTF(pReq, "      }\n");
  423   1          WEB_PRINTF(pReq, "  }\n");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 8   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 8   
 
  424   1          WEB_PRINTF(pReq, "</script>\n");
  425   1          WEB_PRINTF(pReq, "</head>\n");
@@ -510,7 +510,7 @@ line level    source
  481   1          WEB_PRINTF(pReq, "</form>\n");
  482   1          WEB_PRINTF(pReq, "<hr>");
  483   1          WEB_PRINTF(pReq, "<br>\n");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 9   
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 9   
 
  484   1          get_bandwidthcontrolstatus(pReq);
  485   1          WEB_PRINTF(pReq, "<br>\n");
@@ -574,7 +574,7 @@ line level    source
  543   1          WEB_PRINTF(pReq, "    <tr>\n");
  544   1      
  545   1          WEB_PRINTF(pReq, "      <td align=\"center\" width=\"120\">\n");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 10  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 10  
 
  546   1          WEB_PRINTF(pReq, "        <select name=\"mirror_direction\">\n");
  547   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Disable\n", (uint16)PORT_MIRROR_OFF);
@@ -638,7 +638,7 @@ line level    source
  605   1      
  606   1          DBG_WEB_PRINTF(("Mode : %ld\n", mode));
  607   1          if (mode == PORT_MIRROR_BOTH)
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 11  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 11  
 
  608   1              sprintf(buf, "Both");
  609   1          else if(mode == PORT_MIRROR_RX)
@@ -702,7 +702,7 @@ line level    source
  667   1          sal_trunk_logicPort_setAll(&portmask);
  668   1      
  669   1          WEB_BEGIN(pReq);
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 12  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 12  
 
  670   1      
  671   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
@@ -766,7 +766,7 @@ line level    source
  729   1      
  730   1      
  731   1          WEB_PRINTF(pReq, "  </tr>\n");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 13  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 13  
 
  732   1      
  733   1          WEB_PRINTF(pReq, "</table>\n");
@@ -830,7 +830,7 @@ line level    source
  791          /*
  792           * Function: get_port_statistics
  793           * -----------------------------
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 14  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 14  
 
  794           * Displays port statistics table with Rx/Tx good/bad packets.
  795           * Shows admin state and link status for each port.
@@ -894,7 +894,7 @@ line level    source
  853   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
  854   1          WEB_HEADER(pReq, "Content-Type: text/html");
  855   1          WEB_PRINTF(pReq, "<html>\n");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 15  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 15  
 
  856   1          WEB_PRINTF(pReq, "\n");
  857   1          WEB_PRINTF(pReq, "<head>\n");
@@ -958,7 +958,7 @@ line level    source
  915   2          }
  916   1      
  917   1          WEB_PRINTF(pReq, "  </table>\n");
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 16  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 16  
 
  918   1      
  919   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
@@ -1022,7 +1022,7 @@ line level    source
                           WEB_PRINTF(pReq, "    <td width=\"300\">%s</td>\n", rmon_cntr_name[i]);            
                           if(SAL_ERR_SUCCESS == sal_mib_port_get(queryPort, rmon_cntr[i], &cntrh, &cntrl))
                               WEB_PRINTF(pReq, "    <td width=\"100\">%lu</td>", cntrl);
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 17  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 17  
 
                           else
                               WEB_PRINTF(pReq, "    <td>0</td>\n");            
@@ -1086,7 +1086,7 @@ line level    source
 1039   1          WEB_VAR(pReq, "state", &pValue);
 1040   1          if (pValue) {
 1041   2              enable = atoi(pValue);
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 18  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 18  
 
 1042   2          }
 1043   1          
@@ -1150,7 +1150,7 @@ line level    source
 1101   4                  }
 1102   3      
 1103   3                  if (flowCtrl == 1)
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 19  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 19  
 
 1104   3                  {
 1105   4                      ability_set[i].FC = 1;
@@ -1214,7 +1214,7 @@ line level    source
 1161   2              if (pValue) {
 1162   3                  port[settingCnt++] = atoi(pValue);
 1163   3              }
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 20  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 20  
 
 1164   2          }
 1165   1      
@@ -1278,7 +1278,7 @@ line level    source
 1223           * Applies isolation mask to selected ports via API.
 1224           */
 1225          int32
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 21  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 21  
 
 1226          post_port_isolation(struct http_request_s *pReq)
 1227          {
@@ -1342,7 +1342,7 @@ line level    source
 1285   3              }
 1286   2              else
 1287   2              if (strncmp(pValue, "Trunk", 5) == 0)
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 22  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 22  
 
 1288   2              {
 1289   3                  isolatedTrunk[isolatedTrunkCnt++] = atoi(pValue + 5);
@@ -1406,7 +1406,7 @@ line level    source
 1347   3                  printerr(pReq, ret);
 1348   3                  return SUCCESS;
 1349   3              }
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 23  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 23  
 
 1350   2          }
 1351   1      
@@ -1470,7 +1470,7 @@ line level    source
 1409   4                  }
 1410   3                  else
 1411   3                  if (strncmp(pValue, "Trunk", 5) == 0)
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 24  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 24  
 
 1412   3                  {
 1413   4                      sal_trunk_port_get(atoi(pValue + 5) - 1, NULL, &tmp, NULL);
@@ -1534,7 +1534,7 @@ line level    source
 1471   1          sal_trunk_logicPort_setAll(&portmask);
 1472   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
 1473   2              sal_mib_port_reset(port);
-C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 25  
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/03/2026 14:16:01 PAGE 25  
 
 1474   2          }
 1475   1      

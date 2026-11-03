@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 1   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE L2
@@ -62,7 +62,7 @@ line level    source
               
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 2   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 2   
 
               
                   if ((retVal = rtl8367c_setAsicLutIpMulticastLookup(DISABLED)) != RT_ERR_OK)
@@ -126,7 +126,7 @@ line level    source
  110   1              return RT_ERR_MAC;
  111   1      
  112   1          RTK_CHK_PORT_VALID(pL2_data->port);
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 3   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 3   
 
  113   1      
  114   1          if (pL2_data->ivl >= RTK_ENABLE_END)
@@ -190,7 +190,7 @@ line level    source
  172   2              l2Table.sa_en       = pL2_data->sa_pri_en;
  173   2              l2Table.fwd_en      = pL2_data->fwd_pri_en;
  174   2              if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 4   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 4   
 
  175   2                  return retVal;
  176   2      
@@ -254,7 +254,7 @@ line level    source
  234           *      If the unicast mac address existed in LUT, it will return the port and fid where
  235           *      the mac is learned. Otherwise, it will return a RT_ERR_L2_ENTRY_NOTFOUND error.
  236           */
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 5   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 5   
 
  237          rtk_api_ret_t rtk_l2_addr_get(rtk_mac_t *pMac, rtk_l2_ucastAddr_t *pL2_data)
  238          {
@@ -318,7 +318,7 @@ line level    source
                *      RT_ERR_FAILED               - Failed
                *      RT_ERR_SMI                  - SMI access error
                *      RT_ERR_PORT_ID              - Invalid port number.
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 6   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 6   
 
                *      RT_ERR_MAC                  - Invalid MAC address.
                *      RT_ERR_L2_FID               - Invalid FID .
@@ -382,7 +382,7 @@ line level    source
                   pL2_data->sa_pri_en = l2Table.sa_en;
                   pL2_data->fwd_pri_en= l2Table.fwd_en;
                   pL2_data->address   = l2Table.address;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 7   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 7   
 
               
                   *pAddress = l2Table.address;
@@ -446,7 +446,7 @@ line level    source
  418   2              l2Table.cvid_fid    = pL2_data->cvid;
  419   2              l2Table.fid = pL2_data->fid;
  420   2              l2Table.efid = pL2_data->efid;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 8   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 8   
 
  421   2              l2Table.spa = 0;
  422   2              l2Table.nosalearn = 0;
@@ -510,7 +510,7 @@ line level    source
  480   1              return RT_ERR_MAC;
  481   1      
  482   1          RTK_CHK_PORTMASK_VALID(&pMcastAddr->portmask);
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 9   
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 9   
 
  483   1      
  484   1          if(pMcastAddr->ivl == 1)
@@ -574,7 +574,7 @@ line level    source
  542   1          {
  543   2              memset(&l2Table, 0, sizeof(rtl8367c_luttb));
  544   2              memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 10  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 10  
 
  545   2              l2Table.ivl_svl     = pMcastAddr->ivl;
  546   2              if(pMcastAddr->ivl)
@@ -638,7 +638,7 @@ line level    source
                       return RT_ERR_NULL_POINTER;
               
                   /* must be L2 multicast address */
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 11  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 11  
 
                   if( (pMcastAddr->mac.octet[0] & 0x01) != 0x01)
                       return RT_ERR_MAC;
@@ -702,7 +702,7 @@ line level    source
                *      The address of next entry is returned by pAddress. User can use (address + 1)
                *      as pAddress to call this API again for dumping all multicast entries is LUT.
                */
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 12  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 12  
 
               rtk_api_ret_t rtk_l2_mcastAddr_next_get(uint32 *pAddress, rtk_l2_mcastAddr_t *pMcastAddr)
               {
@@ -766,7 +766,7 @@ line level    source
  728           *      RT_ERR_MAC                  - Invalid MAC address.
  729           *      RT_ERR_L2_FID               - Invalid FID .
  730           *      RT_ERR_L2_VID               - Invalid VID .
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 13  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 13  
 
  731           *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
  732           *      RT_ERR_INPUT                - Invalid input parameters.
@@ -830,7 +830,7 @@ line level    source
  789   2              l2Table.nosalearn   = 0;
  790   2              l2Table.sa_block    = 0;
  791   2              l2Table.l3lookup    = 0;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 14  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 14  
 
  792   2              l2Table.lut_pri     = 0;
  793   2              l2Table.fwd_en      = 0;
@@ -894,7 +894,7 @@ line level    source
                   if ((retVal = rtk_switch_portmask_L2P_get(&pIpMcastAddr->portmask, &pmask)) != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 15  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 15  
 
                   memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
                   l2Table.sip = pIpMcastAddr->sip;
@@ -958,7 +958,7 @@ line level    source
                *      pIpMcastAddr    - IP Multicast entry
                * Return:
                *      RT_ERR_OK                   - OK
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 16  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 16  
 
                *      RT_ERR_FAILED               - Failed
                *      RT_ERR_SMI                  - SMI access error
@@ -1022,7 +1022,7 @@ line level    source
                *      Get the next IP multicast entry after the current entry pointed by pAddress.
                *      The address of next entry is returned by pAddress. User can use (address + 1)
                *      as pAddress to call this API again for dumping all IP multicast entries is LUT.
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 17  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 17  
 
                */
               rtk_api_ret_t rtk_l2_ipMcastAddr_next_get(uint32 *pAddress, rtk_l2_ipMcastAddr_t *pIpMcastAddr)
@@ -1086,7 +1086,7 @@ line level    source
                *      RT_ERR_INPUT                - Invalid input parameters.
                * Note:
                *      The API can delete a IP multicast address entry from the specified device.
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 18  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 18  
 
                */
               rtk_api_ret_t rtk_l2_ipMcastAddr_del(rtk_l2_ipMcastAddr_t *pIpMcastAddr)
@@ -1150,7 +1150,7 @@ line level    source
                *      RT_ERR_INPUT            - Invalid input parameters.
                * Note:
                *
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 19  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 19  
 
                */
               rtk_api_ret_t rtk_l2_ipVidMcastAddr_add(rtk_l2_ipVidMcastAddr_t *pIpVidMcastAddr)
@@ -1214,7 +1214,7 @@ line level    source
                       l2Table.l3_vid = pIpVidMcastAddr->vid;
                       if ((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
                           return retVal;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 20  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 20  
 
               
                       pIpVidMcastAddr->address = l2Table.address;
@@ -1278,7 +1278,7 @@ line level    source
               
                   pIpVidMcastAddr->address = l2Table.address;
               
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 21  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 21  
 
                    /* Get Logical port mask */
                   if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pIpVidMcastAddr->portmask)) != RT_ERR_OK)
@@ -1342,7 +1342,7 @@ line level    source
                   /* Get Logical port mask */
                   if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pIpVidMcastAddr->portmask)) != RT_ERR_OK)
                       return retVal;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 22  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 22  
 
               
                   *pAddress = l2Table.address;
@@ -1406,7 +1406,7 @@ line level    source
                           return retVal;
               
                       pIpVidMcastAddr->address = l2Table.address;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 23  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 23  
 
                       return RT_ERR_OK;
                   }
@@ -1470,7 +1470,7 @@ line level    source
 1408   1          if(pConfig->flushAddrOnAllPorts >= RTK_ENABLE_END)
 1409   1              return RT_ERR_ENABLE;
 1410   1      
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 24  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 24  
 
 1411   1          if(pConfig->vid > RTL8367C_VIDMAX)
 1412   1              return RT_ERR_VLAN_VID;
@@ -1534,7 +1534,7 @@ line level    source
 1466   2                  return RT_ERR_INPUT;
 1467   2          }
 1468   1          else if(pConfig->flushByPort == ENABLED)
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 25  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 25  
 
 1469   1          {
 1470   2              if ((retVal = rtl8367c_setAsicLutFlushType((pConfig->flushStaticAddr == ENABLED) ? FLUSHTYPE_BOTH 
@@ -1598,7 +1598,7 @@ line level    source
                * Return:
                *      RT_ERR_OK           - OK
                *      RT_ERR_FAILED       - Failed
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 26  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 26  
 
                *      RT_ERR_SMI          - SMI access error
                * Note:
@@ -1662,7 +1662,7 @@ line level    source
               
               /* Function Name:
                *      rtk_l2_flushLinkDownPortAddrEnable_get
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 27  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 27  
 
                * Description:
                *      Get HW flush linkdown port mac configuration of the specified device.
@@ -1726,7 +1726,7 @@ line level    source
               
                   /* check port valid */
                   RTK_CHK_PORT_VALID(port);
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 28  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 28  
 
               
                   if (enable >= RTK_ENABLE_END)
@@ -1790,7 +1790,7 @@ line level    source
 1712           * Input:
 1713           *      port    - Port id.
 1714           *      mac_cnt - Auto learning entries limit number
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 29  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 29  
 
 1715           * Output:
 1716           *      None
@@ -1854,7 +1854,7 @@ line level    source
 1774   1      
 1775   1          if ((retVal = rtl8367c_getAsicLutLearnLimitNo(rtk_switch_port_L2P_get(port), pMac_cnt)) != RT_ERR_OK)
 1776   1              return retVal;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 30  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 30  
 
 1777   1      
 1778   1          return RT_ERR_OK;
@@ -1918,7 +1918,7 @@ line level    source
               
                   if(NULL == pMac_cnt)
                       return RT_ERR_NULL_POINTER;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 31  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 31  
 
               
                   if ((retVal = rtl8367c_getAsicSystemLutLearnLimitNo(pMac_cnt)) != RT_ERR_OK)
@@ -1982,7 +1982,7 @@ line level    source
 1898           * Input:
 1899           *      port - Port id.
 1900           * Output:
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 32  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 32  
 
 1901           *      pAction - Learn over action
 1902           * Return:
@@ -2046,7 +2046,7 @@ line level    source
                *      The action symbol as following:
                *      - LIMIT_LEARN_CNT_ACTION_DROP,
                *      - LIMIT_LEARN_CNT_ACTION_FORWARD,
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 33  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 33  
 
                *      - LIMIT_LEARN_CNT_ACTION_TO_CPU,
                */
@@ -2110,7 +2110,7 @@ line level    source
                   if ( 1 == action )
                       *pAction = LIMIT_LEARN_CNT_ACTION_DROP;
                   else if ( 0 == action )
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 34  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 34  
 
                       *pAction = LIMIT_LEARN_CNT_ACTION_FORWARD;
                   else if ( 2 == action )
@@ -2174,7 +2174,7 @@ line level    source
                *      RT_ERR_SMI          - SMI access error
                *      RT_ERR_NULL_POINTER - Null pointer.
                * Note:
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 35  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 35  
 
                *
                */
@@ -2238,7 +2238,7 @@ line level    source
                * Description:
                *      Set flooding portmask
                * Input:
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 36  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 36  
 
                *      type - flooding type.
                *      pFlood_portmask - flooding porkmask
@@ -2302,7 +2302,7 @@ line level    source
                * Input:
                *      type - flooding type.
                * Output:
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 37  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 37  
 
                *      pFlood_portmask - flooding porkmask
                * Return:
@@ -2366,7 +2366,7 @@ line level    source
                * Output:
                *      None
                * Return:
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 38  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 38  
 
                *      RT_ERR_OK           - OK
                *      RT_ERR_FAILED       - Failed
@@ -2430,7 +2430,7 @@ line level    source
                   return RT_ERR_OK;
               }
               
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 39  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 39  
 
               /* Function Name:
                *      rtk_l2_aging_set
@@ -2494,7 +2494,7 @@ line level    source
                   uint32 i,time, speed;
                   CONST_T uint32 agePara[10][3] = {
                       {45, 0, 1}, {88, 0, 2}, {133, 0, 3}, {177, 0, 4}, {221, 0, 5}, {266, 0, 6}, {310, 0, 7},
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 40  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 40  
 
                       {354, 2, 6}, {413, 2, 7}, {458, 3, 7}};
               
@@ -2558,7 +2558,7 @@ line level    source
               
                       if ((retVal = rtl8367c_setAsicLutIpLookupMethod(1))!=RT_ERR_OK)
                           return retVal;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 41  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 41  
 
                   }
                   else if(type == LOOKUP_IP_VID)
@@ -2622,7 +2622,7 @@ line level    source
               
                   return RT_ERR_OK;
               }
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 42  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 42  
 
               
               /* Function Name:
@@ -2686,7 +2686,7 @@ line level    source
               
                   return RT_ERR_OK;
               }
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 43  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 43  
 
               
               /* Function Name:
@@ -2750,7 +2750,7 @@ line level    source
                           }
               
                           return RT_ERR_OK;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 44  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 44  
 
                       }
               
@@ -2814,7 +2814,7 @@ line level    source
                           group_addr = 0xE0000000;
                           group_vid = 0;
                           pmask = 0;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 45  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 45  
 
                           if ((retVal = rtl8367c_setAsicLutIPMCGroup(index, group_addr, group_vid, pmask, DISABLED))!=RT
              -_ERR_OK)
@@ -2878,7 +2878,7 @@ line level    source
               
                           return RT_ERR_OK;
                       }
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 46  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 46  
 
                   }
               
@@ -2942,7 +2942,7 @@ line level    source
                           pL2_entry->auth      = 0;
                           pL2_entry->sa_block  = 0;
                           pL2_entry->is_ipvidmul = 1;
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 47  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 47  
 
                           pL2_entry->l3_vid      = l2Table.l3_vid;
                       }
@@ -3006,7 +3006,7 @@ line level    source
                       memset(&pL2_entry->dip, 0, sizeof(ipaddr_t));
                       pL2_entry->mac.octet[0] = l2Table.mac.octet[0];
                       pL2_entry->mac.octet[1] = l2Table.mac.octet[1];
-C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 48  
+C51 COMPILER V9.60.0.0   L2                                                                11/03/2026 14:15:40 PAGE 48  
 
                       pL2_entry->mac.octet[2] = l2Table.mac.octet[2];
                       pL2_entry->mac.octet[3] = l2Table.mac.octet[3];

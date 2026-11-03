@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 1   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALSYS
@@ -62,7 +62,7 @@ line level    source
   44          extern uint8     xdata firmVer[];
   45          extern uint8     xdata firmDate[];
   46          extern uint8     xdata chipVer[];
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 2   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 2   
 
   47          extern uint8     xdata chipId[];
   48          
@@ -126,7 +126,7 @@ line level    source
  105   2          }
  106   1          else
  107   1          {
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 3   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 3   
 
  108   2              /*copy flash's config to cache for later restore*/
  109   2              DBG_PRINT("SalFlshCopyFlshToCache()\n");        
@@ -190,7 +190,7 @@ line level    source
               printf("ker  -  %lu\n", rate);
               }
               #endif
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 4   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 4   
 
  170   1       
  171   1          DBG_PRINT("sal_rate_config_restore()");
@@ -254,7 +254,7 @@ line level    source
  229          void
  230          sal_sys_config_restore ()
  231          {
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 5   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 5   
 
  232   1          sal_ipaddr_t ip;
  233   1          sal_ipaddr_t netmask;
@@ -318,7 +318,7 @@ line level    source
  291   1          if((ip == 0) || (ip == 0xffffffff))
  292   1          {
  293   2              ip = 0xC0A80101; /* 192.168.1.1 */
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 6   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 6   
 
  294   2              netmask = 0xFFFFFF00; /*255.255.255.0*/
  295   2          }    
@@ -382,7 +382,7 @@ line level    source
  353   1        sal_flash_syslog_serverIp_get(&syslogHostIpAddr);
  354   1        sal_sys_syslog_hostIp_set(&syslogHostIpAddr, 0);
  355   1        
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 7   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 7   
 
  356   1        sal_flash_syslog_serverPort_get(&syslogHostPort);
  357   1        sal_sys_syslog_hostUdpPort_set(&syslogHostPort, 0);
@@ -446,7 +446,7 @@ line level    source
  415   1          if(pSysMac == NULL)
  416   1              return SAL_ERR_PARAMETER;
  417   1      
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 8   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 8   
 
  418   1          memcpy(this_mac, pSysMac->octet, SAL_ETHER_ADDR_LEN);
  419   1      
@@ -510,7 +510,7 @@ line level    source
  477          sal_sys_gateway_set (
  478              sal_ipaddr_t gateway
  479              )
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 9   
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 9   
 
  480          {
  481   1      
@@ -574,7 +574,7 @@ line level    source
  539           *      sal_sys_dhcp_get
  540           * Description:
  541           *      Get the DHCP enable status.
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 10  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 10  
 
  542           * Input:
  543           *      None
@@ -638,7 +638,7 @@ line level    source
  601           *      None
  602           */
  603          // Sal Sys Dev Type Set: Sets device type/description and writes to flash
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 11  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 11  
 
  604          // Updates device description and persists to flash configuration
  605          int32 sal_sys_dev_type_set(uint8 *pDesc)
@@ -702,7 +702,7 @@ line level    source
  663           *      None
  664           * Output:
  665           *      pDesc - Pointer to the description
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 12  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 12  
 
  666           * Return:
  667           *      None
@@ -766,7 +766,7 @@ line level    source
  725           * Description:
  726           *      Set read only community of this switch to cache
  727           * Input:
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 13  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 13  
 
  728           *      None
  729           * Output:
@@ -830,7 +830,7 @@ line level    source
  787           *      Set read write community of this switch
  788           * Input:
  789           *      None
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 14  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 14  
 
  790           * Output:
  791           *      pDesc - Pointer to the description
@@ -894,7 +894,7 @@ line level    source
  849   1          if(len > SNMP_COMMUNITY_STR_LEN)
  850   1              return SAL_ERR_FAILED;
  851   1              
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 15  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 15  
 
  852   1          memset(configCache.snmp.write_community,0,SNMP_COMMUNITY_STR_LEN);
  853   1          memcpy(configCache.snmp.write_community, pDesc, len);
@@ -958,7 +958,7 @@ line level    source
  911   1          len = strlen(pDesc);
  912   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
  913   1              return SAL_ERR_FAILED;
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 16  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 16  
 
  914   1      
  915   1          memset(sysDescription,0,SAL_SNMP_SYS_INFO_STR_LEN);
@@ -1022,7 +1022,7 @@ line level    source
  973           *      None
  974           */
  975          // Sal Sys Contact Get: Retrieves system contact string (SNMP sysContact)
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 17  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 17  
 
  976          // Copies system contact from variable
  977          int32 sal_sys_contact_get(uint8 *pDesc)
@@ -1086,7 +1086,7 @@ line level    source
 1035           * Return:
 1036           *      SAL_ERR_SUCCESS
 1037           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 18  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 18  
 
 1038           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
 1039           * Note:
@@ -1150,7 +1150,7 @@ line level    source
 1097           * Return:
 1098           *      SAL_ERR_SUCCESS
 1099           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 19  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 19  
 
 1100           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
 1101           * Note:
@@ -1214,7 +1214,7 @@ line level    source
 1159   1      
 1160   1          return SAL_ERR_SUCCESS;
 1161   1      }
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 20  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 20  
 
 1162          
 1163          // Sal Sys Syslog State Get: Retrieves syslog enable/disable state
@@ -1278,7 +1278,7 @@ line level    source
 1221          // Copies syslog server IP from variable
 1222          int32 sal_sys_syslog_hostIp_get(sal_ipaddr_t *pIp)
 1223          {
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 21  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 21  
 
 1224   1          if(NULL == pIp)
 1225   1              return SAL_ERR_NULL_POINTER;
@@ -1342,7 +1342,7 @@ line level    source
 1283          int32 sal_sys_syslog_hostIp_set_cache(sal_ipaddr_t *pIp)
 1284          {
 1285   1          if(NULL == pIp)
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 22  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 22  
 
 1286   1              return SAL_ERR_NULL_POINTER;
 1287   1              
@@ -1406,7 +1406,7 @@ line level    source
 1345   1          if(setCache)
 1346   1          {
 1347   2              sal_sys_syslog_hostUdpPort_set_cache(pPort);
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 23  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 23  
 
 1348   2          }
 1349   1      
@@ -1470,7 +1470,7 @@ line level    source
 1407   1      
 1408   1          return SAL_ERR_SUCCESS;
 1409   1      }
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 24  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 24  
 
 1410          
 1411          // Sal Sys Syslog Head Index Set Cache: Sets syslog buffer head index in config cache
@@ -1534,7 +1534,7 @@ line level    source
 1469           * Description:
 1470           *      Get the version information of the firmware.
 1471           * Input:
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 25  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 25  
 
 1472           *      None
 1473           * Output:
@@ -1598,7 +1598,7 @@ line level    source
 1531           *      sal_sys_firmVersion_set_cache
 1532           * Description:
 1533           *      Set the version information of the firmware to cache.
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 26  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 26  
 
 1534           * Input:
 1535           *      pVersion - pointer buffer of the firmware version
@@ -1662,7 +1662,7 @@ line level    source
 1593          /* Function Name:
 1594           *      sal_sys_hardwareVersion_set
 1595           * Description:
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 27  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 27  
 
 1596           *      Set the version information of the hardware.
 1597           * Input:
@@ -1726,7 +1726,7 @@ line level    source
 1655   1          
 1656   1          if(len > SAL_SYS_STRING_LEN)
 1657   1              return SAL_ERR_FAILED;
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 28  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 28  
 
 1658   1              
 1659   1          memset(hwVer,0,SAL_SYS_STRING_LEN);
@@ -1790,7 +1790,7 @@ line level    source
 1717   1          
 1718   1          len = strlen(pDate);
 1719   1          
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 29  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 29  
 
 1720   1          if(len > SAL_SYS_STRING_LEN)
 1721   1              return SAL_ERR_FAILED;
@@ -1854,7 +1854,7 @@ line level    source
                   if((ret = rtl8367c_setAsicRegBits(addr, bits, value)) != RT_ERR_OK)
                       return ret;
               
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 30  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 30  
 
                   return SAL_ERR_SUCCESS;
               }
@@ -1918,7 +1918,7 @@ line level    source
                * Input: 
                *      addr   - register address
                * Output: 
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 31  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 31  
 
                *      pValue - pointer buffer of the register value 
                * Return: 
@@ -1982,7 +1982,7 @@ line level    source
 1903           *      None
 1904           */
 1905          // Sal Sys Loader Mode Set: Jumps to loader (bootloader) mode
-C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 32  
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/03/2026 14:15:36 PAGE 32  
 
 1906          // Saves config, sets warm start flag, and jumps to loader entry point
 1907          int32 sal_sys_loaderMode_set()

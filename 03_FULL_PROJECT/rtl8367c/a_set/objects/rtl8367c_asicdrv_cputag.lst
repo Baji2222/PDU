@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_CPUTAG
@@ -62,7 +62,7 @@ line level    source
                * Input:
                *      pEnabled - 1: enabled, 0: disabled
                * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 2   
 
                *      None
                * Return:
@@ -126,7 +126,7 @@ line level    source
  109          ret_t rtl8367c_getAsicCputagTrapPort(uint32 *pPort)
  110          {
  111   1          ret_t retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 3   
 
  112   1          uint32 tmpPort;
  113   1      
@@ -190,7 +190,7 @@ line level    source
  171           *      Set CPU-tag insert mode
  172           * Input:
  173           *      mode - 0: insert to all packets; 1: insert to trapped packets; 2: don't insert
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 4   
 
  174           * Output:
  175           *      None
@@ -254,7 +254,7 @@ line level    source
               /* Function Name:
                *      rtl8367c_getAsicCputagPriorityRemapping
                * Description:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 5   
 
                *      Get queue assignment of CPU port
                * Input:
@@ -318,7 +318,7 @@ line level    source
                *      rtl8367c_setAsicCputagMode
                * Description:
                *      Set cpu tag mode
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 6   
 
                * Input:
                *      mode - 1: 4bytes mode, 0: 8bytes mode
@@ -382,7 +382,7 @@ line level    source
               }
               /* Function Name:
                *      rtl8367c_getAsicCputagRxMinLength
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/03/2026 14:15:44 PAGE 7   
 
                * Description:
                *      Get cpu tag mode

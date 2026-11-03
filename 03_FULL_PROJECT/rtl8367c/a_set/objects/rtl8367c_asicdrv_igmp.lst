@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_IGMP
@@ -62,7 +62,7 @@ line level    source
                * Input:
                *      enabled     - 1: enabled, 0: disabled
                * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 2   
 
                *      None
                * Return:
@@ -126,7 +126,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_getAsicIpMulticastVlanLeaky(uint32 port, uint32 *ptr_enabled)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 3   
 
               {
                   ret_t  retVal;
@@ -190,7 +190,7 @@ line level    source
               
                   /* Table full Operation */
                   retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_IGMP_MLD_CFG1, RTL8367C_TABLE_FULL_OP_MASK, &value);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 4   
 
                   if(retVal != RT_ERR_OK)
                       return retVal;
@@ -254,7 +254,7 @@ line level    source
                   if(retVal != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 5   
 
                   *poperation = value;
               
@@ -318,7 +318,7 @@ line level    source
               }
               
               /* Function Name:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 6   
 
                *      rtl8367c_setAsicIGMPLeaveTimer
                * Description:
@@ -382,7 +382,7 @@ line level    source
                *      rtl8367c_setAsicIGMPQueryInterval
                * Description:
                *      Set Query Interval of IGMP/MLD
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 7   
 
                * Input:
                *      interval    - Query Interval
@@ -446,7 +446,7 @@ line level    source
                * Input:
                *      rob_var     - Robustness Variable
                * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 8   
 
                *      None
                * Return:
@@ -510,7 +510,7 @@ line level    source
                *      None
                * Return:
                *      RT_ERR_OK           - Success
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 9   
 
                *      RT_ERR_SMI          - SMI access error
                *      RT_ERR_PORT_MASK    - Invalid port mask
@@ -574,7 +574,7 @@ line level    source
                *      None.
                * Output:
                *      pPmsk   - Allow dynamic router port mask
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 10  
 
                * Return:
                *      RT_ERR_OK           - Success
@@ -638,7 +638,7 @@ line level    source
               ret_t rtl8367c_getAsicIGMPdynamicRouterPort2(uint32 *port, uint32 *timer)
               {
                   ret_t   retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 11  
 
               
                   retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_IGMP_DYNAMIC_ROUTER_PORT, RTL8367C_D_ROUTER_PORT_2_MASK,
@@ -702,7 +702,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_getAsicIGMPSuppression(uint32 *report_supp_enabled, uint32 *leave_supp_enabled)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 12  
 
               {
                   ret_t   retVal;
@@ -766,7 +766,7 @@ line level    source
                *      rtl8367c_getAsicIGMPQueryRX
                * Description:
                *      Get port-based Query packet RX allowance
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 13  
 
                * Input:
                *      port            - port number
@@ -830,7 +830,7 @@ line level    source
                   if(port > RTL8367C_PORTIDMAX)
                       return RT_ERR_PORT_ID;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 14  
 
                   if(port < 8)
                   {
@@ -894,7 +894,7 @@ line level    source
               }
               
               /* Function Name:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 15  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 15  
 
                *      rtl8367c_setAsicIGMPLeaveRX
                * Description:
@@ -958,7 +958,7 @@ line level    source
               
                   if(port > RTL8367C_PORTIDMAX)
                       return RT_ERR_PORT_ID;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 16  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 16  
 
               
                   if(port < 8)
@@ -1022,7 +1022,7 @@ line level    source
                   }
                   return RT_ERR_OK;
               }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 17  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 17  
 
               
               /* Function Name:
@@ -1086,7 +1086,7 @@ line level    source
                */
               ret_t rtl8367c_setAsicIGMPMcDataRX(uint32 port, uint32 allow_mcdata)
               {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 18  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 18  
 
                   ret_t   retVal;
               
@@ -1150,7 +1150,7 @@ line level    source
                           return retVal;
                   }
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 19  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 19  
 
                   *allow_mcdata = value;
               
@@ -1214,7 +1214,7 @@ line level    source
                * Return:
                *      RT_ERR_OK       - Success
                *      RT_ERR_PORT_ID  - Error PORT ID
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 20  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 20  
 
                *      RT_ERR_SMI      - SMI access error
                * Note:
@@ -1278,7 +1278,7 @@ line level    source
 1191   1      
 1192   1          /* IGMPv2 operation */
 1193   1          if(port < 8)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 21  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 21  
 
 1194   1          {
 1195   2              retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_IGMP_PORT0_CONTROL + port, RTL8367C_IGMP_PORT0_CONTR
@@ -1342,7 +1342,7 @@ line level    source
                   return RT_ERR_OK;
               }
               #endif
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 22  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 22  
 
 1252          
 1253          /* Function Name:
@@ -1406,7 +1406,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_getAsicIGMPv3Opeartion(uint32 port, uint32 *igmpv3_op)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 23  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 23  
 
               {
                   ret_t   retVal;
@@ -1470,7 +1470,7 @@ line level    source
 1368   2              if(retVal != RT_ERR_OK)
 1369   2                  return retVal;
 1370   2          }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 24  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 24  
 
 1371   1          else
 1372   1          {
@@ -1534,7 +1534,7 @@ line level    source
 1427           *      Set port-based MLDv2 Control packet action
 1428           * Input:
 1429           *      port            - port number
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 25  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 25  
 
 1430           *      mldv2_op        - MLDv2 control packet action
 1431           * Output:
@@ -1598,7 +1598,7 @@ line level    source
                   if(port > RTL8367C_PORTIDMAX)
                       return RT_ERR_PORT_ID;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 26  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 26  
 
                   /* MLDv2 operation */
                   if(port < 8)
@@ -1662,7 +1662,7 @@ line level    source
                       if(retVal != RT_ERR_OK)
                           return retVal;
                   }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 27  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 27  
 
               
                   return RT_ERR_OK;
@@ -1726,7 +1726,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_getAsicIGMPPortCurrentGroup(uint32 port, uint32 *current_group)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 28  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 28  
 
               {
                   ret_t   retVal;
@@ -1790,7 +1790,7 @@ line level    source
                   /* Write ACS_CMD register */
                   regAddr = RTL8367C_TABLE_ACCESS_CTRL_REG;
                   regData = RTL8367C_TABLE_ACCESS_REG_DATA(TB_OP_READ, TB_TARGET_IGMP_GROUP);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 29  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 29  
 
                   retVal = rtl8367c_setAsicRegBits(regAddr, RTL8367C_TABLE_TYPE_MASK | RTL8367C_COMMAND_TYPE_MASK, regDa
              -ta);
@@ -1854,7 +1854,7 @@ line level    source
                * Note:
                *      None
                */
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 30  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 30  
 
               ret_t rtl8367c_setAsicIpMulticastPortIsoLeaky(uint32 port, uint32 enabled)
               {
@@ -1918,7 +1918,7 @@ line level    source
                   ret_t   retVal;
               
                   retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_IGMP_MLD_CFG3, RTL8367C_REPORT_LEAVE_FORWARD_MASK, flood
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 31  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 31  
 
              -);
                   if(retVal != RT_ERR_OK)
@@ -1982,7 +1982,7 @@ line level    source
               }
               
               /* Function Name:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 32  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 32  
 
                *      rtl8367c_getAsicIGMPDropLeaveZero
                * Description:
@@ -2046,7 +2046,7 @@ line level    source
                * Output:
                *      pBypass    - 1: Bypass, 0:not bypass
                * Return:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 33  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 33  
 
                *      RT_ERR_OK       - Success
                *      RT_ERR_SMI      - SMI access error
@@ -2110,7 +2110,7 @@ line level    source
               ret_t rtl8367c_getAsicIGMPIsoLeaky(uint32 *pLeaky)
               {
                   ret_t   retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 34  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 34  
 
                   uint32  regData;
               
@@ -2174,7 +2174,7 @@ line level    source
              -ata);
                   if(retVal != RT_ERR_OK)
                       return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 35  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 35  
 
               
                   *pLeaky = regData;
@@ -2238,7 +2238,7 @@ line level    source
                *      RT_ERR_OK       - Success
                *      RT_ERR_SMI      - SMI access error
                * Note:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/02/2026 17:57:18 PAGE 36  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_IGMP                                             11/03/2026 14:15:45 PAGE 36  
 
                *      None
                */

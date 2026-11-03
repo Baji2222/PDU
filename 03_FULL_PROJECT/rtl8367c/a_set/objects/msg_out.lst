@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 1   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MSG_OUT
@@ -62,7 +62,7 @@ line level    source
   49          
   50          #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
   51          
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 2   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 2   
 
   52          //#include "lwip/udp.h"
   53          #include <snmp/snmp.h>
@@ -126,7 +126,7 @@ line level    source
  111          static u16_t snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len);
  112          static u16_t snmp_trap_header_enc(struct snmp_msg_trap *m_trap, u8_t *p);
  113          
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 3   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 3   
 
  114          #endif /* end of LWPS_SNMP_TRAP_ENABLE */
  115          
@@ -190,7 +190,7 @@ line level    source
  173           * @param m_stat points to the current message request state source
  174           * @return ERR_OK when success, ERR_MEM if we're out of memory
  175           *
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 4   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 4   
 
  176           * @note the caller is responsible for filling in outvb in the m_stat
  177           * and provide error-status and index (except for tooBig errors) ...
@@ -254,7 +254,7 @@ line level    source
  235   3          }
  236   2        /** @todo do we need separate rx and tx pcbs for threaded case? */
  237   2          /** connect to the originating source */
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 5   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 5   
 
  238   2        DBG_SNMP_PRINTF(("[%s][%d][tot_len=%d]\n", __FILE__, (uint16)__LINE__, \
  239   2            (uint16)tot_len));
@@ -318,7 +318,7 @@ line level    source
  297          {
  298   1        u16_t tot_len;
  299   1        struct snmp_resp_header_lengths *rhl;
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 6   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 6   
 
  300   1      
  301   1        rhl = &m_stat->rhl;
@@ -382,7 +382,7 @@ line level    source
  359   1        vb = root->tail;
  360   1        while ( vb != NULL )
  361   1        {
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 7   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 7   
 
  362   2          /* encoded value lenght depends on type */
  363   2          switch (vb->value_type)
@@ -446,7 +446,7 @@ line level    source
  421          /*
  422           * Function: snmp_resp_header_enc
  423           * ------------------------------
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 8   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 8   
 
  424           * Encodes SNMP response header into buffer.
  425           * Writes version, community, PDU type, request ID, error status/index.
@@ -510,7 +510,7 @@ line level    source
  483           * Encodes varbind list from head to tail.
  484           */
  485          /*
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 9   
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 9   
 
  486           * Function: snmp_varbind_list_enc
  487           * -------------------------------
@@ -574,7 +574,7 @@ line level    source
  545   3            case (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_OPAQUE):
  546   3              raw_ptr = vb->value;
  547   3              snmp_asn1_enc_raw(p, ofs, vb->vlen, raw_ptr);
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 10  
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 10  
 
  548   3              break;
  549   3            case (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_NUL):
@@ -638,7 +638,7 @@ line level    source
  607   1          *pEnable = snmp_authfail_trap_enable;
  608   1      }
  609              
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 11  
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 11  
 
  610          /*
  611           * Function: snmp_trap_linkChange
@@ -702,7 +702,7 @@ line level    source
 *** WARNING C182 IN LINE 668 OF ..\..\common\src\app\snmp\msg_out.c: pointer to different objects
  669   4                      memset(vb->ident, 0x00, sizeof(struct vb_ident_buf_s));
  670   4                      if (vb->ident != NULL)
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 12  
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 12  
 
  671   4                      {
  672   5                          memcpy(vb->ident, interface_oid_Interface, sizeof(interface_oid_Interface));
@@ -766,7 +766,7 @@ line level    source
  730           * -------------------------
  731           * Periodic timer handler for SNMP trap processing.
  732           * Reads JSON data for battery and AC status.
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 13  
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 13  
 
  733           * Sends traps on status changes and processes queued traps.
  734           * Requires ARP resolution before sending traps.
@@ -780,711 +780,713 @@ line level    source
  742   1          if(start_pdu_status)
  743   1          {
  744   2              printf("GET_STATUS\r\n");
- 745   2          }
- 746   1          
- 747   1          if(start_rtc_data)
- 748   1          {
- 749   2              printf("GET_RTC\r\n");
- 750   2      
- 751   2          }
- 752   1          
- 753   1          // Validate extracted values (assuming valid range for battery: 0-100, AC: 0 or 1)
- 754   1          if (current_battery_percentage > 100 || current_ac_status > 1) {
- 755   2              // printf("Invalid data: battery=%u, ac=%u\n", current_battery_percentage, current_ac_status);
- 756   2              return; // Skip processing if data is invalid
- 757   2          }
- 758   1      
- 759   1          if (enable_trap_flag == 1) {
- 760   2              // Battery low trap logic
- 761   2            if (last_battery_percentage == INVALID_U8_VALUE || current_battery_percentage != last_battery_percen
+ 745   2               start_pdu_status = 0;
+ 746   2          }
+ 747   1          
+ 748   1          if(start_rtc_data)
+ 749   1          {
+ 750   2              printf("GET_RTC\r\n");
+ 751   2              start_rtc_data = 0;
+ 752   2      
+ 753   2          }
+ 754   1          
+ 755   1          // Validate extracted values (assuming valid range for battery: 0-100, AC: 0 or 1)
+ 756   1          if (current_battery_percentage > 100 || current_ac_status > 1) {
+ 757   2              // printf("Invalid data: battery=%u, ac=%u\n", current_battery_percentage, current_ac_status);
+ 758   2              return; // Skip processing if data is invalid
+ 759   2          }
+ 760   1      
+ 761   1          if (enable_trap_flag == 1) {
+ 762   2              // Battery low trap logic
+ 763   2            if (last_battery_percentage == INVALID_U8_VALUE || current_battery_percentage != last_battery_percen
              -tage) {
- 762   3                  // printf("Sending BATT_LOW trap: battery=%u\n", current_battery_percentage);
- 763   3                  snmp_add_trap(SNMP_TRAP_TYPE_BATT_LOW);
- 764   3               last_battery_percentage = current_battery_percentage; // Always update last value
- 765   3              }
- 766   2             
- 767   2      
- 768   2              // AC status trap logic
- 769   2              if (last_ac_status == INVALID_U8_VALUE || current_ac_status != last_ac_status) {
- 770   3                  // printf("Sending AC_STATUS trap: ac=%u\n", current_ac_status);
- 771   3                  snmp_add_trap(SNMP_TRAP_TYPE_AC_STATUS);
- 772   3                  last_ac_status = current_ac_status; // Update last value
- 773   3              }
- 774   2          }
- 775   1      
- 776   1          if ((-1 == snmp_trap_msg_index) || (FALSE == snmp_trap_enable)) {
- 777   2              return;
- 778   2          }
- 779   1      
- 780   1          snmp_trap_test_time++;
+ 764   3                  // printf("Sending BATT_LOW trap: battery=%u\n", current_battery_percentage);
+ 765   3                  snmp_add_trap(SNMP_TRAP_TYPE_BATT_LOW);
+ 766   3               last_battery_percentage = current_battery_percentage; // Always update last value
+ 767   3              }
+ 768   2             
+ 769   2      
+ 770   2              // AC status trap logic
+ 771   2              if (last_ac_status == INVALID_U8_VALUE || current_ac_status != last_ac_status) {
+ 772   3                  // printf("Sending AC_STATUS trap: ac=%u\n", current_ac_status);
+ 773   3                  snmp_add_trap(SNMP_TRAP_TYPE_AC_STATUS);
+ 774   3                  last_ac_status = current_ac_status; // Update last value
+ 775   3              }
+ 776   2          }
+ 777   1      
+ 778   1          if ((-1 == snmp_trap_msg_index) || (FALSE == snmp_trap_enable)) {
+ 779   2              return;
+ 780   2          }
  781   1      
- 782   1          if (LWPS_OK != lwps_arp_check(trap_dst[0].dip)) {
- 783   2              if (snmp_trap_test_time >= LWPS_SNMP_TRAP_TESTTIME) {
- 784   3                  // printf("Trap timeout: clearing queue\n");
- 785   3                  for (i = 0; i <= snmp_trap_msg_index; i++) {
- 786   4                      snmp_trap_msg_queue[i] = 0;
- 787   4                  }
- 788   3                  snmp_trap_msg_index = -1;
- 789   3                  snmp_trap_test_time = 0;
- 790   3              }
- 791   2              return;
- 792   2          }
- 793   1      
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 14  
+ 782   1          snmp_trap_test_time++;
+ 783   1      
+ 784   1          if (LWPS_OK != lwps_arp_check(trap_dst[0].dip)) {
+ 785   2              if (snmp_trap_test_time >= LWPS_SNMP_TRAP_TESTTIME) {
+ 786   3                  // printf("Trap timeout: clearing queue\n");
+ 787   3                  for (i = 0; i <= snmp_trap_msg_index; i++) {
+ 788   4                      snmp_trap_msg_queue[i] = 0;
+ 789   4                  }
+ 790   3                  snmp_trap_msg_index = -1;
+ 791   3                  snmp_trap_test_time = 0;
+ 792   3              }
+ 793   2              return;
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 14  
 
- 794   1          for (i = 0; i <= snmp_trap_msg_index; i++) {
- 795   2              switch (snmp_trap_msg_queue[i]) {
- 796   3                  case SNMP_TRAP_TYPE_COLDSTART:
- 797   3                      trap_msg.outvb.head = NULL;
- 798   3                      trap_msg.outvb.tail = NULL;
- 799   3                      trap_msg.outvb.count = 0;
- 800   3                      snmp_send_trap(SNMP_GENTRAP_COLDSTART, NULL, 0);
- 801   3                      syslog_add_new_buf_entry(SYSLOG_MSG_SYSTEM_STARTED, 0);
- 802   3                      break;
- 803   3                  case SNMP_TRAP_TYPE_LINKDOWN:
- 804   3                      snmp_trap_linkChange(SNMP_GENTRAP_LINKDOWN);
- 805   3                      break;
- 806   3                  case SNMP_TRAP_TYPE_LINKUP:
- 807   3                      snmp_trap_linkChange(SNMP_GENTRAP_LINKUP);
- 808   3                      break;
- 809   3                  case SNMP_TRAP_TYPE_BATT_LOW:
- 810   3                      snmp_battery_low_trap();
- 811   3                      break;
- 812   3                  case SNMP_TRAP_TYPE_AC_STATUS:
- 813   3                      snmp_ac_status_trap(current_ac_status);
- 814   3                      break;
- 815   3              }
- 816   2              snmp_trap_msg_queue[i] = 0;
- 817   2          }
- 818   1      
- 819   1          snmp_trap_msg_index = -1;
- 820   1      }
- 821          
- 822          /*
- 823           * Function: snmp_add_trap
- 824           * -----------------------
- 825           * Adds a trap type to the trap message queue.
- 826           * Prevents duplicate traps by checking existing entries.
- 827           * Returns if queue is full or trap already queued.
- 828           */
- 829          void snmp_add_trap(u8_t trap_type){
- 830   1          u8_t i;
- 831   1      
- 832   1          if( -1==snmp_trap_msg_index ){
- 833   2              snmp_trap_msg_index = 0;
- 834   2          }
- 835   1      
- 836   1          for(i=0; i<=snmp_trap_msg_index; i++)
- 837   1          {
- 838   2              if( snmp_trap_msg_queue[i]==trap_type )
- 839   2              {
- 840   3                  return;
- 841   3              }
- 842   2          }
- 843   1          
- 844   1          
- 845   1          if( (SNMP_TRAP_TYPE_MAXIMAL-1)==snmp_trap_msg_index )
- 846   1          {
- 847   2              return; /* no more space to add */
- 848   2          }
- 849   1          else
- 850   1          {
- 851   2              snmp_trap_msg_index++;
- 852   2          }
- 853   1      
- 854   1          snmp_trap_msg_queue[snmp_trap_msg_index] = trap_type;
- 855   1      }
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 15  
+ 794   2          }
+ 795   1      
+ 796   1          for (i = 0; i <= snmp_trap_msg_index; i++) {
+ 797   2              switch (snmp_trap_msg_queue[i]) {
+ 798   3                  case SNMP_TRAP_TYPE_COLDSTART:
+ 799   3                      trap_msg.outvb.head = NULL;
+ 800   3                      trap_msg.outvb.tail = NULL;
+ 801   3                      trap_msg.outvb.count = 0;
+ 802   3                      snmp_send_trap(SNMP_GENTRAP_COLDSTART, NULL, 0);
+ 803   3                      syslog_add_new_buf_entry(SYSLOG_MSG_SYSTEM_STARTED, 0);
+ 804   3                      break;
+ 805   3                  case SNMP_TRAP_TYPE_LINKDOWN:
+ 806   3                      snmp_trap_linkChange(SNMP_GENTRAP_LINKDOWN);
+ 807   3                      break;
+ 808   3                  case SNMP_TRAP_TYPE_LINKUP:
+ 809   3                      snmp_trap_linkChange(SNMP_GENTRAP_LINKUP);
+ 810   3                      break;
+ 811   3                  case SNMP_TRAP_TYPE_BATT_LOW:
+ 812   3                      snmp_battery_low_trap();
+ 813   3                      break;
+ 814   3                  case SNMP_TRAP_TYPE_AC_STATUS:
+ 815   3                      snmp_ac_status_trap(current_ac_status);
+ 816   3                      break;
+ 817   3              }
+ 818   2              snmp_trap_msg_queue[i] = 0;
+ 819   2          }
+ 820   1      
+ 821   1          snmp_trap_msg_index = -1;
+ 822   1      }
+ 823          
+ 824          /*
+ 825           * Function: snmp_add_trap
+ 826           * -----------------------
+ 827           * Adds a trap type to the trap message queue.
+ 828           * Prevents duplicate traps by checking existing entries.
+ 829           * Returns if queue is full or trap already queued.
+ 830           */
+ 831          void snmp_add_trap(u8_t trap_type){
+ 832   1          u8_t i;
+ 833   1      
+ 834   1          if( -1==snmp_trap_msg_index ){
+ 835   2              snmp_trap_msg_index = 0;
+ 836   2          }
+ 837   1      
+ 838   1          for(i=0; i<=snmp_trap_msg_index; i++)
+ 839   1          {
+ 840   2              if( snmp_trap_msg_queue[i]==trap_type )
+ 841   2              {
+ 842   3                  return;
+ 843   3              }
+ 844   2          }
+ 845   1          
+ 846   1          
+ 847   1          if( (SNMP_TRAP_TYPE_MAXIMAL-1)==snmp_trap_msg_index )
+ 848   1          {
+ 849   2              return; /* no more space to add */
+ 850   2          }
+ 851   1          else
+ 852   1          {
+ 853   2              snmp_trap_msg_index++;
+ 854   2          }
+ 855   1      
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 15  
 
- 856          
- 857          /**
- 858           * Sets enable switch for this trap destination.
- 859           * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
- 860           * @param enable switch if 0 destination is disabled >0 enabled.
- 861           */
- 862          /*
- 863           * Function: snmp_trap_dst_enable
- 864           * ------------------------------
- 865           * Enables or disables SNMP trap destination.
- 866           * Sets enable flag for specified trap destination index.
- 867           */
- 868          void
- 869          snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
- 870          {
- 871   1        if (dst_idx < SNMP_TRAP_DESTINATIONS)
- 872   1        {
- 873   2          trap_dst[dst_idx].enable = enable;
- 874   2        }
- 875   1      }
- 876          
- 877          #if 1 /* Only Link-down/up trap */
- 878          /*
- 879           * Function: snmp_authfail_trap
- 880           * ----------------------------
- 881           * Sends authentication failure trap if enabled.
- 882           * Called when SNMP community string validation fails.
- 883           * Uses generic trap type AUTHFAIL.
- 884           */
- 885          void
- 886          snmp_authfail_trap(void)
- 887          {
- 888   1        u8_t enable;
- 889   1        snmp_get_snmpenableauthentraps(&enable);
- 890   1        if (enable == 1)
- 891   1        {
- 892   2          trap_msg.outvb.head = NULL;
- 893   2          trap_msg.outvb.tail = NULL;
- 894   2          trap_msg.outvb.count = 0;
- 895   2          snmp_send_trap(SNMP_GENTRAP_AUTHFAIL, NULL, 0);
- 896   2        }
- 897   1      }
- 898          #endif
- 899          
- 900          
- 901          /**
- 902           * Sets IPv4 address for this trap destination.
- 903           * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
- 904           * @param dst IPv4 address in host order.
- 905           */
- 906          /*
- 907           * Function: snmp_trap_dst_ip_set
- 908           * ------------------------------
- 909           * Sets trap destination IP address for specified index.
- 910           * Copies IP address from input into trap destination array.
- 911           */
- 912          void
- 913          snmp_trap_dst_ip_set(u8_t dst_idx, u8_t *dst)
- 914          {
- 915   1        if (dst_idx < SNMP_TRAP_DESTINATIONS)
- 916   1        {
- 917   2          IPADDR_COPY(trap_dst[dst_idx].dip.addr, dst);
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 16  
+ 856   1          snmp_trap_msg_queue[snmp_trap_msg_index] = trap_type;
+ 857   1      }
+ 858          
+ 859          /**
+ 860           * Sets enable switch for this trap destination.
+ 861           * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
+ 862           * @param enable switch if 0 destination is disabled >0 enabled.
+ 863           */
+ 864          /*
+ 865           * Function: snmp_trap_dst_enable
+ 866           * ------------------------------
+ 867           * Enables or disables SNMP trap destination.
+ 868           * Sets enable flag for specified trap destination index.
+ 869           */
+ 870          void
+ 871          snmp_trap_dst_enable(u8_t dst_idx, u8_t enable)
+ 872          {
+ 873   1        if (dst_idx < SNMP_TRAP_DESTINATIONS)
+ 874   1        {
+ 875   2          trap_dst[dst_idx].enable = enable;
+ 876   2        }
+ 877   1      }
+ 878          
+ 879          #if 1 /* Only Link-down/up trap */
+ 880          /*
+ 881           * Function: snmp_authfail_trap
+ 882           * ----------------------------
+ 883           * Sends authentication failure trap if enabled.
+ 884           * Called when SNMP community string validation fails.
+ 885           * Uses generic trap type AUTHFAIL.
+ 886           */
+ 887          void
+ 888          snmp_authfail_trap(void)
+ 889          {
+ 890   1        u8_t enable;
+ 891   1        snmp_get_snmpenableauthentraps(&enable);
+ 892   1        if (enable == 1)
+ 893   1        {
+ 894   2          trap_msg.outvb.head = NULL;
+ 895   2          trap_msg.outvb.tail = NULL;
+ 896   2          trap_msg.outvb.count = 0;
+ 897   2          snmp_send_trap(SNMP_GENTRAP_AUTHFAIL, NULL, 0);
+ 898   2        }
+ 899   1      }
+ 900          #endif
+ 901          
+ 902          
+ 903          /**
+ 904           * Sets IPv4 address for this trap destination.
+ 905           * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
+ 906           * @param dst IPv4 address in host order.
+ 907           */
+ 908          /*
+ 909           * Function: snmp_trap_dst_ip_set
+ 910           * ------------------------------
+ 911           * Sets trap destination IP address for specified index.
+ 912           * Copies IP address from input into trap destination array.
+ 913           */
+ 914          void
+ 915          snmp_trap_dst_ip_set(u8_t dst_idx, u8_t *dst)
+ 916          {
+ 917   1        if (dst_idx < SNMP_TRAP_DESTINATIONS)
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 16  
 
- 918   2          //trap_dst[dst_idx].dip.addr = htonl(dst->addr);
- 919   2        }
- 920   1      }
- 921          
- 922          /**
- 923           * Gets IPv4 address for this trap destination.
- 924           * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
- 925           * @param dst IPv4 address in host order.
- 926           */
- 927          /*
- 928           * Function: snmp_trap_dst_ip_get
- 929           * ------------------------------
- 930           * Gets trap destination IP address for specified index.
- 931           * Copies IP address from trap destination array to output.
- 932           */
- 933          void
- 934          snmp_trap_dst_ip_get(u8_t dst_idx, u8_t *dst)
- 935          {
- 936   1        if ( (dst_idx < SNMP_TRAP_DESTINATIONS)  && dst )
- 937   1        {
- 938   2          IPADDR_COPY(dst, trap_dst[dst_idx].dip.addr);
- 939   2          //trap_dst[dst_idx].dip.addr = htonl(dst->addr);
- 940   2        }
- 941   1      }
- 942          
- 943          
+ 918   1        {
+ 919   2          IPADDR_COPY(trap_dst[dst_idx].dip.addr, dst);
+ 920   2          //trap_dst[dst_idx].dip.addr = htonl(dst->addr);
+ 921   2        }
+ 922   1      }
+ 923          
+ 924          /**
+ 925           * Gets IPv4 address for this trap destination.
+ 926           * @param dst_idx index in 0 .. SNMP_TRAP_DESTINATIONS-1
+ 927           * @param dst IPv4 address in host order.
+ 928           */
+ 929          /*
+ 930           * Function: snmp_trap_dst_ip_get
+ 931           * ------------------------------
+ 932           * Gets trap destination IP address for specified index.
+ 933           * Copies IP address from trap destination array to output.
+ 934           */
+ 935          void
+ 936          snmp_trap_dst_ip_get(u8_t dst_idx, u8_t *dst)
+ 937          {
+ 938   1        if ( (dst_idx < SNMP_TRAP_DESTINATIONS)  && dst )
+ 939   1        {
+ 940   2          IPADDR_COPY(dst, trap_dst[dst_idx].dip.addr);
+ 941   2          //trap_dst[dst_idx].dip.addr = htonl(dst->addr);
+ 942   2        }
+ 943   1      }
  944          
- 945          /**
- 946           * Sends an generic or enterprise specific trap message.
- 947           *
- 948           * @param generic_trap is the trap code
- 949           * @param eoid points to enterprise object identifier
- 950           * @param specific_trap used for enterprise traps when generic_trap == 6
- 951           * @return ERR_OK when success, ERR_MEM if we're out of memory
- 952           *
- 953           * @note the caller is responsible for filling in outvb in the trap_msg
- 954           * @note the use of the enterpise identifier field
- 955           * is per RFC1215.
- 956           * Use .iso.org.dod.internet.mgmt.mib-2.snmp for generic traps
- 957           * and .iso.org.dod.internet.private.enterprises.yourenterprise
- 958           * (sysObjectID) for specific traps.
- 959           */
- 960          /*
- 961           * Function: snmp_send_trap
- 962           * ------------------------
- 963           * Sends SNMP trap to all enabled destinations.
- 964           * Performs two-pass encoding and sends via UDP.
- 965           * Supports both generic and enterprise-specific traps.
- 966           */
- 967          err_t
- 968          snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
- 969          {
- 970   1        struct snmp_trap_dst *td;
- 971   1        int32  socketId;
- 972   1        u8_t *p;
- 973   1        u16_t i,tot_len;
- 974   1        u16_t ofs;
- 975   1      
- 976   1        DBG_SNMP_PRINTF(("[%s][%d]\n", __FILE__, (uint16)__LINE__));
+ 945          
+ 946          
+ 947          /**
+ 948           * Sends an generic or enterprise specific trap message.
+ 949           *
+ 950           * @param generic_trap is the trap code
+ 951           * @param eoid points to enterprise object identifier
+ 952           * @param specific_trap used for enterprise traps when generic_trap == 6
+ 953           * @return ERR_OK when success, ERR_MEM if we're out of memory
+ 954           *
+ 955           * @note the caller is responsible for filling in outvb in the trap_msg
+ 956           * @note the use of the enterpise identifier field
+ 957           * is per RFC1215.
+ 958           * Use .iso.org.dod.internet.mgmt.mib-2.snmp for generic traps
+ 959           * and .iso.org.dod.internet.private.enterprises.yourenterprise
+ 960           * (sysObjectID) for specific traps.
+ 961           */
+ 962          /*
+ 963           * Function: snmp_send_trap
+ 964           * ------------------------
+ 965           * Sends SNMP trap to all enabled destinations.
+ 966           * Performs two-pass encoding and sends via UDP.
+ 967           * Supports both generic and enterprise-specific traps.
+ 968           */
+ 969          err_t
+ 970          snmp_send_trap(s8_t generic_trap, struct snmp_obj_id *eoid, s32_t specific_trap)
+ 971          {
+ 972   1        struct snmp_trap_dst *td;
+ 973   1        int32  socketId;
+ 974   1        u8_t *p;
+ 975   1        u16_t i,tot_len;
+ 976   1        u16_t ofs;
  977   1      
- 978   1        for (i=0, td = &trap_dst[0]; i<SNMP_TRAP_DESTINATIONS; i++, td++)
- 979   1        {
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 17  
+ 978   1        DBG_SNMP_PRINTF(("[%s][%d]\n", __FILE__, (uint16)__LINE__));
+ 979   1      
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 17  
 
- 980   2          if ((td->enable != 0) && (td->dip.addr[0] != 0) && (td->dip.addr[1] != 0) &&\
- 981   2          (td->dip.addr[2] != 0) && (td->dip.addr[3] != 0))
- 982   2          {
- 983   3            /* network order trap destination */
- 984   3          IPADDR_COPY(trap_msg.dip.addr, td->dip.addr);
- 985   3            IPADDR_COPY(trap_msg.sip_raw, this_ip);
- 986   3            trap_msg.gen_trap = generic_trap;
- 987   3            trap_msg.spc_trap = specific_trap;
- 988   3            if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
- 989   3            {
- 990   4              /* enterprise-Specific trap */
- 991   4              trap_msg.enterprise = eoid;
- 992   4      
- 993   4              
- 994   4            }
- 995   3            else
- 996   3            {
- 997   4              /* generic (MIB-II) trap */
- 998   4              snmp_get_sysobjid_ptr(&trap_msg.enterprise);
- 999   4            }
-1000   3            snmp_get_sysuptime(&trap_msg.ts);
-1001   3      
-1002   3            /* pass 0, calculate length fields */
-1003   3            tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
-1004   3            tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
-1005   3      
-1006   3            p = malloc_tx_buf(1518UL);
+ 980   1        for (i=0, td = &trap_dst[0]; i<SNMP_TRAP_DESTINATIONS; i++, td++)
+ 981   1        {
+ 982   2          if ((td->enable != 0) && (td->dip.addr[0] != 0) && (td->dip.addr[1] != 0) &&\
+ 983   2          (td->dip.addr[2] != 0) && (td->dip.addr[3] != 0))
+ 984   2          {
+ 985   3            /* network order trap destination */
+ 986   3          IPADDR_COPY(trap_msg.dip.addr, td->dip.addr);
+ 987   3            IPADDR_COPY(trap_msg.sip_raw, this_ip);
+ 988   3            trap_msg.gen_trap = generic_trap;
+ 989   3            trap_msg.spc_trap = specific_trap;
+ 990   3            if (generic_trap == SNMP_GENTRAP_ENTERPRISESPC)
+ 991   3            {
+ 992   4              /* enterprise-Specific trap */
+ 993   4              trap_msg.enterprise = eoid;
+ 994   4      
+ 995   4              
+ 996   4            }
+ 997   3            else
+ 998   3            {
+ 999   4              /* generic (MIB-II) trap */
+1000   4              snmp_get_sysobjid_ptr(&trap_msg.enterprise);
+1001   4            }
+1002   3            snmp_get_sysuptime(&trap_msg.ts);
+1003   3      
+1004   3            /* pass 0, calculate length fields */
+1005   3            tot_len = snmp_varbind_list_sum(&trap_msg.outvb);
+1006   3            tot_len = snmp_trap_header_sum(&trap_msg, tot_len);
 1007   3      
-1008   3            /* pass 1, encode packet ino the pbuf(s) */
-1009   3            ofs = snmp_trap_header_enc(&trap_msg, p);
-1010   3            snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
-1011   3            
-1012   3            /** connect to the TRAP destination */
-1013   3          socketId = lwps_socket(LWPS_L3TYPE_IP, LWPS_L4TYPE_UDP, snmpHandler);
-1014   3          if (socketId < 0)
-1015   3          {
-1016   4            OSAL_PRINTF("SNMP Connect Error! alloc socket failed!\n");
-1017   4            lwps_close(socketId);
-1018   4            return ERR_CONN;
-1019   4          }
-1020   3          if (LWPS_OK != lwps_sendto(socketId, p, tot_len, trap_msg.dip, SNMP_TRAP_PORT))
-1021   3          {
-1022   4            OSAL_PRINTF("SNMP Send Error! alloc socket failed!\n");
-1023   4            lwps_close(socketId);
-1024   4            return ERR_CONN;
-1025   4          }
-1026   3          /*if (LWPS_OK != lwps_sendto(socketId, p, tot_len, trap_msg.dip, SNMP_TRAP_PORT))
-1027   3          {
-1028   3            OSAL_PRINTF("SNMP Send Error! alloc socket failed!\n");
-1029   3            lwps_close(socketId);
-1030   3            return ERR_CONN;
-1031   3          }*/
-1032   3            lwps_close(socketId);
-1033   3          
-1034   3      
-1035   3          }
-1036   2        }
-1037   1        return ERR_OK;
-1038   1      }
-1039          
-1040          /*
-1041           * Function: snmp_coldstart_trap
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 18  
+1008   3            p = malloc_tx_buf(1518UL);
+1009   3      
+1010   3            /* pass 1, encode packet ino the pbuf(s) */
+1011   3            ofs = snmp_trap_header_enc(&trap_msg, p);
+1012   3            snmp_varbind_list_enc(&trap_msg.outvb, p, ofs);
+1013   3            
+1014   3            /** connect to the TRAP destination */
+1015   3          socketId = lwps_socket(LWPS_L3TYPE_IP, LWPS_L4TYPE_UDP, snmpHandler);
+1016   3          if (socketId < 0)
+1017   3          {
+1018   4            OSAL_PRINTF("SNMP Connect Error! alloc socket failed!\n");
+1019   4            lwps_close(socketId);
+1020   4            return ERR_CONN;
+1021   4          }
+1022   3          if (LWPS_OK != lwps_sendto(socketId, p, tot_len, trap_msg.dip, SNMP_TRAP_PORT))
+1023   3          {
+1024   4            OSAL_PRINTF("SNMP Send Error! alloc socket failed!\n");
+1025   4            lwps_close(socketId);
+1026   4            return ERR_CONN;
+1027   4          }
+1028   3          /*if (LWPS_OK != lwps_sendto(socketId, p, tot_len, trap_msg.dip, SNMP_TRAP_PORT))
+1029   3          {
+1030   3            OSAL_PRINTF("SNMP Send Error! alloc socket failed!\n");
+1031   3            lwps_close(socketId);
+1032   3            return ERR_CONN;
+1033   3          }*/
+1034   3            lwps_close(socketId);
+1035   3          
+1036   3      
+1037   3          }
+1038   2        }
+1039   1        return ERR_OK;
+1040   1      }
+1041          
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 18  
 
-1042           * -----------------------------
-1043           * Triggers coldstart trap and enables trap flag.
-1044           * Called during system initialization after boot.
-1045           */
-1046          void
-1047          snmp_coldstart_trap(void)
-1048          {
-1049   1        enable_trap_flag = 1;
-1050   1        snmp_add_trap(SNMP_TRAP_TYPE_COLDSTART);
-1051   1      }
-1052          
-1053          /**
-1054           * Sums trap header field lengths from tail to head and
-1055           * returns trap_header_lengths for second encoding pass.
-1056           *
-1057           * @param vb_len varbind-list length
-1058           * @param thl points to returned header lengths
-1059           * @return the required lenght for encoding the trap header
-1060           */
-1061          /*
-1062           * Function: snmp_trap_header_sum
-1063           * ------------------------------
-1064           * Calculates total length for SNMP trap header.
-1065           * Sums enterprise OID, agent address, generic/specific traps, timestamp.
-1066           * Stores lengths in trap header structure for encoding.
-1067           */
-1068          static u16_t
-1069          snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
-1070          {
-1071   1        u16_t tot_len;
-1072   1        struct snmp_trap_header_lengths *thl;
-1073   1      
-1074   1        thl = &m_trap->thl;
-1075   1        tot_len = vb_len;
-1076   1      
-1077   1        snmp_asn1_enc_u32t_cnt(m_trap->ts, &thl->tslen);
-1078   1        snmp_asn1_enc_length_cnt(thl->tslen, &thl->tslenlen);
-1079   1        tot_len += 1 + thl->tslen + thl->tslenlen;
-1080   1      
-1081   1        snmp_asn1_enc_s32t_cnt(m_trap->spc_trap, &thl->strplen);
-1082   1        snmp_asn1_enc_length_cnt(thl->strplen, &thl->strplenlen);
-1083   1        tot_len += 1 + thl->strplen + thl->strplenlen;
-1084   1      
-1085   1        snmp_asn1_enc_s32t_cnt(m_trap->gen_trap, &thl->gtrplen);
-1086   1        snmp_asn1_enc_length_cnt(thl->gtrplen, &thl->gtrplenlen);
-1087   1        tot_len += 1 + thl->gtrplen + thl->gtrplenlen;
-1088   1      
-1089   1        thl->aaddrlen = 4;
-1090   1        snmp_asn1_enc_length_cnt(thl->aaddrlen, &thl->aaddrlenlen);
-1091   1        tot_len += 1 + thl->aaddrlen + thl->aaddrlenlen;
-1092   1      
-1093   1        snmp_asn1_enc_oid_cnt(m_trap->enterprise->len, &m_trap->enterprise->id[0], &thl->eidlen);
-1094   1        snmp_asn1_enc_length_cnt(thl->eidlen, &thl->eidlenlen);
-1095   1        tot_len += 1 + thl->eidlen + thl->eidlenlen;
-1096   1      
-1097   1        thl->pdulen = tot_len;
-1098   1        snmp_asn1_enc_length_cnt(thl->pdulen, &thl->pdulenlen);
-1099   1        tot_len += 1 + thl->pdulenlen;
-1100   1      
-1101   1        //thl->comlen = sizeof(snmp_publiccommunity) - 1;
-1102   1        thl->comlen = strlen(snmp_write_community);
-1103   1        snmp_asn1_enc_length_cnt(thl->comlen, &thl->comlenlen);
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 19  
+1042          /*
+1043           * Function: snmp_coldstart_trap
+1044           * -----------------------------
+1045           * Triggers coldstart trap and enables trap flag.
+1046           * Called during system initialization after boot.
+1047           */
+1048          void
+1049          snmp_coldstart_trap(void)
+1050          {
+1051   1        enable_trap_flag = 1;
+1052   1        snmp_add_trap(SNMP_TRAP_TYPE_COLDSTART);
+1053   1      }
+1054          
+1055          /**
+1056           * Sums trap header field lengths from tail to head and
+1057           * returns trap_header_lengths for second encoding pass.
+1058           *
+1059           * @param vb_len varbind-list length
+1060           * @param thl points to returned header lengths
+1061           * @return the required lenght for encoding the trap header
+1062           */
+1063          /*
+1064           * Function: snmp_trap_header_sum
+1065           * ------------------------------
+1066           * Calculates total length for SNMP trap header.
+1067           * Sums enterprise OID, agent address, generic/specific traps, timestamp.
+1068           * Stores lengths in trap header structure for encoding.
+1069           */
+1070          static u16_t
+1071          snmp_trap_header_sum(struct snmp_msg_trap *m_trap, u16_t vb_len)
+1072          {
+1073   1        u16_t tot_len;
+1074   1        struct snmp_trap_header_lengths *thl;
+1075   1      
+1076   1        thl = &m_trap->thl;
+1077   1        tot_len = vb_len;
+1078   1      
+1079   1        snmp_asn1_enc_u32t_cnt(m_trap->ts, &thl->tslen);
+1080   1        snmp_asn1_enc_length_cnt(thl->tslen, &thl->tslenlen);
+1081   1        tot_len += 1 + thl->tslen + thl->tslenlen;
+1082   1      
+1083   1        snmp_asn1_enc_s32t_cnt(m_trap->spc_trap, &thl->strplen);
+1084   1        snmp_asn1_enc_length_cnt(thl->strplen, &thl->strplenlen);
+1085   1        tot_len += 1 + thl->strplen + thl->strplenlen;
+1086   1      
+1087   1        snmp_asn1_enc_s32t_cnt(m_trap->gen_trap, &thl->gtrplen);
+1088   1        snmp_asn1_enc_length_cnt(thl->gtrplen, &thl->gtrplenlen);
+1089   1        tot_len += 1 + thl->gtrplen + thl->gtrplenlen;
+1090   1      
+1091   1        thl->aaddrlen = 4;
+1092   1        snmp_asn1_enc_length_cnt(thl->aaddrlen, &thl->aaddrlenlen);
+1093   1        tot_len += 1 + thl->aaddrlen + thl->aaddrlenlen;
+1094   1      
+1095   1        snmp_asn1_enc_oid_cnt(m_trap->enterprise->len, &m_trap->enterprise->id[0], &thl->eidlen);
+1096   1        snmp_asn1_enc_length_cnt(thl->eidlen, &thl->eidlenlen);
+1097   1        tot_len += 1 + thl->eidlen + thl->eidlenlen;
+1098   1      
+1099   1        thl->pdulen = tot_len;
+1100   1        snmp_asn1_enc_length_cnt(thl->pdulen, &thl->pdulenlen);
+1101   1        tot_len += 1 + thl->pdulenlen;
+1102   1      
+1103   1        //thl->comlen = sizeof(snmp_publiccommunity) - 1;
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 19  
 
-1104   1        tot_len += 1 + thl->comlenlen + thl->comlen;
-1105   1      
-1106   1        snmp_asn1_enc_s32t_cnt(snmp_version, &thl->verlen);
-1107   1        snmp_asn1_enc_length_cnt(thl->verlen, &thl->verlenlen);
-1108   1        tot_len += 1 + thl->verlen + thl->verlenlen;
-1109   1      
-1110   1        thl->seqlen = tot_len;
-1111   1        snmp_asn1_enc_length_cnt(thl->seqlen, &thl->seqlenlen);
-1112   1        tot_len += 1 + thl->seqlenlen;
-1113   1      
-1114   1        return tot_len;
-1115   1      }
-1116          
-1117          /**
-1118           * Encodes trap header from head to tail.
-1119           */
-1120          /*
-1121           * Function: snmp_trap_header_enc
-1122           * ------------------------------
-1123           * Encodes SNMP trap header into buffer from head to tail.
-1124           * Writes version, community, PDU type, enterprise OID, agent IP.
-1125           * Writes generic/specific trap codes and timestamp.
-1126           */
-1127          static u16_t
-1128          snmp_trap_header_enc(struct snmp_msg_trap *m_trap, u8_t *p)
-1129          {
-1130   1        u16_t ofs;
-1131   1      
-1132   1        ofs = 0;
-1133   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_CONSTR | SNMP_ASN1_SEQ));
-1134   1        ofs += 1;
-1135   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.seqlen);
-1136   1        ofs += m_trap->thl.seqlenlen;
-1137   1      
-1138   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG));
-1139   1        ofs += 1;
-1140   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.verlen);
-1141   1        ofs += m_trap->thl.verlenlen;
-1142   1        snmp_asn1_enc_s32t(p, ofs, m_trap->thl.verlen, snmp_version);
-1143   1        ofs += m_trap->thl.verlen;
-1144   1      
-1145   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR));
-1146   1        ofs += 1;
-1147   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.comlen);
-1148   1        ofs += m_trap->thl.comlenlen;
-1149   1        snmp_asn1_enc_raw(p, ofs, m_trap->thl.comlen, (u8_t *)&snmp_write_community[0]);
-1150   1        ofs += m_trap->thl.comlen;
-1151   1      
-1152   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_CONTXT | SNMP_ASN1_CONSTR | SNMP_ASN1_PDU_TRAP));
-1153   1        ofs += 1;
-1154   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.pdulen);
-1155   1        ofs += m_trap->thl.pdulenlen;
-1156   1      
-1157   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID));
-1158   1        ofs += 1;
-1159   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.eidlen);
-1160   1        ofs += m_trap->thl.eidlenlen;
-1161   1        snmp_asn1_enc_oid(p, ofs, m_trap->enterprise->len, &m_trap->enterprise->id[0]);
-1162   1        ofs += m_trap->thl.eidlen;
-1163   1      
-1164   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR));
-1165   1        ofs += 1;
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 20  
+1104   1        thl->comlen = strlen(snmp_write_community);
+1105   1        snmp_asn1_enc_length_cnt(thl->comlen, &thl->comlenlen);
+1106   1        tot_len += 1 + thl->comlenlen + thl->comlen;
+1107   1      
+1108   1        snmp_asn1_enc_s32t_cnt(snmp_version, &thl->verlen);
+1109   1        snmp_asn1_enc_length_cnt(thl->verlen, &thl->verlenlen);
+1110   1        tot_len += 1 + thl->verlen + thl->verlenlen;
+1111   1      
+1112   1        thl->seqlen = tot_len;
+1113   1        snmp_asn1_enc_length_cnt(thl->seqlen, &thl->seqlenlen);
+1114   1        tot_len += 1 + thl->seqlenlen;
+1115   1      
+1116   1        return tot_len;
+1117   1      }
+1118          
+1119          /**
+1120           * Encodes trap header from head to tail.
+1121           */
+1122          /*
+1123           * Function: snmp_trap_header_enc
+1124           * ------------------------------
+1125           * Encodes SNMP trap header into buffer from head to tail.
+1126           * Writes version, community, PDU type, enterprise OID, agent IP.
+1127           * Writes generic/specific trap codes and timestamp.
+1128           */
+1129          static u16_t
+1130          snmp_trap_header_enc(struct snmp_msg_trap *m_trap, u8_t *p)
+1131          {
+1132   1        u16_t ofs;
+1133   1      
+1134   1        ofs = 0;
+1135   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_CONSTR | SNMP_ASN1_SEQ));
+1136   1        ofs += 1;
+1137   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.seqlen);
+1138   1        ofs += m_trap->thl.seqlenlen;
+1139   1      
+1140   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG));
+1141   1        ofs += 1;
+1142   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.verlen);
+1143   1        ofs += m_trap->thl.verlenlen;
+1144   1        snmp_asn1_enc_s32t(p, ofs, m_trap->thl.verlen, snmp_version);
+1145   1        ofs += m_trap->thl.verlen;
+1146   1      
+1147   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR));
+1148   1        ofs += 1;
+1149   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.comlen);
+1150   1        ofs += m_trap->thl.comlenlen;
+1151   1        snmp_asn1_enc_raw(p, ofs, m_trap->thl.comlen, (u8_t *)&snmp_write_community[0]);
+1152   1        ofs += m_trap->thl.comlen;
+1153   1      
+1154   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_CONTXT | SNMP_ASN1_CONSTR | SNMP_ASN1_PDU_TRAP));
+1155   1        ofs += 1;
+1156   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.pdulen);
+1157   1        ofs += m_trap->thl.pdulenlen;
+1158   1      
+1159   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID));
+1160   1        ofs += 1;
+1161   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.eidlen);
+1162   1        ofs += m_trap->thl.eidlenlen;
+1163   1        snmp_asn1_enc_oid(p, ofs, m_trap->enterprise->len, &m_trap->enterprise->id[0]);
+1164   1        ofs += m_trap->thl.eidlen;
+1165   1      
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 20  
 
-1166   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.aaddrlen);
-1167   1        ofs += m_trap->thl.aaddrlenlen;
-1168   1        snmp_asn1_enc_raw(p, ofs, m_trap->thl.aaddrlen, &m_trap->sip_raw[0]);
-1169   1        ofs += m_trap->thl.aaddrlen;
-1170   1      
-1171   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG));
-1172   1        ofs += 1;
-1173   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.gtrplen);
-1174   1        ofs += m_trap->thl.gtrplenlen;
-1175   1        snmp_asn1_enc_u32t(p, ofs, m_trap->thl.gtrplen, m_trap->gen_trap);
-1176   1        ofs += m_trap->thl.gtrplen;
-1177   1      
-1178   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG));
-1179   1        ofs += 1;
-1180   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.strplen);
-1181   1        ofs += m_trap->thl.strplenlen;
-1182   1        snmp_asn1_enc_u32t(p, ofs, m_trap->thl.strplen, m_trap->spc_trap);
-1183   1        ofs += m_trap->thl.strplen;
-1184   1      
-1185   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS));
-1186   1        ofs += 1;
-1187   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.tslen);
-1188   1        ofs += m_trap->thl.tslenlen;
-1189   1        snmp_asn1_enc_u32t(p, ofs, m_trap->thl.tslen, m_trap->ts);
-1190   1        ofs += m_trap->thl.tslen;
-1191   1      
-1192   1        return ofs;
-1193   1      }
-1194          
-1195          #endif /* end of LWPS_SNMP_TRAP_ENABLE */
+1166   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_IPADDR));
+1167   1        ofs += 1;
+1168   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.aaddrlen);
+1169   1        ofs += m_trap->thl.aaddrlenlen;
+1170   1        snmp_asn1_enc_raw(p, ofs, m_trap->thl.aaddrlen, &m_trap->sip_raw[0]);
+1171   1        ofs += m_trap->thl.aaddrlen;
+1172   1      
+1173   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG));
+1174   1        ofs += 1;
+1175   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.gtrplen);
+1176   1        ofs += m_trap->thl.gtrplenlen;
+1177   1        snmp_asn1_enc_u32t(p, ofs, m_trap->thl.gtrplen, m_trap->gen_trap);
+1178   1        ofs += m_trap->thl.gtrplen;
+1179   1      
+1180   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG));
+1181   1        ofs += 1;
+1182   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.strplen);
+1183   1        ofs += m_trap->thl.strplenlen;
+1184   1        snmp_asn1_enc_u32t(p, ofs, m_trap->thl.strplen, m_trap->spc_trap);
+1185   1        ofs += m_trap->thl.strplen;
+1186   1      
+1187   1        snmp_asn1_enc_type(p, ofs, (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS));
+1188   1        ofs += 1;
+1189   1        snmp_asn1_enc_length(p, ofs, m_trap->thl.tslen);
+1190   1        ofs += m_trap->thl.tslenlen;
+1191   1        snmp_asn1_enc_u32t(p, ofs, m_trap->thl.tslen, m_trap->ts);
+1192   1        ofs += m_trap->thl.tslen;
+1193   1      
+1194   1        return ofs;
+1195   1      }
 1196          
-1197          /*
-1198           * Function: snmp_linkChange_cb
-1199           * ----------------------------
-1200           * Callback for link state changes detected by switch.
-1201           * Updates portPoe and portLan global variables for ports 3 and 4.
-1202           * Queues link down/up traps and updates link change time.
-1203           */
-1204          void
-1205          snmp_linkChange_cb(portmask_type pm)
-1206          {
-1207   1        u8_t i;
-1208   1        snmp_new_linkdown_pm = pm ^ (snmp_keep_pm | pm);
-1209   1        snmp_new_linkup_pm = (snmp_keep_pm | pm) - snmp_keep_pm;
-1210   1      
-1211   1        /* Update portPoe for port 3 (index 2) */
-1212   1        if (snmp_new_linkdown_pm & (1UL << 2)) {
-1213   2          portPoe = 0; /* Port 3 is down */
-1214   2        } else if (snmp_new_linkup_pm & (1UL << 2)) {
-1215   2          portPoe = 1; /* Port 3 is up */
-1216   2        }
-1217   1      
-1218   1        /* Update portLan for port 4 (index 3) */
-1219   1        if (snmp_new_linkdown_pm & (1UL << 3)) {
-1220   2          portLan = 0; /* Port 4 is down */
-1221   2        } else if (snmp_new_linkup_pm & (1UL << 3)) {
-1222   2          portLan = 1; /* Port 4 is up */
-1223   2        }
-1224   1      
-1225   1        if (snmp_new_linkdown_pm)
-1226   1        {
-1227   2      #if LWPS_SNMP_TRAP_ENABLE
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 21  
+1197          #endif /* end of LWPS_SNMP_TRAP_ENABLE */
+1198          
+1199          /*
+1200           * Function: snmp_linkChange_cb
+1201           * ----------------------------
+1202           * Callback for link state changes detected by switch.
+1203           * Updates portPoe and portLan global variables for ports 3 and 4.
+1204           * Queues link down/up traps and updates link change time.
+1205           */
+1206          void
+1207          snmp_linkChange_cb(portmask_type pm)
+1208          {
+1209   1        u8_t i;
+1210   1        snmp_new_linkdown_pm = pm ^ (snmp_keep_pm | pm);
+1211   1        snmp_new_linkup_pm = (snmp_keep_pm | pm) - snmp_keep_pm;
+1212   1      
+1213   1        /* Update portPoe for port 3 (index 2) */
+1214   1        if (snmp_new_linkdown_pm & (1UL << 2)) {
+1215   2          portPoe = 0; /* Port 3 is down */
+1216   2        } else if (snmp_new_linkup_pm & (1UL << 2)) {
+1217   2          portPoe = 1; /* Port 3 is up */
+1218   2        }
+1219   1      
+1220   1        /* Update portLan for port 4 (index 3) */
+1221   1        if (snmp_new_linkdown_pm & (1UL << 3)) {
+1222   2          portLan = 0; /* Port 4 is down */
+1223   2        } else if (snmp_new_linkup_pm & (1UL << 3)) {
+1224   2          portLan = 1; /* Port 4 is up */
+1225   2        }
+1226   1      
+1227   1        if (snmp_new_linkdown_pm)
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 21  
 
-1228   2          snmp_add_trap(SNMP_TRAP_TYPE_LINKDOWN);
-1229   2      #endif
-1230   2          for (i = 0; i < INTERFACE_NUMBER; i++) {
-1231   3            if (snmp_new_linkdown_pm & (1UL << i)) {
-1232   4              snmp_get_sysuptime(&(linkChangeTime[i]));
-1233   4            }
-1234   3          }
-1235   2        }
-1236   1      
-1237   1        if (snmp_new_linkup_pm)
-1238   1        {
-1239   2      #if LWPS_SNMP_TRAP_ENABLE
-1240   2          snmp_add_trap(SNMP_TRAP_TYPE_LINKUP);
-1241   2          
-1242   2      #endif
-1243   2          for (i = 0; i < INTERFACE_NUMBER; i++) {
-1244   3            if (snmp_new_linkup_pm & (1UL << i)) {
-1245   4              snmp_get_sysuptime(&(linkChangeTime[i]));
-1246   4            }
-1247   3          }
-1248   2        }
-1249   1        snmp_keep_pm = pm;
-1250   1        
-1251   1      }
-1252          
-1253          #endif /* LWIP_SNMP */
+1228   1        {
+1229   2      #if LWPS_SNMP_TRAP_ENABLE
+1230   2          snmp_add_trap(SNMP_TRAP_TYPE_LINKDOWN);
+1231   2      #endif
+1232   2          for (i = 0; i < INTERFACE_NUMBER; i++) {
+1233   3            if (snmp_new_linkdown_pm & (1UL << i)) {
+1234   4              snmp_get_sysuptime(&(linkChangeTime[i]));
+1235   4            }
+1236   3          }
+1237   2        }
+1238   1      
+1239   1        if (snmp_new_linkup_pm)
+1240   1        {
+1241   2      #if LWPS_SNMP_TRAP_ENABLE
+1242   2          snmp_add_trap(SNMP_TRAP_TYPE_LINKUP);
+1243   2          
+1244   2      #endif
+1245   2          for (i = 0; i < INTERFACE_NUMBER; i++) {
+1246   3            if (snmp_new_linkup_pm & (1UL << i)) {
+1247   4              snmp_get_sysuptime(&(linkChangeTime[i]));
+1248   4            }
+1249   3          }
+1250   2        }
+1251   1        snmp_keep_pm = pm;
+1252   1        
+1253   1      }
 1254          
-1255          /*
-1256           * Function: extract_a_value
-1257           * -------------------------
-1258           * Extracts AC status value from JSON string.
-1259           * Searches for "A": pattern and returns integer value.
-1260           * Returns -1 if key not found or value invalid.
-1261           */
-1262          u8_t extract_a_value(const char *json_str) {
-1263   1          u8_t value = 0;
-1264   1          const char *key = "\"A\":";
-1265   1          char *key_pos = strstr(json_str, key);
-1266   1          if (key_pos == NULL) {
-1267   2              return -1; // Key not found
-1268   2          }
-1269   1      
-1270   1          key_pos += strlen(key);
-1271   1          while (*key_pos == ' ' || *key_pos == '\t') {
-1272   2              key_pos++;
-1273   2          }
-1274   1      
-1275   1          if (*key_pos >= '0' && *key_pos <= '9') {
-1276   2              char buffer[3] = {0}; // Buffer to store the number
-1277   2              int i = 0;
-1278   2              // Copy digits until a non-digit is encountered
-1279   2              while (*key_pos >= '0' && *key_pos <= '9' && i < sizeof(buffer) - 1) {
-1280   3                  buffer[i++] = *key_pos++;
-1281   3              }
-1282   2              buffer[i] = '\0'; // Null-terminate the string
-1283   2              value = atoi(buffer);
-1284   2      
-1285   2          } else {
-1286   2              return -1; // Invalid value
-1287   2          }
-1288   1      
-1289   1          return value;
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 22  
+1255          #endif /* LWIP_SNMP */
+1256          
+1257          /*
+1258           * Function: extract_a_value
+1259           * -------------------------
+1260           * Extracts AC status value from JSON string.
+1261           * Searches for "A": pattern and returns integer value.
+1262           * Returns -1 if key not found or value invalid.
+1263           */
+1264          u8_t extract_a_value(const char *json_str) {
+1265   1          u8_t value = 0;
+1266   1          const char *key = "\"A\":";
+1267   1          char *key_pos = strstr(json_str, key);
+1268   1          if (key_pos == NULL) {
+1269   2              return -1; // Key not found
+1270   2          }
+1271   1      
+1272   1          key_pos += strlen(key);
+1273   1          while (*key_pos == ' ' || *key_pos == '\t') {
+1274   2              key_pos++;
+1275   2          }
+1276   1      
+1277   1          if (*key_pos >= '0' && *key_pos <= '9') {
+1278   2              char buffer[3] = {0}; // Buffer to store the number
+1279   2              int i = 0;
+1280   2              // Copy digits until a non-digit is encountered
+1281   2              while (*key_pos >= '0' && *key_pos <= '9' && i < sizeof(buffer) - 1) {
+1282   3                  buffer[i++] = *key_pos++;
+1283   3              }
+1284   2              buffer[i] = '\0'; // Null-terminate the string
+1285   2              value = atoi(buffer);
+1286   2      
+1287   2          } else {
+1288   2              return -1; // Invalid value
+1289   2          }
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 22  
 
-1290   1      }
-1291          #if LWPS_SNMP_TRAP_ENABLE
-1292          
-1293          /**
-1294           * Triggers a battery low trap with minimal memory usage, sending a string "Battery Low -25%".
-1295           * Uses local variables for OID and varbind to avoid global memory allocation.
-1296           */
-1297          /**
-1298           * Triggers a battery low trap with minimal memory usage, sending the current battery percentage as an int
+1290   1      
+1291   1          return value;
+1292   1      }
+1293          #if LWPS_SNMP_TRAP_ENABLE
+1294          
+1295          /**
+1296           * Triggers a battery low trap with minimal memory usage, sending a string "Battery Low -25%".
+1297           * Uses local variables for OID and varbind to avoid global memory allocation.
+1298           */
+1299          /**
+1300           * Triggers a battery low trap with minimal memory usage, sending the current battery percentage as an int
              -eger.
-1299           * Uses local variables for OID and varbind to avoid global memory allocation.
-1300           */
-1301          /*
-1302           * Function: snmp_battery_low_trap
-1303           * -------------------------------
-1304           * Sends battery low enterprise-specific trap.
-1305           * Extracts battery percentage from JSON and sends as integer.
-1306           * Uses local varbind with OID .1.3.6.1.4.1.63663.1.12.
-1307           */
-1308          void snmp_battery_low_trap()
-1309          {
-1310   1          /* Local OID for battery status (1.3.6.1.4.1.63663.1.12) */
-1311   1          s32_t batt_oid[] = {1, 3, 6, 1, 4, 1, 63663, 1, 12};
-1312   1          u8_t batt_oid_len = sizeof(batt_oid) / sizeof(s32_t);
-1313   1          
-1314   1          /* Local varbind structure */
-1315   1          struct snmp_varbind vb;
-1316   1          struct snmp_varbind_root vb_root;
-1317   1          
-1318   1          /* Local value buffer for the battery percentage */
-1319   1         s32_t value = extract_c_value(Get_Response); /* Get current battery percentage */
-1320   1          
-1321   1          /* Validate extracted value */
-1322   1          if (value < 0 || value > 100) {
-1323   2              // Invalid battery percentage, skip sending trap
-1324   2              return;
-1325   2          }
-1326   1          
-1327   1          /* Initialize varbind root */
-1328   1          vb_root.head = NULL;
-1329   1          vb_root.tail = NULL;
-1330   1          vb_root.count = 0;
-1331   1          
-1332   1          /* Initialize varbind */
-1333   1          memset(&vb, 0, sizeof(struct snmp_varbind));
-1334   1          vb.next = NULL;
-1335   1          vb.prev = NULL;
-1336   1          
-1337   1          /* Set up OID for the varbind */
-1338   1          vb.ident_len = batt_oid_len;
-1339   1          vb.ident = batt_oid; /* Use local OID array directly */
-1340   1          
-1341   1          /* Set up value (integer as SNMP INTEGER) */
-1342   1          vb.value_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-1343   1          vb.value_len = sizeof(s32_t);
-1344   1          vb.value = &value; /* Use local integer variable */
-1345   1          
-1346   1          /* Add varbind to the root */
-1347   1          snmp_varbind_tail_add(&vb_root, &vb);
-1348   1          
-1349   1          /* Set up trap message */
-1350   1          trap_msg.outvb = vb_root;
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 23  
+1301           * Uses local variables for OID and varbind to avoid global memory allocation.
+1302           */
+1303          /*
+1304           * Function: snmp_battery_low_trap
+1305           * -------------------------------
+1306           * Sends battery low enterprise-specific trap.
+1307           * Extracts battery percentage from JSON and sends as integer.
+1308           * Uses local varbind with OID .1.3.6.1.4.1.63663.1.12.
+1309           */
+1310          void snmp_battery_low_trap()
+1311          {
+1312   1          /* Local OID for battery status (1.3.6.1.4.1.63663.1.12) */
+1313   1          s32_t batt_oid[] = {1, 3, 6, 1, 4, 1, 63663, 1, 12};
+1314   1          u8_t batt_oid_len = sizeof(batt_oid) / sizeof(s32_t);
+1315   1          
+1316   1          /* Local varbind structure */
+1317   1          struct snmp_varbind vb;
+1318   1          struct snmp_varbind_root vb_root;
+1319   1          
+1320   1          /* Local value buffer for the battery percentage */
+1321   1         s32_t value = extract_c_value(Get_Response); /* Get current battery percentage */
+1322   1          
+1323   1          /* Validate extracted value */
+1324   1          if (value < 0 || value > 100) {
+1325   2              // Invalid battery percentage, skip sending trap
+1326   2              return;
+1327   2          }
+1328   1          
+1329   1          /* Initialize varbind root */
+1330   1          vb_root.head = NULL;
+1331   1          vb_root.tail = NULL;
+1332   1          vb_root.count = 0;
+1333   1          
+1334   1          /* Initialize varbind */
+1335   1          memset(&vb, 0, sizeof(struct snmp_varbind));
+1336   1          vb.next = NULL;
+1337   1          vb.prev = NULL;
+1338   1          
+1339   1          /* Set up OID for the varbind */
+1340   1          vb.ident_len = batt_oid_len;
+1341   1          vb.ident = batt_oid; /* Use local OID array directly */
+1342   1          
+1343   1          /* Set up value (integer as SNMP INTEGER) */
+1344   1          vb.value_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+1345   1          vb.value_len = sizeof(s32_t);
+1346   1          vb.value = &value; /* Use local integer variable */
+1347   1          
+1348   1          /* Add varbind to the root */
+1349   1          snmp_varbind_tail_add(&vb_root, &vb);
+1350   1          
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 23  
 
-1351   1          
-1352   1          /* Send enterprise-specific trap */
-1353   1          snmp_send_trap(SNMP_GENTRAP_ENTERPRISESPC, NULL, SNMP_TRAP_TYPE_AC_STATUS - SNMP_TRAP_TYPE_ADD);
-1354   1          
-1355   1          
-1356   1          /* Clean up */
-1357   1          snmp_varbind_list_free(&trap_msg.outvb);
-1358   1          RESET_VB_BUFS();
-1359   1      }
-1360          
-1361          /*
-1362           * Function: snmp_ac_status_trap
-1363           * -----------------------------
-1364           * Sends AC status enterprise-specific trap.
-1365           * Extracts AC status from JSON and sends as integer.
-1366           * Uses local varbind with OID .1.3.6.1.4.1.63663.1.13.
-1367           */
-1368          void snmp_ac_status_trap(uint8 ac_status)
-1369          {
-1370   1          /* Local OID for AC status (1.3.6.1.4.1.63663.1.13) */
-1371   1          s32_t batt_oid[] = {1, 3, 6, 1, 4, 1, 63663, 1, 13};
-1372   1          u8_t batt_oid_len = sizeof(batt_oid) / sizeof(s32_t);
-1373   1          
-1374   1          /* Local varbind structure */
-1375   1          struct snmp_varbind vb;
-1376   1          struct snmp_varbind_root vb_root;
-1377   1          
-1378   1          /* Local value buffer for the ac status */
-1379   1         s32_t value = (s32_t *)ac_status; /* Get current ac status */
-1380   1          
-1381   1          /* Validate extracted value */
-1382   1          if (value < 0 || value > 1) {
-1383   2              // Invalid ac value, skip sending trap
-1384   2              return;
-1385   2          }
-1386   1          
-1387   1          /* Initialize varbind root */
-1388   1          vb_root.head = NULL;
-1389   1          vb_root.tail = NULL;
-1390   1          vb_root.count = 0;
-1391   1          
-1392   1          /* Initialize varbind */
-1393   1          memset(&vb, 0, sizeof(struct snmp_varbind));
-1394   1          vb.next = NULL;
-1395   1          vb.prev = NULL;
-1396   1          
-1397   1          /* Set up OID for the varbind */
-1398   1          vb.ident_len = batt_oid_len;
-1399   1          vb.ident = batt_oid; /* Use local OID array directly */
-1400   1          
-1401   1          /* Set up value (integer as SNMP INTEGER) */
-1402   1          vb.value_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
-1403   1          vb.value_len = sizeof(s32_t);
-1404   1          vb.value = &value; /* Use local integer variable */
-1405   1          
-1406   1          /* Add varbind to the root */
-1407   1          snmp_varbind_tail_add(&vb_root, &vb);
-1408   1          
-1409   1          /* Set up trap message */
-1410   1          trap_msg.outvb = vb_root;
-1411   1          
-1412   1          /* Send enterprise-specific trap */
-C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/02/2026 17:57:42 PAGE 24  
+1351   1          /* Set up trap message */
+1352   1          trap_msg.outvb = vb_root;
+1353   1          
+1354   1          /* Send enterprise-specific trap */
+1355   1          snmp_send_trap(SNMP_GENTRAP_ENTERPRISESPC, NULL, SNMP_TRAP_TYPE_AC_STATUS - SNMP_TRAP_TYPE_ADD);
+1356   1          
+1357   1          
+1358   1          /* Clean up */
+1359   1          snmp_varbind_list_free(&trap_msg.outvb);
+1360   1          RESET_VB_BUFS();
+1361   1      }
+1362          
+1363          /*
+1364           * Function: snmp_ac_status_trap
+1365           * -----------------------------
+1366           * Sends AC status enterprise-specific trap.
+1367           * Extracts AC status from JSON and sends as integer.
+1368           * Uses local varbind with OID .1.3.6.1.4.1.63663.1.13.
+1369           */
+1370          void snmp_ac_status_trap(uint8 ac_status)
+1371          {
+1372   1          /* Local OID for AC status (1.3.6.1.4.1.63663.1.13) */
+1373   1          s32_t batt_oid[] = {1, 3, 6, 1, 4, 1, 63663, 1, 13};
+1374   1          u8_t batt_oid_len = sizeof(batt_oid) / sizeof(s32_t);
+1375   1          
+1376   1          /* Local varbind structure */
+1377   1          struct snmp_varbind vb;
+1378   1          struct snmp_varbind_root vb_root;
+1379   1          
+1380   1          /* Local value buffer for the ac status */
+1381   1         s32_t value = (s32_t *)ac_status; /* Get current ac status */
+1382   1          
+1383   1          /* Validate extracted value */
+1384   1          if (value < 0 || value > 1) {
+1385   2              // Invalid ac value, skip sending trap
+1386   2              return;
+1387   2          }
+1388   1          
+1389   1          /* Initialize varbind root */
+1390   1          vb_root.head = NULL;
+1391   1          vb_root.tail = NULL;
+1392   1          vb_root.count = 0;
+1393   1          
+1394   1          /* Initialize varbind */
+1395   1          memset(&vb, 0, sizeof(struct snmp_varbind));
+1396   1          vb.next = NULL;
+1397   1          vb.prev = NULL;
+1398   1          
+1399   1          /* Set up OID for the varbind */
+1400   1          vb.ident_len = batt_oid_len;
+1401   1          vb.ident = batt_oid; /* Use local OID array directly */
+1402   1          
+1403   1          /* Set up value (integer as SNMP INTEGER) */
+1404   1          vb.value_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+1405   1          vb.value_len = sizeof(s32_t);
+1406   1          vb.value = &value; /* Use local integer variable */
+1407   1          
+1408   1          /* Add varbind to the root */
+1409   1          snmp_varbind_tail_add(&vb_root, &vb);
+1410   1          
+1411   1          /* Set up trap message */
+1412   1          trap_msg.outvb = vb_root;
+C51 COMPILER V9.60.0.0   MSG_OUT                                                           11/03/2026 14:16:07 PAGE 24  
 
-1413   1          snmp_send_trap(SNMP_GENTRAP_ENTERPRISESPC, NULL, SNMP_TRAP_TYPE_BATT_LOW - SNMP_TRAP_TYPE_ADD);
-1414   1          
-1415   1          
-1416   1          /* Clean up */
-1417   1          snmp_varbind_list_free(&trap_msg.outvb);
-1418   1          RESET_VB_BUFS();
-1419   1      }
-1420          
-1421          #endif /* LWPS_SNMP_TRAP_ENABLE */
+1413   1          
+1414   1          /* Send enterprise-specific trap */
+1415   1          snmp_send_trap(SNMP_GENTRAP_ENTERPRISESPC, NULL, SNMP_TRAP_TYPE_BATT_LOW - SNMP_TRAP_TYPE_ADD);
+1416   1          
+1417   1          
+1418   1          /* Clean up */
+1419   1          snmp_varbind_list_free(&trap_msg.outvb);
+1420   1          RESET_VB_BUFS();
+1421   1      }
+1422          
+1423          #endif /* LWPS_SNMP_TRAP_ENABLE */
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-   CODE SIZE        =  11008    ----
+   CODE SIZE        =  11018    ----
    CONSTANT SIZE    =    225    ----
    XDATA SIZE       =    242     353
    PDATA SIZE       =   ----    ----

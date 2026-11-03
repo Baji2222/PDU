@@ -742,11 +742,13 @@ void snmp_timer_tick() {
 		if(start_pdu_status)
 		{
 				printf("GET_STATUS\r\n");
+         start_pdu_status = 0;
 		}
 		
 		if(start_rtc_data)
 		{
 				printf("GET_RTC\r\n");
+        start_rtc_data = 0;
 
 		}
 		

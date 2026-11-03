@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 1   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTK_SWITCH
@@ -62,7 +62,7 @@ line level    source
   49          //uint8 salPortSkipStart;
   50          //uint8 salPortSkipEnd;
   51          uint8 salMaxPhyPort;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 2   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 2   
 
   52          uint8 salMaxExtPort;
   53          uint8 salMaxStaticTrunk;
@@ -126,7 +126,7 @@ line level    source
  102              /* Valid EXT port mask */
  103              ( (1UL << EXT_PORT0) | (1UL << EXT_PORT1) ),
  104          
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 3   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 3   
 
  105              /* Valid CPU port mask */
  106              0x00,
@@ -190,7 +190,7 @@ line level    source
  159              /* PTP port */
  160              {1, 1, 1, 1, 1, 1, 1, 1,
  161               0, 0, 0, 0, 0, 0, 0, 0,
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 4   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 4   
 
  162               1, 1, 0, 0, 0, 0, 0, 0,
  163               0, 0, 0, 0, 0, 0, 0, 0 },
@@ -254,7 +254,7 @@ line level    source
                   {UNDEFINE_PORT, UTP_PORT1, UNDEFINE_PORT, UTP_PORT3, UNDEFINE_PORT, UNDEFINE_PORT, EXT_PORT0, EXT_PORT
              -1,
                    UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PO
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 5   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 5   
 
              -RT, UNDEFINE_PORT,
                    UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PORT, UNDEFINE_PO
@@ -318,7 +318,7 @@ line level    source
                   0x01
               };
               #endif
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 6   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 6   
 
  275          #endif
  276          
@@ -382,7 +382,7 @@ line level    source
               
                   /* Combo Logical port ID */
                   4,
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 7   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 7   
 
               
                   /* HSG Logical port ID */
@@ -446,7 +446,7 @@ line level    source
  375                  {0xa438, 0x0fff}, {0xa436, 0xA004}, {0xa438, 0x0689}, {0xa436, 0xA002}, {0xa438, 0x0911}, {0xa436,
              - 0xA000}, {0xa438, 0x7302}, {0xa436, 0xB820}, {0xa438, 0x0010}, {0xa436, 0x8412},
  376                  {0xa438, 0xaf84}, {0xa438, 0x1eaf}, {0xa438, 0x8427}, {0xa438, 0xaf84}, {0xa438, 0x27af}, {0xa438,
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 8   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 8   
 
              - 0x8427}, {0xa438, 0x0251}, {0xa438, 0x6802}, {0xa438, 0x8427}, {0xa438, 0xaf04},
  377                  {0xa438, 0x0af8}, {0xa438, 0xf9bf}, {0xa438, 0x5581}, {0xa438, 0x0255}, {0xa438, 0x27ef}, {0xa438,
@@ -510,7 +510,7 @@ line level    source
  425   3      
  426   3                   if((regValue & 0x00F0) == 0x00A0)
  427   3                   {
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 9   
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 9   
 
  428   4                       if((retVal = rtl8367c_getAsicPHYOCPReg(port, 0xA5D0, &regData)) != RT_ERR_OK)
  429   4                           return retVal;
@@ -574,7 +574,7 @@ line level    source
  487          // Configures PHY OCP registers, applies patch data, and sets up long link parameters
  488          static rtk_api_ret_t _rtk_switch_init_8370b(void)
  489          {
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 10  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 10  
 
  490   1          ret_t retVal;
  491   1          uint32 regData, tmp = 0UL;
@@ -638,7 +638,7 @@ line level    source
  549   2              if((retVal = rtl8367c_setAsicPHYOCPReg(i, 0xa4b4, long_link[i])) != RT_ERR_OK)
  550   2                   return retVal;
  551   2          }
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 11  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 11  
 
  552   1      
  553   1        if (prf == 0x1)
@@ -702,7 +702,7 @@ line level    source
                   if ((retVal = rtl8367c_setAsicRegBits(0x78, 0x300, 3)) != RT_ERR_OK)
                       return retVal;
                   if ((retVal = rtl8367c_setAsicRegBits(0xd8, 0x300, 0)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 12  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 12  
 
                       return retVal;
                   if ((retVal = rtl8367c_setAsicRegBits(0xf8, 0x300, 0)) != RT_ERR_OK)
@@ -766,7 +766,7 @@ line level    source
                   uint32 regData;
               
                   /*enable EEE, include mac & phy*/
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 13  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 13  
 
               
                   if ((retVal = rtl8367c_setAsicRegBits(0x38, 0x300, 3)) != RT_ERR_OK)
@@ -830,7 +830,7 @@ line level    source
               #endif
  736          /* Function Name:
  737           *      rtk_switch_probe
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 14  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 14  
 
  738           * Description:
  739           *      Probe switch
@@ -894,7 +894,7 @@ line level    source
  797   2              case 0x6368:
  798   2                  *pSwitchChip = CHIP_RTL8370B;
  799   2                  halCtrl = &rtl8370b_hal_Ctrl;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 15  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 15  
 
  800   2                  break;
  801   2      #if 0            
@@ -958,7 +958,7 @@ line level    source
                           cpuPortPortmask=1UL << 7;
                           salMaxPhyPort=6;
                           salMaxExtPort=1;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 16  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 16  
 
                           salMaxStaticTrunk=2;
                           salMaxTrkPort=2;
@@ -1022,7 +1022,7 @@ line level    source
  921   3                  maxTrkPortk=2;
  922   3                  portIdCput=10;
  923   3                  phyAllPortMask = 0xff;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 17  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 17  
 
  924   3                  aclAllPortMask = 0xff;            
  925   3      #endif
@@ -1086,7 +1086,7 @@ line level    source
  983   1              return RT_ERR_FAILED;
  984   1      
  985   1          if(halCtrl->l2p_port[logicalPort] == 0xFF)
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 18  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 18  
 
  986   1              return RT_ERR_FAILED;
  987   1      
@@ -1150,7 +1150,7 @@ line level    source
                       return RT_ERR_OK;
                   else
                       return RT_ERR_FAILED;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 19  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 19  
 
               }
               #endif
@@ -1214,7 +1214,7 @@ line level    source
                       return RT_ERR_FAILED;
               }
               
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 20  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 20  
 
               /* Function Name:
                *      rtk_switch_isCPUPort
@@ -1278,7 +1278,7 @@ line level    source
 1169          #endif
 1170          
 1171          #if 0 //NOT used
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 21  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 21  
 
               /* Function Name:
                *      rtk_switch_ComboPort_get
@@ -1342,7 +1342,7 @@ line level    source
 1231           *
 1232           */
 1233          uint32 rtk_switch_port_L2P_get(rtk_port_t logicalPort)
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 22  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 22  
 
 1234          {
 1235   1          if(init_state != INIT_COMPLETED)
@@ -1406,7 +1406,7 @@ line level    source
 1293   1              return RT_ERR_FAILED;
 1294   1          else
 1295   1              return RT_ERR_OK;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 23  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 23  
 
 1296   1      }
 1297          
@@ -1470,7 +1470,7 @@ line level    source
                   else
                       return RT_ERR_OK;
               }
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 24  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 24  
 
               #endif
 1359          #if !defined(LWS_LOADER)
@@ -1534,7 +1534,7 @@ line level    source
 1417           * Note:
 1418           *
 1419           */
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 25  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 25  
 
 1420          rtk_api_ret_t rtk_switch_portmask_P2L_get(uint32 physicalPortmask, rtk_portmask_t *pLogicalPmask)
 1421          {
@@ -1598,7 +1598,7 @@ line level    source
                *      RT_ERR_OK           - OK
                *      RT_ERR_NOT_INIT     - Not Initialize
                *      RT_ERR_NULL_POINTER - Null pointer
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 26  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 26  
 
                * Note:
                *
@@ -1662,7 +1662,7 @@ line level    source
                           if((retVal = _rtk_switch_init_8364b()) != RT_ERR_OK)
                               return retVal;
                           break;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 27  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 27  
 
                       case CHIP_RTL8363SC_VB:
                           if((retVal = _rtk_switch_init_8363sc_vb()) != RT_ERR_OK)
@@ -1726,7 +1726,7 @@ line level    source
 1597   1          if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_IO_MISC_FUNC, RTL8367C_INT_EN_OFFSET, 1)) != RT_ERR_O
              -K)
 1598   1              return retVal;
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 28  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 28  
 
 1599   1      
 1600   1          return RT_ERR_OK;
@@ -1790,7 +1790,7 @@ line level    source
                *      RT_ERR_INPUT        - Error Input
                * Note:
                */
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 29  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 29  
 
               rtk_api_ret_t rtk_switch_portMaxPktLen_get(rtk_port_t port, rtk_switch_maxPktLen_linkSpeed_t speed, uint32
              - *pCfgId)
@@ -1854,7 +1854,7 @@ line level    source
 1716          
 1717          /* Function Name:
 1718           *      rtk_switch_maxPktLenCfg_get
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 30  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 30  
 
 1719           * Description:
 1720           *      Get Max packet length configuration
@@ -1918,7 +1918,7 @@ line level    source
 1778   1      
 1779   1          RTK_SCAN_ALL_LOG_PORT(port)
 1780   1          {
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 31  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 31  
 
 1781   2              if(rtk_switch_isUtpPort(port) == RT_ERR_OK)
 1782   2              {
@@ -1982,7 +1982,7 @@ line level    source
                               *pEnable = DISABLED;
                               return RT_ERR_OK;
                           }
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 32  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 32  
 
                       }
                   }
@@ -2046,7 +2046,7 @@ line level    source
 1900   1      
 1901   1          return (halCtrl->max_meter_id);
 1902   1      }
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 33  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 33  
 
 1903          
 1904          /* Function Name:
@@ -2110,7 +2110,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    BIT SIZE         =   ----    ----
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----
-C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/02/2026 17:57:10 PAGE 34  
+C51 COMPILER V9.60.0.0   RTK_SWITCH                                                        11/03/2026 14:15:40 PAGE 34  
 
    XDATA CONST SIZE =   ----    ----
    FAR CONST SIZE   =   ----    ----

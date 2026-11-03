@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 1   
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/03/2026 14:15:34 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALNIC
@@ -62,7 +62,7 @@ line level    source
   49           * Function Declaration 
   50           */
   51          
-C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 2   
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/03/2026 14:15:34 PAGE 2   
 
   52          /* Function Name:
   53           *      sal_nic_rxPort_get
@@ -126,7 +126,7 @@ line level    source
                   if (current_spa == 6)
                       current_spa = EXT_PORT0;
               #else
-C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 3   
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/03/2026 14:15:34 PAGE 3   
 
  114   1      #endif
  115   1          return SAL_ERR_SUCCESS;
@@ -190,7 +190,7 @@ line level    source
  173   1          {
  174   2              /* TX buf initial */
  175   2              pBuf->tx_dport_mode    = TX_DPORT_DEFAULT;
-C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 4   
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/03/2026 14:15:34 PAGE 4   
 
  176   2              pBuf->tx_trunk_support = TX_TRUNK_IGNORE;
  177   2              pBuf->pkt_cputag       = NULL;
@@ -254,7 +254,7 @@ line level    source
  235   2              *(pBuf->pkt_vlantag + 0) = 0x81;
  236   2              *(pBuf->pkt_vlantag + 1) = 0x00;
  237   2              *(pBuf->pkt_vlantag + 2) = ((pBuf->inner_tag & 0x0f00) >> 8);
-C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 5   
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/03/2026 14:15:34 PAGE 5   
 
  238   2              *(pBuf->pkt_vlantag + 3) = pBuf->inner_tag & 0xff;
  239   2          }
@@ -318,7 +318,7 @@ line level    source
  297   1      //    rtk_portmask_t  member_mask;
  298   1      //    rtk_portmask_t  untag_mask;
  299   1      //    rtk_fid_t       fid;
-C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 6   
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/03/2026 14:15:34 PAGE 6   
 
  300   1          rtk_vlan_cfg_t vlanCfg;
  301   1      

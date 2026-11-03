@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 1   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ASN1_ENC
@@ -62,7 +62,7 @@ line level    source
   49           * @param octets_needed points to the return value
   50           */
   51          void
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 2   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 2   
 
   52          snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed)
   53          {
@@ -126,7 +126,7 @@ line level    source
                */
               void
               snmp_asn1_enc_s64t_cnt(s32_t value[2], u16_t *octets_needed)
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 3   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 3   
 
               {
                 if (value[0] < 0)
@@ -190,7 +190,7 @@ line level    source
  173   1        {
  174   2          *octets_needed = 5;
  175   2        }
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 4   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 4   
 
  176   1      }
  177          
@@ -254,7 +254,7 @@ line level    source
  235   2          sub_id = *ident;
  236   2      
  237   2          sub_id >>= 7;
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 5   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 5   
 
  238   2          cnt++;
  239   2          while(sub_id > 0)
@@ -318,7 +318,7 @@ line level    source
  297   3            ofs += 1;
  298   3            msg_ptr++;
  299   3            *msg_ptr = length;
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 6   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 6   
 
  300   3            return ERR_OK;
  301   3          }
@@ -382,7 +382,7 @@ line level    source
  359   3          value_ptr++;
  360   3          }
  361   2          /* (only) one least significant octet */
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 7   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 7   
 
  362   2          *msg_ptr = *value_ptr;
  363   2          return ERR_OK;
@@ -446,7 +446,7 @@ line level    source
  421           * @see snmp_asn1_enc_s32t_cnt()
  422           */
  423          err_t
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 8   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 8   
 
  424          snmp_asn1_enc_s32t(u8_t *p, u16_t ofs, u8_t octets_needed, s32_t value)
  425          {
@@ -510,7 +510,7 @@ line level    source
  483   2          {
  484   3      /* @g:  allow empty varbinds for symmetry (we must decode them for getnext), allow partial compression??  
              -*/
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 9   
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 9   
 
  485   3            /* ident_len <= 1, at least we need zeroDotZero (0.0) (ident_len == 2) */
  486   3            return ERR_ARG;
@@ -574,7 +574,7 @@ line level    source
  544   2          while (raw_len > 1)
  545   2          {
  546   3            /* copy raw_len - 1 octets */
-C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 10  
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/03/2026 14:16:05 PAGE 10  
 
  547   3            raw_len--;
  548   3            *msg_ptr = *raw;

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 1   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALACL
@@ -62,7 +62,7 @@ line level    source
              -L_FIELD_SELECT13, ACL_FIELD_SELECT14, ACL_FIELD_SELECT15}   
   45          };
   46          
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 2   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 2   
 
   47          uint8 filter_advanceCaretagField[RTL8367C_ACLTEMPLATENO][2] = {
   48              {FALSE,   0},
@@ -126,7 +126,7 @@ line level    source
  106          
  107          uint8 filter_fieldSize[FILTER_FIELD_END] = {
  108              3, 3, 1, 1, 1,
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 3   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 3   
 
  109              2, 2, 1, 1, 1, 1, 4, 4, 1, 1,
  110              1, 1, 1, 1, 1, 1, 1, 1,
@@ -190,7 +190,7 @@ line level    source
                 {0x10, 0x11},
                 {0x12, 0x13},
                 {0x24},
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 4   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 4   
 
                 {0x25},
                 {0x35},
@@ -254,7 +254,7 @@ line level    source
                   {FIELDSEL_FORMAT_IPV6, 6},       /* Field Selector 8 */
                   {FIELDSEL_FORMAT_IPV6, 26},      /* Field Selector 9 */
                   {FIELDSEL_FORMAT_IPV6, 24},      /* Field Selector 10 */
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 5   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 5   
 
                   {FIELDSEL_FORMAT_DEFAULT, 0},    /* Field Selector 11 */
                   {FIELDSEL_FORMAT_IPV4, 6},       /* Field Selector 12 */
@@ -318,7 +318,7 @@ line level    source
  285   2              if ((ret = rtl8367c_setAsicAcl(i, TRUE)) != RT_ERR_OK)
  286   2                  return ret;
  287   2      
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 6   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 6   
 
  288   2              if ((ret = rtl8367c_setAsicAclUnmatchedPermit(i, TRUE)) != RT_ERR_OK)
  289   2                  return ret;
@@ -382,7 +382,7 @@ line level    source
  346   1          {
  347   2              if (pFilter_cfg->fieldHead->next == NULL)
  348   2              {
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 7   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 7   
 
  349   3                  pFilter_cfg->fieldHead->next = pFilter_field;
  350   3              }
@@ -446,7 +446,7 @@ line level    source
  405   2      
  406   2              ipValue = fieldPtr->filter_pattern_union.sip.value;
  407   2              ipMask = fieldPtr->filter_pattern_union.sip.mask;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 8   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 8   
 
  408   2      
  409   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
@@ -510,7 +510,7 @@ line level    source
  460   4                      aclRule[tempIdx].care_bits.field[fieldIdx] = ((ip6mask[3] & (0xFFFF << ((i&1) * 16))) >> (
              -(i&1) * 16));
  461   4                  }
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 9   
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 9   
 
  462   3              }
  463   2      
@@ -574,7 +574,7 @@ line level    source
  513   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
  514   2              {
  515   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 10  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 10  
 
  516   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
  517   3      
@@ -638,7 +638,7 @@ line level    source
              -e << 1);
  567   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.tcpFlag.fin.value
              -;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 11  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 11  
 
  568   3      
  569   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.cwr.mask
@@ -702,7 +702,7 @@ line level    source
  619   3                  aclRule[tempIdx].care_bits.field[fieldIdx] &= 0x00FF;
  620   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.icmpType.mask <<
              - 8);
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 12  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 12  
 
  621   3              }
  622   2              break;
@@ -766,7 +766,7 @@ line level    source
  676           *      RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT     - Action is not supported in this chip.
  677           *      RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT    - Rule is not supported.
  678           * Note:
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 13  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 13  
 
  679           *      This function store pFilter_cfg, pFilter_action into ASIC. The starting
  680           *      index(es) is filter_id.
@@ -830,7 +830,7 @@ line level    source
  736   1      
  737   1          if(careTagData || careTagMask)
  738   1          {
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 14  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 14  
 
  739   2              i = 0;
  740   2              while(i < RTL8367C_ACLTEMPLATENO)
@@ -894,7 +894,7 @@ line level    source
  798   3                  careTagMask |= (1 << i);
  799   3                  if(0 == pFilter_cfg->careTag.tagType[i].value )
  800   3                      careTagData &= ~(1 << i);
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 15  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 15  
 
  801   3                  else
  802   3                      careTagData |= (1 << i);
@@ -958,7 +958,7 @@ line level    source
  859   5                      }
  860   4                      else
  861   4                      {
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 16  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 16  
 
  862   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_VLANONLY;
  863   5                      }
@@ -1022,7 +1022,7 @@ line level    source
  920   5                      }
  921   4      
  922   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 17  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 17  
 
  923   4                      break;
  924   4      #if 0 //NOT used
@@ -1086,7 +1086,7 @@ line level    source
  981   4                  case FILTER_ENACT_DROP:
  982   4      
  983   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(FILTER_ENACT_REDIRECT);
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 18  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 18  
 
  984   4                      aclAct.fwdact_ext = FALSE;
  985   4      
@@ -1150,7 +1150,7 @@ line level    source
 1043   4                  case FILTER_ENACT_ISOLATION:
 1044   4                      RTK_CHK_PORTMASK_VALID(&pFilter_action->filterPortmask);
 1045   4      
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 19  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 19  
 
 1046   4                      aclAct.fwdact_ext = TRUE;
 1047   4      
@@ -1214,7 +1214,7 @@ line level    source
 1105   4                      aclAct.tag_fmt = FILTER_CTAGFMT_KEEP;
 1106   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
 1107   4                      break;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 20  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 20  
 
 1108   4                   case FILTER_ENACT_EGRESSCTAG_KEEPAND1PRMK:
 1109   4      
@@ -1278,7 +1278,7 @@ line level    source
 1166   2          }
 1167   1      
 1168   1          return RT_ERR_OK;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 21  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 21  
 
 1169   1      }
 1170          
@@ -1342,7 +1342,7 @@ line level    source
 1228           */
 1229          rtk_api_ret_t sal_filter_igrAcl_cfg_delAll(void)
 1230          {
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 22  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 22  
 
 1231   1          uint32            i;
 1232   1          rtk_api_ret_t     ret;
@@ -1406,7 +1406,7 @@ line level    source
 1289   1      
 1290   1          /* Check valid */
 1291   1          if(aclRule.valid == 0)
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 23  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 23  
 
 1292   1          {
 1293   2              pFilter_cfg->valid = DISABLED;
@@ -1470,7 +1470,7 @@ line level    source
 1349   1      
 1350   1          if ((retVal = rtl8367c_getAsicAclActCtrl(filter_id, &tmp))!= RT_ERR_OK)
 1351   1              return retVal;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 24  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 24  
 
 1352   1      
 1353   1          if ((retVal = rtl8367c_getAsicAclAct(filter_id, &aclAct)) != RT_ERR_OK)
@@ -1534,7 +1534,7 @@ line level    source
 1411   3              }
 1412   2          }
 1413   1      
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 25  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 25  
 
 1414   1          if(tmp & FILTER_ENACT_POLICING_MASK)
 1415   1          {
@@ -1598,7 +1598,7 @@ line level    source
 1471   2          }
 1472   1      
 1473   1      
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 26  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 26  
 
 1474   1          if(tmp & FILTER_ENACT_CVLAN_MASK)
 1475   1          {
@@ -1662,7 +1662,7 @@ line level    source
 1533   2              if(TRUE == aclAct.aclint)
 1534   2              {
 1535   3                  pAction->actEnable[FILTER_ENACT_INTERRUPT] = TRUE;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 27  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 27  
 
 1536   3              }
 1537   2      
@@ -1726,7 +1726,7 @@ line level    source
                *      sal_filter_igrAcl_unmatchAction_get
                * Description:
                *      Get action to packets when no ACL configuration match
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 28  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 28  
 
                * Input:
                *      port    - Port id.
@@ -1790,7 +1790,7 @@ line level    source
 1657   1      
 1658   1          if(state >= RTK_ENABLE_END)
 1659   1              return RT_ERR_INPUT;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 29  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 29  
 
 1660   1      
 1661   1          if((ret = rtl8367c_setAsicAcl(rtk_switch_port_L2P_get(port), state)) != RT_ERR_OK)
@@ -1854,7 +1854,7 @@ line level    source
               rtk_api_ret_t sal_filter_igrAcl_template_set(rtk_filter_template_t *aclTemplate)
               {
                   rtk_api_ret_t retVal;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 30  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 30  
 
                   uint32 idxField;
                   rtl8367c_acltemplate_t aclType;
@@ -1918,7 +1918,7 @@ line level    source
                   RTK_CHK_INIT_STATE();
               
                   if(NULL == aclTemplate)
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 31  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 31  
 
                       return RT_ERR_NULL_POINTER;
               
@@ -1982,7 +1982,7 @@ line level    source
                *      sal_filter_igrAcl_field_sel_get
                * Description:
                *      Get user defined field selectors in HSB
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 32  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 32  
 
                * Input:
                *      index       - index of field selector 0-15
@@ -2046,7 +2046,7 @@ line level    source
               
                   if(index > RTL8367C_ACLRANGEMAX)
                       return RT_ERR_OUT_OF_RANGE;
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 33  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 33  
 
               
                   if(type >= IPRANGE_END)
@@ -2110,7 +2110,7 @@ line level    source
                *      upperVid    - The upper bound of VID range
                *      lowerVid    - The lower Bound of VID range
                * Output:
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 34  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 34  
 
                *      None.
                * Return:
@@ -2174,7 +2174,7 @@ line level    source
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
               
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 35  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 35  
 
                   if((NULL == pType) || (NULL == pUpperVid) || (NULL == pLowerVid))
                       return RT_ERR_NULL_POINTER;
@@ -2238,7 +2238,7 @@ line level    source
               }
               
               /* Function Name:
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 36  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 36  
 
                *      sal_filter_portrange_get
                * Description:
@@ -2302,7 +2302,7 @@ line level    source
                   return rtl8367c_setAsicAclGpioPolarity(polarity);
               }
               /* Function Name:
-C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 37  
+C51 COMPILER V9.60.0.0   SALACL                                                            11/03/2026 14:15:39 PAGE 37  
 
                *      rtk_filter_igrAclPolarity_get
                * Description:

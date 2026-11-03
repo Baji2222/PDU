@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/02/2026 17:57:25 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/03/2026 14:15:51 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_SPECIALCONGEST
@@ -62,7 +62,7 @@ line level    source
   47          #if 0 //NOT used
               /* Function Name:
                *      rtl8367c_getAsicSpecialCongestModeConfig
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/02/2026 17:57:25 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/03/2026 14:15:51 PAGE 2   
 
                * Description:
                *      Get ASIC special congest mode configuration
@@ -126,7 +126,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    HDATA SIZE       =   ----    ----
    XDATA CONST SIZE =   ----    ----
    FAR CONST SIZE   =   ----    ----
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/02/2026 17:57:25 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/03/2026 14:15:51 PAGE 3   
 
 END OF MODULE INFORMATION.
 

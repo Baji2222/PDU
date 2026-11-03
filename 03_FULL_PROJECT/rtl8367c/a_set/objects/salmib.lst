@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 1   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALMIB
@@ -62,7 +62,7 @@ line level    source
   49           *      sal_mib_port_get
   50           * Description:
   51           *      Get one specified port counter.
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 2   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 2   
 
   52           * Input:
   53           *      port        - port id
@@ -126,7 +126,7 @@ line level    source
  111   2          case SAL_ETHER_STATS_JABBERS_INDEX:
  112   2              ret = rtk_stat_port_get(port, STAT_EtherStatsJabbers, pCntH, pCntL);
  113   2              break;
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 3   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 3   
 
  114   2          case SAL_ETHER_STATS_COLLISIONS_INDEX:
  115   2              ret = rtk_stat_port_get(port, STAT_EtherStatsCollisions, pCntH, pCntL);
@@ -190,7 +190,7 @@ line level    source
  173   2              ret = rtk_stat_port_get(port, STAT_IfOutMulticastPkts, pCntH, pCntL);
  174   2              break;
  175   2          case SAL_OUT_BCAST_PKTS_CNT_INDEX:
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 4   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 4   
 
  176   2              ret = rtk_stat_port_get(port, STAT_IfOutBroadcastPkts, pCntH, pCntL);
  177   2              break;
@@ -254,7 +254,7 @@ line level    source
  235   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
  236   1          {
  237   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&portMask, portId))
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 5   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 5   
 
  238   2              {
  239   3                  cnth = cntl = 0;
@@ -318,7 +318,7 @@ line level    source
  297   3                  rtk_stat_port_get(portId, STAT_EtherStatsUnderSizePkts, &cnth, &cntl);
  298   3                _counter_add(high, low, cnth, cntl);
  299   3                  
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 6   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 6   
 
  300   3                cnth = cntl = 0;
  301   3                  rtk_stat_port_get(portId, STAT_Dot3StatsFCSErrors, &cnth, &cntl);
@@ -382,7 +382,7 @@ line level    source
  359   1          rtk_stat_counter_t cntl; 
  360   1      
  361   1        if ((port > SAL_PORT_ID_CPU - 1)) {
-C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 7   
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/03/2026 14:15:35 PAGE 7   
 
  362   2          return SAL_ERR_PORT_RANGE;
  363   2        }

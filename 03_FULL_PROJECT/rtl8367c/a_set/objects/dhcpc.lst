@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 1   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE DHCPC
@@ -62,7 +62,7 @@ line level    source
   49              DHCPC_STATUS_RENEW      = 0x00000020,
   50              DHCPC_STATUS_REBIND     = 0x00000040,
   51              DHCPC_STATUS_COMPLETED  = 0x00000080, /* mission completed */
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 2   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 2   
 
   52          } tftpc_status_t;
   53          typedef struct dhcpc_slot_s {
@@ -126,7 +126,7 @@ line level    source
  111   1          DBG_PRINT(2, "     CIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->ciaddr), \
  112   1              pDhcpHdr->ciaddr[0], pDhcpHdr->ciaddr[1], pDhcpHdr->ciaddr[2], pDhcpHdr->ciaddr[3]);
  113   1          DBG_PRINT(2, "     YIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->yiaddr), \
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 3   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 3   
 
  114   1              pDhcpHdr->yiaddr[0], pDhcpHdr->yiaddr[1], pDhcpHdr->yiaddr[2], pDhcpHdr->yiaddr[3]);
  115   1          DBG_PRINT(2, "     SIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->siaddr), \
@@ -190,7 +190,7 @@ line level    source
  173   1          pDhcpHdr->magic_cookie = DHCP_MAGIC_COOKIE_VALUE;
  174   1      
  175   1          /* Options */
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 4   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 4   
 
  176   1          /* Option: (t=53,l=1) DHCP Message Type = DHCP Discover */
  177   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t), "\x35\x01\x01", 3);
@@ -254,7 +254,7 @@ line level    source
  234   1          {
  235   2              memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len, "\x36\x04", 2);
  236   2              memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len + 2, dhcpc_slot.serverid.addr, IP_ADDR_LEN);
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 5   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 5   
 
  237   2              opt_len += (2 + IP_ADDR_LEN);
  238   2          }
@@ -318,7 +318,7 @@ line level    source
  295   3              } else {
  296   3                  /* really timeout */
  297   3                  dhcpc_slot.status |= DHCPC_STATUS_TIMEOUT;
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 6   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 6   
 
  298   3                  //dhcpc_slot.status |= DHCPC_STATUS_FAILED;
  299   3                  dhcpc_slot.status |= DHCPC_STATUS_COMPLETED;
@@ -382,7 +382,7 @@ line level    source
  355   3                  if (dhcpc_slot.status & DHCPC_STATUS_RETRY)
  356   3                  {
  357   4                      dhcpc_slot.state = DHCPC_STATE_SELECTING;
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 7   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 7   
 
  358   4                  }
  359   3              }
@@ -446,7 +446,7 @@ line level    source
  417   3                  {
  418   4                      dhcpc_slot.state = DHCPC_STATE_INITIALIZING;
  419   4                      dhcpc_slot.left_time = dhcpc_slot.max_time;
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 8   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 8   
 
  420   4                  }
  421   3              }
@@ -510,7 +510,7 @@ line level    source
  478   3                  if ((len % IP_ADDR_LEN) == 0)
  479   3                  {
  480   4                      memcpy(dhcpc_slot.netmask.addr, (pBuf + 2), IP_ADDR_LEN);
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 9   
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 9   
 
  481   4                  }
  482   3                  break;
@@ -574,7 +574,7 @@ line level    source
  540   3                  break;
  541   3      
  542   3              case DHCPC_STATE_RENEWING:
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 10  
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 10  
 
  543   3                  if (msgtype == DHCP_MSGTYPE_ACK)
  544   3                  {
@@ -638,7 +638,7 @@ line level    source
  602   3                  dhcpcHandler.event_connect    = NULL;
  603   3                  dhcpcHandler.event_disconnect = NULL;
  604   3                  dhcpcHandler.event_recvfrom   = lwps_dhcpc_recvfrom;
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 11  
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 11  
 
  605   3      
  606   3                  dhcpc_slot.socket_id = lwps_socket(LWPS_L3TYPE_IP, LWPS_L4TYPE_UDP, dhcpcHandler);
@@ -702,7 +702,7 @@ line level    source
  664   3                  dhcpc_slot.sec_elapsed += 1;
  665   3                  DBG_PRINT(3, "dhcpc_slot.ipaddr_lease_time = %d, dhcpc_slot.sec_elapsed = %lu\n", \
  666   3                      dhcpc_slot.ipaddr_lease_time, dhcpc_slot.sec_elapsed);
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 12  
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 12  
 
  667   3      
  668   3                  if (dhcpc_slot.timeout > 0)
@@ -766,7 +766,7 @@ line level    source
                   
                   return SUCCESS;
               }
-C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 13  
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/03/2026 14:15:55 PAGE 13  
 
               #endif
 

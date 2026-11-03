@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/03/2026 14:16:02 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_TRUNK
@@ -62,7 +62,7 @@ line level    source
   49   1          WEB_PRINTF(pReq, "}\n");
   50   1          WEB_PRINTF(pReq, "function chkEnable(value)\n");
   51   1          WEB_PRINTF(pReq, "{\n");
-C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/03/2026 14:16:02 PAGE 2   
 
   52   1          WEB_PRINTF(pReq, "    if ( value == '1' ) {\n");
   53   1          WEB_PRINTF(pReq, "        document.getElementById('lacp_mode').value = \"0\";\n");
@@ -126,7 +126,7 @@ line level    source
                       if(i == 8)
                           WEB_PRINTF(pReq, "          <option value=%d>%s\n", (uint16)16, logicPortStr);
                       else if(i == 9)
-C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/03/2026 14:16:02 PAGE 3   
 
                           WEB_PRINTF(pReq, "          <option value=%d>%s\n", (uint16)17, logicPortStr);
                       else
@@ -190,7 +190,7 @@ line level    source
  167   1          WEB_PRINTF(pReq, "</fieldset>\n");
  168   1          WEB_PRINTF(pReq, "</center>\n");
  169   1          WEB_PRINTF(pReq, "</body>\n");
-C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/03/2026 14:16:02 PAGE 4   
 
  170   1          WEB_PRINTF(pReq, "</html>\n");
  171   1      
@@ -254,7 +254,7 @@ line level    source
  229           * Calls sal_trunk_port_del() for each selected trunk.
  230           * Refreshes trunk page after deletion.
  231           */
-C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/03/2026 14:16:02 PAGE 5   
 
  232          int32 post_trunk_remove (struct http_request_s *pReq)
  233          {

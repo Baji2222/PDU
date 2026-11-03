@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 1   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HTML_API
@@ -62,7 +62,7 @@ line level    source
   49          #endif
   50          
   51          #if __WEB_GREENETH__
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 2   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 2   
 
   52          #include "web_greeneth.h"
   53          #endif
@@ -126,7 +126,7 @@ line level    source
  111   2              memset(mac_str, 0, sizeof(mac_str));
  112   2              strncpy(mac_str, pValue, sizeof(mac_str) - 1);
  113   2              
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 3   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 3   
 
  114   2              /* Parse MAC address */
  115   2              for (i = 0, j = 0; i < 6; i++, j += 3) {
@@ -190,7 +190,7 @@ line level    source
  173   1      
  174   1          switch (pReq->method)
  175   1          {
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 4   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 4   
 
  176   2          case HTTP_METHOD_GET:
  177   2              if ((strcmp(pPath, "Unauth") == 0))
@@ -254,7 +254,7 @@ line level    source
  235   3                  return get_image(pReq, WEB_IMAGE_DOCUMENT_GIF);
  236   3              }
  237   2              else if (strcmp(pReq->path, "/folder_opened.gif") == 0)
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 5   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 5   
 
  238   2              {
  239   3                  return get_image(pReq, WEB_IMAGE_FOLDER_OPENED_GIF);
@@ -318,7 +318,7 @@ line level    source
  297   4                  }
  298   3              }
  299   2              /* ip.cgi */
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 6   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 6   
 
  300   2              else if (strcmp(pReq->path, "/ip.cgi") == 0)
  301   2              {
@@ -382,7 +382,7 @@ line level    source
  359   2              {
  360   3                  return set_port_handler(pReq);
  361   3              }
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 7   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 7   
 
  362   2              else if (strcmp(pReq->path, "/set_port6") == 0)
  363   2              {
@@ -446,7 +446,7 @@ line level    source
  421   2              /* port.cgi */
  422   2              else if (strcmp(pReq->path, "/port.cgi") == 0)
  423   2              {
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 8   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 8   
 
  424   3                  WEB_VAR(pReq, "page", &pValue);
  425   3      
@@ -510,7 +510,7 @@ line level    source
  483   2      
  484   2              else if (strcmp(pReq->path, "/trunk.cgi") == 0)
  485   2              {
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 9   
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 9   
 
  486   3                  WEB_VAR(pReq, "page", &pValue);
  487   3      
@@ -574,7 +574,7 @@ line level    source
  545   2      
  546   2              /* mac.cgi */
  547   2              else if (strcmp(pReq->path, "/mac.cgi") == 0)
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 10  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 10  
 
  548   2              {
  549   3                  WEB_VAR(pReq, "page", &pValue);
@@ -638,7 +638,7 @@ line level    source
  607   4                      return get_qos(pReq);
  608   4                  }
  609   3              }
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 11  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 11  
 
  610   2      
  611   2      #if __WEB_TFTP_UPGRADE__
@@ -702,7 +702,7 @@ line level    source
  669   3                  WEB_STATUS(pReq, HTTP_STATUS_NOT_FOUND);
  670   3                  WEB_HEADER(pReq, "");
  671   3                  WEB_END(pReq);
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 12  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 12  
 
  672   3              }
  673   2              break;
@@ -766,7 +766,7 @@ line level    source
  731   2      
  732   2              /* user.cgi */
  733   2              else if (strcmp(pReq->path, "/user.cgi") == 0)
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 13  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 13  
 
  734   2              {
  735   3                  return post_user(pReq);
@@ -830,7 +830,7 @@ line level    source
  793   4                      return post_fwd_stormcontrol(pReq);
  794   4                  }
  795   3              }
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 14  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 14  
 
  796   2      #if __WEB_LOOP__
  797   2              else if (strcmp(pReq->path, "/loop.cgi") == 0)
@@ -894,7 +894,7 @@ line level    source
  855   4                  }
  856   3                  else if (pValue && strcmp("fwd_tbl", pValue) == 0)
  857   3                  {
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 15  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 15  
 
  858   4                      return post_mac_tblclear(pReq);
  859   4                  }
@@ -958,7 +958,7 @@ line level    source
               
                           if (pValue && strcmp("fwupg", pValue) == 0)
                           {
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 16  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 16  
 
                               return post_tftp_fwupg(pReq);
                           }
@@ -1022,7 +1022,7 @@ line level    source
  979   2              {
  980   3                  // return post_save(pReq);
  981   3              }
-C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 17  
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/03/2026 14:15:56 PAGE 17  
 
  982   2              /* reboot.cgi */
  983   2              else if (strcmp(pReq->path, "/reboot.cgi") == 0)

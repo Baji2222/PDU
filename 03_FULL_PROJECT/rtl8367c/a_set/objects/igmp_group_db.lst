@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 1   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE IGMP_GROUP_DB
@@ -62,7 +62,7 @@ line level    source
   48           * Macro Definition
   49           */
   50          #if   CONFIG_IGMP_MLD_ENABLE
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 2   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 2   
 
               
               #define IGMP_CHECK_GROUP(addr1, addr2, cuur_mode, target_mode) \
@@ -126,7 +126,7 @@ line level    source
                       }
                   }
               
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 3   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 3   
 
                   if ( type&IGMP_PRINT_TYPE_ROUTER )
                   {
@@ -190,7 +190,7 @@ line level    source
  172   1          FOREACH_PORTINMASK(pn, portmask)
  173   1          {
  174   2              hit = 1;
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 4   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 4   
 
  175   2              /* trk_pm will be zero if pn is not in any trunking group */
  176   2              trk_pm = check_trunk_portmask(1UL<<pn);
@@ -254,7 +254,7 @@ line level    source
  234   2              else
  235   2              {
  236   3                  if( (1UL<<pn)&&igmpFastLeavePort )
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 5   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 5   
 
  237   3                  {
  238   4                      inst->fwdPortMask[0] &= ~(1UL<<pn);
@@ -318,7 +318,7 @@ line level    source
                   for (i=0; i<SAL_PORT_ID_CPU; i++)
                   {
                       if( FALSE==hit )
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 6   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 6   
 
                       {
                           if( pm&0x01 )
@@ -382,7 +382,7 @@ line level    source
  358   2          }
  359   1          return LWPS_OK;
  360   1      }
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 7   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 7   
 
  361          
  362          // IGMP Dynamic Router Get: Retrieves the dynamic router port mask
@@ -446,7 +446,7 @@ line level    source
  418   2              if( !iter_last )
  419   2              {
  420   3                  igmpGroupHead.item = iter;        
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 8   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 8   
 
  421   3              }
  422   2              else
@@ -510,7 +510,7 @@ line level    source
  480   4                      igmp_group_del_queryPort(i);
  481   4                      DBG_IGMPDB_PRINTF(("[%s][%d][Router Expired:%d]\n", __FILE__, \
  482   4                          (uint16)__LINE__, i));
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 9   
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 9   
 
  483   4                  }
  484   3              }
@@ -574,7 +574,7 @@ line level    source
  542          // IGMP Group Add Query Port: Adds a port to the router port list
  543          // Sets router timer and updates router port mask for IGMP snooping
  544          int32 igmp_group_add_queryPort(portmask_type portmask)
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 10  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 10  
 
  545          {
  546   1          int8 pn = u32_mask_to_num(portmask);
@@ -638,7 +638,7 @@ line level    source
  604   1        sal_lPortmask_t grp_pm;
  605   1          sal_enable_t    linkup;
  606   1      
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 11  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 11  
 
  607   1          for (iter=igmpGroupHead.item, j=0; j<igmpGroupHead.listNumber; j++)
  608   1          {
@@ -702,7 +702,7 @@ line level    source
  666   1      
  667   1          listNumber = igmpGroupHead.listNumber;
  668   1          for (iter=igmpGroupHead.item, j=0; j<listNumber; j++)
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 12  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 12  
 
  669   1          {
  670   2              /* delete iter group will change iter->next value */
@@ -766,7 +766,7 @@ line level    source
  726   1          pktBuf_t   xdata *pBuf;
  727   1          igmp_hdr_t xdata *pIgmpHdr;
  728   1          ipaddr_group_t      xdata  grp;
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 13  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 13  
 
  729   1          ipaddr_group_list_t *iter;
  730   1          ipaddr_group_list_t *iter_last;
@@ -830,7 +830,7 @@ line level    source
                   grm.bits[0] |= router_pm;
               
                   sal_igmp_ipAddrEntry_add(grp_addr, 0, vid, &grm);
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 14  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 14  
 
               #endif    
  792   1          return LWPS_OK;
@@ -894,7 +894,7 @@ line level    source
  850   2              iter->fwdPortMask[0] &= ~(1UL<<pn);
  851   2      
  852   2              /* only left router port in group->delete this group */
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 15  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 15  
 
  853   2              if( iter->fwdPortMask[0] == 0UL )
  854   2              {
@@ -958,7 +958,7 @@ line level    source
  912   1      
  913   1          DBG_IGMPDB_PRINTF(("[%s][%d][Work Group:%d]\n", __FILE__, (uint16)__LINE__, \
  914   1                  (uint16)igmpGroupHead.listNumber ));
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 16  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 16  
 
  915   1      
  916   1          if ( sip ){}
@@ -1022,7 +1022,7 @@ line level    source
                   igmpdb_get_group(&grp, &grupAddr, vid, IGMP_GRP_DB_IPV6);
                   iter = grp.iter;
                   iter_last = grp.iter_last;
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 17  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 17  
 
               
                   if ( !iter )
@@ -1086,7 +1086,7 @@ line level    source
                       pBuf     = (pktBuf_t *) d;
                       pMldHdr  = (igmp_mld_hdr_t *)pBuf->l4;
                       IGMP_MEMCPY(grupAddr.addr, &(pMldHdr->groupAddr.addr[IPV6_ADDR_LEN-4]), 4);
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 18  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 18  
 
                   }
                   else if( IGMP_ADDR_GROUP_ADDR==mode )
@@ -1150,7 +1150,7 @@ line level    source
                   
                   return LWPS_OK;
               }
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 19  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 19  
 
               
               /* group member functions */
@@ -1214,7 +1214,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
-C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 20  
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/03/2026 14:15:33 PAGE 20  
 
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----

@@ -875,67 +875,51 @@ int32 set_pdu_name(struct http_request_s *pReq)
 
 
 uint8 far Get_Response_RTC[234];
+uint8 far Get_Response_ALARM[234];
+
+/* Kept only so other files still link. Nothing sets them to 1 any more,
+   so the old flag-reading sender stays idle. */
 extern uint8 start_pdu_status;
-uint8 start_rtc_data = 0;
+uint8 start_rtc_data   = 0;
 uint8 start_alarm_data = 0;
-
-//uint8 far Get_Response_ALARM[64];
-
-
 
 void Copy_RTC_DATA(uint8* tempData)
 {
-		strcpy((char*)Get_Response_RTC, tempData);
+    strncpy((char*)Get_Response_RTC, (char*)tempData, sizeof(Get_Response_RTC) - 1);
+    Get_Response_RTC[sizeof(Get_Response_RTC) - 1] = '\0';
 }
 
 void Copy_Alarm_DATA(uint8* tempData)
 {
-//		strcpy((char*)Get_Response_ALARM, tempData);
+    strncpy((char*)Get_Response_ALARM, (char*)tempData, sizeof(Get_Response_ALARM) - 1);
+    Get_Response_ALARM[sizeof(Get_Response_ALARM) - 1] = '\0';
 }
 
-
-
-/* ============================================================
- * GET /get_rtc_time
- * Returns complete RTC data: current time + date + all alarms.
- * NOTE: Static test values are used below — replace with real
- *       RTC / alarm reads when ready.
- * JSON keys are all uppercase.
- * ============================================================ */
+/* GET /get_rtc_time : asks MCU2 for a fresh reply, returns the last one stored.
+   The stored reply is NOT erased, so a request never returns blank. */
 int32 get_rtc_time(struct http_request_s *pReq)
 {
-    start_pdu_status = 0;
-		start_rtc_data  = 1;
-		
+    printf("GET_RTC\r\n");
+
     WEB_BEGIN(pReq);
     WEB_STATUS(pReq, HTTP_STATUS_OK);
     WEB_HEADER(pReq, "Content-Type: application/json");
     WEB_HEADER(pReq, "Cache-Control: no-cache");
-		WEB_PRINTF(pReq, "%s" ,Get_Response_RTC);
+    WEB_PRINTF(pReq, "%s", Get_Response_RTC);
     WEB_END(pReq);
-		memset(Get_Response_RTC,'\0',234);
     return SUCCESS;
 }
 
-
-
-/* ============================================================
- * GET /get_alarms
- * Returns all 3 alarm times only (JSON, uppercase keys).
- * Use null for alarms that are not configured.
- *   {"A1H":8,"A1M":18,"A2H":2,"A2M":12,"A3H":4,"A3M":19}
- * ============================================================ */
+/* GET /get_alarms : same idea for the alarm data */
 int32 get_alarms(struct http_request_s *pReq)
 {
-		start_alarm_data = 1;
-		//printf("GET_ALARMS\r\n");
+    printf("GET_ALARM\r\n");
+
     WEB_BEGIN(pReq);
     WEB_STATUS(pReq, HTTP_STATUS_OK);
     WEB_HEADER(pReq, "Content-Type: application/json");
     WEB_HEADER(pReq, "Cache-Control: no-cache");
-		//strcpy(Get_Response_ALARM, "{\"A1H\":2,\"A1M\":45,\"A2H\":4,\"A2M\":24,\"A3H\":6,\"A3M\":36}");
-//    WEB_PRINTF(pReq,"%s", Get_Response_ALARM);
-
+    WEB_PRINTF(pReq, "%s", Get_Response_ALARM);
     WEB_END(pReq);
     return SUCCESS;
 }
@@ -975,13 +959,13 @@ static int parse_query_uint(struct http_request_s *pReq,
 
     p = (const char *)pReq->pPath;
 
-    /* advance to the first '?' — start of the query string */
+    /* advance to the first '?' ï¿½ start of the query string */
     while (*p && *p != '?' && *p != ' ' && *p != '\r' && *p != '\n')
         p++;
     if (*p != '?') return -1;
     p++;                                   /* skip '?' */
 
-    /* end of the request line — anything past this is headers */
+    /* end of the request line ï¿½ anything past this is headers */
     qs_end = p;
     while (*qs_end && *qs_end != ' ' && *qs_end != '\r' && *qs_end != '\n')
         qs_end++;
@@ -1010,7 +994,7 @@ static int parse_query_uint(struct http_request_s *pReq,
         p++;                               /* skip '=' */
 
         if (klen == nlen && memcmp(kstart, name, nlen) == 0) {
-            /* matched — parse the value */
+            /* matched ï¿½ parse the value */
             if (p < qs_end && *p == '-')      { sign = -1; p++; }
             else if (p < qs_end && *p == '+') { p++; }
 

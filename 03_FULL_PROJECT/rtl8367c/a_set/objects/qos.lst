@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 1   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE QOS
@@ -62,7 +62,7 @@ line level    source
               {
                   CONST_T uint16 g_prioritytToQid[8][8]= {
                           {0, 0,0,0,0,0,0,0},
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 2   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 2   
 
                           {0, 0,0,0,7,7,7,7},
                           {0, 0,0,0,1,1,7,7},
@@ -126,7 +126,7 @@ line level    source
                   }
               
                   /*Set Port-based Priority to 0*/
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 3   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 3   
 
                   RTK_SCAN_ALL_PHY_PORTMASK(port)
                   {
@@ -190,7 +190,7 @@ line level    source
  169           * Note:
  170           *      ASIC will follow user priority setting of mechanisms to select mapped queue priority for receiving
              - frame.
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 4   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 4   
 
  171           *      If two priority mechanisms are the same, the ASIC will chose the highest priority from mechanisms 
              -to
@@ -254,7 +254,7 @@ line level    source
  227   1          for (i = pPriDec->cvlan_pri; i > 0; i--)
  228   1              cvlan_pow = (cvlan_pow)*2;
  229   1      
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 5   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 5   
 
  230   1          dmac_pow = 1;
  231   1          for (i = pPriDec->dmac_pri; i > 0; i--)
@@ -318,7 +318,7 @@ line level    source
  287           *      - PRIDEC_CVLAN,
  288           *      - PRIDEC_DA,
  289           *      - PRIDEC_SA,
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 6   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 6   
 
  290           */
  291          rtk_api_ret_t rtk_qos_priSel_get(rtk_qos_priDecTbl_t index, rtk_priority_select_t *pPriDec)
@@ -382,7 +382,7 @@ line level    source
  349   3                  break;
  350   3              }
  351   2          }
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 7   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 7   
 
  352   1      
  353   1          for (i = 31; i >= 0; i--)
@@ -446,7 +446,7 @@ line level    source
                *      rtk_qos_1pPriRemap_set
                * Description:
                *      Configure 1Q priorities mapping to internal absolute priority.
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 8   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 8   
 
                * Input:
                *      dot1p_pri   - 802.1p priority value.
@@ -510,7 +510,7 @@ line level    source
               
                   if ((retVal = rtl8367c_getAsicPriorityDot1qRemapping(dot1p_pri, pInt_pri)) != RT_ERR_OK)
                       return retVal;
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 9   
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 9   
 
               
                   return RT_ERR_OK;
@@ -574,7 +574,7 @@ line level    source
  531           * Note:
  532           *      The Differentiated Service Code Point is a selector for router's per-hop behaviors. As a selector,
              - there is no implication that a numerically
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 10  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 10  
 
  533           *      greater DSCP implies a better network service. As can be seen, the DSCP totally overlaps the old p
              -recedence field of TOS. So if values of
@@ -638,7 +638,7 @@ line level    source
  591           *      rtk_qos_portPri_get
  592           * Description:
  593           *      Get priority usage to each port.
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 11  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 11  
 
  594           * Input:
  595           *      port - Port id.
@@ -702,7 +702,7 @@ line level    source
  652   1          if ((0 == queue_num) || (queue_num > RTK_MAX_NUM_OF_QUEUE))
  653   1              return RT_ERR_FAILED;
  654   1      
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 12  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 12  
 
  655   1          if (RTK_MAX_NUM_OF_QUEUE == queue_num)
  656   1              queue_num = 0;
@@ -766,7 +766,7 @@ line level    source
  711           * Return:
  712           *      RT_ERR_OK               - OK
  713           *      RT_ERR_FAILED           - Failed
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 13  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 13  
 
  714           *      RT_ERR_SMI              - SMI access error
  715           *      RT_ERR_INPUT            - Invalid input parameters.
@@ -830,7 +830,7 @@ line level    source
  772   1      
  773   1          if ((0 == queue_num) || (queue_num > RTK_MAX_NUM_OF_QUEUE))
  774   1              return RT_ERR_QUEUE_NUM;
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 14  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 14  
 
  775   1      
  776   1          for (pri = 0; pri <= RTK_PRIMAX; pri++)
@@ -894,7 +894,7 @@ line level    source
  832   3                  if ((retVal = rtl8367c_setAsicQueueType(rtk_switch_port_L2P_get(port), qid, QTYPE_WFQ)) != RT_
              -ERR_OK)
  833   3                      return retVal;
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 15  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 15  
 
  834   3      
  835   3                  if ((retVal = rtl8367c_setAsicWFQWeight(rtk_switch_port_L2P_get(port),qid, pQweights->weights[
@@ -958,7 +958,7 @@ line level    source
  890          #if 0//Not used
               /* Function Name:
                *      rtk_qos_1pRemarkEnable_set
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 16  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 16  
 
                * Description:
                *      Set 1p Remarking state
@@ -1022,7 +1022,7 @@ line level    source
               {
                   rtk_api_ret_t retVal;
               
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 17  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 17  
 
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
@@ -1086,7 +1086,7 @@ line level    source
                *      RT_ERR_OK               - OK
                *      RT_ERR_FAILED           - Failed
                *      RT_ERR_SMI              - SMI access error
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 18  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 18  
 
                *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
                * Note:
@@ -1150,7 +1150,7 @@ line level    source
                * Input:
                *      none
                * Output:
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 19  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 19  
 
                *      pType      - remarking source
                * Return:
@@ -1214,7 +1214,7 @@ line level    source
                   if (enable >= RTK_ENABLE_END)
                       return RT_ERR_INPUT;
               
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 20  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 20  
 
                   if ((retVal = rtl8367c_setAsicRemarkingDscpAbility(enable)) != RT_ERR_OK)
                       return retVal;
@@ -1278,7 +1278,7 @@ line level    source
                */
               rtk_api_ret_t rtk_qos_dscpRemark_set(rtk_pri_t int_pri, rtk_dscp_t dscp)
               {
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 21  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 21  
 
                   rtk_api_ret_t retVal;
               
@@ -1342,7 +1342,7 @@ line level    source
                *      RT_ERR_OK
                *      RT_ERR_FAILED
                *      RT_ERR_NOT_INIT         - The module is not initial
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 22  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 22  
 
                *      RT_ERR_PORT_ID  - invalid port id
                *      RT_ERR_INPUT            - invalid input parameter
@@ -1406,7 +1406,7 @@ line level    source
                * Input:
                *      dscp    - DSCP value
                *      rmkDscp - remarked DSCP value
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 23  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 23  
 
                * Output:
                *      None.
@@ -1470,7 +1470,7 @@ line level    source
               /* Function Name:
                *      rtk_qos_portPriSelIndex_set
                * Description:
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 24  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 24  
 
                *      Configure priority decision index to each port.
                * Input:
@@ -1534,7 +1534,7 @@ line level    source
                   RTK_CHK_PORT_VALID(port);
               
                   if ((retVal = rtl8367c_getAsicPortPriorityDecisionIndex(rtk_switch_port_L2P_get(port), pIndex)) != RT_
-C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 25  
+C51 COMPILER V9.60.0.0   QOS                                                               11/03/2026 14:15:42 PAGE 25  
 
              -ERR_OK)
                       return retVal;

@@ -31,7 +31,7 @@ assembling STARTUP.A51...
 compiling putchar.c...
 compiling mem_lib.c...
 compiling utilies_flash.c...
-..\src\utilies_flash.c(194): warning C209: '_str_to_mac': too few actual parameters
+..\src\utilies_flash.c(89): warning C209: '_str_to_mac': too few actual parameters
 compiling global_variable.c...
 compiling init.c...
 ..\src\init.c(65): warning C231: 'netmask': redefinition
@@ -312,8 +312,6 @@ linking...
 *** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
     NAME:    _GET_SYSLOG_SEV_FRM_CONTENT_ID/WEB_SYSLOGBUF
 *** WARNING L57: UNCALLED FUNCTION, IGNORED FOR OVERLAY PROCESS
-    NAME:    _COPY_ALARM_DATA/WEB_SYSLOGBUF
-*** WARNING L57: UNCALLED FUNCTION, IGNORED FOR OVERLAY PROCESS
     NAME:    _SAL_SNMP_COMMUNITY_GET/SALSNMP
 *** WARNING L57: UNCALLED FUNCTION, IGNORED FOR OVERLAY PROCESS
     NAME:    _SAL_SNMP_STATE_GET/SALSNMP
@@ -339,15 +337,15 @@ linking...
     SYMBOL:  aclAllPortMask
     MODULE:  .\driver_protocol_8G.LIB (RLPP)
    DEFINED:  .\objects\rtk_switch.obj (RTK_SWITCH)
-Program Size: data=83.1 xdata=49107 const=110756 code=410380
+Program Size: data=83.1 xdata=49115 const=110735 code=411253
 creating hex file from ".\objects\image"...
 User command #1: ..\tools\gen_image.exe r objects\image.hex images\final.bin
- images\final.bin = 700184 (0x000AAF18) (683.77 KB)
+ images\final.bin = 700264 (0x000AAF68) (683.85 KB)
 MaxBankNum = 16
  TotalBank = 14
- iROM Size = 12288 (12.00 KB)
-".\objects\image" - 0 Error(s), 124 Warning(s).
-Build Time Elapsed:  00:01:00
+ iROM Size = 12286 (12.00 KB)
+".\objects\image" - 0 Error(s), 123 Warning(s).
+Build Time Elapsed:  00:00:47
 </pre>
 </body>
 </html>

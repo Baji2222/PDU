@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/02/2026 17:57:27 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/03/2026 14:15:53 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_UNKNOWNMULTICAST
@@ -62,7 +62,7 @@ line level    source
                   {
                       retVal = rtl8367c_setAsicRegBits(RTL8367C_UNKNOWN_L2_MULTICAST_REG(port), RTL8367C_UNKNOWN_L2_MULT
              -ICAST_MASK(port), behave);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/02/2026 17:57:27 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/03/2026 14:15:53 PAGE 2   
 
                       if(retVal != RT_ERR_OK)
                           return retVal;
@@ -126,7 +126,7 @@ line level    source
  106           *      port    - Physical port number (0~7)
  107           *      behave  - 0: flooding, 1: drop, 2: trap
  108           * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/02/2026 17:57:27 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/03/2026 14:15:53 PAGE 3   
 
  109           *      None
  110           * Return:
@@ -190,7 +190,7 @@ line level    source
                * Note:
                *      None
                */
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/02/2026 17:57:27 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/03/2026 14:15:53 PAGE 4   
 
               ret_t rtl8367c_setAsicUnknownIPv6MulticastBehavior(uint32 port, uint32 behave)
               {
@@ -254,7 +254,7 @@ line level    source
                *      rtl8367c_getAsicUnknownMulticastTrapPriority
                * Description:
                *      Get trap priority of unknown multicast frame
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/02/2026 17:57:27 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_UNKNOWNMULTICAST                                 11/03/2026 14:15:53 PAGE 5   
 
                * Input:
                *      pPriority   - priority (0~7)

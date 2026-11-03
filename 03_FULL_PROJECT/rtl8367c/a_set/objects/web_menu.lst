@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_MENU
@@ -62,7 +62,7 @@ line level    source
   42          //</STYLE>\n\
   43          //<script>\n\
   44          //function h(){var a=document.getElementById('f').contentWindow.location.pathname,b=document.querySelector
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 2   
 
              -All('.sidebar>ul>li>a');b.forEach(function(d){d.parentElement.classList.remove('active');var e=d.getAttribute('href');if
              -(e===a||e===a.replace('./','')){d.parentElement.classList.add('active')}})}\n\
@@ -126,7 +126,7 @@ line level    source
   92          //*{margin:0;padding:0;box-sizing:border-box}\n\
   93          //body{font-size:13px;font-family:sans-serif;background:#f0f0f0;height:100vh;overflow:hidden}\n\
   94          //.header{display:flex;align-items:center;background:#0f1a2b;padding:0 25px;height:70px;width:100%;positio
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 3   
 
              -n:fixed;top:0;left:0;z-index:100;border-bottom:2px solid #00d4ff}\n\
   95          //.logo-container{flex:0 0 auto;margin-right:20px}\n\
@@ -190,7 +190,7 @@ line level    source
  148          //            }\n\
  149          //        });\n\
  150          //        var tools=document.querySelector('.sidebar>ul>li:last-child');\n\
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 4   
 
  151          //        if(tools){\n\
  152          //            var subItems=tools.querySelectorAll('ul li a');\n\
@@ -254,7 +254,7 @@ line level    source
  208          //</div>\n\
  209          //</body>\n\
  210          //</html>\n\
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 5   
 
  211          //";
 *** WARNING C329 IN LINE 88 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
@@ -318,7 +318,7 @@ line level    source
              -l){var a=l.querySelector('a');if(!a)return;var h=a.getAttribute('href');if(h&&h!='#'&&u.indexOf(h)!==-1)sa(l)});var s=do
              -cument.querySelectorAll('.sidebar>ul>li>ul li');s.forEach(function(l){var a=l.querySelector('a');if(!a)return;var h=a.ge
              -tAttribute('href');if(h&&u.indexOf(h)!==-1){l.classList.add('active');var p=l.closest('.sidebar>ul>li');if(p)sa(p)}})}ca
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 6   
 
              -tch(e){}}\
  253          window.onload=function(){var l=document.querySelectorAll('.sidebar>ul>li>a, .sidebar>ul>li>ul li a');l.for
@@ -382,7 +382,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    XDATA SIZE       =   ----       3
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----
-C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/03/2026 14:16:00 PAGE 7   
 
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----

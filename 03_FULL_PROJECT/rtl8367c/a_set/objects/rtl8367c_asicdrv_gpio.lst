@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/02/2026 17:57:28 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/03/2026 14:15:54 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_GPIO
@@ -62,7 +62,7 @@ line level    source
   47           * Input:
   48           *      gpioPin     - GPIO pin number
   49           *      gpioOutput    - GPIO output
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/02/2026 17:57:28 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/03/2026 14:15:54 PAGE 2   
 
   50           * Output:
   51           *      None
@@ -126,7 +126,7 @@ line level    source
  107          ret_t rtl8367c_setAsicGpioEn(uint32 gpioPin, uint32 gpioEn)
  108          {
  109   1        if(gpioPin >= RTL8367C_GPIOPINNO)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/02/2026 17:57:28 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/03/2026 14:15:54 PAGE 3   
 
  110   1          return RT_ERR_OUT_OF_RANGE;
  111   1      
@@ -190,7 +190,7 @@ line level    source
                * Description:
                *      Get gpio output
                * Input:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/02/2026 17:57:28 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/03/2026 14:15:54 PAGE 4   
 
                *      gpioPin     - GPIO pin number
                *      pMode     - 0: Input, 1:Output
@@ -254,7 +254,7 @@ line level    source
                *      rtl8367c_getAsicGpioAclEnClear
                * Description:
                *      Get gpio output
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/02/2026 17:57:28 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_GPIO                                             11/03/2026 14:15:54 PAGE 5   
 
                * Input:
                *      gpioPin     - GPIO pin number

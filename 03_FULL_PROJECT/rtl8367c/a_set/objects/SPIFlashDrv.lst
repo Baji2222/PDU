@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 1   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SPIFLASHDRV
@@ -62,7 +62,7 @@ line level    source
   49          #define M_CMD_IO2       ((2)<<6)
   50          #define M_CMD_IO4       ((3)<<6)
   51          #define M_CMD_IO_Reserved (1<<8)
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 2   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 2   
 
   52          #define M_R_ADDR_IO1    ((1)<<9)
   53          #define M_R_ADDR_IO2    ((2)<<9)
@@ -126,7 +126,7 @@ line level    source
  111   1      #pragma asm
  112   1      //  struct spi_write_flash_argument_t * xdata arg=(struct spi_write_flash_argument_t *)argx;
  113   1      //  if (arg==NULL) return FALSE;
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 3   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 3   
 
  114   1          MOV     A, R7
  115   1          MOV     DPL, A
@@ -190,7 +190,7 @@ line level    source
  173   1      ?0034:
  174   1          
  175   1          //  return FALSE;
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 4   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 4   
 
  176   1          MOV     R7, #FALSE
  177   1      __spi_flash_drv_restore_S_mode_reg:
@@ -254,7 +254,7 @@ line level    source
  235   1      
  236   1      //  SPI_CMD_ISSUE = 1;
  237   1          SETB    SPI_CMD_ISSUE
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 5   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 5   
 
  238   1      
  239   1      //  while (!(__spi_flash_readSR()&SPI_FLASH_WEL));
@@ -318,7 +318,7 @@ line level    source
  297   1              MOV     SPI_S_DATA1, A
  298   1              INC     DPTR
  299   1              MOVX    A, @DPTR
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 6   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 6   
 
  300   1              MOV     SPI_S_DATA2, A
  301   1              INC     DPTR
@@ -382,7 +382,7 @@ line level    source
  359   1      //      SPI_S_ADDR1 = (uint8)((start_adr>> 8)&0x0000FF);
  360   1      //      SPI_S_ADDR0 = (uint8)((start_adr>> 0)&0x0000FF);
  361   1              MOV     A, R0
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 7   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 7   
 
  362   1              MOV     SPI_S_ADDR2, A
  363   1              MOV     A, R1
@@ -446,7 +446,7 @@ line level    source
  421   1      
  422   1      //  }
  423   1          SJMP    ?0021
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 8   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 8   
 
  424   1      
  425   1      ?0020:
@@ -510,7 +510,7 @@ line level    source
               #define M_SPI_C_FREAD   0x0B
               #define M_SPI_C_RDID    0x9F
               #define M_SPI_C_4RDID   0xAF
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 9   
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 9   
 
               #define M_SPI_C_WREN    0x06
               #define M_SPI_C_WRDI    0x04
@@ -574,7 +574,7 @@ line level    source
                   /* Set sfr for ReadSR */
                   SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_08cycle);
                   SPI_IO_CONF   = SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS);
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 10  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 10  
 
                   SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_SKIP_ADR;
                   SPI_S_WCMD    = SPI_C_WRSR;
@@ -638,7 +638,7 @@ line level    source
                   LJMP    __spi_flash_drv_init
               ?0032:
                   
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 11  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 11  
 
               //  uint8 len=arg->len; (R3)
                   INC     DPTR
@@ -702,7 +702,7 @@ line level    source
                   RET
               
               __spi_flash_waitRdy:
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 12  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 12  
 
               //  while( __spi_flash_readSR()&SPI_FLASH_WIP );
               ?0009:
@@ -766,7 +766,7 @@ line level    source
                       JZ      ?000E
                 ADD   A,#0xFB
                 JC      ?000E
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 13  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 13  
 
                 MOV     A, #(SPI_S_ACCESS_WRITE)
                 ORL     A, R3
@@ -830,7 +830,7 @@ line level    source
               ?0010:
               //  __spi_flash_waitRdy();
                   XCALL   __spi_flash_waitRdy
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 14  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 14  
 
               
               //  __spi_flash_drv_restore_S_mode_reg(); 
@@ -894,7 +894,7 @@ line level    source
               //      if ((--len)==0) break;
                       MOV     A, SPI_S_DATA2
                       MOVX    @DPTR, A
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 15  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 15  
 
                       INC     DPTR
                       DEC     R3
@@ -958,7 +958,7 @@ line level    source
               //  SPI_S_ADDR1   = (uint8)((erase_block_adr)&0xff);
                   MOV     A,R2
                   MOV     SPI_S_ADDR0,A
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 16  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 16  
 
               
               //  SPI_CMD_ISSUE = 1;
@@ -1022,7 +1022,7 @@ line level    source
                               0xBB,                                       /* spi_ri_cmd */
                               SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_04cycle), /* spi_s_conf */
                               0xBB,                                       /* spi_s_rcmd */
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 17  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 17  
 
                               SPI_C_PP                                    /* spi_s_wcmd */
                       },
@@ -1086,7 +1086,7 @@ line level    source
                       /* Read ID */
                       SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
                       SPI_IO_CONF   = SPI_IO_CONF_MHZ(SPI_IO_CONF_20_8MHZ);
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 18  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 18  
 
                       SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(3) | SPI_S_ACCESS_READ | \
                                       SPI_S_ACCESS_SKIP_ADR;
@@ -1150,7 +1150,7 @@ line level    source
                               OSAL_PRINTF("Unknown chipID=0x%04x%04x\n", *print_ptr, *(print_ptr+1));
                               size_in_kb = (uint16)(spi_chip0.chip_size>>10);
                               OSAL_PRINTF("Default Flash Size = %d KB\n", size_in_kb);
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 19  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 19  
 
                       }
               #endif /* end of else of 0==CONFIG_FLASH_PROBE */
@@ -1214,7 +1214,7 @@ line level    source
                               return FALSE;
                       }
                       
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 20  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 20  
 
                       for (i=0; i<flash_protect_region; i+=2){
                               if( erase_block_adr>flash_protect_area[i] && \
@@ -1278,7 +1278,7 @@ line level    source
                       SPI_S_CONF = spi_chip0.spi_s_conf; // reset S config for DataBank
                       
                       return SUCCESS;
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 21  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 21  
 
               }
               
@@ -1342,7 +1342,7 @@ line level    source
                               if( ( start_adr < flash_protect_area[i]      &&       \
                                         start_adr > flash_protect_area[i+1]  )      ||  \
                                       ((start_adr+len) > flash_protect_area[i] &&       \
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 22  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 22  
 
                                        (start_adr+len) < flash_protect_area[i+1]  )
                               ){
@@ -1406,7 +1406,7 @@ line level    source
                               SPI_CMD_ISSUE = 1;
                               
                               /* Check Controller Ready */
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 23  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 23  
 
                               while( 1==SPI_CTRL_BUSY );
                               
@@ -1470,7 +1470,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    DATA SIZE        =   ----    ----
    IDATA SIZE       =   ----    ----
    BIT SIZE         =   ----    ----
-C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/02/2026 17:56:52 PAGE 24  
+C51 COMPILER V9.60.0.0   SPIFLASHDRV                                                       11/03/2026 14:15:30 PAGE 24  
 
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----

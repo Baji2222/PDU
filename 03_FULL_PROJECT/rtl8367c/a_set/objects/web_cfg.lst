@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/03/2026 14:15:57 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_CFG
@@ -62,7 +62,7 @@ line level    source
              -x;font-weight:bold;margin-top:10px}\
   48          </style>\
   49          <script>\
-C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/03/2026 14:15:57 PAGE 2   
 
   50          function conf_backup(){window.location.href=\"/config_back.cgi?cmd=conf_backup\";}\
   51          function CfmFwUpg(s){return confirm('It must reboot your device for the upgrade to take effect, continue?'
@@ -126,7 +126,7 @@ line level    source
  106           * How it works:
  107           * - If cmd=conf_backup parameter is present: Sends the entire configuration 
  108           *   file (switch_cfg.bin) as a downloadable attachment
-C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/03/2026 14:15:57 PAGE 3   
 
  109           * - If no command parameter: Displays the HTML page with Backup/Restore buttons
  110           * - If unknown command: Returns HTTP 404 Not Found
@@ -190,7 +190,7 @@ line level    source
  168   1          return SUCCESS;
  169   1      }
  170          
-C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/03/2026 14:15:57 PAGE 4   
 
  171          /*
  172           * Function: post_http_restore
@@ -254,7 +254,7 @@ line level    source
  230   3                  
  231   3                  return SUCCESS;
  232   3              }
-C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/03/2026 14:15:57 PAGE 5   
 
  233   2          }
  234   1          else
@@ -318,7 +318,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/03/2026 14:15:57 PAGE 6   
 
    CODE SIZE        =   1193    ----
    CONSTANT SIZE    =   2671    ----

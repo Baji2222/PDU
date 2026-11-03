@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 1   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MIB2
@@ -62,7 +62,7 @@ line level    source
   49          #if !defined(SAL_REPLACE)
               #include <local/rtk_sal_mib.h>
               #else
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 2   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 2   
 
   52          #include <snmp/mib_glue.h>
 *** WARNING C322 IN LINE 165 OF ..\..\common\include\snmp/mib_glue.h: unknown identifier
@@ -126,7 +126,7 @@ line level    source
  110          //static void icmp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od) reentrant;
  111          //static void icmp_get_value(struct obj_def *od, u16_t len, void *value) reentrant;
  112          #if LWIP_TCP
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 3   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 3   
 
               //static void tcp_get_object_def(u8_t ident_len, s32_t *ident, struct obj_def *od) reentrant;
               //static void tcp_get_value(struct obj_def *od, u16_t len, void *value) reentrant;
@@ -190,7 +190,7 @@ line level    source
               /* udp .1.3.6.1.2.1.7 */
               /** index root node for udpTable */
               struct mib_list_rootnode udp_root = {
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 4   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 4   
 
                 &noleafs_get_object_def,
                 &noleafs_get_value,
@@ -254,7 +254,7 @@ line level    source
                 udp_ids,
                 udp_nodes
               };
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 5   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 5   
 
               #endif /* end of udp objects */
  238          
@@ -318,7 +318,7 @@ line level    source
               far struct mib_node* const tcp_nodes[15] = {
                 (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
                 (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 6   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 6   
 
                 (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
                 (struct mib_node* const)&tcp_scalar, (struct mib_node* const)&tcp_scalar,
@@ -382,7 +382,7 @@ line level    source
                 &ipntomtable_id,
                 &ipntomtable_node
               };
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 7   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 7   
 
               
               /** index root node for ipRouteTable */
@@ -446,7 +446,7 @@ line level    source
               far const s32_t ipaddrentry_ids[5] = { 1, 2, 3, 4, 5 };
               far struct mib_node* const ipaddrentry_nodes[5] = {
                 (struct mib_node* const)&ipaddrtree_root,
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 8   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 8   
 
                 (struct mib_node* const)&ipaddrtree_root,
                 (struct mib_node* const)&ipaddrtree_root,
@@ -510,7 +510,7 @@ line level    source
                 23,
                 ip_ids,
                 ip_nodes
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 9   
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 9   
 
               };
               #endif /* end of ip objects */
@@ -574,7 +574,7 @@ line level    source
               };
               #endif /* end of at objects */
  545          
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 10  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 10  
 
  546          //#if LWPS_SNMP_INTERFACE_GROUP /* mib2-interface objects */
  547          #if LWPS_SNMP_IFTABLE
@@ -638,7 +638,7 @@ line level    source
  604            &interfaces_get_object_def,
  605            &interfaces_get_value,
  606            &noleafs_set_test,
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 11  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 11  
 
  607            &noleafs_set_value,
  608            MIB_NODE_SC,
@@ -702,7 +702,7 @@ line level    source
               #endif
  667            //7,
  668          #if LWPS_SNMP_ETHERNET_LIKE
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 12  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 12  
 
  669            MIB_TRANSMISSION_ID,
  670          #endif
@@ -766,7 +766,7 @@ line level    source
  728            mib2_nodes
  729          };
  730          
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 13  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 13  
 
  731          /* mgmt .1.3.6.1.2 */
  732          far const s32_t mgmt_ids[1] = { 1 };
@@ -830,7 +830,7 @@ line level    source
  789          //static u8_t syscontact_default[SAL_SNMP_SYS_INFO_STR_LEN] = "";
  790          //static u8_t syscontact_len_default = sizeof(syscontact_default);
  791          //static u8_t* syscontact_len_ptr = (u8_t*)&syscontact_len_default;
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 14  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 14  
 
  792          static u8_t  syscontact_buf_len = CONFIG_SYSTEM_NAME_LEN;
  793          static u8_t  syscontact_buf[CONFIG_SYSTEM_CONTACT_LEN] = "";
@@ -894,7 +894,7 @@ line level    source
  851          /*
  852           * Function: noleafs_get_object_def
  853           * --------------------------------
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 15  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 15  
 
  854           * Placeholder for leaf node object definition.
  855           * Sets instance to MIB_OBJECT_NONE.
@@ -958,7 +958,7 @@ line level    source
  913          /*
  914           * Function: snmp_print_node_info
  915           * ------------------------------
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 16  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 16  
 
  916           * Prints MIB array node information for debugging.
  917           * Iterates through node entries (currently empty).
@@ -1022,7 +1022,7 @@ line level    source
  975   3            case 2: /* sysObjectID */
  976   3              od->instance = MIB_OBJECT_SCALAR;
  977   3              od->access = MIB_OBJECT_READ_ONLY;
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 17  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 17  
 
  978   3              od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
  979   3              od->v_len = sysobjid.len * sizeof(s32_t);
@@ -1086,7 +1086,7 @@ line level    source
 1037           * Copies values into SNMP response varbind buffer.
 1038           */
 1039          static void
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 18  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 18  
 
 1040          system_get_value(struct obj_def *od, u16_t len, void *value) reentrant
 1041          {
@@ -1150,7 +1150,7 @@ line level    source
 1099   2            {
 1100   3              set_ok = 1;
 1101   3            }
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 19  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 19  
 
 1102   2            break;
 1103   2          case 5: /* sysName */
@@ -1214,7 +1214,7 @@ line level    source
 1161   1          sal_flash_sys_description_get(sysdescription_buf);
 1162   1          sysdescription_buf_len = strlen(sysdescription_buf);
 1163   1          memset(syscontact_buf, 0, CONFIG_SYSTEM_NAME_LEN);
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 20  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 20  
 
 1164   1          sal_flash_sys_contact_get(syscontact_buf);
 1165   1          syscontact_buf_len = strlen(syscontact_buf);
@@ -1278,7 +1278,7 @@ line level    source
 1223          /*
 1224           * Function: ifentry_get_object_def
 1225           * --------------------------------
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 21  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 21  
 
 1226           * Defines ifTable entry objects for each interface.
 1227           * Handles ifIndex, ifDescr, ifType, ifMtu, ifSpeed, ifPhysAddress, etc.
@@ -1342,7 +1342,7 @@ line level    source
 1285   3              case 7:                /* ifAdminStatus */
 1286   3                  od->instance = MIB_OBJECT_TAB;
 1287   3                  od->access = MIB_OBJECT_READ_WRITE;
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 22  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 22  
 
 1288   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
 1289   3                  od->v_len = sizeof(s32_t);
@@ -1406,7 +1406,7 @@ line level    source
 1347   1          u8_t xdata id;
 1348   1          u8_t xdata tmp[3];
 1349   1          u8_t *u8_ptr = value;
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 23  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 23  
 
 1350   1          u8_t physical_port; // Map to actual physical port
 1351   1          
@@ -1470,7 +1470,7 @@ line level    source
 1409   2          case 4:                    /* ifMtu */
 1410   2              {
 1411   3                  u32_t *xdata uint_ptr = value;
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 24  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 24  
 
 1412   3                  *uint_ptr = P_BUFFER_SIZE;
 1413   3              }
@@ -1534,7 +1534,7 @@ line level    source
 1471   3                  u32_t *xdata  uint_ptr = value;
 1472   3                  *uint_ptr = linkChangeTime[physical_port-1];
 1473   3              }
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 25  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 25  
 
 1474   2              break;
 1475   2          case 10:                   /* ifInOctets */
@@ -1598,7 +1598,7 @@ line level    source
 1531   2              {
 1532   3                  u32_t xdata value64[2];
 1533   3                  GET_IF_HC_OUT_OCTETS(((u8_t)physical_port-1),((u8_t)(sizeof(u32_t)*2)), ((u8_t*)value64));
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 26  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 26  
 
 1534   3                  uncpy((u32_t *) value, (u32_t *) (value64 + 1), 1);
 1535   3              }
@@ -1662,7 +1662,7 @@ line level    source
 1590           * --------------------------
 1591           * Tests write permission for ifEntry objects.
 1592           * Only allows ifAdminStatus (id=7) with valid values (1 or 2).
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 27  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 27  
 
 1593           * Returns 1 if write allowed, 0 if denied.
 1594           */
@@ -1726,7 +1726,7 @@ line level    source
 1652   1          switch (id)
 1653   1          {
 1654   2          case 7:
-C51 COMPILER V9.60.0.0   MIB2                                                              11/02/2026 17:57:41 PAGE 28  
+C51 COMPILER V9.60.0.0   MIB2                                                              11/03/2026 14:16:06 PAGE 28  
 
 1655   2              sal_port_adminEnable_set(physical_port -1, adminEnable);
 1656   2              break;

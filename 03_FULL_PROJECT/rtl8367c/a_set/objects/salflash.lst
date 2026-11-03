@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 1   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALFLASH
@@ -62,7 +62,7 @@ line level    source
   49          /* -------------------- General Functions ------------------------------ */
   50          
   51          // Sal Flash Read Config Cache: Reads configuration data from cache memory
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 2   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 2   
 
   52          // Copies data from config cache to variable based on address offset
   53          void
@@ -126,7 +126,7 @@ line level    source
  109   1          sal_flash_mirror_init();
  110   1          sal_flash_l2_init();
  111   1          sal_flash_port_init();
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 3   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 3   
 
  112   1          sal_flash_qos_init();
  113   1          sal_flash_vlan_init();
@@ -190,7 +190,7 @@ line level    source
  171   1          sal_flash_sysGateway_set(default_gateway_u32);
  172   1      
  173   1          sal_flash_sysAccount_set(DFLT_SYS_USERNAME, DFLT_SYS_PASSWORD);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 4   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 4   
 
  174   1      }
  175          
@@ -254,7 +254,7 @@ line level    source
                   if ((SAL_MAX_PHY_N_CPU_PORT <= ucLId) && (ucLId < SAL_MAX_LOGIC_PORT)) {
                       sal_trunk_logicId_toStr(pcLogicId, ucLId);
                   }
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 5   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 5   
 
                   else {
                       sprintf(pcLogicId, "%d", ucLId+1);
@@ -318,7 +318,7 @@ line level    source
  295   1      }
  296          
  297          // Sal Flash Get Init OK Mark: Retrieves initialization marker from flash
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 6   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 6   
 
  298          // Returns whether config area has been properly initialized
  299          int32
@@ -382,7 +382,7 @@ line level    source
  357          // Sal Flash Sys DHCP Get: Retrieves DHCP enable/disable status from flash
  358          // Reads DHCP configuration from system info structure
  359          int32
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 7   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 7   
 
  360          sal_flash_sysDhcp_get (
  361              sal_enable_t *pEnable
@@ -446,7 +446,7 @@ line level    source
  419          
  420          // Sal Flash Sys Gateway Get: Retrieves gateway address from flash
  421          // Reads gateway configuration from system info structure
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 8   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 8   
 
  422          int32
  423          sal_flash_sysGateway_get (
@@ -510,7 +510,7 @@ line level    source
               SalFlshSysSetBootCmd (
                   uint8   *strCmd
                   )
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 9   
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 9   
 
               {
                   sal_flash_sysInfo_t stFlshSys;
@@ -574,7 +574,7 @@ line level    source
  543              uint8 *pPassword
  544              )
  545          {
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 10  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 10  
 
  546   1          sal_flash_account_t stFlshUsr;
  547   1          
@@ -638,7 +638,7 @@ line level    source
  605   1      
  606   1          if (portId > SAL_PORT_ID_CPU - 1) {
  607   2              return SAL_ERR_PORT_RANGE;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 11  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 11  
 
  608   2          }
  609   1      
@@ -702,7 +702,7 @@ line level    source
  667          // Stores CPU egress rate limit configuration in flash
  668          int32
  669          sal_flash_rate_cpuEgrCtrl_set (sal_enable_t enable)
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 12  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 12  
 
  670          {
  671   1          sal_flash_fwd_t flshFwd;
@@ -766,7 +766,7 @@ line level    source
  729          {
  730   1          sal_flash_fwd_t flshFwd;
  731   1      
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 13  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 13  
 
  732   1          _SalFlshRead(&flshFwd, FLSH_ADDR_FWD, sal_flash_fwd_t);
  733   1          flshFwd.egrIncludeIFG = include;
@@ -830,7 +830,7 @@ line level    source
  791          {
  792   1          sal_flash_port_t flshPort;
  793   1          sal_pPortmask_t  portMask;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 14  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 14  
 
  794   1          sal_port_t       port;
  795   1      
@@ -894,7 +894,7 @@ line level    source
  853   1          /*Modify this for Defence Engine*/
  854   1          for (port = 0; port <= SAL_PORT_ID_CPU; ++port) {
  855   2              if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&portMask, port)) {
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 15  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 15  
 
  856   3                  flshPort.egrRate[port] = rate;
  857   3              }
@@ -958,7 +958,7 @@ line level    source
  915          {
  916   1          sal_flash_fwd_t flshFwd;
  917   1      
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 16  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 16  
 
  918   1          _SalFlshRead(&flshFwd, FLSH_ADDR_FWD, sal_flash_fwd_t);
  919   1          flshFwd.mirror[mirrId].mode = mode;
@@ -1022,7 +1022,7 @@ line level    source
  977   3              }
  978   2      
  979   2              sal_flash_port_adminEnable_set(port, DFLT_PORT_EBL);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 17  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 17  
 
  980   2              sal_flash_port_phyAbility_set(port, &ability);
  981   2              sal_flash_port_flowCtrl_set(port, DFLT_PORT_FLOW_CTRL);
@@ -1086,7 +1086,7 @@ line level    source
 1039              sal_port_t port,
 1040              sal_phyAbility_t *pPhyAbility
 1041              )
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 18  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 18  
 
 1042          {
 1043   1          sal_port_t  p_port;
@@ -1150,7 +1150,7 @@ line level    source
 1101          int32
 1102          sal_flash_port_flowCtrl_set (
 1103              sal_port_t port,
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 19  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 19  
 
 1104              sal_enable_t enable
 1105              )
@@ -1214,7 +1214,7 @@ line level    source
                   for (p_port = 0; p_port < SAL_MAX_PHY_PORT; ++p_port) {
                       if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&p_portMask, p_port)) {
                           flash_port.securityNum[p_port] = num;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 20  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 20  
 
                       }
                   }
@@ -1278,7 +1278,7 @@ line level    source
               
                   if (port > SAL_PORT_ID_CPU - 1) {
                       return SAL_ERR_PORT_RANGE;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 21  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 21  
 
                   }
               
@@ -1342,7 +1342,7 @@ line level    source
 1287          
 1288          /* -------------------- MAC Table Functions ---------------------------- */
 1289          
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 22  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 22  
 
 1290          void
 1291          sal_flash_l2_init ()
@@ -1406,7 +1406,7 @@ line level    source
 1347          int32
 1348          sal_flash_l2_sttcEntry_get (
 1349              uint32  slot,
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 23  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 23  
 
 1350              sal_flash_l2_sttcEntry_t *pEntry
 1351              )
@@ -1470,7 +1470,7 @@ line level    source
 1408   3                      && (Entry.fid == fid))
 1409   3                  {
 1410   4                      *usSlot = index; /* found matched entry */
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 24  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 24  
 
 1411   4                      return SAL_ERR_SUCCESS;
 1412   4                  }
@@ -1534,7 +1534,7 @@ line level    source
 1470   1      }
 1471          
 1472          int32 sal_flash_l2_mac_constraint_get(sal_port_t port, uint32* pMac_cnt)
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 25  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 25  
 
 1473          {
 1474   1          sal_port_t  p_port;
@@ -1598,7 +1598,7 @@ line level    source
                   sal_flash_trunk_t flash_trunk;
               
                   _SalFlshRead(&flash_trunk, FLSH_ADDR_TRK, sal_flash_trunk_t);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 26  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 26  
 
                   flash_trunk.flashTrunkGroup[trkId].paraMsk= paraMsk;
                   _SalFlshWrite(FLSH_ADDR_TRK, &flash_trunk, sal_flash_trunk_t);
@@ -1662,7 +1662,7 @@ line level    source
 1594   1          sal_flash_trunk_t flash_trunk;
 1595   1          pIs_Lacp = NULL; // kill compiler warning
 1596   1      
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 27  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 27  
 
 1597   1          _SalFlshRead(&flash_trunk, FLSH_ADDR_TRK, sal_flash_trunk_t);
 1598   1          sal_pPortMask_copy(pPortMask, &flash_trunk.flashTrunkGroup[trkId].portMask);
@@ -1726,7 +1726,7 @@ line level    source
 1655   1          return SAL_ERR_SUCCESS;
 1656   1      }
 1657          
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 28  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 28  
 
 1658          int32
 1659          sal_flash_vlan_enable_get (
@@ -1790,7 +1790,7 @@ line level    source
 1717              sal_port_t port,
 1718              sal_vlan_t vlan_id
 1719              )
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 29  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 29  
 
 1720          {
 1721   1          sal_flash_vlan_t flashVlan;
@@ -1854,7 +1854,7 @@ line level    source
 1779   3              }
 1780   2          }
 1781   1          _SalFlshWrite(FLSH_ADDR_VLAN, &flashVlan, sal_flash_vlan_t);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 30  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 30  
 
 1782   1          return SAL_ERR_SUCCESS;
 1783   1      
@@ -1918,7 +1918,7 @@ line level    source
 1840          sal_flash_vlan_sttcEntry_set (
 1841              uint16 slot,
 1842              sal_flash_vlanEntry_t *pVlanEntry
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 31  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 31  
 
 1843              )
 1844          {
@@ -1982,7 +1982,7 @@ line level    source
 1898          
 1899          #if SAL_SERVICE_VLAN
               void
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 32  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 32  
 
               sal_flash_svlan_init ()
               {
@@ -2046,7 +2046,7 @@ line level    source
                   _SalFlshWrite(FLSH_ADDR_SVLAN_DFT, pstSvid, sal_vlan_t);
                   return SAL_ERR_SUCCESS;
               }
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 33  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 33  
 
               
               int32
@@ -2110,7 +2110,7 @@ line level    source
               }
               
               
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 34  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 34  
 
               int32
               sal_flash_svlan_sttcEntry_remove (
@@ -2174,7 +2174,7 @@ line level    source
 2081   2              sal_flash_qos_portPri_set(ucPortId, DFLT_QOS_PORT_TO_INTERNAL_PRI);
 2082   2              sal_flash_qos_queueNum_set(ucPortId, DFLT_QOS_QUEUE_NUMBER);
 2083   2              sal_flash_qos_schedulingAlgo_set(ucPortId, DFLT_QOS_SCHED_ALGORITHM);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 35  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 35  
 
 2084   2              sal_flash_qos_schedulingQueue_set(ucPortId, &qweights);   
 2085   2          }
@@ -2238,7 +2238,7 @@ line level    source
 2143   1          sal_trunk_logicId_toPhysicMask(&pPortMask, port);
 2144   1      
 2145   1          for (pPortId = 0; pPortId < SAL_PORT_ID_CPU; ++pPortId)
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 36  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 36  
 
 2146   1          {
 2147   2              if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&pPortMask, pPortId))
@@ -2302,7 +2302,7 @@ line level    source
 2205          int32
 2206          sal_flash_qos_queueNum_get (
 2207              sal_port_t port,
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 37  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 37  
 
 2208              uint8 *pQueueNum
 2209              )
@@ -2366,7 +2366,7 @@ line level    source
 2267   1          for (pPortId = 0; pPortId < SAL_PORT_ID_CPU; ++pPortId)
 2268   1          {
 2269   2              if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&pPortMask, pPortId))
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 38  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 38  
 
 2270   2              {
 2271   3                  for (index = 0; index < SAL_MAX_NUM_OF_QUEUE; index++)
@@ -2430,7 +2430,7 @@ line level    source
 2329   1          sal_flash_qos_table_t qosTable;
 2330   1      
 2331   1          _SalFlshRead(&qosTable, FLSH_ADDR_QOS_TBL_BEGIN, sal_flash_qos_table_t);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 39  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 39  
 
 2332   1          *int_pri = qosTable.dscpRemaping.intPri[dscp];
 2333   1          
@@ -2494,7 +2494,7 @@ line level    source
                   dscp_cfg.dscp[qid] = dscp;
                   dscp_cfg.dscp_enable = enable;
               
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 40  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 40  
 
                   _SalFlshWrite(FLSH_ADDR_DSCP_BEGIN, &dscp_cfg, sal_flash_qos_dscp_remarking_t);
               
@@ -2558,7 +2558,7 @@ line level    source
 2453   1      }
 2454          
 2455          /* Function Name:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 41  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 41  
 
 2456           *      sal_flash_cfg_reset
 2457           * Description:
@@ -2622,7 +2622,7 @@ line level    source
 2515   1              return SAL_ERR_NULL_POINTER;
 2516   1          if(off + length > sizeof(configCache))
 2517   1              return SAL_ERR_PARAMETER;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 42  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 42  
 
 2518   1      
 2519   1          memcpy((uint8*)&configCache + off, pData, length);
@@ -2686,7 +2686,7 @@ line level    source
 2577           * Input:
 2578           *      None
 2579           * Output:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 43  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 43  
 
 2580           *      ppConfig - pointer to address of configuration
 2581           * Return:
@@ -2750,7 +2750,7 @@ line level    source
 2639          
 2640          
 2641          int32
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 44  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 44  
 
 2642          sal_flash_loop_get (
 2643              sal_loop_mode_t *pMode
@@ -2814,7 +2814,7 @@ line level    source
 2701          sal_flash_loop_recover_time_set(uint32 time)
 2702          {
 2703   1          sal_flash_loop_t rlpp;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 45  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 45  
 
 2704   1      
 2705   1          _SalFlshRead(&rlpp, FLSH_ADDR_LOOP_BEGIN, sal_flash_loop_t);
@@ -2878,7 +2878,7 @@ line level    source
                *      None
                */
               void
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 46  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 46  
 
               sal_flash_stp_init (void)
               {
@@ -2942,7 +2942,7 @@ line level    source
                *      Set stp/rstp version into flash.
                * Input:
                *      version - version of stp/rstp.
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 47  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 47  
 
                * Output:
                *      None
@@ -3006,7 +3006,7 @@ line level    source
                *      SAL_ERR_PARAMETER - invalid parameter
                * Note:
                *      None
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 48  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 48  
 
                */
               int32
@@ -3070,7 +3070,7 @@ line level    source
                * Return:
                *      SAL_ERR_SUCCESS
                *      SAL_ERR_PARAMETER - invalid parameter
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 49  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 49  
 
                * Note:
                *      None
@@ -3134,7 +3134,7 @@ line level    source
                * Description:
                *      Set port parameter of stp/rstp into flash.
                * Input:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 50  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 50  
 
                *      pPortPara - Pointer to port parameter of stp/rstp.
                *      port      - logical port id 
@@ -3198,7 +3198,7 @@ line level    source
 3073   1      
 3074   1          if(eeeEnable >= SAL_ENABLE_END)
 3075   1              return SAL_ERR_PARAMETER;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 51  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 51  
 
 3076   1      
 3077   1          eee.enable = eeeEnable;
@@ -3262,7 +3262,7 @@ line level    source
 3135           *      None
 3136           */
 3137          int32 sal_flash_greenEth_port_enable_set (sal_enable_t enable)
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 52  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 52  
 
 3138          {
 3139   1          sal_flash_greeneth_t greeneth;
@@ -3326,7 +3326,7 @@ line level    source
 3197          
 3198          #endif
 3199          
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 53  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 53  
 
 3200          #if SAL_LLDP
               /* Function Name:
@@ -3390,7 +3390,7 @@ line level    source
               
               /* Function Name:
                *      sal_flash_lldp_time_set
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 54  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 54  
 
                * Description:
                *      Set time configuration of LLDP in flash
@@ -3454,7 +3454,7 @@ line level    source
                *      Set port state configuration of LLDP in flash
                * Input:
                *      port  - port id 
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 55  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 55  
 
                *      state - port state
                * Output:
@@ -3518,7 +3518,7 @@ line level    source
                * Note:
                *      None
                */
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 56  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 56  
 
               int32 sal_flash_lldp_init()
               {
@@ -3582,7 +3582,7 @@ line level    source
 3445           *      SAL_ERR_SUCCESS
 3446           *      SAL_ERR_NULL_POINTER
 3447           *      SAL_ERR_PARAMETER
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 57  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 57  
 
 3448           * Note:
 3449           *      None
@@ -3646,7 +3646,7 @@ line level    source
 3507   1          _SalFlshRead(&stFlshSnmp, FLSH_ADDR_SNMP_BEGIN, sal_flash_snmp_t);
 3508   1          *pTrapIp = stFlshSnmp.trapIp;
 3509   1          
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 58  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 58  
 
 3510   1          return SAL_ERR_SUCCESS;
 3511   1      }
@@ -3710,7 +3710,7 @@ line level    source
 3569           * Return:
 3570           *      SAL_ERR_SUCCESS
 3571           * Note:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 59  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 59  
 
 3572           *      None
 3573           */
@@ -3774,7 +3774,7 @@ line level    source
 3631          int32 sal_flash_sys_location_get(char *pLocation)
 3632          {
 3633   1          sal_flash_snmp_t stFlshSnmp;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 60  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 60  
 
 3634   1          
 3635   1          if(pLocation == NULL)
@@ -3838,7 +3838,7 @@ line level    source
 3693   1          
 3694   1          if(pDescription == NULL)
 3695   1              return SAL_ERR_NULL_POINTER;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 61  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 61  
 
 3696   1      
 3697   1          strSize = strlen(pDescription);
@@ -3902,7 +3902,7 @@ line level    source
 3755           * Input:
 3756           *      pLocation - Set the Location to flash 
 3757           * Output:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 62  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 62  
 
 3758           *      None 
 3759           * Return:
@@ -3966,7 +3966,7 @@ line level    source
 3817   1          FLASH_WRITE((uint32)FLSH_NVDATA_START, buf, sizeof(buf));
 3818   1      
 3819   1          return SAL_ERR_SUCCESS;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 63  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 63  
 
 3820   1      }
 3821          
@@ -4030,7 +4030,7 @@ line level    source
 3879           *      plogServerIp - Pointer to IP Address  
 3880           * Return:
 3881           *      SAL_ERR_SUCCESS
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 64  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 64  
 
 3882           *      SAL_ERR_NULL_POINTER
 3883           * Note:
@@ -4094,7 +4094,7 @@ line level    source
 3941   1          return SAL_ERR_SUCCESS;
 3942   1      }
 3943          
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 65  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 65  
 
 3944          
 3945          
@@ -4158,7 +4158,7 @@ line level    source
 4003           *      sal_flash_syslog_buf_set
 4004           * Description:
 4005           *      Set Syslog buffer to flash
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 66  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 66  
 
 4006           * Input:
 4007           *      
@@ -4222,7 +4222,7 @@ line level    source
 4061           */
 4062          
 4063          int32 sal_flash_syslog_buf_tail_index_set(uint16 tailIndex)
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 67  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 67  
 
 4064          {
 4065   1          uint16 stFlshSyslogTailIdx;
@@ -4286,7 +4286,7 @@ line level    source
 4122          /* Function Name:
 4123           *      sal_flash_syslog_buf_head_index_get
 4124           * Description:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 68  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 68  
 
 4125           *      Get Syslog buffer free Index from flash
 4126           * Input:
@@ -4350,7 +4350,7 @@ line level    source
                */
               int32 sal_flash_syslog_buf_getAll(sal_flash_syslog_buf_t* pSysLogBuf)
               {
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 69  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 69  
 
                   sal_flash_syslog_buf_t stFlshSyslogBuf;
                   uint32 flashMemoryBegin = FLSH_ADDR_SYSLOG_BEGIN + sizeof(sal_flash_syslog_t);
@@ -4414,7 +4414,7 @@ line level    source
 4246   1          sal_flash_igmp_t igmp;
 4247   1          
 4248   1          _SalFlshRead(&igmp, FLSH_ADDR_IGMP_BEGIN, sal_flash_igmp_t);
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 70  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 70  
 
 4249   1          igmp.enable = igmpStatus;
 4250   1          _SalFlshWrite(FLSH_ADDR_IGMP_BEGIN, &igmp, sal_flash_igmp_t);
@@ -4478,7 +4478,7 @@ line level    source
 4308           * Input:
 4309           *      type - pointer to device type
 4310           * Output:
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 71  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 71  
 
 4311           *      None
 4312           * Return:
@@ -4542,7 +4542,7 @@ line level    source
 4370           *      SAL_ERR_NULL_POINTER 
 4371           * Note:
 4372           *      None
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 72  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 72  
 
 4373           */
 4374          //int32 sal_flash_userData_set(uint32 addr , uint16 length, uint8 *pData)
@@ -4606,7 +4606,7 @@ line level    source
 4432   1          return SAL_ERR_SUCCESS;
 4433   1      }
 4434          extern int32 sal_flash_vlan_id_get(uint32 addr , uint16 length, uint8 *pData)
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 73  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 73  
 
 4435          {
 4436   1        uint8 xdata buf[4];
@@ -4670,7 +4670,7 @@ line level    source
 4493   1          memcpy(fwversion, buf, sizeof(buf));
 4494   1      
 4495   1          return SAL_ERR_SUCCESS;
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 74  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 74  
 
 4496   1      }
 4497          
@@ -4734,7 +4734,7 @@ line level    source
 MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =  18655    ----
    CONSTANT SIZE    =    155    ----
-C51 COMPILER V9.60.0.0   SALFLASH                                                          11/02/2026 17:57:05 PAGE 75  
+C51 COMPILER V9.60.0.0   SALFLASH                                                          11/03/2026 14:15:37 PAGE 75  
 
    XDATA SIZE       =   3542   12128
    PDATA SIZE       =   ----    ----

@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_MIB
@@ -62,7 +62,7 @@ line level    source
   48   1                      (((portmask & 0xFF) << RTL8367C_PORT0_RESET_OFFSET) & RTL8367C_MIB_PORT07_MASK) |
   49   1                      (((portmask >> 8)&0x7) << 13);
   50   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 2   
 
   51   1      
   52   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_MIB_CTRL0, regBits, (regData >> RTL8367C_PORT0_RESET_OFF
@@ -126,7 +126,7 @@ line level    source
  108   1          else
  109   1          {
  110   2              i = 0;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 3   
 
  111   2              mibOff = RTL8367C_MIB_PORT_OFFSET * port;
  112   2      
@@ -190,7 +190,7 @@ line level    source
  170   2                  return retVal;
  171   2      
  172   2              mibCounter = (mibCounter << 16) | (regData & 0xFFFF);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 4   
 
  173   2      
  174   2              regAddr --;
@@ -254,7 +254,7 @@ line level    source
                       return retVal;
               
                   if(regData & RTL8367C_MIB_CTRL0_BUSY_FLAG_MASK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 5   
 
                       return RT_ERR_BUSYWAIT_TIMEOUT;
               
@@ -318,7 +318,7 @@ line level    source
                *      value           - Reset to value 0 or 1
                * Output:
                *      None
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 6   
 
                * Return:
                *      RT_ERR_OK       - Success
@@ -382,7 +382,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_getAsicMIBsUsageMode(uint32* pMode)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 7   
 
               {
                   return rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_CTRL4, RTL8367C_MIB_USAGE_MODE_OFFSET, pMode);
@@ -446,7 +446,7 @@ line level    source
                       return RT_ERR_OUT_OF_RANGE;
               
                   return rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_CTRL3, index,mode);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 8   
 
               }
               /* Function Name:
@@ -510,7 +510,7 @@ line level    source
                *      RT_ERR_OK               - Success
                *      RT_ERR_SMI              - SMI access error
                *      RT_ERR_OUT_OF_RANGE     - input parameter out of range
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 9   
 
                * Note:
                *      None
@@ -574,7 +574,7 @@ line level    source
                   ret_t retVal;
               
                   if( (retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_RMON_LEN_CTRL, RTL8367C_TX_LENGTH_CTRL_OFFSET, t
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/03/2026 14:15:46 PAGE 10  
 
              -xLengthMode)) != RT_ERR_OK)
                       return retVal;

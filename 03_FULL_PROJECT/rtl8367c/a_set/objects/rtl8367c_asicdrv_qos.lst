@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_QOS
@@ -62,7 +62,7 @@ line level    source
                * Description:
                *      Get 802.1Q absolutely priority
                * Input:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 2   
 
                *      srcpriority - Priority value
                *      pPriority     - Absolute priority value
@@ -126,7 +126,7 @@ line level    source
  106   2          }
  107   1      
  108   1          return RT_ERR_OK;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 3   
 
  109   1      }
  110          /* Function Name:
@@ -190,7 +190,7 @@ line level    source
  166          {
  167   1          if(priority > RTL8367C_PRIMAX )
  168   1              return RT_ERR_QOS_INT_PRIORITY;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 4   
 
  169   1      
  170   1          if(dscp > RTL8367C_DSCPMAX)
@@ -254,7 +254,7 @@ line level    source
  226   1              return RT_ERR_QOS_INT_PRIORITY;
  227   1      
  228   1          switch(index)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 5   
 
  229   1          {
  230   2              case PRIDEC_IDX0:
@@ -318,7 +318,7 @@ line level    source
  284   2                  break;
  285   2          };
  286   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 6   
 
  287   1          return RT_ERR_OK;
  288   1      
@@ -382,7 +382,7 @@ line level    source
  346           *      Set output queue number for each port
  347           * Input:
  348           *      port     - Physical port number (0~7)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 7   
 
  349           *      index     - Mapping table index
  350           * Output:
@@ -446,7 +446,7 @@ line level    source
  406           *      RT_ERR_QUEUE_ID          - Invalid queue id
  407           *      RT_ERR_QUEUE_NUM          - Invalid queue number
  408           *      RT_ERR_QOS_INT_PRIORITY - Invalid priority
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 8   
 
  409           * Note:
  410           *      None
@@ -510,7 +510,7 @@ line level    source
                *      RT_ERR_PORT_ID      - Invalid port number
                * Note:
                *      None
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 9   
 
                */
               ret_t rtl8367c_setAsicRemarkingDot1pAbility(uint32 port, uint32 enabled)
@@ -574,7 +574,7 @@ line level    source
                * Return:
                *      RT_ERR_OK                 - Success
                *      RT_ERR_SMI              - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 10  
 
                *      RT_ERR_QOS_INT_PRIORITY - Invalid priority
                * Note:
@@ -638,7 +638,7 @@ line level    source
               ret_t rtl8367c_getAsicRemarkingDot1pSrc(uint32 *pType)
               {
                   return rtl8367c_getAsicRegBit(RTL8367C_REG_RMK_CFG_SEL_CTRL, RTL8367C_RMK_1Q_CFG_SEL_OFFSET, pType);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 11  
 
               }
               
@@ -702,7 +702,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_setAsicRemarkingDscpParameter(uint32 priority, uint32 newDscp )
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 12  
 
               {
                   if(priority > RTL8367C_PRIMAX )
@@ -766,7 +766,7 @@ line level    source
               
                   return rtl8367c_setAsicRegBits(RTL8367C_REG_RMK_CFG_SEL_CTRL, RTL8367C_RMK_DSCP_CFG_SEL_MASK, type);
               }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 13  
 
               
               
@@ -830,7 +830,7 @@ line level    source
                *      pRmkDscp   - remarked DSCP value
                * Return:
                *      RT_ERR_OK
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/02/2026 17:57:23 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_QOS                                              11/03/2026 14:15:49 PAGE 14  
 
                *      RT_ERR_FAILED
                *      RT_ERR_QOS_DSCP_VALUE   - Invalid dscp value

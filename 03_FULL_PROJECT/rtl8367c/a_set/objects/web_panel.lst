@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_PANEL                                                         11/02/2026 17:57:35 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_PANEL                                                         11/03/2026 14:16:01 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_PANEL
@@ -62,7 +62,7 @@ line level    source
   49           * Displays the main panel page with "OPL SMART PDU RACK" title.
   50           * Uses clean, centered design with beetroot red colored heading.
   51           * Sets up full viewport height with flexbox centering.
-C51 COMPILER V9.60.0.0   WEB_PANEL                                                         11/02/2026 17:57:35 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_PANEL                                                         11/03/2026 14:16:01 PAGE 2   
 
   52           * Serves as the default landing/display page for the switch.
   53           */

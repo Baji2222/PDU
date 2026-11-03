@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_RMA
@@ -62,7 +62,7 @@ line level    source
   48   1          regData |= ((pRmacfg->discard_storm_filter & 0x0001) << 6);
   49   1          regData |= ((pRmacfg->operation & 0x0003) << 7);
   50   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 2   
 
   51   1          if( (index >= 0x4 && index <= 0x7) || (index >= 0x9 && index <= 0x0C) || (0x0F == index))
   52   1              index = 0x04;
@@ -126,7 +126,7 @@ line level    source
                   if(retVal != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 3   
 
                   pRmacfg->trap_priority = regData;
               
@@ -190,7 +190,7 @@ line level    source
                */
               ret_t rtl8367c_getAsicRmaCdp(rtl8367c_rma_t* pRmacfg)
               {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 4   
 
                   ret_t retVal;
                   uint32 regData;
@@ -254,7 +254,7 @@ line level    source
                       return retVal;
               
                   return rtl8367c_setAsicReg(RTL8367C_REG_RMA_CTRL_CSSTP, regData);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 5   
 
               }
               /* Function Name:
@@ -318,7 +318,7 @@ line level    source
                   ret_t retVal;
               
                   if(enabled > 1)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 6   
 
                       return RT_ERR_ENABLE;
               
@@ -382,7 +382,7 @@ line level    source
                   pRmacfg->portiso_leaky = (regData & 0x0001);
               
                   retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, &regData);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/02/2026 17:57:24 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              11/03/2026 14:15:50 PAGE 7   
 
                   if(retVal != RT_ERR_OK)
                       return retVal;

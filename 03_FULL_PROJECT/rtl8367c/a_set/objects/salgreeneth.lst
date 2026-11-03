@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALGREENETH                                                       11/02/2026 17:57:06 PAGE 1   
+C51 COMPILER V9.60.0.0   SALGREENETH                                                       11/03/2026 14:15:38 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALGREENETH
@@ -62,7 +62,7 @@ line level    source
   49          int32 sal_greenEth_enable_set(sal_enable_t enable)
   50          {
   51   1      //    uint16 i;
-C51 COMPILER V9.60.0.0   SALGREENETH                                                       11/02/2026 17:57:06 PAGE 2   
+C51 COMPILER V9.60.0.0   SALGREENETH                                                       11/03/2026 14:15:38 PAGE 2   
 
   52   1      
   53   1          if(enable >= SAL_ENABLE_END)    

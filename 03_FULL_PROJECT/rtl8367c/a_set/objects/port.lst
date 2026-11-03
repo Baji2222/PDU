@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 1   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE PORT
@@ -62,7 +62,7 @@ line level    source
   49          0x9D,0x12,0x02,0x57,0x7D,0x23,0x12,0x01,
   50          0xF4,0x7D,0x10,0x7C,0xD8,0x12,0x02,0x57,
   51          0x7D,0x24,0x7C,0x04,0x12,0x02,0x28,0x7D,
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 2   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 2   
 
   52          0x00,0x12,0x02,0x1E,0x7D,0x2F,0x12,0x02,
   53          0x09,0x7D,0x20,0x7C,0x0F,0x7F,0x02,0x7E,
@@ -126,7 +126,7 @@ line level    source
  111          0x02,0x15,0x83,0xE0,0x38,0xF0,0x22,0x75,
  112          0xF0,0x08,0x75,0x82,0x00,0xEF,0x2F,0xFF,
  113          0xEE,0x33,0xFE,0xCD,0x33,0xCD,0xCC,0x33,
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 3   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 3   
 
  114          0xCC,0xC5,0x82,0x33,0xC5,0x82,0x9B,0xED,
  115          0x9A,0xEC,0x99,0xE5,0x82,0x98,0x40,0x0C,
@@ -190,7 +190,7 @@ line level    source
  173          0x24,0x0C,0xC8,0xC3,0x33,0xC4,0x54,0x0F,
  174          0x44,0x20,0xC8,0x83,0x40,0x04,0xF4,0x56,
  175          0x80,0x01,0x46,0xF6,0xDF,0xE4,0x80,0x0B,
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 4   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 4   
 
  176          0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,
  177          0x90,0x05,0xCB,0xE4,0x7E,0x01,0x93,0x60,
@@ -254,7 +254,7 @@ line level    source
  235           *      RT_ERR_SMI              - SMI access error
  236           *      RT_ERR_PORT_ID          - Invalid port number.
  237           *      RT_ERR_PHY_REG_ID       - Invalid PHY address
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 5   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 5   
 
  238           *      RT_ERR_INPUT            - Invalid input parameters.
  239           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
@@ -318,7 +318,7 @@ line level    source
  292   3                      return retVal;
  293   3              }
  294   2              else
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 6   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 6   
 
  295   2              {
  296   3                  if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_FIB0_CFG00, 0x0140)) != RT_ERR_OK)
@@ -382,7 +382,7 @@ line level    source
  352   1              return retVal;
  353   1      
  354   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_DATA, 0x1403))!=RT_ERR_OK)
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 7   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 7   
 
  355   1              return retVal;
  356   1      
@@ -446,7 +446,7 @@ line level    source
                   if ((retVal = rtl8367c_getAsicReg(RTL8367C_REG_SDS_INDACS_DATA, &regData)) != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 8   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 8   
 
                   if(regData & (0x0001 << 8))
                       pAbility->AsyFC = 1;
@@ -510,7 +510,7 @@ line level    source
  471           *      RT_ERR_INPUT            - Invalid input parameters.
  472           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
  473           * Note:
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 9   
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 9   
 
  474           *      If Full_1000 bit is set to 1, the AutoNegotiation will be automatic set to 1. While both AutoNegot
              -iation and Full_1000 are set to 0, the PHY speed and duplex selection will
@@ -574,7 +574,7 @@ line level    source
  532   1      
  533   1          if (1 == pAbility->Full_10)
  534   1          {
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 10  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 10  
 
  535   2              /*10BASE-TX full duplex capable in reg 4.6*/
  536   2              phyEnMsk4 = phyEnMsk4 | (1 << 6);
@@ -638,7 +638,7 @@ line level    source
  594   2              /*Auto-Negotiation setting in reg 0.12*/
  595   2              phyEnMsk0 = phyEnMsk0 | (1 << 12);
  596   2      
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 11  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 11  
 
  597   2           }
  598   1      
@@ -702,7 +702,7 @@ line level    source
  650          #if 0 //NOT used
               /* Function Name:
                *      rtk_port_phyAutoNegoAbility_get
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 12  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 12  
 
                * Description:
                *      Get PHY ability through PHY registers.
@@ -766,7 +766,7 @@ line level    source
               
                   if (phyData9 & (1 << 9))
                       pAbility->Full_1000 = 1;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 13  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 13  
 
                   else
                       pAbility->Full_1000 = 0;
@@ -830,7 +830,7 @@ line level    source
  771           *      RT_ERR_INPUT            - Invalid input parameters.
  772           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
  773           * Note:
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 14  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 14  
 
  774           *      While both AutoNegotiation and Full_1000 are set to 0, the PHY speed and duplex selection will
  775           *      be set as following 100F > 100H > 10F > 10H priority sequence.
@@ -894,7 +894,7 @@ line level    source
  833   2               /* 01= 100Mpbs*/
  834   2               /* 00= 10Mpbs*/
  835   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 15  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 15  
 
  836   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 13));
  837   2           }
@@ -958,7 +958,7 @@ line level    source
  895   1      
  896   1           /*1000 BASE-T control register setting*/
  897   1           if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, &phyD
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 16  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 16  
 
              -ata)) != RT_ERR_OK)
  898   1               return retVal;
@@ -1022,7 +1022,7 @@ line level    source
                   rtk_port_media_t    media_type;
               
                   /* Check initialization state */
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 17  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 17  
 
                   RTK_CHK_INIT_STATE();
               
@@ -1086,7 +1086,7 @@ line level    source
               
                   if (phyData4 & (1 << 6))
                       pAbility->Full_10 = 1;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 18  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 18  
 
                   else
                       pAbility->Full_10 = 0;
@@ -1150,7 +1150,7 @@ line level    source
                   if (phyData & (1<<2))
                   {
                       *pLinkStatus = 1;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 19  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 19  
 
               
                       /*check link speed*/
@@ -1214,7 +1214,7 @@ line level    source
                   ability.link      = pPortability->link;
                   ability.nway      = pPortability->nway;
                   ability.txpause   = pPortability->txpause;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 20  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 20  
 
                   ability.rxpause   = pPortability->rxpause;
               
@@ -1278,7 +1278,7 @@ line level    source
                *      mode            - external interface mode
                *      pPortability    - port ability configuration
                * Output:
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 21  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 21  
 
                *      None
                * Return:
@@ -1342,7 +1342,7 @@ line level    source
              -1 || pPortability->rxpause > 1)
                           return RT_ERR_INPUT;
                   }
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 22  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 22  
 
               
                   ext_id = port - 15;
@@ -1406,7 +1406,7 @@ line level    source
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
               
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 23  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 23  
 
                   /* Check Port Valid */
                   RTK_CHK_PORT_IS_EXT(port);
@@ -1470,7 +1470,7 @@ line level    source
 1373   1      
 1374   1          if ((retVal = rtl8367c_getAsicPortStatus(rtk_switch_port_L2P_get(port), &status)) != RT_ERR_OK)
 1375   1              return retVal;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 24  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 24  
 
 1376   1      
 1377   1      
@@ -1534,7 +1534,7 @@ line level    source
                   {
                       if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, &data1)) != R
              -T_ERR_OK)
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 25  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 25  
 
                           return retVal;
               
@@ -1598,7 +1598,7 @@ line level    source
 1494           *      None
 1495           * Return:
 1496           *      RT_ERR_OK               - OK
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 26  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 26  
 
 1497           *      RT_ERR_FAILED           - Failed
 1498           *      RT_ERR_SMI              - SMI access error
@@ -1662,7 +1662,7 @@ line level    source
               /* Function Name:
                *      rtk_port_backpressureEnable_set
                * Description:
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 27  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 27  
 
                *      Set the half duplex backpressure enable status of the specific port.
                * Input:
@@ -1726,7 +1726,7 @@ line level    source
                   uint32 regData;
               
                   /* Check initialization state */
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 28  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 28  
 
                   RTK_CHK_INIT_STATE();
               
@@ -1790,7 +1790,7 @@ line level    source
 1680   1          else if (DISABLED == enable)
 1681   1          {
 1682   2              data1 |= 0x0800;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 29  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 29  
 
 1683   2          }
 1684   1      
@@ -1854,7 +1854,7 @@ line level    source
 1742           *      Set permitted port isolation portmask
 1743           * Input:
 1744           *      port         - port id.
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 30  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 30  
 
 1745           *      pPortmask    - Permit port mask
 1746           * Output:
@@ -1918,7 +1918,7 @@ line level    source
 1803   1          rtk_api_ret_t retVal;
 1804   1          uint32 pmask;
 1805   1      
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 31  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 31  
 
 1806   1          /* Check initialization state */
 1807   1          RTK_CHK_INIT_STATE();
@@ -1982,7 +1982,7 @@ line level    source
                   if ((retVal = rtl8367c_getAsicReg(regAddr, &regData)) != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 32  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 32  
 
                   regData = (regData & 0xFFF0) | ((txDelay << 3) & 0x0008) | (rxDelay & 0x0007);
               
@@ -2046,7 +2046,7 @@ line level    source
                * Description:
                *      Set all PHY enable status.
                * Input:
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 33  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 33  
 
                *      enable - PHY Enable State.
                * Output:
@@ -2110,7 +2110,7 @@ line level    source
                * Input:
                *      None
                * Output:
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 34  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 34  
 
                *      pEnable - PHY Enable State.
                * Return:
@@ -2174,7 +2174,7 @@ line level    source
               
                   if ((retVal = rtl8367c_setAsicPortIsolationEfid(rtk_switch_port_L2P_get(port), efid))!=RT_ERR_OK)
                       return retVal;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 35  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 35  
 
               
                   return RT_ERR_OK;
@@ -2238,7 +2238,7 @@ line level    source
               {
                   rtk_api_ret_t retVal;
                   uint32 regData;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 36  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 36  
 
                   uint32 idx;
               
@@ -2302,7 +2302,7 @@ line level    source
                       if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_CHIP_RESET, RTL8367C_DW8051_RST_OFFSET, 0)) != R
              -T_ERR_OK)
                           return retVal;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 37  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 37  
 
                   }
                   else
@@ -2366,7 +2366,7 @@ line level    source
 2227   2              *pMedia = PORT_MEDIA_COPPER;
 2228   2          }
 2229   1          else
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 38  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 38  
 
 2230   1          {
 2231   2          if ((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_UTP_FIB_DET, RTL8367C_UTP_FIRST_OFFSET, &data1))!=RT
@@ -2430,7 +2430,7 @@ line level    source
                *      RT_ERR_PORT_MASK        - Invalid port mask.
                * Note:
                *      The API can disable RTCT Test
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 39  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 39  
 
                */
               rtk_api_ret_t rtk_port_rtctDisable_set(rtk_portmask_t *pPortmask)
@@ -2494,7 +2494,7 @@ line level    source
 2350   1          pRtctResult->result.rtk_ge_result.channelBLen = result.channelBLen;
 2351   1          pRtctResult->result.rtk_ge_result.channelCLen = result.channelCLen;
 2352   1          pRtctResult->result.rtk_ge_result.channelDLen = result.channelDLen;
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 40  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 40  
 
 2353   1      
 2354   1          pRtctResult->result.rtk_ge_result.channelALinedriver = result.channelALinedriver;
@@ -2558,7 +2558,7 @@ line level    source
                *      Get SGMII status
                * Input:
                *      port        - Port ID
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 41  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 41  
 
                * Output:
                *      pSignalDetect   - Signal detect
@@ -2622,7 +2622,7 @@ line level    source
                    /* Check initialization state */
                   RTK_CHK_INIT_STATE();
               
-C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 42  
+C51 COMPILER V9.60.0.0   PORT                                                              11/03/2026 14:15:40 PAGE 42  
 
                   /* Check Port Valid */
                   if(rtk_switch_isSgmiiPort(port) != RT_ERR_OK)

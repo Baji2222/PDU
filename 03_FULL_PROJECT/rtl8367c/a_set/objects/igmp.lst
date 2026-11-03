@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 1   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE IGMP
@@ -62,7 +62,7 @@ line level    source
               
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 2   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 2   
 
               
                   if ((retVal = rtl8367c_setAsicLutIpMulticastLookup(ENABLED))!=RT_ERR_OK)
@@ -126,7 +126,7 @@ line level    source
               
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 3   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 3   
 
               
                   if (enabled >= RTK_ENABLE_END)
@@ -190,7 +190,7 @@ line level    source
               {
                   rtk_api_ret_t retVal;
                   uint32 pmask;
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 4   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 4   
 
               
                   /* Check initialization state */
@@ -254,7 +254,7 @@ line level    source
  235           * Input:
  236           *      port        - Port ID
  237           *      protocol    - IGMP/MLD protocol
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 5   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 5   
 
  238           *      action      - Per-port and per-protocol IGMP action seeting
  239           * Output:
@@ -318,7 +318,7 @@ line level    source
  294   2      
  295   2                  break;
  296   2              case PROTOCOL_IGMPv3:
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 6   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 6   
 
  297   2                  if ((retVal = rtl8367c_setAsicIGMPv3Opeartion(rtk_switch_port_L2P_get(port), operation))!=RT_E
              -RR_OK)
@@ -382,7 +382,7 @@ line level    source
                       return RT_ERR_NULL_POINTER;
               
                   switch(protocol)
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 7   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 7   
 
                   {
                       case PROTOCOL_IGMPv1:
@@ -446,7 +446,7 @@ line level    source
                * Description:
                *      set IGMP/MLD FastLeave state
                * Input:
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 8   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 8   
 
                *      state       - ENABLED: Enable FastLeave, DISABLED: disable FastLeave
                * Output:
@@ -510,7 +510,7 @@ line level    source
               }
               
               /* Function Name:
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 9   
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 9   
 
                *      rtk_igmp_maxGroup_set
                * Description:
@@ -574,7 +574,7 @@ line level    source
               
                   /* Check port valid */
                   RTK_CHK_PORT_VALID(port);
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 10  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 10  
 
               
                   if(pGroup == NULL)
@@ -638,7 +638,7 @@ line level    source
                * Note:
                */
               rtk_api_ret_t rtk_igmp_tableFullAction_set(rtk_igmp_tableFullAction_t action)
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 11  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 11  
 
               {
                   rtk_api_ret_t   retVal;
@@ -702,7 +702,7 @@ line level    source
                * Note:
                */
               rtk_api_ret_t rtk_igmp_checksumErrorAction_set(rtk_igmp_checksumErrorAction_t action)
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 12  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 12  
 
               {
                   rtk_api_ret_t   retVal;
@@ -766,7 +766,7 @@ line level    source
                *      RT_ERR_SMI             - SMI access error
                * Note:
                */
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 13  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 13  
 
               rtk_api_ret_t rtk_igmp_leaveTimer_set(uint32 timer)
               {
@@ -830,7 +830,7 @@ line level    source
                *      RT_ERR_SMI             - SMI access error
                * Note:
                */
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 14  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 14  
 
               rtk_api_ret_t rtk_igmp_queryInterval_set(uint32 interval)
               {
@@ -894,7 +894,7 @@ line level    source
                *      RT_ERR_SMI             - SMI access error
                * Note:
                */
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 15  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 15  
 
               rtk_api_ret_t rtk_igmp_robustness_set(uint32 robustness)
               {
@@ -958,7 +958,7 @@ line level    source
                *      RT_ERR_PORT_MASK       - Error parameter
                * Note:
                *
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 16  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 16  
 
                */
               rtk_api_ret_t rtk_igmp_dynamicRouterPortAllow_set(rtk_portmask_t *pPortmask)
@@ -1022,7 +1022,7 @@ line level    source
               
               /* Function Name:
                *      rtk_igmp_dynamicRouterPort_get
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 17  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 17  
 
                * Description:
                *      Get dynamic router port
@@ -1086,7 +1086,7 @@ line level    source
                   return RT_ERR_OK;
               }
               
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 18  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 18  
 
               /* Function Name:
                *      rtk_igmp_suppressionEnable_set
@@ -1150,7 +1150,7 @@ line level    source
               
                   /* Check initialization state */
                   RTK_CHK_INIT_STATE();
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 19  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 19  
 
               
                   if(NULL == pReportSuppression)
@@ -1214,7 +1214,7 @@ line level    source
               
                   if ((retVal = rtl8367c_setAsicIGMPQueryRX(rtk_switch_port_L2P_get(port), (uint32)pRxCfg->rxQuery))!=RT
              -_ERR_OK)
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 20  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 20  
 
                       return retVal;
               
@@ -1278,7 +1278,7 @@ line level    source
               
                   if ((retVal = rtl8367c_getAsicIGMPLeaveRX(rtk_switch_port_L2P_get(port), (uint32 *)&(pRxCfg->rxLeave))
              -)!=RT_ERR_OK)
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 21  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 21  
 
                       return retVal;
               
@@ -1342,7 +1342,7 @@ line level    source
                   if(grp.p1_timer != 0)
                   {
                       RTK_PORTMASK_PORT_SET((pGroup->member), rtk_switch_port_P2L_get(1));
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 22  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 22  
 
                       pGroup->timer[rtk_switch_port_P2L_get(1)] = grp.p1_timer;
                   }
@@ -1406,7 +1406,7 @@ line level    source
               
               /* Function Name:
                *      rtk_igmp_ReportLeaveFwdAction_set
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 23  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 23  
 
                * Description:
                *      Set Report Leave packet forwarding action
@@ -1470,7 +1470,7 @@ line level    source
                */
               rtk_api_ret_t rtk_igmp_ReportLeaveFwdAction_get(rtk_igmp_ReportLeaveFwdAct_t *pAction)
               {
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 24  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 24  
 
                   rtk_api_ret_t   retVal;
                   uint32      regData;
@@ -1534,7 +1534,7 @@ line level    source
                   return RT_ERR_OK;
               
               }
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 25  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 25  
 
               
               /* Function Name:
@@ -1598,7 +1598,7 @@ line level    source
                   if(group >= IGMP_BYPASS_GROUP_END)
                       return RT_ERR_INPUT;
               
-C51 COMPILER V9.60.0.0   IGMP                                                              11/02/2026 17:57:14 PAGE 26  
+C51 COMPILER V9.60.0.0   IGMP                                                              11/03/2026 14:15:42 PAGE 26  
 
                   if(enabled >= RTK_ENABLE_END)
                       return RT_ERR_INPUT;

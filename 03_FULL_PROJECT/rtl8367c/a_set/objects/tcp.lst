@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 1   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE TCP
@@ -62,7 +62,7 @@ line level    source
               // TCP Header Dump: Prints formatted TCP header fields for debugging purposes
               // Displays ports, sequence numbers, flags, window size, checksum, and options
               void tcp_hdr_dump(tcp_hdr_t *pTcpHdr) large
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 2   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 2   
 
               {
                   //DBG_LWPS_TCP_PRINTF(("%s():%d pTcpHdr = %p\n", __FILE__, (uint16)__LINE__, pTcpHdr));
@@ -126,7 +126,7 @@ line level    source
  111   1              return;
  112   1      
  113   1          /* Event_Connect : others to ESTABLISHED */
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 3   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 3   
 
  114   1          if ((tcp_pcb_entry[pcbId].state != TCP_STATE_ESTABLISHED) && (state == TCP_STATE_ESTABLISHED))
  115   1          {
@@ -190,7 +190,7 @@ line level    source
  171   2                  (tcp_pcb_entry[i].local_port == local_port) &&
  172   2                  IS_IPADDR_EQUAL(tcp_pcb_entry[i].remote_ip.addr, remote_ip.addr) &&
  173   2                  (tcp_pcb_entry[i].remote_port == remote_port))
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 4   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 4   
 
  174   2              {
  175   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - Match PCB-ID = %d\n", __FILE__, (uint16)__LINE__, (uint16)i));
@@ -254,7 +254,7 @@ line level    source
  232   2              if (tcp_pcb_entry[i].timer_rest > TCP_TIMER_REST_TIMEOUT) {
  233   3                  DBG_LWPS_TCP_PRINTF(("%s():%d TCP PCB[%02d] Rest Timeout!\n", __FILE__, (uint16)__LINE__, i));
  234   3                  tcp_delPCB(i);
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 5   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 5   
 
  235   3              }
  236   2              else if ((tcp_pcb_entry[i].timer_rest > TCP_TIMER_REST_TIMEOUT_FAST) &&
@@ -318,7 +318,7 @@ line level    source
  293          // Resets all TCP control blocks and clears handler callbacks
  294          int16 tcp_init(void) large
  295          {
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 6   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 6   
 
  296   1          uint16 xdata i;
  297   1      
@@ -382,7 +382,7 @@ line level    source
  353   1          /* Insert TCP HDR */
  354   1          pTcpHdr_Xmit = (tcp_hdr_t *)pBuf_Xmit.l4;
  355   1          pTcpHdr_Xmit->src_port = tcp_pcb_entry[pcbId].local_port;
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 7   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 7   
 
  356   1          pTcpHdr_Xmit->dst_port = tcp_pcb_entry[pcbId].remote_port;
  357   1          pTcpHdr_Xmit->seq_num = tcp_pcb_entry[pcbId].local_seq;
@@ -446,7 +446,7 @@ line level    source
  415          {
  416   1          tcp_hdr_t xdata *pTcpHdr = (tcp_hdr_t *)pBuf->l4;
  417   1          tcp_hdr_opt_mss_t xdata *pTcpHdrMSS = (tcp_hdr_opt_mss_t *)(pBuf->l4 + sizeof(tcp_hdr_t));
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 8   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 8   
 
  418   1          ip_hdr_t xdata *pIpHdr = (ip_hdr_t *)pBuf->l3;
  419   1          int32 xdata pcbId;
@@ -510,7 +510,7 @@ line level    source
  474   4                      {
  475   5                          /* [FIXME] Connection Not Found */
  476   5                          //lwps_pbuf_free(pBuf);
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 9   
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 9   
 
  477   5                  
  478   5                          return LWPS_OK;
@@ -574,7 +574,7 @@ line level    source
  534   2      
  535   2          case TCP_STATE_ESTABLISHED:
  536   2              if (tcp_pcb_entry[pcbId].remote_seq == pTcpHdr->seq_num)
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 10  
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 10  
 
  537   2              {
  538   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - Update remote_seq, Old = 0x%08llX\n", \
@@ -638,7 +638,7 @@ line level    source
  595   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_ACK);
  596   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
  597   3                  tcp_delPCB(pcbId);
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 11  
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 11  
 
  598   3                  //lwps_pbuf_free(pBuf);
  599   3      
@@ -702,7 +702,7 @@ line level    source
  657   2              break;
  658   2      
  659   2          case TCP_STATE_LAST_ACK:
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 12  
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 12  
 
  660   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_ACK)
  661   2              {
@@ -766,7 +766,7 @@ line level    source
  718   1        DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
  719   1          return LWPS_OK;
  720   1      } /* end of tcp_up */
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 13  
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 13  
 
  721          
  722          // TCP Bind: Binds a TCP PCB to a specific local IP address and port
@@ -830,7 +830,7 @@ line level    source
  780   1          int32 xdata i;
  781   1      
  782   1          //DBG_LWPS_TCP_PRINTF("%s():%d MSS=%u\n", __FILE__, (uint16)__LINE__, (tcp_pcb_entry[pcbId].remote_mss
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 14  
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 14  
 
              -));
  783   1      
@@ -894,7 +894,7 @@ line level    source
  839   1          DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
  840   1      
  841   1          for (i = 0; i < TCP_CONNECTION_MAX; i++)
-C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 15  
+C51 COMPILER V9.60.0.0   TCP                                                               11/03/2026 14:15:33 PAGE 15  
 
  842   1          {
  843   2              if (tcp_pcb_entry[i].state == TCP_STATE_SYN_SENT && 

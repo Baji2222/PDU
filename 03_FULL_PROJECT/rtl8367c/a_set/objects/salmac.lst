@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 1   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALMAC
@@ -62,7 +62,7 @@ line level    source
   49   1      }
   50          
   51          void sal_mac_dbg_dump(void)
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 2   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 2   
 
   52          {
   53   1          sal_flash_l2_sttcEntry_t entry;
@@ -126,7 +126,7 @@ line level    source
  109   1      }
  110          
  111          int32 sal_l2_table_clear (sal_l2_clr_t type)
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 3   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 3   
 
  112          {
  113   1        uint16  index;
@@ -190,7 +190,7 @@ line level    source
  171   1          rtk_l2_ucastAddr_t lut_entry;
  172   1      
  173   1          if(da_block)
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 4   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 4   
 
  174   1              return SAL_ERR_NOT_SUPPORT;
  175   1          
@@ -254,7 +254,7 @@ line level    source
  233   1      
  234   1        return SAL_ERR_SUCCESS;
  235   1      }
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 5   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 5   
 
  236            
  237          int32
@@ -318,7 +318,7 @@ line level    source
  295           *      None
  296           */
  297          int32 sal_l2_addr_get (
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 6   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 6   
 
  298              sal_mac_t           *pMac,
  299              sal_vlan_t          vid,
@@ -382,7 +382,7 @@ line level    source
                   for (i = 0; i < SAL_MAX_STATIC_MAC; ++i)
                   {
                       if ((ret = sal_flash_l2_sttcEntry_get(i, &entry)) != SAL_ERR_SUCCESS)
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 7   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 7   
 
                           return ret;
                       
@@ -446,7 +446,7 @@ line level    source
                *      No
                * Return:
                *      SAL_ERR_SUCCESS
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 8   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 8   
 
                * Note:
                */
@@ -510,7 +510,7 @@ line level    source
              -ESS)
                           return ret;
               
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 9   
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 9   
 
                       /* Write the flash */
                       pEntry->valid = 1;
@@ -574,7 +574,7 @@ line level    source
                               return ret;                
                           break;
                       case SAL_ENTRY_ACT_INVALID:
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 10  
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 10  
 
                           if ((ret = _sal_clear_entry(index)) != SAL_ERR_SUCCESS)
                               return ret;
@@ -638,7 +638,7 @@ line level    source
                *      sal_l2_learnedEntry_flush
                * Description:
                *      Flush leanred entry of a port
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 11  
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 11  
 
                * Input:
                *      port    - port id
@@ -702,7 +702,7 @@ line level    source
 *** WARNING C259 IN LINE 662 OF ..\src\sal\salmac.c: 'parameter 1': different enumeration types
  663   1              return ret;
  664   1      
-C51 COMPILER V9.60.0.0   SALMAC                                                            11/02/2026 17:57:00 PAGE 12  
+C51 COMPILER V9.60.0.0   SALMAC                                                            11/03/2026 14:15:34 PAGE 12  
 
  665   1          switch (act)
  666   1          {

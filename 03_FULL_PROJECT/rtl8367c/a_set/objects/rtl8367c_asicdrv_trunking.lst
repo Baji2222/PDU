@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_TRUNKING
@@ -62,7 +62,7 @@ line level    source
                * Return:
                *      RT_ERR_OK   - Success
                *      RT_ERR_SMI  - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 2   
 
                * Note:
                *      None
@@ -126,7 +126,7 @@ line level    source
               #endif
  108          /* Function Name:
  109           *      rtl8367c_setAsicTrunkingGroup
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 3   
 
  110           * Description:
  111           *      Set trunking group available port mask
@@ -190,7 +190,7 @@ line level    source
                   return rtl8367c_setAsicRegBit(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_FLOOD_OFFSET, enabled)
              -;
               }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 4   
 
               /* Function Name:
                *      rtl8367c_getAsicTrunkingFlood
@@ -254,7 +254,7 @@ line level    source
                */
               ret_t rtl8367c_getAsicTrunkingHashSelect(uint32* pHashsel)
               {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 5   
 
                   return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_HASH_MASK, pHashsel);
               }
@@ -318,7 +318,7 @@ line level    source
                * Output:
                *      None
                * Return:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 6   
 
                *      RT_ERR_OK           - Success
                *      RT_ERR_SMI          - SMI access error
@@ -382,7 +382,7 @@ line level    source
                *      None
                * Return:
                *      RT_ERR_OK           - Success
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/03/2026 14:15:53 PAGE 7   
 
                *      RT_ERR_SMI          - SMI access error
                *      RT_ERR_OUT_OF_RANGE - Invalid hashing value (0-15)

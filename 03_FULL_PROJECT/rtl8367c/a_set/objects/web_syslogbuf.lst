@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYSLOGBUF
@@ -62,7 +62,7 @@ line level    source
   49           * Converts syslog severity numeric value to display string.
   50           * Maps severity codes (Emergency, Alert, Error, etc.) to readable text.
   51           * Prints formatted table cell with severity name.
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 2   
 
   52           * Used for syslog buffer display formatting.
   53           */
@@ -126,7 +126,7 @@ line level    source
  111   1      
  112   1          WEB_BEGIN(pReq);
  113   1      
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 3   
 
  114   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
  115   1        WEB_HEADER(pReq, "Content-Type: text/html");
@@ -190,7 +190,7 @@ line level    source
  172   2          while(headIndex != tailIndex)
  173   2          {
  174   3            memset(&sysLogBufEntry, 0x00, sizeof(sal_flash_syslog_buf_entry_t));
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 4   
 
  175   3            sal_flash_syslog_buf_get(&sysLogBufEntry, headIndex);
  176   3            timestamp = sysLogBufEntry.timestamp;
@@ -254,7 +254,7 @@ line level    source
  230          {
  231   1          uint8           *pValue;
  232   1        sal_enable_t  syslogBufClear = 0;
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 5   
 
  233   1      
  234   1          WEB_VAR(pReq, "state", &pValue);
@@ -318,7 +318,7 @@ line level    source
              -#dde1e6; --green:#2f9e44; --green-dark:#1e7e34; --green-light:#d4edda; --red:#e03131; --red-light:#f8d7da; --grey:#868e9
              -6; --txt:#1c1f23; --txtdim:#6b7280; }\n");
  292          //    WEB_PRINTF(pReq, "body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg1); min-hei
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 6   
 
              -ght: 100vh; padding: 14px; color: var(--txt); }\n");
  293          //    WEB_PRINTF(pReq, ".container { max-width: 1180px; margin: 0 auto; }\n");
@@ -382,7 +382,7 @@ line level    source
              -izing:border-box; }\n");
  338          
  339          //    /* Socket GRAY (default / no current) */
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 7   
 
  340          //    WEB_PRINTF(pReq, ".socket-icon.off .outline, .socket-icon.off .pins { stroke:#A0A0A0; opacity:1; }\n
              -");
@@ -446,7 +446,7 @@ line level    source
  382          //    WEB_PRINTF(pReq, "    const voltageEl = document.getElementById('voltageDisplay');\n");
  383          //    WEB_PRINTF(pReq, "    if (voltageEl) voltageEl.textContent = voltage.toFixed(1) + 'V';\n");
  384          //    WEB_PRINTF(pReq, "    const ports = res1.p || res1.P || [0,0,0,0,0,0,0,0];\n");
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 8   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 8   
 
  385          //    WEB_PRINTF(pReq, "    let perPortCurrent = [0,0,0,0,0,0,0,0];\n");
  386          //    WEB_PRINTF(pReq, "    if (res1.i && Array.isArray(res1.i)) {\n");
@@ -510,7 +510,7 @@ line level    source
              -; }\n");
  441          //    WEB_PRINTF(pReq, "    if (item) item.className = 'port-item off-gray';\n");
  442          //    WEB_PRINTF(pReq, "    if (radioOn) radioOn.checked = false;\n");
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 9   
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 9   
 
  443          //    WEB_PRINTF(pReq, "    if (radioOff) radioOff.checked = true;\n");
  444          //    WEB_PRINTF(pReq, "    if (applyBtn) { applyBtn.textContent = 'Apply'; applyBtn.className = 'port-app
@@ -574,7 +574,7 @@ line level    source
  498          //    WEB_PRINTF(pReq, "    if (totalElapsed < 3000) {\n");
  499          //    WEB_PRINTF(pReq, "      await new Promise(resolve => setTimeout(resolve, 2000 - totalElapsed));\n");
  500          //    WEB_PRINTF(pReq, "    }\n");
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 10  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 10  
 
  501          //    WEB_PRINTF(pReq, "    if (ok) {\n");
  502          //    WEB_PRINTF(pReq, "      applyBtn.textContent = 'Apply';\n");
@@ -638,7 +638,7 @@ line level    source
  552          //        WEB_PRINTF(pReq, "        </div>\n");
  553          //        WEB_PRINTF(pReq, "      </div>\n");
  554          //        WEB_PRINTF(pReq, "      <div class=\"port-controls\">\n");
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 11  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 11  
 
  555          //        WEB_PRINTF(pReq, "        <label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-on-%d\"
              - value=\"1\"> <span>ON</span></label>\n", port, port);
@@ -702,7 +702,7 @@ line level    source
  640   1              ".port-item.on-normal{background:var(--panel);border-color:var(--border)}"
  640   1              ".port-item.pending{opacity:.65;pointer-events:none}"
  640   1              ".port-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16p
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 12  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 12  
 
              -x}"
  640   1              ".port-info{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0}"
@@ -766,7 +766,7 @@ line level    source
  687   1              "for(let n=0;n<8;n++){let c=i[n]?i[n]/100:0;t+=c;applyPortState(n+1,p[n]||0,c)}let cl=document.get
              -ElementById('currentDisplay');"
  687   1              "if(cl)cl.textContent=t.toFixed(1)+'A'}catch(x){console.error('PDU:',x)}}"
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 13  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 13  
 
  687   1              "async function loadPortNames(){try{let r=await fetch('/get_pdu_names',{cache:'no-store'});"
  687   1              "if(!r.ok)throw new Error(r.status);let d=await r.json(),n=d.n||d.N||d.names||[];"
@@ -830,7 +830,7 @@ line level    source
              ->"
  695   1              "<div class=\"header-right\">"
  695   1              "<span class=\"header-item\"><span class=\"label\">INPUT VOLTAGE</span><b id=\"voltageDisplay\">0.
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 14  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 14  
 
              -0V</b></span>"
  695   1              "<span class=\"header-item\"><span class=\"label\">TOTAL CURRENT</span><b id=\"currentDisplay\">0.
@@ -894,7 +894,7 @@ line level    source
  741          //            src += 3;
  742          //        } else if (*src == '+') {
  743          //            dst[di++] = ' ';
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 15  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 15  
 
  744          //            src++;
  745          //        } else {
@@ -958,7 +958,7 @@ line level    source
  803          //                out[i++] = *p++;
  804          //            out[i] = '\0';
  805          //            return 1;
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 16  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 16  
 
  806          //        }
  807          
@@ -1022,7 +1022,7 @@ line level    source
  865   1      //        port = atoi(port_buf);
  866   1      
  867   1      //    if (pdu_get_query_str(pReq, "name", name_enc, sizeof(name_enc)))
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 17  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 17  
 
  868   1      //        pdu_url_decode(name_enc, name_dec, sizeof(name_dec));
  869   1      
@@ -1086,7 +1086,7 @@ line level    source
  926   1          WEB_PRINTF(pReq, "%s" ,Get_Response_RTC);
  927   1          WEB_END(pReq);
  928   1          memset(Get_Response_RTC,'\0',234);
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 18  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 18  
 
  929   1          return SUCCESS;
  930   1      }
@@ -1150,7 +1150,7 @@ line level    source
  988   1          p = (const char *)pReq->pPath;
  989   1      
  990   1          /* advance to the first '?' — start of the query string */
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 19  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 19  
 
  991   1          while (*p && *p != '?' && *p != ' ' && *p != '\r' && *p != '\n')
  992   1              p++;
@@ -1214,7 +1214,7 @@ line level    source
 1050   1          return -1;
 1051   1      }
 1052          
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 20  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 20  
 
 1053          
 1054          /* ================================================================== *
@@ -1278,7 +1278,7 @@ line level    source
 1112   1              M   >= 0 && M   <= 59 &&
 1113   1              OUT >= 1 && OUT <= 8  &&
 1114   1              ACT >= 0 && ACT <= 1)
-C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 21  
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/03/2026 14:16:04 PAGE 21  
 
 1115   1          {
 1116   2              /* TODO: rtc_set_alarm(alarm_idx, H, M, OUT, ACT); */

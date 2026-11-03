@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_VLAN
@@ -62,7 +62,7 @@ line level    source
   48   1          pVlanCg->envlanpol      = (pSmiVlanCfg[2] >> 4) & 0x0001;
   49   1          pVlanCg->vbpri          = (pSmiVlanCfg[2] >> 1) & 0x0007;
   50   1          pVlanCg->vbpen          = pSmiVlanCfg[2] & 0x0001;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 2   
 
   51   1          pVlanCg->evid           = pSmiVlanCfg[3] & 0x1FFF;
   52   1      }
@@ -126,7 +126,7 @@ line level    source
  106          {
  107   1          ret_t  retVal;
  108   1          uint32 regAddr;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 3   
 
  109   1          uint32 regData;
  110   1          uint16 *tableAddr;
@@ -190,7 +190,7 @@ line level    source
  168           */
  169          ret_t rtl8367c_getAsicVlanMemberConfig(uint32 index, rtl8367c_vlanconfiguser *pVlanCg)
  170          {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 4   
 
  171   1          ret_t  retVal;
  172   1          uint32 page_idx;
@@ -254,7 +254,7 @@ line level    source
  230   1          if(pVlan4kEntry->mbr > RTL8367C_PORTMASK)
  231   1              return RT_ERR_PORT_MASK;
  232   1      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 5   
 
  233   1          if(pVlan4kEntry->untag > RTL8367C_PORTMASK)
  234   1              return RT_ERR_PORT_MASK;
@@ -318,7 +318,7 @@ line level    source
  291           *      None
  292           */
  293          ret_t rtl8367c_getAsicVlan4kEntry(rtl8367c_user_vlan4kentry *pVlan4kEntry )
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 6   
 
  294          {
  295   1          uint16                  vlan_4k_entry[RTL8367C_VLAN_4KTABLE_LEN];
@@ -382,7 +382,7 @@ line level    source
  350   1          for(page_idx = 0; page_idx < RTL8367C_VLAN_4KTABLE_LEN; page_idx++)
  351   1          {
  352   2              retVal = rtl8367c_getAsicReg(RTL8367C_TABLE_ACCESS_RDDATA_BASE + page_idx, &regData);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 7   
 
  353   2              if(retVal != RT_ERR_OK)
  354   2                  return retVal;
@@ -446,7 +446,7 @@ line level    source
  411           */
  412          ret_t rtl8367c_getAsicVlanAccpetFrameType(uint32 port, rtl8367c_accframetype *pFrameType)
  413          {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 8   
 
  414   1          uint32 regData;
  415   1          ret_t  retVal;
@@ -510,7 +510,7 @@ line level    source
               }
               #endif
  474          /* Function Name:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 9   
 
  475           *      rtl8367c_setAsicVlanEgressTagMode
  476           * Description:
@@ -574,7 +574,7 @@ line level    source
               #endif
  533          /* Function Name:
  534           *      rtl8367c_setAsicVlanPortBasedVID
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 10  
 
  535           * Description:
  536           *      Set port based VID which is indexed to 32 VLAN member configurations
@@ -638,7 +638,7 @@ line level    source
  594           * Note:
  595           *      None
  596           */
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 11  
 
  597          ret_t rtl8367c_getAsicVlanPortBasedVID(uint32 port, uint32 *pIndex, uint32 *pPri)
  598          {
@@ -702,7 +702,7 @@ line level    source
                   if(retVal != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 12  
 
                   /* Ether type */
                   retVal = rtl8367c_setAsicReg(RTL8367C_VLAN_PPB_ETHERTYPR_REG(index), etherType);
@@ -766,7 +766,7 @@ line level    source
                *      None
                * Return:
                *      RT_ERR_OK                   - Success
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 13  
 
                *      RT_ERR_SMI                  - SMI access error
                *      RT_ERR_INPUT                - Invalid input parameter
@@ -830,7 +830,7 @@ line level    source
                   }
               
                   bit_value = pPpbCfg->vlan_idx;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 14  
 
                   retVal  = rtl8367c_setAsicRegBits(reg_addr, bit_mask, bit_value);
                   if(retVal != RT_ERR_OK)
@@ -894,7 +894,7 @@ line level    source
                   if(port < 8)
                   {
                       reg_addr = RTL8367C_VLAN_PPB_CTRL_REG(index, port);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 15  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 15  
 
                       bit_mask = RTL8367C_VLAN_PPB_CTRL_MASK(port);
                   }
@@ -958,7 +958,7 @@ line level    source
                * Input:
                *      pEnabled - 1: enabled, 0: disabled
                * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 16  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 16  
 
                *      None
                * Return:
@@ -1022,7 +1022,7 @@ line level    source
                *      RT_ERR_OK       - Success
                *      RT_ERR_SMI      - SMI access error
                *      RT_ERR_L2_FID   - Invalid FID
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 17  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 17  
 
                *      RT_ERR_PORT_ID  - Invalid port number
                * Note:
@@ -1086,7 +1086,7 @@ line level    source
                * Output:
                *      None
                * Return:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 18  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 18  
 
                *      RT_ERR_OK       - Success
                *      RT_ERR_SMI      - SMI access error
@@ -1150,7 +1150,7 @@ line level    source
 1084   1      
 1085   1          if(port > RTL8367C_PORTIDMAX)
 1086   1              return RT_ERR_PORT_ID;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 19  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 19  
 
 1087   1      
 1088   1          if(msti > RTL8367C_MSTIMAX)
@@ -1214,7 +1214,7 @@ line level    source
                       return rtl8367c_getAsicRegBits(reg_addr, bits_msk, pState);
                   }
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 20  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 20  
 
               }
               
@@ -1278,7 +1278,7 @@ line level    source
                *      Set per egress port VLAN keep mode
                * Input:
                *      port        - Physical port number (0~10)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 21  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 21  
 
                *      portmask    - portmask(0~0xFF)
                * Output:
@@ -1342,7 +1342,7 @@ line level    source
                                   return retVal;
                               break;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 22  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 22  
 
                           case 10:
                               regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL5;
@@ -1406,7 +1406,7 @@ line level    source
                               bit_mask = RTL8367C_PORT8_VLAN_KEEP_MASK_MASK;
                               retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_l);
                               if(retVal != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 23  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 23  
 
                                   return retVal;
                               regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4_EXT;
@@ -1470,7 +1470,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_setReservedVidAction(uint32 vid0Action, uint32 vid4095Action)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 24  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 24  
 
               {
                   ret_t   retVal;
@@ -1534,7 +1534,7 @@ line level    source
                *      rtl8367c_setRealKeepRemarkEn
                * Description:
                *      Set Real Keep Remark
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 25  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 25  
 
                * Input:
                *      enabled         - 0: 1P remarking is forbidden at real keep packet, 1: 1P remarking is enabled at 
@@ -1598,7 +1598,7 @@ line level    source
                *      RT_ERR_OK       - Success
                *      RT_ERR_SMI      - SMI access error
                * Note:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 26  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/03/2026 14:15:54 PAGE 26  
 
                *      None
                */

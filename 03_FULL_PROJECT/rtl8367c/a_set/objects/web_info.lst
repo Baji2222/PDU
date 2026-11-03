@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/03/2026 14:15:59 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_INFO
@@ -62,7 +62,7 @@ line level    source
   49   1      
   50   1          sal_sys_firmVersion_get(firmVer);
   51   1          sal_sys_firmDate_get(firmDate);
-C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/03/2026 14:15:59 PAGE 2   
 
   52   1          sal_sys_hardwareVersion_get(hdrVer);
   53   1          sal_sys_dev_type_get(devDesc);
@@ -126,7 +126,7 @@ line level    source
  105   1          WEB_PRINTF(pReq, "        </div>\n");
  106   1          
  107   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
-C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/03/2026 14:15:59 PAGE 3   
 
  108   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Hardware Version</div>\n");
  109   1          WEB_PRINTF(pReq, "          <div class=\"info-value\">06062025</div>\n");
@@ -190,7 +190,7 @@ line level    source
  165   1          WEB_END(pReq);
  166   1      
  167   1          return SUCCESS;
-C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/03/2026 14:15:59 PAGE 4   
 
  168   1      }
  169          
@@ -254,7 +254,7 @@ line level    source
  227   1          for (i = 0; i < (MAX_PORT_ONBOARD - SAL_MAX_EXT_PORT); i++)
  228   1          {
  229   2              if (selectPmsk.bits[0] & (1UL << i))
-C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/03/2026 14:15:59 PAGE 5   
 
  230   2              {
  231   3                  sal_port_rtct_start(i);
@@ -318,7 +318,7 @@ line level    source
  289   4                  }
  290   3              }
  291   2              else
-C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/03/2026 14:15:59 PAGE 6   
 
  292   2              {
  293   3                  sprintf(strCheck, "<input type=checkbox name=P%d>", (uint16)(i+1));

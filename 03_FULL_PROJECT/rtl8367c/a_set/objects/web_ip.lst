@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/03/2026 14:15:59 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_IP
@@ -62,7 +62,7 @@ line level    source
   49           * Uses JavaScript to enable/disable IP fields based on DHCP selection.
   50           * Displays warning confirmation when changing IP addresses.
   51           */
-C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/03/2026 14:15:59 PAGE 2   
 
   52          int32 get_ip(struct http_request_s *pReq)
   53          {
@@ -126,7 +126,7 @@ line level    source
  107   1          
  108   1          // Minimal HTML structure
  109   1          WEB_PRINTF(pReq, "<body onload=\"chkEnable(document.getElementById('dhcp').value)\">\n");
-C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/03/2026 14:15:59 PAGE 3   
 
  110   1          WEB_PRINTF(pReq, "<h1>IP Address Setting</h1>\n");
  111   1          WEB_PRINTF(pReq, "<div class=\"card\">\n");
@@ -190,7 +190,7 @@ line level    source
  167   1          uint32  gateway = 0;
  168   1          uint8   ipStr[16];
  169   1          uint8   netmaskStr[16];
-C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/03/2026 14:15:59 PAGE 4   
 
  170   1          uint8   gatewayStr[16];
  171   1          uint8   dhcp_state;
@@ -254,7 +254,7 @@ line level    source
 
 
 MODULE INFORMATION:   STATIC OVERLAYABLE
-C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/03/2026 14:15:59 PAGE 5   
 
    CODE SIZE        =   1864    ----
    CONSTANT SIZE    =   2052    ----

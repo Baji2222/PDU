@@ -1,4 +1,4 @@
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     1
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     1
 
 
 MACRO ASSEMBLER A51 V8.2.7.0
@@ -65,7 +65,7 @@ LOC  OBJ            LINE     SOURCE
   00A4                51     INDACC_WDATA_H  DATA    0A4H
   00B1                52     TXD0    BIT     0B0H.1
   0097                53     INT5    BIT     090H.7
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     2
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     2
 
   0093                54     TXD1    BIT     090H.3
   00CB                55     RCAP2H  DATA    0CBH
@@ -133,7 +133,7 @@ LOC  OBJ            LINE     SOURCE
   00D0               117     P       BIT     0D0H.0
   00E8               118     EX2     BIT     0E8H.0
   00AF               119     SPI_S_DATA3     DATA    0AFH
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     3
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     3
 
   00AB               120     SPI_S_ADDR2     DATA    0ABH
   009F               121     SM0     BIT     098H.7
@@ -201,7 +201,7 @@ LOC  OBJ            LINE     SOURCE
                      183     ; #define SPI_WINBOND_QIO  (0)
                      184     ; 
                      185     ; 
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     4
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     4
 
                      186     ; #ifdef CONFIG_TO_USE_SCKU_SPI_DRIVER
                      187     ; // *********************************************
@@ -269,7 +269,7 @@ LOC  OBJ            LINE     SOURCE
                      249     ; 
                      250     ; uint8 __spi_flash_drv_init(void) large {
                      251     
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     5
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     5
 
 ----                 252             RSEG  ?PR?__spi_flash_drv_init?SPIFLASHDRV
 0000                 253     __spi_flash_drv_init:
@@ -337,7 +337,7 @@ LOC  OBJ            LINE     SOURCE
 0028 120000   F      315               LCALL   __spi_flash_drv_restore_S_mode_reg;
                      316     ; #pragma endasm
                      317     ;     return SUCCESS;
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     6
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     6
 
                      318                             ; SOURCE LINE # 103
 002B 7F00            319             MOV     R7,#00H
@@ -405,7 +405,7 @@ LOC  OBJ            LINE     SOURCE
 0014 F9              380               MOV     R1, A
                      381     ;     INC     DPTR
 0015 A3              382               INC     DPTR
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     7
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     7
 
                      383     ;     MOVX    A, @DPTR
 0016 E0              384               MOVX    A, @DPTR
@@ -473,7 +473,7 @@ LOC  OBJ            LINE     SOURCE
 0038 F583            446               MOV     DPH, A
                      447     ; 
                      448               
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     8
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     8
 
                      449     ;     CJNE    R5, #(SPI_FLASH_OP_WRITE), ?0033
 003A BD0202          450               CJNE    R5, #((2)), ?0033
@@ -541,7 +541,7 @@ LOC  OBJ            LINE     SOURCE
                      511     ; //  SPI_S_RCMD    = SPI_C_RDSR;
                      512               
                      513     ;     MOV     SPI_S_RCMD, #(M_SPI_C_RDSR)
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE     9
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE     9
 
 0057 75B105          514               MOV     SPI_S_RCMD, #(0x05)
                      515     ; 
@@ -609,7 +609,7 @@ LOC  OBJ            LINE     SOURCE
 006D 759E18          576               MOV     SPI_S_ACCESS, #(((0)<<0) | (1<<3) | (1<<4))
                      577     ; 
                      578               
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    10
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    10
 
                      579     ; //  SPI_S_WCMD    = SPI_C_WREN;
                      580               
@@ -677,7 +677,7 @@ LOC  OBJ            LINE     SOURCE
                      642               
                      643     ; //      }
                      644               
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    11
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    11
 
                      645     ; //      SPI_S_ACCESS = clen  | SPI_S_ACCESS_WRITE ;
                      646               
@@ -745,7 +745,7 @@ LOC  OBJ            LINE     SOURCE
 00A3 F5AD            708               MOV     SPI_S_DATA1, A
                      709     ;         INC     DPTR
 00A5 A3              710               INC     DPTR
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    12
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    12
 
                      711     ;         MOVX    A, @DPTR
 00A6 E0              712               MOVX    A, @DPTR
@@ -813,7 +813,7 @@ LOC  OBJ            LINE     SOURCE
                      774               
                      775     ; //    
                      776               
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    13
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    13
 
                      777     ; ?0010:
 00C3                 778               ?0010:
@@ -881,7 +881,7 @@ LOC  OBJ            LINE     SOURCE
 00D7 E9              840               MOV     A, R1
                      841     ;         MOV     SPI_S_ADDR1, A
 00D8 F5AA            842               MOV     SPI_S_ADDR1, A
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    14
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    14
 
                      843     ;         MOV     A, R2
 00DA EA              844               MOV     A, R2
@@ -949,7 +949,7 @@ LOC  OBJ            LINE     SOURCE
 00F4 F0              906               MOVX    @DPTR, A
                      907     ;         INC     DPTR
 00F5 A3              908               INC     DPTR
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    15
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    15
 
                      909     ;         DEC     R3
 00F6 1B              910               DEC     R3
@@ -1017,7 +1017,7 @@ LOC  OBJ            LINE     SOURCE
 0111                 972               __spi_flash_driver_erase:
                      973     ;     // erase_block_adr is in (R0/R1/R2)
                      974               
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    16
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    16
 
                      975     ;     // blocking mode is in (R5)
                      976               
@@ -1085,7 +1085,7 @@ LOC  OBJ            LINE     SOURCE
 0125 ED             1038               MOV     A, R5
                     1039     ;     CJNE    A, #(SPI_FLASH_OP_ERASE_BLOCKING), ?000B
 0126 B40403         1040               CJNE    A, #((4)), ?000B
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    17
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    17
 
                     1041     ;     XCALL   __spi_flash_waitRdy
 0129 120000   F     1042                LCALL   __spi_flash_waitRdy
@@ -1106,7 +1106,7 @@ LOC  OBJ            LINE     SOURCE
                     1057     ; END OF __spi_flash_drv_entry
                     1058     
                     1059             END
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    18
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    18
 
 SYMBOL TABLE LISTING
 ------ ----- -------
@@ -1174,7 +1174,7 @@ FL. . . . . . . . . . . . . . . . . .  B ADDR   00D0H.1 A
 FLASH_MSB . . . . . . . . . . . . . .  D ADDR   0096H   A   
 GPIO2_E . . . . . . . . . . . . . . .  D ADDR   00C4H   A   
 GPIO2_I . . . . . . . . . . . . . . .  D ADDR   00C3H   A   
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    19
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    19
 
 GPIO2_O . . . . . . . . . . . . . . .  D ADDR   00C2H   A   
 GPIO_E. . . . . . . . . . . . . . . .  D ADDR   0093H   A   
@@ -1242,7 +1242,7 @@ RXD1. . . . . . . . . . . . . . . . .  B ADDR   0090H.2 A
 SBUF0 . . . . . . . . . . . . . . . .  D ADDR   0099H   A   
 SBUF1 . . . . . . . . . . . . . . . .  D ADDR   00C1H   A   
 SCON0 . . . . . . . . . . . . . . . .  D ADDR   0098H   A   
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    20
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    20
 
 SCON1 . . . . . . . . . . . . . . . .  D ADDR   00C0H   A   
 SM0 . . . . . . . . . . . . . . . . .  B ADDR   0098H.7 A   
@@ -1310,7 +1310,7 @@ __SPI_FLASH_DRV_ENTRY . . . . . . . .  C ADDR   0000H   R   SEG=?PR?__SPI_FLASH_
 __SPI_FLASH_DRV_INIT. . . . . . . . .  C ADDR   0000H   R   SEG=?PR?__SPI_FLASH_DRV_INIT?SPIFLASHDRV
 __SPI_FLASH_DRV_RESTORE_S_MODE_REG. .  C ADDR   0047H   R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
 __SPI_FLASH_READSR. . . . . . . . . .  C ADDR   0051H   R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
-A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/02/2026 17:56:52 PAGE    21
+A51 MACRO ASSEMBLER  SPIFLASHDRV                                                          11/03/2026 14:15:30 PAGE    21
 
 __SPI_FLASH_WAITRDY . . . . . . . . .  C ADDR   0062H   R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
 __SPI_FLASH_WAITWEL . . . . . . . . .  C ADDR   006AH   R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV

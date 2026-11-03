@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 1   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALPORT
@@ -62,7 +62,7 @@ line level    source
   49          #define RTCT_ACT_PHY_REG(port)             (PHY_REG_ADDR_BASE + 25 + (port) * 0x20)
   50          #define RTCT_ACT_PHY_CMD_OFF               15
   51          
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 2   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 2   
 
   52          #if SAL_ENABLE
   53          int32
@@ -126,7 +126,7 @@ line level    source
  111          
  112          int32 
  113          sal_port_adminEnable_get(
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 3   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 3   
 
  114              sal_port_t port, 
  115              sal_enable_t *pEnable
@@ -190,7 +190,7 @@ line level    source
                   
                 SalTrkLId2PId(&ucPPortId, port);
                   if ((ret = rtk_port_phyStatus_get(ucPPortId, &LinkStatus, &spd, &duplex)) !=SUCCESS)
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 4   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 4   
 
                   return ret;
               
@@ -254,7 +254,7 @@ line level    source
  235   1      
  236   1          memset(&portmask, 0, sizeof(rtk_portmask_t));
  237   1          memset(&stPPortMask, 0, sizeof(sal_pPortmask_t));
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 5   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 5   
 
  238   1          
  239   1        sal_trunk_logicId_toPhysicId(&ucPPortId, port);
@@ -318,7 +318,7 @@ line level    source
  297   4                          return ret;            
  298   4                  }
  299   3              }
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 6   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 6   
 
  300   2          }
  301   1          
@@ -382,7 +382,7 @@ line level    source
  359           * Output:
  360           *      pStatus - pointer to the mac status
  361           * Return:
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 7   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 7   
 
  362           *      SAL_ERR_SUCCESS
  363           * Note:
@@ -446,7 +446,7 @@ line level    source
  421           *      SAL_ERR_FAILED
  422           *      SAL_ERR_NOT_SUPPORT
  423           *      SAL_ERR_PARAMETER
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 8   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 8   
 
  424           *      SAL_ERR_NULL_POINTER 
  425           * Note:
@@ -510,7 +510,7 @@ line level    source
  479   1          pRtctResult->ge_result.channelBShort = rtk_rtctResult.result.rtk_ge_result.channelBShort & 0xff;
  480   1          pRtctResult->ge_result.channelCShort = rtk_rtctResult.result.rtk_ge_result.channelCShort & 0xff;
  481   1          pRtctResult->ge_result.channelDShort = rtk_rtctResult.result.rtk_ge_result.channelDShort & 0xff;    
-C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 9   
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/03/2026 14:15:35 PAGE 9   
 
  482   1      
  483   1          return SAL_ERR_SUCCESS;

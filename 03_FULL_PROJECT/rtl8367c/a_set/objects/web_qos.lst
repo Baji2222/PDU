@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_QOS
@@ -62,7 +62,7 @@ line level    source
   49          {
   50   1          WEB_BEGIN(pReq);
   51   1      
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 2   
 
   52   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
   53   1          WEB_HEADER(pReq, "Content-Type: text/html");
@@ -126,7 +126,7 @@ line level    source
  108   1      
  109   1          WEB_PRINTF(pReq, "<html>\n");
  110   1          
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 3   
 
  111   1          WEB_PRINTF(pReq, "</html>\n");
  112   1      
@@ -190,7 +190,7 @@ line level    source
  165   1          return SUCCESS;
  166   1      }
 *** WARNING C280 IN LINE 151 OF ..\src\web\web_qos.c: 'dscp': unreferenced local variable
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 4   
 
 *** WARNING C280 IN LINE 152 OF ..\src\web\web_qos.c: 'queue_num': unreferenced local variable
 *** WARNING C280 IN LINE 152 OF ..\src\web\web_qos.c: 'pri': unreferenced local variable
@@ -254,7 +254,7 @@ line level    source
  218   3                  port[settingCnt++] = atoi(pValue);
  219   3              }
  220   2          }
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 5   
 
  221   1      
  222   1          WEB_VAR(pReq, "port_priority", &pValue);
@@ -318,7 +318,7 @@ line level    source
  280   2              WEB_VAR(pReq, NULL, &value);
  281   2              if (value)
  282   2              {
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 6   
 
  283   3                  queueId[entryNum++] = atoi(value);
  284   3              }
@@ -382,7 +382,7 @@ line level    source
  342   2              WEB_VAR(pReq, NULL, &pValue);
  343   2              if (pValue)
  344   2              {
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 7   
 
  345   3                  priSet[settingCnt++] = atoi(pValue);
  346   3              }
@@ -446,7 +446,7 @@ line level    source
  404   1      }
  405          
  406          /*
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 8   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 8   
 
  407           * Function: post_qos_dscpremapping
  408           * --------------------------------
@@ -510,7 +510,7 @@ line level    source
  466           * Processes priority-to-queue mapping form submission.
  467           * Extracts priority values and queue ID to map.
  468           * Updates priority-to-queue mapping table.
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 9   
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 9   
 
  469           * Refreshes priority-to-queue page after applying.
  470           */
@@ -574,7 +574,7 @@ line level    source
  528          int32 get_rtc(struct http_request_s *pReq)
  529          {
  530   1          WEB_BEGIN(pReq);
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 10  
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 10  
 
  531   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
  532   1          WEB_HEADER(pReq, "Content-Type: text/html");
@@ -638,7 +638,7 @@ line level    source
  654   1      
  654   1          "function updateUI(){"
  654   1          "  currS++;"
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 11  
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 11  
 
  654   1          "  if(currS>=60){currS=0; currM++;}"
  654   1          "  if(currM>=60){currM=0; currH++;}"
@@ -702,7 +702,7 @@ line level    source
  654   1          "    retryDelay = 1000; /* Retry immediately */"
  654   1          "  }"
  654   1          "  setTimeout(fetchAll, retryDelay);"
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 12  
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 12  
 
  654   1          "}"
  654   1      
@@ -766,7 +766,7 @@ line level    source
  701   1          WEB_PRINTF(pReq, "<button type=button onclick=\"f()\">Apply Time & Date</button>");
  702   1          WEB_PRINTF(pReq, "<div class=msg id=m></div>");
  703   1      
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 13  
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 13  
 
  704   1          WEB_PRINTF(pReq, "</div></div><script>");
  705   1      
@@ -830,7 +830,7 @@ line level    source
              -:0;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:background 0.2s;}");
  757   1          WEB_PRINTF(pReq, "button:hover{background:#1a2f44;}");
  758   1          
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 14  
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 14  
 
  759   1          WEB_PRINTF(pReq, ".msg{margin-top:16px;font-size:14px;font-weight:600;text-align:center;min-height:20p
              -x;}");
@@ -894,7 +894,7 @@ line level    source
              -");
  817   1          WEB_PRINTF(pReq, "msg.style.color='#0f1a2b';");
  818   1          WEB_PRINTF(pReq, "}else{");
-C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 15  
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/03/2026 14:16:01 PAGE 15  
 
  819   1          WEB_PRINTF(pReq, "msg.textContent='Failed: '+(j.msg||xhr.status);msg.style.color='#e03131';");
  820   1          WEB_PRINTF(pReq, "}}else{");

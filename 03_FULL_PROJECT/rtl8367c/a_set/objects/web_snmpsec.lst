@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/02/2026 17:57:39 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/03/2026 14:16:04 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SNMPSEC
@@ -62,7 +62,7 @@ line level    source
   49           * ---------------------
   50           * Displays SNMP security configuration page.
   51           * Shows community strings (Read Only, Read Write).
-C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/02/2026 17:57:39 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/03/2026 14:16:04 PAGE 2   
 
   52           * Displays system information (description, contact, location).
   53           * Shows trap IP address configuration.
@@ -126,7 +126,7 @@ line level    source
  106   1          WEB_PRINTF(pReq, "<h2 class=\"section-title\">Community Settings</h2>\n");
  107   1          WEB_PRINTF(pReq, "<div class=\"form-row\">\n");
  108   1      
-C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/02/2026 17:57:39 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/03/2026 14:16:04 PAGE 3   
 
  109   1          // Read Only Community
  110   1          WEB_PRINTF(pReq, "<div class=\"form-group\">\n");
@@ -190,7 +190,7 @@ line level    source
  162   1          WEB_PRINTF(pReq, "</html>\n");
  163   1      
  164   1          WEB_END(pReq);
-C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/02/2026 17:57:39 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/03/2026 14:16:04 PAGE 4   
 
  165   1      
  166   1          return SUCCESS;
@@ -254,7 +254,7 @@ line level    source
  224   2              memcpy(rdwrcommunity, pValue, 16);
  225   2          }
  226   1      
-C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/02/2026 17:57:39 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_SNMPSEC                                                       11/03/2026 14:16:04 PAGE 5   
 
  227   1          if (str_to_ip(&ip, ipStr) != 0) {
  228   2      //        printmsg(pReq, "Invalid IP Address.");

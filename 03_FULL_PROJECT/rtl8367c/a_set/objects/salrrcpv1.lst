@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALRRCPV1                                                         11/02/2026 17:57:02 PAGE 1   
+C51 COMPILER V9.60.0.0   SALRRCPV1                                                         11/03/2026 14:15:35 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALRRCPV1
@@ -62,7 +62,7 @@ line level    source
   49           *      Get rrcpv1 vender id
   50           * Input: 
   51           *      None
-C51 COMPILER V9.60.0.0   SALRRCPV1                                                         11/02/2026 17:57:02 PAGE 2   
+C51 COMPILER V9.60.0.0   SALRRCPV1                                                         11/03/2026 14:15:35 PAGE 2   
 
   52           * Output: 
   53           *      pChipId - Pointer to vender ID

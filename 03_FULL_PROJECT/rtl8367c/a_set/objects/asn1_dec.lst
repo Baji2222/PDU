@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 1   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ASN1_DEC
@@ -62,7 +62,7 @@ line level    source
   49           * @param ofs points to the offset within the pbuf chain of the ASN1 coded type field
   50           * @param type return ASN1 type
   51           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 2   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 2   
 
   52           */
   53          err_t
@@ -126,7 +126,7 @@ line level    source
  111   5                else
  112   5                {
  113   6                  zeros = 0;
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 3   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 3   
 
  114   6                }
  115   5              }
@@ -190,7 +190,7 @@ line level    source
  173           * @param value return host order integer
  174           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
  175           *
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 4   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 4   
 
  176           * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
  177           * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
@@ -254,7 +254,7 @@ line level    source
  235           * @param value return host order integer
  236           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) decode
  237           *
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 5   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 5   
 
  238           * @note ASN coded integers are _always_ signed!
  239           */
@@ -318,7 +318,7 @@ line level    source
  297   1        /* p == NULL, ofs >= plen */
  298   1        return ERR_ARG;
  299   1      }
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 6   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 6   
 
  300          
  301          /**
@@ -382,7 +382,7 @@ line level    source
  359   3               getnext operation. uncommon but valid */
  360   3            return ERR_OK;
  361   3          }
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 7   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 7   
 
  362   2          len--;
  363   2          if (len > 0)
@@ -446,7 +446,7 @@ line level    source
  421           * Decodes (copies) raw data (ip-addresses, octet strings, opaque encoding)
  422           * from incoming message into array.
  423           *
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 8   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 8   
 
  424           * @param p points to a pbuf holding an ASN1 coded raw data
  425           * @param ofs points to the offset within the pbuf chain of the ASN1 coded raw data
@@ -510,7 +510,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    EDATA SIZE       =   ----    ----
    HDATA SIZE       =   ----    ----
    XDATA CONST SIZE =   ----    ----
-C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/02/2026 17:57:40 PAGE 9   
+C51 COMPILER V9.60.0.0   ASN1_DEC                                                          11/03/2026 14:16:05 PAGE 9   
 
    FAR CONST SIZE   =   ----    ----
 END OF MODULE INFORMATION.

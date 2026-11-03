@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 1   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RATE
@@ -62,7 +62,7 @@ line level    source
                *      RT_ERR_INPUT            - Invalid input parameters
                * Note:
                *      The API can set shared meter rate and ifg include for each meter.
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 2   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 2   
 
                *      The rate unit is 1 kbps and the range is from 8k to 1048568k if type is METER_TYPE_KBPS and
                *      the granularity of rate is 8 kbps.
@@ -126,7 +126,7 @@ line level    source
                *      pType        - Meter Type
                *      pRate        - pointer of rate of share meter
                *      pIfg_include - include IFG or not, ENABLE:include DISABLE:exclude
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 3   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 3   
 
                * Return:
                *      RT_ERR_OK               - OK
@@ -190,7 +190,7 @@ line level    source
                *      The API can set shared meter bucket size.
                */
               rtk_api_ret_t rtk_rate_shareMeterBucket_set(rtk_meter_id_t index, uint32 bucket_size)
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 4   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 4   
 
               {
                   rtk_api_ret_t retVal;
@@ -254,7 +254,7 @@ line level    source
  233           *      rate        - Rate of share meter
  234           *      ifg_include - include IFG or not, ENABLE:include DISABLE:exclude
  235           *      fc_enable   - enable flow control or not, ENABLE:use flow control DISABLE:drop
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 5   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 5   
 
  236           * Output:
  237           *      None
@@ -318,7 +318,7 @@ line level    source
  293           *      RT_ERR_OK           - OK
  294           *      RT_ERR_FAILED       - Failed
  295           *      RT_ERR_SMI          - SMI access error
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 6   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 6   
 
  296           *      RT_ERR_PORT_ID      - Invalid port number.
  297           *      RT_ERR_INPUT        - Invalid input parameters.
@@ -382,7 +382,7 @@ line level    source
  352   1          rtk_api_ret_t retVal;
  353   1      
  354   1          /* Check initialization state */
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 7   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 7   
 
  355   1          RTK_CHK_INIT_STATE();
  356   1      
@@ -446,7 +446,7 @@ line level    source
  413   1      
  414   1          if(NULL == pRate)
  415   1              return RT_ERR_NULL_POINTER;
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 8   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 8   
 
  416   1      
  417   1          if(NULL == pIfg_include)
@@ -510,7 +510,7 @@ line level    source
               /* Function Name:
                *      rtk_rate_egrQueueBwCtrlEnable_set
                * Description:
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 9   
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 9   
 
                *      Set enable status of egress bandwidth control on specified queue.
                * Input:
@@ -574,7 +574,7 @@ line level    source
               rtk_api_ret_t rtk_rate_egrQueueBwCtrlRate_get(rtk_port_t port, rtk_qid_t queue, rtk_meter_id_t *pIndex)
               {
                   rtk_api_ret_t retVal;
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 10  
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 10  
 
                   uint32 offset_idx;
                   uint32 phy_port;
@@ -638,7 +638,7 @@ line level    source
               
                   if (index > RTK_MAX_METER_ID)
                       return RT_ERR_FILTER_METER_ID;
-C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 11  
+C51 COMPILER V9.60.0.0   RATE                                                              11/03/2026 14:15:41 PAGE 11  
 
               
                   phy_port = rtk_switch_port_L2P_get(port);

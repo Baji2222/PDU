@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 1   
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/03/2026 14:15:38 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALERROR
@@ -62,7 +62,7 @@ line level    source
   45   2              case RT_ERR_LA_PORTMASK:            return "Invalid port mask ";
   46   2              case RT_ERR_LA_HASHMASK:            return "Invalid hash mask";
   47   2              case RT_ERR_LA_DUMB:                return "This API should be used in 802.1ad dumb mode";
-C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 2   
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/03/2026 14:15:38 PAGE 2   
 
   48   2              case RT_ERR_LA_PORTNUM_DUMB:        return "It can only aggregate at most four ports when 802.1ad 
              -dumb mode";
@@ -126,7 +126,7 @@ line level    source
  103   2              case RT_ERR_L2_L2MULTI_PARAM:           return " invalid L2 multicast parameter";
  104   2              case RT_ERR_L2_IPMULTI_PARAM:           return " invalid L2 ip multicast parameter";
  105   2              case RT_ERR_L2_PARTIAL_HASH_KEY:        return " invalid L2 partial Hash key";
-C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 3   
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/03/2026 14:15:38 PAGE 3   
 
  106   2              case RT_ERR_L2_EMPTY_ENTRY:             return " the entry is empty(invalid)";
  107   2              case RT_ERR_L2_FLUSH_TYPE:              return " the flush type is invalid";
@@ -190,7 +190,7 @@ line level    source
  159   2          
  160   2              /* port ability */
  161   2              case RT_ERR_PHY_PAGE_ID :               return " invalid PHY page id";
-C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 4   
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/03/2026 14:15:38 PAGE 4   
 
  162   2              case RT_ERR_PHY_REG_ID:                 return "  invalid PHY reg id";
  163   2              case RT_ERR_PHY_DATAMASK:               return "  invalid PHY data mask";
@@ -254,7 +254,7 @@ line level    source
  220   2          case SAL_ERR_PARAMETER:                 return "Invalid parameter";
  221   2          case SAL_ERR_NOT_SUPPORT:               return "Action not supported";
  222   2      
-C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 5   
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/03/2026 14:15:38 PAGE 5   
 
  223   2          /* MAC Table */    
  224   2          case SAL_ERR_MAC_ENTRY_INVALID:         return "Invalid MAC entry";
@@ -318,7 +318,7 @@ line level    source
  279   2          /*SVLAN*/
  280   2          case SAL_ERR_SVLAN_ENTRY_INDEX:         return "Invalid svid entry NO.";                              
              -         
-C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 6   
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/03/2026 14:15:38 PAGE 6   
 
  281   2          case SAL_ERR_SVLAN_ETHER_TYPE:          return "Invalid SVLAN ether type";                            
              -            

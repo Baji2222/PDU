@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 1   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALVLAN
@@ -62,7 +62,7 @@ line level    source
   49            sal_lPortmask_t *pPortMask, 
   50            sal_lPortmask_t *pTagMask
   51            )
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 2   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 2   
 
   52          {
   53   1          int32           ret;
@@ -126,7 +126,7 @@ line level    source
                   uint32          max_portmask;
                   rtk_vlan_cfg_t vlanCfg;
               
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 3   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 3   
 
                   memset(&vlanCfg, 0, sizeof(vlanCfg));
                   if ((ret = rtk_vlan_get(vlan_id, &vlanCfg)) != RT_ERR_OK)
@@ -190,7 +190,7 @@ line level    source
  173   1          sal_vlan_t                  vlan_id;
  174   1          sal_lPortmask_t             portmask;
  175   1          sal_lPortmask_t             tagmask;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 4   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 4   
 
  176   1          sal_vlan_acceptFrameType_t  type;
  177   1          sal_vlan_tagMode_t          vlanMode;
@@ -254,7 +254,7 @@ line level    source
  235   1      }
  236          
  237          #if 0
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 5   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 5   
 
               int32 sal_vlan_exist(sal_vlan_t vlan_id)
               {
@@ -318,7 +318,7 @@ line level    source
                 sal_flash_vlan_sttcEntry_create(slotVidIndex, &newEntry);
               
                   return SAL_ERR_SUCCESS;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 6   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 6   
 
               }
               
@@ -382,7 +382,7 @@ line level    source
                 if (enable == DISABLE) {
                   return SAL_ERR_VLAN_DISABLE;
                 }
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 7   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 7   
 
               
                 if ( (!vlan_id) || (vlan_id > 4094)) {
@@ -446,7 +446,7 @@ line level    source
  421   1      
  422   1        if (!(sal_vlan_db_search(vlan_id, &sortedSlotIndex, &slotVidIndex))) {
  423   2          return SAL_ERR_VLAN_NOT_EXIST;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 8   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 8   
 
  424   2        }
  425   1        
@@ -510,7 +510,7 @@ line level    source
  483   3            *pSorted_slot_idx = i;
  484   3            *pSlot_idx = vlanDb.sortedSlot[i];
  485   3            return TRUE;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 9   
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 9   
 
  486   3          }
  487   2        }
@@ -574,7 +574,7 @@ line level    source
  545          {
  546   1          int32       ret;
  547   1          uint32      vlan_tmp;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 10  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 10  
 
  548   1          sal_port_t  portId;
  549   1          uint32      pri;
@@ -638,7 +638,7 @@ line level    source
                   int32               ret;
                   rtk_vlan_tagMode_t  vlan_tag_mode;
                   uint8               portId;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 11  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 11  
 
                   
                   sal_trunk_logicId_toPhysicId(&portId, port);
@@ -702,7 +702,7 @@ line level    source
  669   1          ret = rtk_vlan_portAcceptFrameType_get(portId, &type);
  670   1          *pType = type;
  671   1      
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 12  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 12  
 
  672   1          SAL_ERR_CODE(ret, SAL_ERR_PARAMETER);
  673   1          return SAL_ERR_SUCCESS;
@@ -766,7 +766,7 @@ line level    source
  731   1          sal_trunk_logicMask_toPhysicMask(&entry.p_tagMask, pTagMask);
  732   1      
  733   1        sal_flash_vlan_sttcEntry_set(entry_index, &entry);
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 13  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 13  
 
  734   1      
  735   1          /* If the vlan id doesn't exist, create a new entry in the index 
@@ -830,7 +830,7 @@ line level    source
               {
                   sal_flash_vlanDb_t      vlanDb;
                   sal_flash_vlanEntry_t   entry;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 14  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 14  
 
                   sal_vlan_t  vlan_id;
                 int16       i;
@@ -894,7 +894,7 @@ line level    source
                   uint16  entry_index;          /* The entry index range from 0 ~ 31   */
                   uint16  sorted_idx;           /* Index in the sorted database        */
                   bool    found;
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 15  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 15  
 
                      
                   if (pEntry == NULL) /* Load the indexed content into hardware*/
@@ -958,7 +958,7 @@ line level    source
                *      Otherwise, save pEntry into the indexed entry and don't set the hardware.
                * Input:
                *      index - static vlan entry index, range from 0 ~ 31
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 16  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 16  
 
                *      pEntry - vlan entry content
                * Output:
@@ -1022,7 +1022,7 @@ line level    source
               }
               
               int32 sal_vlan_index_entry_get(int16 index, sal_vlan_entry_t *pEntry)
-C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 17  
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/03/2026 14:15:37 PAGE 17  
 
               {
                   return sal_flash_vlan_sttcEntry_get(index, (sal_flash_vlanEntry_t*)pEntry);

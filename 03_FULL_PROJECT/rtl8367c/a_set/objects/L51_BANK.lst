@@ -1,4 +1,4 @@
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     1
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     1
 
 
 MACRO ASSEMBLER A51 V8.2.7.0
@@ -65,7 +65,7 @@ LOC  OBJ            LINE     SOURCE
                       55     ;    add the following lines of code at the end of the STARTUP.A51 file:      *
                       56     ;                :                                                            *
                       57     ;      EXTRN CODE (?B_SWITCH0)                                                *
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     2
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     2
 
                       58     ;               CALL    ?B_SWITCH0    ; init bank mechanism to code bank 0    *
                       59     ;               LJMP    ?C_START      ; line already exits at the end of file *
@@ -133,7 +133,7 @@ LOC  OBJ            LINE     SOURCE
                      120     ;                                                                             *
                      121     ;******************************************************************************
                      122     ;                                                                             *
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     3
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     3
 
                      123     ; THEORY OF OPERATION                                                         *
                      124     ; -------------------                                                         *
@@ -201,7 +201,7 @@ LOC  OBJ            LINE     SOURCE
                      196     
                      197         IF ?B_SSTACK = 1
                      198             ?BANK?SELECT    SEGMENT CODE
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     4
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     4
 
                      199             ?BANK?SWITCH    SEGMENT CODE PAGE
 ----                 200                             RSEG    ?BANK?SWITCH
@@ -269,7 +269,7 @@ LOC  OBJ            LINE     SOURCE
                      591     ;************************  SWITCHBANK FUNCTION  *******************************
                      592     ;                                                                             *
                      593     ; SWITCHBANK allows use of bank-switching for C programs                      *
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     5
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     5
 
                      594     ;                                                                             *
                      595     ; prototype:   extern switchbank (unsigned char bank_number);                 *
@@ -337,7 +337,7 @@ LOC  OBJ            LINE     SOURCE
                      688     ;     MOV  R3,#MBYTE (variable)   ; gives memory type byte of variable        *
                      689     ;     CALL ?C?CLDXPTR             ; load BYTE variable into A                 *
                      690     ;******************************************************************************
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     6
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     6
 
                      691     
                      692     PUBLIC ?C?CLDXPTR
@@ -405,7 +405,7 @@ LOC  OBJ            LINE     SOURCE
 0039 FA              790                         MOV     R2, A
 003A 7402            791                         MOV     A, #2
 003C 93              792                         MOVC    A, @A+DPTR
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     7
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     7
 
 003D F9              793                         MOV     R1, A
 003E D096            794                         POP     CODE_BANK
@@ -452,7 +452,7 @@ LOC  OBJ            LINE     SOURCE
                      967      
                      968     ENDIF  ; close block IF ?B_VAR_BANKING ****************************************
                      969     
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     8
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     8
 
 SYMBOL TABLE LISTING
 ------ ----- -------
@@ -520,7 +520,7 @@ N A M E             T Y P E  V A L U E   ATTRIBUTES
 ?B_SWITCH24. . . .  C ADDR   0104H   R   SEG=?BANK?SWITCH
 ?B_SWITCH25. . . .  C ADDR   0110H   R   SEG=?BANK?SWITCH
 ?B_SWITCH26. . . .  C ADDR   011CH   R   SEG=?BANK?SWITCH
-A51 MACRO ASSEMBLER  L51_BANK                                                             11/02/2026 17:56:52 PAGE     9
+A51 MACRO ASSEMBLER  L51_BANK                                                             11/03/2026 14:15:30 PAGE     9
 
 ?B_SWITCH27. . . .  C ADDR   0128H   R   SEG=?BANK?SWITCH
 ?B_SWITCH28. . . .  C ADDR   0134H   R   SEG=?BANK?SWITCH

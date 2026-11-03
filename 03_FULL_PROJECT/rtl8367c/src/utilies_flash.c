@@ -28,140 +28,34 @@ uint8  far m_u8_uart_str[234];
 uint8 m_u8_temp_cntr = 0;
 
 
-/*
-uint32 xdata s1;
-uint32 xdata s2;
-uint32 xdata s3;
-
-uint32 vic_rand32(void){
-	#define TAUSWORTHE(s,a,b,c,d) ((s&c)<<d) ^ (((s <<a) ^ s)>>b)
-	s1 = TAUSWORTHE(s1, 13, 19, 4294967294UL, 12);
-	s2 = TAUSWORTHE(s2, 2, 25, 4294967288UL, 4);
-	s3 = TAUSWORTHE(s3, 3, 11, 4294967280UL, 17);
-	
-	return ( (s1^s2^s3) );
-}
-
-
-uint8 vic_rand8(void){
-	return (vic_rand32()%0xFF);
-}
-
-void print_buf(uint8 *buf, uint32 len, char *msg) large{
-	uint16 xdata i;
-	int    xdata line_size = 8;
-	
-	if( NULL!=msg ){
-		OSAL_PRINTF("%s\n", msg);
-	}
-	OSAL_PRINTF("[Begin:0x%04x_0x0000]    0     1     2     3     4     5     6     7", (uint16)buf);
-	for(i=0;i<len;i++, buf++){
-		if( 0==(i%8) ){
-			OSAL_PRINTF("\n      [0x%04x_0x%04x]:", (uint16)buf, i);
-		}
-		OSAL_PRINTF("0x%02x  ", (uint16)(*buf));
-	}
-	OSAL_PRINTF("\n");
-}
-
-void print_fcbuf(uint8 const far *buf, uint32 len, char *msg) large{
-	uint16 xdata i;
-	int    xdata line_size = 8;
-	
-	if( NULL!=msg ){
-		OSAL_PRINTF("%s\n", msg);
-	}
-	OSAL_PRINTF("[Begin:0x%04x_0x0000]    0     1     2     3     4     5     6     7", (uint16)buf);
-	for(i=0;i<len;i++, buf++){
-		if( 0==(i%8) ){
-			OSAL_PRINTF("\n      [0x%04x_0x%04x]:", (uint16)buf, i);
-		}
-		OSAL_PRINTF("0x%02x  ", (uint16)(*buf));
-	}
-	OSAL_PRINTF("\n");
-}
-*/
-
 // Print Menu: Displays the main CLI menu with available commands and project name
-// Shows clear screen, IP, help, loader mode, MAC set, and reboot options
 void print_menu(void) large{
-	OSAL_PRINTF("\n     ****************    %s    ****************\n", PROJECT_NAME);
-	OSAL_PRINTF("     %c: Clear Screen\n", CLI_COMMAND_CLEAR);
+    OSAL_PRINTF("\n     ****************    %s    ****************\n", PROJECT_NAME);
+    OSAL_PRINTF("     %c: Clear Screen\n", CLI_COMMAND_CLEAR);
     OSAL_PRINTF("     %c: Print IP\n", CLI_COMMAND_DUMP_IP);
-	OSAL_PRINTF("     %c: Help Menu\n", CLI_COMMAND_HELP);
-	OSAL_PRINTF("     %c: Enter Loader Mode\n", CLI_COMMAND_UPDATE);
+    OSAL_PRINTF("     %c: Help Menu\n", CLI_COMMAND_HELP);
+    OSAL_PRINTF("     %c: Enter Loader Mode\n", CLI_COMMAND_UPDATE);
     OSAL_PRINTF("     %c: Set MAC Address\n", CLI_COMMAND_MAC_SET);
-    OSAL_PRINTF("     %c: Reboot\n", CLI_COMMAND_REBOOT);    
-	OSAL_PRINTF("     ************************************************\n\n");
+    OSAL_PRINTF("     %c: Reboot\n", CLI_COMMAND_REBOOT);
+    OSAL_PRINTF("     ************************************************\n\n");
 }
 
-#if 0
-static uint8 hex2dec(uint8 value) large{
-	if( ('0'<=value) && ('9'>=value) ){
-		return (value-'0');
-	}else if( ('a'<=value) && ('f'>=value) ){
-		return (value - 'a' + 10);
-	}else if( ('A'<=value) && ('F'>=value) ){
-		return (value - 'A' + 10);
-	}
-}
-#endif
-
-#if 0 /* function:getAddress */
-/* NO ERROR CHECK */
-uint32 getAddress(void) large{
-	uint32 xdata addr;
-	uint16 xdata i;
-	uint8  xdata input_buf[32];
-	
-	OSAL_PRINTF("target address:");
-	for(i=0;i<32;i++){
-		input_buf[i] = getchar();
-		if( '\n'==input_buf[i] || '\r'==input_buf[i] ){
-			input_buf[i] = '\0';
-			putchar('\n');
-			break;
-		}
-		putchar(input_buf[i]);
-	}
-	
-	addr = 0;
-	/* NO ERROR CHECK */
-	if( '0'==input_buf[0] && 'x'==input_buf[1] ){
-		addr = hex2dec(input_buf[2]);
-		for(i=3;input_buf[i]!='\0';i++){
-			addr *= 16;
-			addr += hex2dec(input_buf[i]);
-		}
-	}else{
-		addr = input_buf[0] - '0';
-		for(i=1;input_buf[i]!='\0';i++){
-			addr *= 10;
-			addr += input_buf[i];
-		}
-	}
-	return addr;
-}
-#endif /* end of function:getAddress */
-
-// Clear Screen: Sends ANSI escape codes to clear terminal and move cursor to home position
-// Uses ESC[2J to clear and ESC[1;1H to position cursor at top-left
+// Clear Screen: ANSI escape codes, clear terminal and cursor to home
 void clearScreen(void) large{
-	putchar(0x1B);
-	putchar('[');
-	putchar('2');
-	putchar('J');
-	putchar(0x1B);
-	putchar('[');
-	putchar('1');
-	putchar(';');
-	putchar('1');
-	putchar('H');
-	putchar(0);
+    putchar(0x1B);
+    putchar('[');
+    putchar('2');
+    putchar('J');
+    putchar(0x1B);
+    putchar('[');
+    putchar('1');
+    putchar(';');
+    putchar('1');
+    putchar('H');
+    putchar(0);
 }
 
-// Get MAC Address: Prompts user to input MAC address in XX:XX:XX:XX:XX:XX format
-// Validates input format and optionally saves to flash if user confirms with 'y'
+// Get MAC Address: input in XX:XX:XX:XX:XX:XX format, optional save to flash
 void cliGetMacAddr(void) large{
     uint8      tmp;
     char      buffer[18];
@@ -183,6 +77,7 @@ void cliGetMacAddr(void) large{
             if(0 == timeout)
             {
                 printf("Input timeout\n");
+                break;                          /* FIX: do not hang the web server */
             }
         }
         else
@@ -215,8 +110,7 @@ void cliGetMacAddr(void) large{
                             if(tmp == 'y')
                             {
                                 printf("MAC address is saved to Flash\n");
-                                sal_flash_sysMac_set(&mac);                                
-                                //sal_flash_cfg_save();
+                                sal_flash_sysMac_set(&mac);
                             }
                             else
                             {
@@ -230,107 +124,139 @@ void cliGetMacAddr(void) large{
                 {
                     printf("\nError input\n");
                 }
-                
+
                 break;
             }
             else
             {
-                printf("%c", tmp);
-                buffer[ptr++] = tmp;
-                timeout = 0xFFFFFFFF;
+                if(ptr < 17)                    /* FIX: never overflow buffer[18] */
+                {
+                    printf("%c", tmp);
+                    buffer[ptr++] = tmp;
+                }
+                timeout = 0xFFFFFFFFUL;
             }
         }
     }
 }
 
-// Command Select: Reads a single character from UART without blocking
-// Returns 0xFF if no character available, else returns the command character
+// Command Select: reads one character without blocking, 0xFF = none
 uint8 cmd_select(void) large
 {
-	uint8 xdata cmd;
-	
-	//cmd = getchar();
-	cmd = getchar_nb();
-	return cmd;
+    uint8 xdata cmd;
+
+    cmd = getchar_nb();
+    return cmd;
 }
 
-// Change Clock: Adjusts system clock divider for SPI flash access based on CPU frequency
-// Sets DW8051_RDY register to control SPI flash access timing and reinitializes UART/timer
+// Change Clock: adjusts clock divider for SPI flash access
 void change_clock(uint16 xdata value) large{
-	volatile uint32 xdata i;
-	
-	for(i=0;i<0x100;i++);
-	if(value < 0x04) //8051 Clock >100Mhz
-	{
-	    //if 8051 Clock >100Mhz, SPI flash access clock is divided to half 8051 Clock
-        setReg(DW8051_RDY, (DW8051_RDY_RATE(value)|(1<<8)) );
-	}
-	else
+    volatile uint32 xdata i;
+
+    for(i=0;i<0x100;i++);
+    if(value < 0x04) //8051 Clock >100Mhz
     {
-        //if 8051 Clock < 100Mhz, SPI flash access clock is equal to 8051 Clock
-	setReg(DW8051_RDY, (DW8051_RDY_RATE(value)) );
+        setReg(DW8051_RDY, (DW8051_RDY_RATE(value)|(1<<8)) );
     }
-	for(i=0;i<65535;i++);
-	uart_init();
-	timer_init();
-	for(i=0;i<0x100;i++);
+    else
+    {
+        setReg(DW8051_RDY, (DW8051_RDY_RATE(value)) );
+    }
+    for(i=0;i<65535;i++);
+    uart_init();
+    timer_init();
+    for(i=0;i<0x100;i++);
 }
 
-// Set 8051 Ready: Sets the ready bit in DW8051_RDY register to enable SPI flash access
-// Reads current register value and sets bit 0 without modifying other bits
+// Set 8051 Ready: sets bit 0 of DW8051_RDY
 void set_8051RDY() large{
-	volatile uint32 xdata tmp;
-	tmp = getReg(DW8051_RDY);
+    volatile uint32 xdata tmp;
+    tmp = getReg(DW8051_RDY);
 
-	setReg(DW8051_RDY, tmp |0x1);
+    setReg(DW8051_RDY, tmp |0x1);
 }
 
 
-
-// System UART Command: Processes UART input characters and executes CLI commands
-// Accumulates characters into buffer and handles commands like help, clear, IP dump, MAC set
-void sys_uart_cmd()
+// System UART Command: drains the UART receive buffer, builds lines,
+// handles CLI commands (help, clear, IP dump, MAC set).
+// Bytes that belong to a JSON data line ('{' ... newline) are never
+// treated as CLI commands.
+// FIX: a '{' ALWAYS starts a new JSON line (buffer is reset), so a lost
+// newline or stray byte can no longer let JSON letters trigger the CLI.
+void sys_uart_cmd(void)
 {
     uint8 cmd;
-    
-    cmd = cmd_select();
-	
-    if( cmd!=0xFF )
-    {
-			
-				m_u8_uart_str[m_u8_temp_cntr++] = cmd;
-				if(cmd == 0x0A || m_u8_temp_cntr >= 180)
-				{
-		
-						m_u8_uart_str[m_u8_temp_cntr] = '\0';
-						process_uart_string();
-						m_u8_temp_cntr = 0;	
-				}
-				
-			
+    uint8 n;
+    static uint8 in_json_line = 0;
 
-			switch(cmd)
-			{
-				case CLI_COMMAND_HELP:
-					print_menu();
-					break;
-				case CLI_COMMAND_CLEAR:
-					clearScreen();
-					break;
-							case CLI_COMMAND_DUMP_IP:
-						printf("  IP:%d.%d.%d.%d\n", (uint16)this_ip[0], (uint16)this_ip[1], (uint16)this_ip[2], (uint16)this_ip[3]);
-									printf("Mask:%d.%d.%d.%d\n", (uint16)netmask[0], (uint16)netmask[1], (uint16)netmask[2], (uint16)netmask[3]);
-									printf("  GW:%d.%d.%d.%d\n", (uint16)default_gateway.addr[0], (uint16)default_gateway.addr[1], (uint16)default_gateway.addr[2], (uint16)default_gateway.addr[3]);
-									printf(" MAC:%02bX.%02bX.%02bX.%02bX.%02bX.%02bX\n", this_mac[0], this_mac[1], this_mac[2], this_mac[3], this_mac[4], this_mac[5]);
-					break;
-							case CLI_COMMAND_MAC_SET:
-									printf("Format: XX:XX:XX:XX:XX:XX, press Enter to submit.\n");
-									printf("input: ");
-									cliGetMacAddr();
-									break;
-							default:
-					break;
-			};        
+    for (n = 0; n < 200; n++)
+    {
+        cmd = cmd_select();
+        if (cmd == 0xFF)
+            break;                      /* nothing more buffered */
+
+        if (cmd == '{')                 /* FIX: resync on every '{' */
+        {
+            m_u8_temp_cntr = 0;
+            in_json_line = 1;
+        }
+
+        if (m_u8_temp_cntr < (sizeof(m_u8_uart_str) - 1))
+        {
+            m_u8_uart_str[m_u8_temp_cntr++] = cmd;
+
+            if (cmd == 0x0A)
+            {
+                m_u8_uart_str[m_u8_temp_cntr] = '\0';
+                process_uart_string();
+                m_u8_temp_cntr = 0;
+                in_json_line = 0;
+            }
+        }
+        else
+        {
+            /* Overflow: discard incomplete message */
+            m_u8_temp_cntr = 0;
+            in_json_line = 0;
+            memset(m_u8_uart_str, 0, sizeof(m_u8_uart_str));
+
+            /* Ignore remaining bytes until newline */
+            while (cmd != 0x0A)
+            {
+                cmd = cmd_select();
+                if (cmd == 0xFF)
+                    break;
+            }
+        }
+
+        if (!in_json_line)
+        {
+            switch(cmd)
+            {
+                case CLI_COMMAND_HELP:
+                    print_menu();
+                    break;
+
+                case CLI_COMMAND_CLEAR:
+                    clearScreen();
+                    break;
+
+                case CLI_COMMAND_DUMP_IP:
+                    printf("  IP:%d.%d.%d.%d\n",
+                        (uint16)this_ip[0], (uint16)this_ip[1],
+                        (uint16)this_ip[2], (uint16)this_ip[3]);
+                    break;
+
+                case CLI_COMMAND_MAC_SET:
+                    printf("Format: XX:XX:XX:XX:XX:XX, press Enter to submit.\n");
+                    printf("input: ");
+                    cliGetMacAddr();
+                    break;
+
+                default:
+                    break;
+            }
+        }
     }
 }
 
@@ -338,29 +264,132 @@ void sys_uart_cmd()
 uint8 m_u8_strlen;
 
 
-// Process UART String: Processes complete UART string by sending to web and checking for JSON format
-// Detects JSON strings with {A...} format and updates JSON data if pattern matches
-void process_uart_string(void)
-{
+/* Number of entries in the "P" and "I" arrays of a PDU frame.
+   Set to 0 to disable the count check. */
+#define PDU_CHANNEL_COUNT 8
 
-	uint8 temp_var;
-	
-	m_u8_strlen = strlen(m_u8_uart_str);
-	if(m_u8_uart_str[0] == '{' && m_u8_uart_str[2] == 'V')
-	{
-			send_str_web(m_u8_uart_str);
-		  update_json_string(m_u8_uart_str);
-	}
-	
-	if(m_u8_uart_str[0] == '{' && m_u8_uart_str[2] == 'H')
-	{
-			Copy_RTC_DATA(m_u8_uart_str);
-	}
-	
-	for(temp_var = 0; temp_var < 234 ; temp_var++)
-	{
-		m_u8_uart_str[temp_var] = '\0';
-	}
+uint16 m_u16_json_ok  = 0;   /* PDU status frames accepted           */
+uint16 m_u16_json_bad = 0;   /* frames rejected as corrupted/unknown */
+uint16 m_u16_json_rtc = 0;   /* RTC replies routed                   */
+uint16 m_u16_json_alm = 0;   /* alarm replies routed                 */
+
+/* Returns number of items in the array that follows key (e.g. "\"P\""),
+   or 0xFF if malformed. */
+static uint8 json_array_items(char *s, const char *key)
+{
+    char *p;
+    uint8 items = 1;
+
+    p = strstr(s, key);
+    if (p == NULL) return 0xFF;
+    p += strlen(key);
+    while (*p == ' ') p++;
+    if (*p != ':') return 0xFF;
+    p++;
+    while (*p == ' ') p++;
+    if (*p != '[') return 0xFF;
+    p++;
+    if (*p == ']') return 0;
+
+    while (*p != ']')
+    {
+        if (*p == '\0') return 0xFF;
+        if (*p == ',')
+            items++;
+        else if (!((*p >= '0' && *p <= '9') || *p == '.' || *p == '-' || *p == '+' || *p == ' '))
+            return 0xFF;                /* unexpected character inside array */
+        p++;
+    }
+    return items;
 }
 
+/* Returns 1 if the number after key (e.g. "\"V\"") looks valid. */
+static uint8 json_number_ok(char *s, const char *key)
+{
+    char *p = strstr(s, key);
+    if (p == NULL) return 0;
+    p += strlen(key);
+    while (*p == ' ') p++;
+    if (*p != ':') return 0;
+    p++;
+    while (*p == ' ') p++;
+    return (uint8)((*p >= '0' && *p <= '9') || *p == '-');
+}
 
+// Process UART String:
+//  1. PDU status frame {"V":..,"P":[8],"I":[8]}  -> validated, then sent to
+//     the web page and the SNMP JSON store.
+//  2. GET_ALARM reply {"alarms":[...]}           -> Copy_Alarm_DATA()
+//  3. GET_RTC / SETRTC reply {"H":..,"MO":..}    -> Copy_RTC_DATA()
+//  4. Anything else (ALARM_SET, ALARM_FIRED, RTC_SET ...) is ignored.
+// Routing is by CONTENT, not by start_xxx flags, so a status poll can
+// never make an RTC or alarm reply get lost.
+void process_uart_string(void)
+{
+    uint8 temp_var;
+    uint8 valid = 0;
+    uint8 len;
+    char *s = (char *)m_u8_uart_str;
+
+    m_u8_strlen = strlen(s);
+
+    /* ignore trailing CR / LF */
+    len = m_u8_strlen;
+    while (len > 0 && (s[len - 1] == '\r' || s[len - 1] == '\n'))
+        len--;
+
+    if (len >= 10 && s[0] == '{' && s[len - 1] == '}')
+    {
+        if (json_number_ok(s, "\"V\"") &&
+            json_array_items(s, "\"P\"") != 0xFF &&
+            json_array_items(s, "\"I\"") != 0xFF)
+        {
+            valid = 1;
+#if PDU_CHANNEL_COUNT
+            if (json_array_items(s, "\"P\"") != PDU_CHANNEL_COUNT ||
+                json_array_items(s, "\"I\"") != PDU_CHANNEL_COUNT)
+            {
+                valid = 0;
+            }
+#endif
+        }
+    }
+
+    if (valid)
+    {
+        m_u16_json_ok++;
+        send_str_web(m_u8_uart_str);
+        update_json_string((char *)m_u8_uart_str);
+    }
+    else if (len >= 2 && s[0] == '{' && s[len - 1] == '}')
+    {
+        if (strstr(s, "\"alarms\""))
+        {
+            m_u16_json_alm++;
+            Copy_Alarm_DATA(m_u8_uart_str);     /* GET_ALARM reply */
+        }
+        else if (strstr(s, "\"MO\""))
+        {
+            m_u16_json_rtc++;
+            Copy_RTC_DATA(m_u8_uart_str);       /* GET_RTC / SETRTC reply */
+        }
+        else if (strstr(s, "\"ALARM_") || strstr(s, "\"RTC_SET\""))
+        {
+            /* short acknowledgements: nothing to store */
+        }
+        else
+        {
+            m_u16_json_bad++;
+        }
+    }
+    else
+    {
+        m_u16_json_bad++;
+    }
+
+    /* Clear receive buffer */
+    for (temp_var = 0; temp_var < sizeof(m_u8_uart_str); temp_var++)
+    {
+        m_u8_uart_str[temp_var] = '\0';
+    }
+}

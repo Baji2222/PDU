@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 1   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_VLAN
@@ -62,7 +62,7 @@ line level    source
   49           * Modifies string in-place, skips if string is "-".
   50           */
   51          void replace_ports(char *str) {
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 2   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 2   
 
   52   1        
   53   1        char temp[64];
@@ -126,7 +126,7 @@ line level    source
  111   1          if (!field1) {
  112   2              printf("Memory allocation failed for field1 (DIP)\n");
  113   2              return RT_ERR_FAILED;
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 3   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 3   
 
  114   2          }
  115   1          memset(field1, 0, sizeof(rtk_filter_field_t));
@@ -190,7 +190,7 @@ line level    source
  173           * Uses SIP (Source IP) and VLAN CTAG as match criteria.
  174           * Allocates fields dynamically and configures redirect action.
  175           * Used for VLAN-based management access from specific IPs.
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 4   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 4   
 
  176           */
  177          int add_ip_over_vlan_acl_rule(uint16 rule_num, uint16 vlan_id, uint32 ip_address,uint32 subnetmask)
@@ -254,7 +254,7 @@ line level    source
  235   1          {
  236   2              free(field1);
  237   2              free(field2);
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 5   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 5   
 
  238   2              return ret;
  239   2          }
@@ -318,7 +318,7 @@ line level    source
  295   1          uint16 seenVlanIds[MAX_STATIC_VLAN];
  296   1          uint16 seenCount;
  297   1          uint16 i;
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 6   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 6   
 
  298   1          uint8 isDuplicate;
  299   1      
@@ -382,7 +382,7 @@ line level    source
  353   1          WEB_PRINTF(pReq, "for(i=portStart;i<=portEnd;i++)document.getElementById(\"vlanPortRadio_\"+i+\"_\"+ra
              -dioIndex).checked=true;\n");
  354   1          WEB_PRINTF(pReq, "}\n");
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 7   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 7   
 
  355   1          WEB_PRINTF(pReq, "function vlanstatic_selAll(vlanNum){\n");
  356   1          WEB_PRINTF(pReq, "for(i=1;i<vlanNum;i++)document.getElementById(\"vlan_\"+i).checked=true;\n");
@@ -446,7 +446,7 @@ line level    source
  411   2              WEB_PRINTF(pReq, "<th>%d</th>\n", (uint16)(port + 1));
  412   2              portNum++;
  413   2          }
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 8   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 8   
 
  414   1          radioNum = portNum;
  415   1      
@@ -510,7 +510,7 @@ line level    source
  471   5                      }
  472   4                  }
  473   3              }
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 9   
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 9   
 
  474   2              else
  475   2              {
@@ -574,7 +574,7 @@ line level    source
  527   1          seenCount = 0;
  528   1          memset(seenVlanIds, 0, sizeof(seenVlanIds));
  529   1          
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 10  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 10  
 
  530   1          /* Special handling to always show VLAN 1 */
  531   1          bFound = FALSE;
@@ -638,7 +638,7 @@ line level    source
  589   2              WEB_PRINTF(pReq, "<td>%s</td>\n", portmaskStr);
  590   2              WEB_PRINTF(pReq, "<td>%s</td>\n", tagMaskStr);
  591   2              WEB_PRINTF(pReq, "<td>%s</td>\n", untagMaskStr);
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 11  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 11  
 
  592   2              
  593   2              WEB_PRINTF(pReq, "<td><input type=\"checkbox\" name=\"remove_%d\" id=\"vlan_%d\" disabled></td>\n"
@@ -702,7 +702,7 @@ line level    source
  650   3              }
  651   2              else
  652   2              {
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 12  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 12  
 
  653   3                  lmask_to_comma(tagMaskStr, &ltagmask);
  654   3              }
@@ -766,7 +766,7 @@ line level    source
  710   1          WEB_END(pReq);
  711   1      
  712   1          return SUCCESS;
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 13  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 13  
 
  713   1      }
  714          
@@ -830,7 +830,7 @@ line level    source
  769   2              if (!(sal_trunk_logicId_exist(port + 2)))
  770   2              {
  771   3                  continue;
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 14  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 14  
 
  772   3              }
  773   2      
@@ -894,7 +894,7 @@ line level    source
  830   2              sal_vlan_port_AcceptFrameType_get(port + 2, &frameType);
  831   2              switch (frameType)
  832   2              {
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 15  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 15  
 
  833   3              case SAL_ACCEPT_FRAME_TYPE_ALL:
  834   3                  strcpy(frameTypeStr, "All");
@@ -958,7 +958,7 @@ line level    source
  892   1      
  893   1          sal_sys_gateway_get(&gateway);
  894   1              
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 16  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 16  
 
  895   1          ip_to_str(gatewayStr, (uint8 *)&gateway);
  896   1          ip_to_str(get_subnetmask, (uint8 *)&netmask);
@@ -1022,7 +1022,7 @@ line level    source
  953          {
  954   1          sal_lPortmask_t portmask;
  955   1          sal_lPortmask_t tagmask;
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 17  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 17  
 
  956   1          sal_vlan_t vid = 0;
  957   1          int32 ret;
@@ -1086,7 +1086,7 @@ line level    source
 1015   1          return SUCCESS;
 1016   1      }
 1017          
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 18  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 18  
 
 1018          /*
 1019           * Function: post_vlanstaticDelEntry
@@ -1150,7 +1150,7 @@ line level    source
 1077   1      }
 1078          
 1079          /*
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 19  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 19  
 
 1080           * Function: post_vlan_portbased
 1081           * -----------------------------
@@ -1214,7 +1214,7 @@ line level    source
 1138   2              {
 1139   3                  continue;
 1140   3              }
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 20  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 20  
 
 1141   2      
 1142   2              if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&portmask, port + 2))
@@ -1278,7 +1278,7 @@ line level    source
 1200   2      
 1201   2          /* read device type, fw version and hw version */    
 1202   2          FLASH_READ((uint32)(FLSH_CONFIG_DUMMY_START), buf, sizeof(buf));
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 21  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 21  
 
 1203   2          
 1204   2          /* keep device type, hw version and replace fw version*/
@@ -1342,7 +1342,7 @@ line level    source
 1262   3              }
 1263   2              
 1264   2      //        // Store subnet mask in flash
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 22  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 22  
 
 1265   2      //        if(sal_flash_userData_set(FLSH_VLAN_SUBNET_ADDRESS, 16, subnetMaskStr) == SAL_ERR_SUCCESS) {
 1266   2      //            printf("Write SubnetMask inside flash Memory: %s\r\n", subnetMaskStr);
@@ -1406,7 +1406,7 @@ line level    source
 1321   2            //printf("Gateway ACL rule creation failed : %u <--> 0X%02x \r\n",gateway_rule_index,gateway_rule_index
              -);
 1322   2             // vlanCount = 0;
-C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 23  
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/03/2026 14:16:03 PAGE 23  
 
 1323   2              return SUCCESS;
 1324   2          }

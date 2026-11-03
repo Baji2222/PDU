@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 1   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_PORT
@@ -62,7 +62,7 @@ line level    source
               0xD7,0x05,0x9B,0xE9,0x9A,0x40,0x07,0xEC,
               0x9B,0xFC,0xE9,0x9A,0xF9,0x0F,0xD8,0xE0,
               0xE4,0xC9,0xFA,0xE4,0xCC,0xFB,0x22,0x75,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 2   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 2   
 
               0xF0,0x10,0xEF,0x2F,0xFF,0xEE,0x33,0xFE,
               0xED,0x33,0xFD,0xCC,0x33,0xCC,0xC8,0x33,
@@ -126,7 +126,7 @@ line level    source
               0xAB,0x7D,0x03,0x7C,0x00,0x7F,0x01,0x7E,
               0x66,0x12,0x07,0xAB,0x7D,0xC0,0x7C,0x00,
               0x7F,0x00,0x7E,0x66,0x12,0x07,0xAB,0xE4,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 3   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 3   
 
               0xFD,0xFC,0x7F,0x01,0x7E,0x66,0x12,0x07,
               0xAB,0x7D,0x80,0x7C,0x00,0x7F,0x00,0x7E,
@@ -190,7 +190,7 @@ line level    source
               0x75,0x09,0xF5,0x75,0x08,0x05,0x80,0x1A,
               0x75,0x0B,0xA0,0x75,0x0A,0xAC,0x75,0x09,
               0xB9,0x75,0x08,0x03,0x80,0x0C,0x75,0x0B,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 4   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 4   
 
               0x00,0x75,0x0A,0x62,0x75,0x09,0x3D,0x75,
               0x08,0x01,0x75,0x89,0x11,0xE4,0x7B,0x60,
@@ -254,7 +254,7 @@ line level    source
               0x7C,0x00,0x7F,0xE7,0x7E,0x13,0x12,0x07,
               0xAB,0x7F,0x41,0x7E,0x1D,0x12,0x07,0x66,
               0xEF,0x44,0x20,0x44,0x80,0xFD,0xAC,0x06,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 5   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 5   
 
               0x7F,0x41,0x7E,0x1D,0x12,0x07,0xAB,0x7D,
               0x00,0x7C,0x21,0x7F,0x00,0x7E,0x62,0x12,
@@ -318,7 +318,7 @@ line level    source
               0xCD,0xFA,0xE4,0xCC,0xF9,0xA8,0x82,0x22,
               0xB8,0x00,0xC1,0xB9,0x00,0x59,0xBA,0x00,
               0x2D,0xEC,0x8B,0xF0,0x84,0xCF,0xCE,0xCD,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 6   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 6   
 
               0xFC,0xE5,0xF0,0xCB,0xF9,0x78,0x18,0xEF,
               0x2F,0xFF,0xEE,0x33,0xFE,0xED,0x33,0xFD,
@@ -382,7 +382,7 @@ line level    source
               0x66,0x12,0x07,0x60,0xEF,0x44,0x40,0xFD,
               0xAC,0x06,0x7F,0x02,0x7E,0x66,0x12,0x07,
               0xA5,0x7D,0x03,0x7C,0x00,0x7F,0x01,0x7E,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 7   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 7   
 
               0x66,0x12,0x07,0xA5,0x7D,0xC0,0x7C,0x00,
               0x7F,0x00,0x7E,0x66,0x12,0x07,0xA5,0x7D,
@@ -446,7 +446,7 @@ line level    source
               0x12,0x07,0x60,0xEE,0xC4,0xF8,0x54,0xF0,
               0xC8,0xEF,0xC4,0x54,0x0F,0x48,0x54,0x07,
               0xFB,0x7A,0x00,0xEA,0x70,0x4A,0xEB,0x14,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 8   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 8   
 
               0x60,0x1C,0x14,0x60,0x27,0x24,0xFE,0x60,
               0x31,0x14,0x60,0x3C,0x24,0x05,0x70,0x38,
@@ -510,7 +510,7 @@ line level    source
               0x44,0x20,0x44,0x80,0xFD,0xAC,0x06,0x7F,
               0x41,0x7E,0x1D,0x12,0x07,0xA5,0x7D,0xBB,
               0x7C,0x15,0x7F,0xEB,0x7E,0x13,0x12,0x07,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 9   
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 9   
 
               0xA5,0x7D,0x07,0x7C,0x00,0x7F,0xE7,0x7E,
               0x13,0x12,0x07,0xA5,0x7D,0x40,0x7C,0x11,
@@ -574,7 +574,7 @@ line level    source
               0xF8,0xA3,0xE0,0x28,0xF0,0xC5,0xF0,0xF8,
               0xE5,0x82,0x15,0x82,0x70,0x02,0x15,0x83,
               0xE0,0x38,0xF0,0x22,0x75,0xF0,0x08,0x75,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 10  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 10  
 
               0x82,0x00,0xEF,0x2F,0xFF,0xEE,0x33,0xFE,
               0xCD,0x33,0xCD,0xCC,0x33,0xCC,0xC5,0x82,
@@ -638,7 +638,7 @@ line level    source
               0x12,0x07,0xA5,0x7D,0xC0,0x7C,0x00,0x7F,
               0x00,0x7E,0x66,0x12,0x07,0xA5,0x7D,0x00,
               0x7C,0x04,0x7F,0x02,0x7E,0x66,0x12,0x07,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 11  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 11  
 
               0xA5,0x7D,0x2F,0x7C,0x00,0x7F,0x01,0x7E,
               0x66,0x12,0x07,0xA5,0x7D,0xC0,0x7C,0x00,
@@ -702,7 +702,7 @@ line level    source
               0x06,0x2C,0xE0,0x70,0x12,0x12,0x04,0xEA,
               0x90,0x06,0x2C,0x74,0x01,0xF0,0xE4,0x90,
               0x06,0x33,0xF0,0xA3,0xF0,0x80,0xD6,0xC3,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 12  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 12  
 
               0x90,0x06,0x34,0xE0,0x94,0x62,0x90,0x06,
               0x33,0xE0,0x94,0x00,0x40,0xC7,0xE4,0xF0,
@@ -766,7 +766,7 @@ line level    source
               0x54,0x1F,0xFE,0xE4,0x93,0xA3,0x60,0x01,
               0x0E,0xCF,0x54,0xC0,0x25,0xE0,0x60,0xA8,
               0x40,0xB8,0xE4,0x93,0xA3,0xFA,0xE4,0x93,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 13  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 13  
 
               0xA3,0xF8,0xE4,0x93,0xA3,0xC8,0xC5,0x82,
               0xC8,0xCA,0xC5,0x83,0xCA,0xF0,0xA3,0xC8,
@@ -830,7 +830,7 @@ line level    source
               0x7E,0x13,0x02,0x07,0xA5,0x12,0x07,0xC1,
               0x12,0x07,0xEC,0x12,0x04,0x25,0x02,0x00,
               0x03,0x42,0x06,0x33,0x00,0x00,0x42,0x06,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 14  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 14  
 
               0x31,0x00,0x00,0x00,0xE4,0xF5,0x8E,0x22,};
               
@@ -894,7 +894,7 @@ line level    source
               0x03,0xEF,0x24,0x01,0xFF,0xE4,0x3E,0xFE,
               0xE4,0x3D,0xFD,0xE4,0x3C,0xFC,0x90,0x06,
               0x24,0x12,0x01,0x1B,0x80,0xD2,0xC2,0x00,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 15  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 15  
 
               0xC2,0x01,0xD2,0xA9,0xD2,0x8C,0x7F,0x01,
               0x7E,0x62,0x12,0x04,0x47,0xEF,0x30,0xE2,
@@ -958,7 +958,7 @@ line level    source
               0x80,0x29,0xE4,0x93,0xA3,0xF8,0x54,0x07,
               0x24,0x0C,0xC8,0xC3,0x33,0xC4,0x54,0x0F,
               0x44,0x20,0xC8,0x83,0x40,0x04,0xF4,0x56,
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 16  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 16  
 
               0x80,0x01,0x46,0xF6,0xDF,0xE4,0x80,0x0B,
               0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,
@@ -1022,7 +1022,7 @@ line level    source
                   else
                       return rtl8367c_setAsicRegBits(RTL8367C_REG_UNKNOWN_UNICAST_DA_PORT_BEHAVE_EXT, RTL8367C_PORT8_ACT
              -ION_MASK << ((port-8) * 2), behavior);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 17  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 17  
 
               }
               /* Function Name:
@@ -1086,7 +1086,7 @@ line level    source
                *      RT_ERR_OK   - Success
                *      RT_ERR_SMI  - SMI access error
                * Note:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 18  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 18  
 
                *      None
                */
@@ -1150,7 +1150,7 @@ line level    source
                * Return:
                *      RT_ERR_OK           - Success
                *      RT_ERR_SMI          - SMI access error
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 19  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 19  
 
                *      RT_ERR_PORT_ID      - Error Port ID
                * Note:
@@ -1214,7 +1214,7 @@ line level    source
                   if(portmask > RTL8367C_PORTMASK)
                       return RT_ERR_PORT_MASK;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 20  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 20  
 
                   return rtl8367c_setAsicReg(RTL8367C_UNUCAST_FLOADING_PMSK_REG, portmask);
               }
@@ -1278,7 +1278,7 @@ line level    source
               {
                   return rtl8367c_getAsicReg(RTL8367C_UNMCAST_FLOADING_PMSK_REG, pPortmask);
               }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 21  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 21  
 
               /* Function Name:
                *      rtl8367c_setAsicPortBcastFloodingPortmask
@@ -1342,7 +1342,7 @@ line level    source
                       return RT_ERR_PORT_ID;
               
                   return rtl8367c_setAsicRegBit(RTL8367C_SOURCE_PORT_BLOCK_REG, port, permit);
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 22  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 22  
 
               }
               /* Function Name:
@@ -1406,7 +1406,7 @@ line level    source
                *      RT_ERR_OUT_OF_RANGE - Invalid payload index
                * Note:
                *      None
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 23  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 23  
 
                */
               ret_t rtl8367c_getAsicPortDos(uint32 type, uint32* pDrop)
@@ -1470,7 +1470,7 @@ line level    source
                */
               ret_t rtl8367c_getAsicPortForceLink(uint32 port, rtl8367c_port_ability_t *pPortAbility)
               {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 24  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 24  
 
                   ret_t retVal;
                   uint32 regData;
@@ -1534,7 +1534,7 @@ line level    source
 1466   1          pPortStatus->rxpause  = (regData >> 5UL) & 0x0001;
 1467   1          pPortStatus->link     = (regData >> 4UL) & 0x0001;
 1468   1          pPortStatus->duplex   = (regData >> 2UL) & 0x0001;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 25  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 25  
 
 1469   1          pPortStatus->speed    = regData  & 0x0003;
 1470   1      
@@ -1598,7 +1598,7 @@ line level    source
                       case 0x0652:
                       case 0x6368:
                           type = 2;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 26  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 26  
 
                           break;
                       case 0x0801:
@@ -1662,7 +1662,7 @@ line level    source
               
                           if((retVal = rtl8367c_setAsicRegBit(0x1311, 6, pPortAbility->txpause)) != RT_ERR_OK)
                               return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 27  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 27  
 
               
                           if((retVal = rtl8367c_setAsicRegBit(0x1311, 5, pPortAbility->rxpause)) != RT_ERR_OK)
@@ -1726,7 +1726,7 @@ line level    source
                           if((retVal = rtl8367c_setAsicRegBit(0x13c4, 12, pPortAbility->forcemode)) != RT_ERR_OK)
                               return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 28  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 28  
 
                           if (pPortAbility->link == 1)
                           {
@@ -1790,7 +1790,7 @@ line level    source
                                   if(regValue2 == 0x4)
                                   {
               #if 0
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 29  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 29  
 
                                       /* new_cfg_sds_mode:reset mode */
                                       if((retVal = rtl8367c_setAsicRegBits(0x1d95, 0x1f00, 0x1f)) != RT_ERR_OK)
@@ -1854,7 +1854,7 @@ line level    source
                                   {
               #if 0
                                       /*100FX*/
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 30  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 30  
 
                                       if((retVal = rtl8367c_setAsicRegBits(0x1d95, 0x1f00, 0x1f)) != RT_ERR_OK)
                                           return retVal;
@@ -1918,7 +1918,7 @@ line level    source
               
                                       /* 0 4 0  bit 12  set 1,  bit15~13 = 4*/
                                       if((retVal = rtl8367c_getAsicSdsReg(0, 4, 0, &reg_data)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 31  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 31  
 
                                           return retVal;
                                       reg_data &= 0xFFFF0FFF;
@@ -1982,7 +1982,7 @@ line level    source
                                       if((retVal = rtl8367c_getAsicSdsReg(0, 4, 2, &reg_data)) != RT_ERR_OK)
                                           return retVal;
                                       if (pPortAbility->txpause)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 32  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 32  
 
                                           reg_data |= 0x80;
                                       else
@@ -2046,7 +2046,7 @@ line level    source
               
                                   if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_SDS_MISC, RTL8367C_CFG_SGMII_FDUP_OFF
              -SET, pPortAbility->duplex)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 33  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 33  
 
                                       return retVal;
               
@@ -2110,7 +2110,7 @@ line level    source
                                   if((retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_SDS_MISC, RTL8367C_CFG_SGMII_SPD_MAS
              -K, pPortAbility->speed)) != RT_ERR_OK)
                                       return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 34  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 34  
 
               
                                   if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_SDS_MISC, RTL8367C_CFG_SGMII_TXFC_OFF
@@ -2174,7 +2174,7 @@ line level    source
                                   }
               
                                   /*disable force ability   ---      */
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 35  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 35  
 
                                   if((retVal = rtl8367c_setAsicRegBit(0x137c, 12, 0)) != RT_ERR_OK)
                                       return retVal;
@@ -2238,7 +2238,7 @@ line level    source
                                           reg_data |= 0x80;
                                       else
                                           reg_data &= 0xffffff7f;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 36  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 36  
 
                                       if (pPortAbility->rxpause)
                                           reg_data |= 0x100;
@@ -2302,7 +2302,7 @@ line level    source
               
                                        /* 0 4 0  bit 12  set 0*/
                                       if((retVal = rtl8367c_getAsicSdsReg(0, 4, 0, &reg_data)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 37  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 37  
 
                                           return retVal;
                                       reg_data &= 0xFFFFEFFF;
@@ -2366,7 +2366,7 @@ line level    source
                                           return retVal;
               
                                       /* 0 4 0  bit 12  set 1,  bit15~13 = 5*/
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 38  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 38  
 
                                       if((retVal = rtl8367c_getAsicSdsReg(0, 4, 0, &reg_data)) != RT_ERR_OK)
                                           return retVal;
@@ -2430,7 +2430,7 @@ line level    source
               
                                   for(i=0;i<0xfff; i++);
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 39  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 39  
 
                                   /* 0 2 0  bit 8-9  nway*/
                                   if((retVal = rtl8367c_getAsicSdsReg(0, 2, 0, &reg_data)) != RT_ERR_OK)
@@ -2494,7 +2494,7 @@ line level    source
               
                               /*force mode for ext2*/
                               if((retVal = rtl8367c_setAsicRegBit(0x13c4, 12, pPortAbility->forcemode)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 40  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 40  
 
                                   return retVal;
               
@@ -2558,7 +2558,7 @@ line level    source
                           /*disable force ability   ---      */
                           if((retVal = rtl8367c_setAsicRegBit(0x137d, 12, 0)) != RT_ERR_OK)
                               return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 41  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 41  
 
                       }
               #if 0
@@ -2622,7 +2622,7 @@ line level    source
                   if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0000)) != RT_ERR_OK)
                       return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 42  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 42  
 
                   type = 0;
               
@@ -2686,7 +2686,7 @@ line level    source
               
                               pPortAbility->txpause = reg_data;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 43  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 43  
 
                               if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_SDS_MISC, RTL8367C_CFG_SGMII_RXFC_OFFSET,
              - &reg_data)) != RT_ERR_OK)
@@ -2750,7 +2750,7 @@ line level    source
                           if ((retVal = rtl8367c_getAsicReg(0x1311, &reg_data))!=RT_ERR_OK)
                               return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 44  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 44  
 
                           pPortAbility->forcemode = (reg_data >> 12) & 1;
                           pPortAbility->duplex = (reg_data >> 2) & 1;
@@ -2814,7 +2814,7 @@ line level    source
                   if(id >= RTL8367C_EXTNO)
                       return RT_ERR_OUT_OF_RANGE;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 45  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 45  
 
                   if(mode >= EXT_END)
                       return RT_ERR_OUT_OF_RANGE;
@@ -2878,7 +2878,7 @@ line level    source
                               return retVal;
               
                           if(mode == EXT_1000X_100FX)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 46  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 46  
 
                           {
                               for(idx = 0; idx < FIBER2_AUTO_INIT_SIZE; idx++)
@@ -2942,7 +2942,7 @@ line level    source
                               return retVal;
                       }
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 47  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 47  
 
                       /* Serdes reset */
                       if( (mode == EXT_TMII_MAC) || (mode == EXT_TMII_PHY) )
@@ -3006,7 +3006,7 @@ line level    source
                               }
                           }
                       }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 48  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 48  
 
               
                       if(mode == EXT_HSGMII)
@@ -3070,7 +3070,7 @@ line level    source
               
                                       if( (retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x00C0)) != RT_ERR_
              -OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 49  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 49  
 
                                           return retVal;
                                   }
@@ -3134,7 +3134,7 @@ line level    source
               
                           if(mode == EXT_SGMII)
                           {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 50  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 50  
 
                               if( (retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_SDS_MISC, RTL8367C_CFG_MAC8_SEL_SGMII_OF
              -FSET, 1)) != RT_ERR_OK)
@@ -3198,7 +3198,7 @@ line level    source
               
                       if( (mode == EXT_SGMII) || (mode == EXT_HSGMII) )
                       {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 51  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 51  
 
                           if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_CHIP_RESET, RTL8367C_DW8051_RST_OFFSET, 1)) 
              -!= RT_ERR_OK)
@@ -3262,7 +3262,7 @@ line level    source
                               if ((retVal = rtl8367c_setAsicRegBits(0x1305, 0xf0, 0)) != RT_ERR_OK)
                                   return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 52  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 52  
 
               
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d92, 14, 1)) != RT_ERR_OK)
@@ -3326,7 +3326,7 @@ line level    source
                           if (mode == EXT_SGMII)
                           {
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 53  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 53  
 
                               if ((retVal = rtl8367c_setAsicRegBits(0x13c3, 0xf, 0)) != RT_ERR_OK)
                                   return retVal;
@@ -3390,7 +3390,7 @@ line level    source
                               return retVal;
                       }
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 54  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 54  
 
               
                       if (mode == EXT_RGMII)
@@ -3454,7 +3454,7 @@ line level    source
                               if ((retVal = rtl8367c_setAsicRegBit(0x13e2, 2, 1)) != RT_ERR_OK)
                                   return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 55  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 55  
 
                               /*drving 1*/
                               if ((retVal = rtl8367c_setAsicRegBit(0x13e2, 1, 1)) != RT_ERR_OK)
@@ -3518,7 +3518,7 @@ line level    source
               
                           }
                           else if (id == 2)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 56  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 56  
 
                           {
                               /*sds 0     reg 0    page 0x28     write value  0x942c*/
@@ -3582,7 +3582,7 @@ line level    source
                               if( (retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, (0x24<<5) | 0)) != RT_ERR_O
              -K)
                                   return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 57  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 57  
 
               
                               if( (retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x00C0)) != RT_ERR_OK)
@@ -3646,7 +3646,7 @@ line level    source
                                   return retVal;
                               regValue &= 0xFFFFdFFF;
                               regValue |= 0x40;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 58  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 58  
 
                               if( (retVal = rtl8367c_setAsicSdsReg(1, 0, 2, regValue)) != RT_ERR_OK)
                                   return retVal;
@@ -3710,7 +3710,7 @@ line level    source
                       else if (mode == EXT_100FX)
                       {
                           if (id == 1)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 59  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 59  
 
                           {
                               if( (retVal = rtl8367c_setAsicSdsReg(1, 1, 0x21, 0xec91)) != RT_ERR_OK)
@@ -3774,7 +3774,7 @@ line level    source
                                   return retVal;
               
                               if( (retVal = rtl8367c_getAsicSdsReg(0, 0, 2, &regValue)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 60  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 60  
 
                                   return retVal;
                               regValue &= 0xFFFFFFBF;
@@ -3838,7 +3838,7 @@ line level    source
                       if( (retVal = rtl8367c_setAsicSdsReg(0, 1, 1, regValue)) != RT_ERR_OK)
                           return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 61  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 61  
 
                       /*set for mac 6*/
                       if (1 == id)
@@ -3902,7 +3902,7 @@ line level    source
                               if ((retVal = rtl8367c_setAsicRegBits(0x1d95, 0x1f00, 0x1f)) != RT_ERR_OK)
                                   return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 62  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 62  
 
               
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d11, 6, 1)) != RT_ERR_OK)
@@ -3966,7 +3966,7 @@ line level    source
                                   return retVal;
               
                               if ((retVal = rtl8367c_setAsicReg(0xd0,7)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 63  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 63  
 
                                   return retVal;
                               if ((retVal = rtl8367c_setAsicReg(0x399, 7)) != RT_ERR_OK)
@@ -4030,7 +4030,7 @@ line level    source
                                   return retVal;
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d41, 7, 1)) != RT_ERR_OK)
                                   return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 64  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 64  
 
               
               
@@ -4094,7 +4094,7 @@ line level    source
               
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d11, 11, 0)) != RT_ERR_OK)
                                   return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 65  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 65  
 
               
               
@@ -4158,7 +4158,7 @@ line level    source
               
               
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d11, 6, 1)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 66  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 66  
 
                                   return retVal;
               
@@ -4222,7 +4222,7 @@ line level    source
                           if ((retVal = rtl8367c_getAsicRegBit(0x1d9d, 7, &reg_data)) != RT_ERR_OK)
                                   return retVal;
                           while(reg_data == 0)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 67  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 67  
 
                           {
                               if ((retVal = rtl8367c_getAsicRegBit(0x1d9d, 7, &reg_data)) != RT_ERR_OK)
@@ -4286,7 +4286,7 @@ line level    source
                               if ((retVal = rtl8367c_setAsicRegBits(0x13c3, 0xf, 0)) != RT_ERR_OK)
                                   return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 68  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 68  
 
               
                               if ((retVal = rtl8367c_setAsicReg(0x13c4, 0)) != RT_ERR_OK)
@@ -4350,7 +4350,7 @@ line level    source
                               if ((retVal = rtl8367c_setAsicRegBit(0x3f7, 2, 0)) != RT_ERR_OK)
                                   return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 69  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 69  
 
               
                               if ((retVal = rtl8367c_setAsicReg(0x1d11, 0x1500)) != RT_ERR_OK)
@@ -4414,7 +4414,7 @@ line level    source
               
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d41, 5, 0)) != RT_ERR_OK)
                                   return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 70  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 70  
 
                               if ((retVal = rtl8367c_setAsicRegBit(0x1d41, 7, 0)) != RT_ERR_OK)
                                   return retVal;
@@ -4478,7 +4478,7 @@ line level    source
                               }
               
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 71  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 71  
 
                               if (mode < EXT_RMII_MAC_2)
                               {
@@ -4542,7 +4542,7 @@ line level    source
                   {
                       case 0x0276:
                       case 0x0597:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 72  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 72  
 
                       case 0x6367:
                           type = 1;
@@ -4606,7 +4606,7 @@ line level    source
                               *pMode = EXT_SGMII;
                               return RT_ERR_OK;
                           }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 73  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 73  
 
               
                           else if (((regData >> 8) & 0x1f) == 4)
@@ -4670,7 +4670,7 @@ line level    source
                           {
                               *pMode = EXT_100FX;
                               return RT_ERR_OK;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 74  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 74  
 
                           }
                           else if ((regData & 0x1f) == 7)
@@ -4734,7 +4734,7 @@ line level    source
                           else
                           {
                               /* check port6 MAC mode */
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 75  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 75  
 
                               if ((retVal = rtl8367c_getAsicRegBits(0x1305, 0xf0, &regData))!=RT_ERR_OK)
                                   return retVal;
@@ -4798,7 +4798,7 @@ line level    source
                * Input:
                *      enable - enable all ports.
                * Output:
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 76  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 76  
 
                *      None
                * Return:
@@ -4862,7 +4862,7 @@ line level    source
                *      None
                */
               ret_t rtl8367c_setAsicPortSmallIpg(uint32 port, uint32 enable)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 77  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 77  
 
               {
                   if(port >= RTL8367C_PORTNO)
@@ -4926,7 +4926,7 @@ line level    source
                *      rtl8367c_getAsicPortLoopback
                * Description:
                *      Set MAC loopback
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 78  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 78  
 
                * Input:
                *      port    - Physical port number (0~7)
@@ -4990,7 +4990,7 @@ line level    source
 4694   3                       return retVal;
 4695   3      
 4696   3                   regData |= 0x00F2;/*RTCT set to  echo response mode*/
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 79  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 79  
 
 4697   3                   if((retVal = rtl8367c_setAsicPHYOCPReg(port, 0xa422, regData)) != RT_ERR_OK)
 4698   3                       return retVal;
@@ -5054,7 +5054,7 @@ line level    source
                            if((retVal = rtl8367c_setAsicPHYOCPReg(port, 0xa422, regData)) != RT_ERR_OK)
                                return retVal;
                       }
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 80  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 80  
 
                   }
               
@@ -5118,7 +5118,7 @@ line level    source
 4818   3                      return retVal;
 4819   3      
 4820   3                  pResult->channelBOpen       = (regData == 0x0048) ? 1UL : 0UL;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 81  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 81  
 
 4821   3                  pResult->channelBShort      = (regData == 0x0050) ? 1UL : 0UL;
 4822   3                  pResult->channelBMismatch   = ((regData == 0x0042) || (regData == 0x0044)) ? 1UL : 0UL;
@@ -5182,7 +5182,7 @@ line level    source
 4880   3                  if((retVal = rtl8367c_getAsicPHYOCPReg(port, 0xa438, &regData)) != RT_ERR_OK)
 4881   3                      return retVal;
 4882   3      
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 82  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 82  
 
 4883   3                  pResult->channelDLen = (regData / 2);
 4884   3              }
@@ -5246,7 +5246,7 @@ line level    source
 4942   3      
 4943   3                  /* Channel A Length */
 4944   3                  if((retVal = rtl8367c_setAsicPHYOCPReg(port, 0xa436, 0x802d)) != RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 83  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 83  
 
 4945   3                      return retVal;
 4946   3      
@@ -5310,7 +5310,7 @@ line level    source
                           if((retVal = rtl8367c_setAsicPHYOCPReg(port, 0xa436, 0x802e)) != RT_ERR_OK)
                               return retVal;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 84  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 84  
 
                           if((retVal = rtl8367c_getAsicPHYOCPReg(port, 0xa438, &regData)) != RT_ERR_OK)
                               return retVal;
@@ -5374,7 +5374,7 @@ line level    source
                           /* Channel D Length */
                           if((retVal = rtl8367c_setAsicPHYOCPReg(port, 0xa436, 0x8038)) != RT_ERR_OK)
                               return retVal;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 85  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 85  
 
               
                           if((retVal = rtl8367c_getAsicPHYOCPReg(port, 0xa438, &regData)) != RT_ERR_OK)
@@ -5438,7 +5438,7 @@ line level    source
                       case 0x0801:
                       case 0x6511:
                           option = 2;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 86  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 86  
 
                           break;
                       default:
@@ -5502,7 +5502,7 @@ line level    source
               
                           while(1)
                           {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 87  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 87  
 
                               if((retVal = rtl8367c_getAsicReg(0x1d9d, &regValue)) != RT_ERR_OK)
                                   return retVal;
@@ -5566,7 +5566,7 @@ line level    source
               
                           for (i=0; i<0xffff; i++);
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 88  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 88  
 
                           if((retVal = rtl8367c_setAsicReg(0x6601, 0x0)) != RT_ERR_OK)
                               return retVal;
@@ -5630,7 +5630,7 @@ line level    source
               {
                   rtk_uint32 retVal, regValue, type, running = 0, retVal2;
               
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 89  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 89  
 
               
                   if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0249)) != RT_ERR_OK)
@@ -5694,7 +5694,7 @@ line level    source
                           *pSignalDetect = (regValue & 0x0100) ? 1 : 0;
                           *pSync = (regValue & 0x0001) ? 1 : 0;
                           *pLink = (regValue & 0x0010) ? 1 : 0;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 90  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 90  
 
                       }
                       else
@@ -5758,7 +5758,7 @@ line level    source
                *      None.
                * Return:
                *      RT_ERR_OK                   - Success
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 91  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 91  
 
                *      RT_ERR_SMI                  - SMI access error
                * Note:
@@ -5822,7 +5822,7 @@ line level    source
                               if(state)
                                     regValue |= 0x0200;
                               else
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 92  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 92  
 
                                     regValue &= ~0x0200;
               
@@ -5886,7 +5886,7 @@ line level    source
               
                           if(state)
                               regValue |= 0x0200;
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 93  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 93  
 
                           else
                               regValue &= ~0x0200;
@@ -5950,7 +5950,7 @@ line level    source
               
                   switch (regValue)
                   {
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 94  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 94  
 
                       case 0x0276:
                       case 0x0597:
@@ -6014,7 +6014,7 @@ line level    source
                               if ((retVal = rtl8367c_setAsicReg(0x6601, 0x0002))!=RT_ERR_OK)
                                   return retVal;
                               if ((retVal = rtl8367c_setAsicReg(0x6600, 0x0081))!=RT_ERR_OK)
-C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/02/2026 17:57:22 PAGE 95  
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_PORT                                             11/03/2026 14:15:48 PAGE 95  
 
                                   return retVal;
                               if ((retVal = rtl8367c_getAsicReg(0x6602, &regValue))!=RT_ERR_OK)

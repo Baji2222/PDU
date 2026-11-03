@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 1   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALIGMP
@@ -62,7 +62,7 @@ line level    source
   49           * Data Declaration 
   50           */
   51          static uint8 updateFlag;
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 2   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 2   
 
   52          
   53          /* 
@@ -126,7 +126,7 @@ line level    source
  111   2                                   (((uint32)pCurrNode->groupAddr.addr[3]));
  112   2              pEntry->vid = pCurrNode->vid;
  113   2          }
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 3   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 3   
 
  114   1      
  115   1          return SAL_ERR_SUCCESS;
@@ -190,7 +190,7 @@ line level    source
  172   1          return SAL_ERR_SUCCESS;
  173   1      }
  174          
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 4   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 4   
 
  175          /* Function Name:
  176           *      sal_igmp_ipAddrEntry_del
@@ -254,7 +254,7 @@ line level    source
                * Return:
                *      SAL_ERR_SUCCESS
                * Note:
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 5   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 5   
 
                *      None
                */
@@ -318,7 +318,7 @@ line level    source
                   /* if sip is not assigned, use L2 Multicast format to write LUT */
                   if(0 == sip)
                   {
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 6   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 6   
 
                       mcastAddr.mac.octet[0] = 0x33;
                       mcastAddr.mac.octet[1] = 0x33;
@@ -382,7 +382,7 @@ line level    source
                           rtk_igmp_protocol_set(port, PROTOCOL_MLDv2, IGMP_ACTION_TRAP2CPU);
               #endif
  358   3      #if defined(LWS_8G_2F)
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 7   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 7   
 
                           if(port == EXT_PORT0)
                               portLogic = 8;
@@ -446,7 +446,7 @@ line level    source
  417   3      #if CONFIG_IGMP_MLD_ENABLE        
                           rtk_igmp_protocol_set(port, PROTOCOL_MLDv1, IGMP_ACTION_FORWARD);
                           rtk_igmp_protocol_set(port, PROTOCOL_MLDv2, IGMP_ACTION_FORWARD);
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 8   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 8   
 
               #endif        
  421   3      #if defined(LWS_8G_2F)
@@ -510,7 +510,7 @@ line level    source
  479   1          ipaddr_group_list_t *iter_group = igmpGroupHead.item;
  480   1          ipaddr_group_list_t *iter_group_rm;
  481   1      
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 9   
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 9   
 
  482   1          /* remove query port */
  483   1          for (i=0; i<SAL_PORT_ID_CPU; i++)
@@ -574,7 +574,7 @@ line level    source
  541           *      sal_igmp_staticRouter_get
  542           * Description:
  543           *      Get IGMP statistic router port configuration
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 10  
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 10  
 
  544           * Input:
  545           *      None
@@ -638,7 +638,7 @@ line level    source
  603           */
  604          int32 sal_igmp_dynamicRouter_get(sal_lPortmask_t *pMask)
  605          {
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 11  
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 11  
 
  606   1          sal_lPortmask_t pm;
  607   1          extern int32 igmp_dynamicRouter_get(sal_lPortmask_t *mask);
@@ -702,7 +702,7 @@ MODULE INFORMATION:   STATIC OVERLAYABLE
    CODE SIZE        =   1579    ----
    CONSTANT SIZE    =      4    ----
    XDATA SIZE       =      4     170
-C51 COMPILER V9.60.0.0   SALIGMP                                                           11/02/2026 17:57:07 PAGE 12  
+C51 COMPILER V9.60.0.0   SALIGMP                                                           11/03/2026 14:15:38 PAGE 12  
 
    PDATA SIZE       =   ----    ----
    DATA SIZE        =   ----    ----

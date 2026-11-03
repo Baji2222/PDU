@@ -1,4 +1,4 @@
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 1   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 1   
 
 
 C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MIB_STRUCTS
@@ -62,7 +62,7 @@ line level    source
   48          const s32_t code prefix[4] = {1, 3, 6, 1};
   49          
   50          #define NODE_STACK_SIZE (LWIP_SNMP_OBJ_ID_LEN)
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 2   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 2   
 
   51          /** node stack entry (old news?) */
   52          struct nse
@@ -126,7 +126,7 @@ line level    source
  110           * Conversion from ifIndex to lwIP netif
  111           * @param ifindex is a s32_t object sub-identifier
  112           * @param netif points to returned netif struct pointer
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 3   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 3   
 
  113           */
  114          #if 0 /* Vic Remove Function - snmp_ifindextonetif */
@@ -190,7 +190,7 @@ line level    source
               }
               
               /**
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 4   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 4   
 
                * Conversion from lwIP ip_addr to oid
                * @param ip points to input struct
@@ -254,7 +254,7 @@ line level    source
  234           * Initializes function pointers to noleaf handlers.
  235           * Sets node type to MIB_NODE_LR and clears list pointers.
  236           */
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 5   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 5   
 
  237          struct mib_list_rootnode *
  238          snmp_mib_lrn_alloc(void)
@@ -318,7 +318,7 @@ line level    source
  296   2          /* empty list, add first node */
  297   2          DBG_SNMP_PRINTF(("[%s][%d]alloc empty list objid==%"S32_F"\n", __FILE__, (uint16)__LINE__,objid));
  298   2          nn = snmp_mib_ln_alloc(objid);
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 6   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 6   
 
  299   2          if (nn != NULL)
  300   2          {
@@ -382,7 +382,7 @@ line level    source
  357   4              /* alloc and insert between n->prev and n */
  358   4              DBG_SNMP_PRINTF(("[%s][%d]alloc ins n->prev, objid==%"S32_F", n\n", __FILE__, (uint16)__LINE__,obj
              -id));
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 7   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 7   
 
  359   4              nn = snmp_mib_ln_alloc(objid);
  360   4              if (nn != NULL)
@@ -446,7 +446,7 @@ line level    source
                 }
                 if (n == NULL)
                 {
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 8   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 8   
 
                   fc = 0;
                 }
@@ -510,7 +510,7 @@ line level    source
                   if (n->next != NULL)
                   {
                     /* not last node, new list begin */
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 9   
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 9   
 
                     n->next->prev = NULL;
                   }
@@ -574,7 +574,7 @@ line level    source
  542   3            struct mib_array_node *an;
  543   3            u16_t i;
  544   3      
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 10  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 10  
 
  545   3            if (ident_len > 0)
  546   3            {
@@ -638,7 +638,7 @@ line level    source
  604   5                ln = ln->next;
  605   5              }
  606   4              if (ln != NULL)
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 11  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 11  
 
  607   4              {
  608   5                /* found it, proceed to child */;
@@ -702,7 +702,7 @@ line level    source
  666   6                }
  667   5                else
  668   5                {
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 12  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 12  
 
  669   6                  /* found it, proceed to child */
  670   6                  ident_len--;
@@ -766,7 +766,7 @@ line level    source
  728           */
  729          static u8_t
  730          empty_table(struct mib_node *node)
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 13  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 13  
 
  731          {
  732   1        u8_t node_type;
@@ -830,7 +830,7 @@ line level    source
  790   2          node_type = node->node_type;
  791   2          if ((node_type == MIB_NODE_AR) || (node_type == MIB_NODE_RA))
  792   2          {
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 14  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 14  
 
  793   3            struct mib_array_node *an;
  794   3            u16_t i;
@@ -894,7 +894,7 @@ line level    source
  852   7                    cur_node.r_nl = 0;
  853   7                  }
  854   6                  else
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 15  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 15  
 
  855   6                  {
  856   7                    cur_node.r_ptr = NULL;
@@ -958,7 +958,7 @@ line level    source
  914   3            struct mib_list_rootnode *lrn;
  915   3            struct mib_list_node *ln;
  916   3      
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 16  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 16  
 
  917   3            /* list root node (internal 'RAM', variable length) */
  918   3            lrn = (struct mib_list_rootnode *)node;
@@ -1022,7 +1022,7 @@ line level    source
  976   6                  push_node(&cur_node);
  977   6                  if (ln->objid == *ident)
  978   6                  {
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 17  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 17  
 
  979   7                    ident_len--;
  980   7                    ident++;
@@ -1086,7 +1086,7 @@ line level    source
 1038   3            if (ident_len > 0)
 1039   3            {
 1040   4              u16_t i, len;
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 18  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 18  
 
 1041   4      
 1042   4              i = 0;
@@ -1150,7 +1150,7 @@ line level    source
 1100   6                  if (en->ident_cmp(en->addr_inf,ext_level,i,*ident) == 0)
 1101   6                  {
 1102   7                    ident_len--;
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 19  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 19  
 
 1103   7                    ident++;
 1104   7                  }
@@ -1214,7 +1214,7 @@ line level    source
 1162   2          {
 1163   3            /* unknown/unhandled node_type */
 1164   3            DBG_SNMP_PRINTF(("[%s][%d]expand failed node_type %"U16_F" unkown\n", \
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 20  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 20  
 
 1165   3              __FILE__, (uint16)__LINE__,(u16_t)node_type));
 1166   3            return NULL;
@@ -1278,7 +1278,7 @@ line level    source
 1224   1            (ident[2] == 6) && (ident[3] == 1))
 1225   1        {
 1226   2          return 1;
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 21  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 21  
 
 1227   2        }
 1228   1        else
@@ -1342,7 +1342,7 @@ line level    source
 1286   2        }
 1287   1      }
 1288          
-C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/02/2026 17:57:42 PAGE 22  
+C51 COMPILER V9.60.0.0   MIB_STRUCTS                                                       11/03/2026 14:16:07 PAGE 22  
 
 1289          #endif /* LWIP_SNMP */
 
