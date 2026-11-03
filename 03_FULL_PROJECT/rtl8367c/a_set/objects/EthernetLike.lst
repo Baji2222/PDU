@@ -1,0 +1,1229 @@
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ETHERNETLIKE
+OBJECT MODULE PLACED IN .\objects\EthernetLike.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\snmp\mib\EthernetLike.c LARGE OMF2 OPTIMIZE(8,SIZE)
+                    - BROWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\c
+                    -ommon\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUP
+                    -PORT,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,CO
+                    -MPATIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\EthernetLike.lst) TABS(2) OBJECT(.\objects\EthernetL
+                    -ike.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3          * Copyright (c)                  Realtek Semiconductor Corporation, 2008  
+   4          * All rights reserved.
+   5          * 
+   6          * Abstract : RTL8213M Media Converter, rfc3635
+   7          * 
+   8          *$Id: rfc3635.c,v 1.1 2008/06/20 08:53:35 yajin_zhou Exp $
+   9          */
+  10          
+  11          #include <local/config.h>
+  12          #include <salport.h>
+  13          #include <snmp/mib/EthernetLike.h>
+  14          #include <snmp/mib/mib.h>
+  15          #include <snmp/snmp_debug.h>
+  16          #if !defined(SAL_REPLACE)
+              #include <local/rtk_sal_mib.h>
+              #else
+  19          #include <snmp/mib_glue.h>
+*** WARNING C322 IN LINE 165 OF ..\..\common\include\snmp/mib_glue.h: unknown identifier
+  20          #endif
+  21          
+  22          #if LWPS_SNMP
+  23          
+  24          
+  25          #if LWPS_SNMP_ETHERNET_LIKE
+  26          
+  27          /* SNMP dot3StatsDuplexStatus value */
+  28          #define PORT_STATUS_DUPLEX_UNKNOWN  (1)
+  29          #define PORT_STATUS_DUPLEX_HALF     (2)
+  30          #define PORT_STATUS_DUPLEX_FULL     (3)
+  31          
+  32          /* SNMP dot3PauseAdminMode/dot3PauseOperMode */
+  33          #define PORT_STATUS_PAUSE_MODE_DISABLE         (1)
+  34          #define PORT_STATUS_PAUSE_MODE_XMIT            (2)
+  35          #define PORT_STATUS_PAUSE_MODE_RCV             (3)
+  36          #define PORT_STATUS_PAUSE_MODE_XMITANDRCV      (4)
+  37          
+  38          struct mib_list_rootnode xdata dot3HCStatsTable_root = {
+  39            &dot3HCStatsTable_get_object_def,
+  40            &dot3HCStatsTable_get_value,
+  41            &noleafs_set_test,
+  42            &noleafs_set_value,
+  43            MIB_NODE_LR,
+  44            0,
+  45            NULL,
+  46            NULL,
+  47            0
+  48          };
+  49          
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 2   
+
+  50          /* .1.3.6.1.2.1.10.7.11.1 */
+  51          far const s32_t dot3HCStatsentry_ids[6] = {1, 2, 3, 4, 5, 6};
+  52          far struct mib_node *const dot3HCStatsentry_nodes[6] = {
+  53            (struct mib_node *) &dot3HCStatsTable_root,
+  54            (struct mib_node *) &dot3HCStatsTable_root,
+  55            (struct mib_node *) &dot3HCStatsTable_root,
+  56            (struct mib_node *) &dot3HCStatsTable_root,
+  57            (struct mib_node *) &dot3HCStatsTable_root,
+  58            (struct mib_node *) &dot3HCStatsTable_root
+  59          };
+  60          far const struct mib_array_node dot3HCStatsentry = {
+  61            &noleafs_get_object_def,
+  62            &noleafs_get_value,
+  63            &noleafs_set_test,
+  64            &noleafs_set_value,
+  65            MIB_NODE_AR,
+  66            6,
+  67            dot3HCStatsentry_ids,
+  68            dot3HCStatsentry_nodes
+  69          };
+  70          
+  71          
+  72          /* .1.3.6.1.2.1.10.7.11 */
+  73          far const s32_t dot3HCStatsTable_id[1] =  { 1 };
+  74          far struct mib_node *const dot3HCStatsTable_node[1] = {
+  75            (struct mib_node * const) &dot3HCStatsentry
+  76          };
+  77          struct mib_ram_array_node xdata dot3HCStatsTable = {
+  78            &noleafs_get_object_def,
+  79            &noleafs_get_value,
+  80            &noleafs_set_test,
+  81            &noleafs_set_value,
+  82            MIB_NODE_RA,
+  83            1,
+  84            dot3HCStatsTable_id,
+  85            dot3HCStatsTable_node
+  86          };
+  87          
+  88          /*  .1.3.6.1.2.1.10.7.10.1 */
+  89          struct mib_list_rootnode xdata dot3PauseTable_root = {
+  90            &dot3PauseTable_get_object_def,
+  91            &dot3PauseTable_get_value,
+  92            &noleafs_set_test,
+  93            &noleafs_set_value,
+  94            MIB_NODE_LR,
+  95            0,
+  96            NULL,
+  97            NULL,
+  98            0
+  99          };
+ 100          far const s32_t dot3Pauseentry_ids[6] = {1, 2, 3, 4, 5, 6};
+ 101          far struct mib_node * const dot3Pauseentry_nodes[6] = {
+ 102            (struct mib_node *) &dot3PauseTable_root,
+ 103            (struct mib_node *) &dot3PauseTable_root,
+ 104            (struct mib_node *) &dot3PauseTable_root,
+ 105            (struct mib_node *) &dot3PauseTable_root,
+ 106            (struct mib_node *) &dot3PauseTable_root,
+ 107            (struct mib_node *) &dot3PauseTable_root
+ 108          };
+ 109          far const struct mib_array_node dot3Pauseentry = {
+ 110            &noleafs_get_object_def,
+ 111            &noleafs_get_value,
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 3   
+
+ 112            &noleafs_set_test,
+ 113            &noleafs_set_value,
+ 114            MIB_NODE_AR,
+ 115            6,
+ 116            dot3Pauseentry_ids,
+ 117            dot3Pauseentry_nodes
+ 118          };
+ 119          
+ 120          /*  .1.3.6.1.2.1.10.7.10 */
+ 121          far const s32_t dot3PauseTable_ids[1] = {1};
+ 122          far struct mib_node *const dot3PauseTable_nodes[1] = {
+ 123            (struct mib_node * const) &dot3Pauseentry
+ 124          };
+ 125          struct mib_ram_array_node xdata dot3PauseTable = {
+ 126            &noleafs_get_object_def,
+ 127            &noleafs_get_value,
+ 128            &noleafs_set_test,
+ 129            &noleafs_set_value,
+ 130            MIB_NODE_RA,
+ 131            1,
+ 132            dot3PauseTable_ids,
+ 133            dot3PauseTable_nodes
+ 134          };
+ 135          
+ 136          /*  .1.3.6.1.2.1.10.7.9.1 */
+ 137          struct mib_list_rootnode xdata dot3ControlTable_root = {
+ 138            &dot3ControlTable_get_object_def,
+ 139            &dot3ControlTable_get_value,
+ 140            &noleafs_set_test,
+ 141            &noleafs_set_value,
+ 142            MIB_NODE_LR,
+ 143            0,
+ 144            NULL,
+ 145            NULL,
+ 146            0
+ 147          };
+ 148          far const s32_t dot3Controlentry_ids[3] = {1, 2, 3};
+ 149          far struct mib_node *const dot3Controlentry_nodes[3] = {
+ 150            (struct mib_node *) &dot3ControlTable_root,
+ 151            (struct mib_node *) &dot3ControlTable_root,
+ 152            (struct mib_node *) &dot3ControlTable_root
+ 153          };
+ 154          far const struct mib_array_node dot3Controlentry = {
+ 155            &noleafs_get_object_def,
+ 156            &noleafs_get_value,
+ 157            &noleafs_set_test,
+ 158            &noleafs_set_value,
+ 159            MIB_NODE_AR,
+ 160            3,
+ 161            dot3Controlentry_ids,
+ 162            dot3Controlentry_nodes
+ 163          };
+ 164          
+ 165          /*  .1.3.6.1.2.1.10.7.9 */
+ 166          far const s32_t dot3ControlTable_ids[1] = { 1 };
+ 167          far struct mib_node *const dot3ControlTable_nodes[1] = {
+ 168            (struct mib_node * const) &dot3Controlentry
+ 169          };
+ 170          struct mib_ram_array_node xdata dot3ControlTable = {
+ 171            &noleafs_get_object_def,
+ 172            &noleafs_get_value,
+ 173            &noleafs_set_test,
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 4   
+
+ 174            &noleafs_set_value,
+ 175            MIB_NODE_RA,
+ 176            1,
+ 177            dot3ControlTable_ids,
+ 178            dot3ControlTable_nodes
+ 179          };
+ 180          
+ 181          /* .1.3.6.1.2.1.10.7.5.1 */
+ 182          struct mib_list_rootnode xdata dot3CollTable_root = {
+ 183            &dot3CollTable_get_object_def,
+ 184            &dot3CollTable_get_value,
+ 185            &noleafs_set_test,
+ 186            &noleafs_set_value,
+ 187            MIB_NODE_LR,
+ 188            0,
+ 189            NULL,
+ 190            NULL,
+ 191            0
+ 192          };
+ 193          far const s32_t dot3Collentry_ids[1] = { 3 };
+ 194          far struct mib_node *const dot3Collentry_nodes[1] = {
+ 195            (struct mib_node *) &dot3CollTable_root
+ 196          };
+ 197          far const struct mib_array_node dot3Collentry = {
+ 198            &noleafs_get_object_def,
+ 199            &noleafs_get_value,
+ 200            &noleafs_set_test,
+ 201            &noleafs_set_value,
+ 202            MIB_NODE_AR, 
+ 203            1,
+ 204            dot3Collentry_ids,
+ 205            dot3Collentry_nodes
+ 206          };
+ 207          
+ 208          /* .1.3.6.1.2.1.10.7.5 */
+ 209          far const s32_t dot3CollTable_ids[1] = { 1 };
+ 210          far struct mib_node *const dot3CollTable_nodes[1] = {
+ 211            (struct mib_node * const) &dot3Collentry
+ 212          };
+ 213          struct mib_ram_array_node xdata dot3CollTable = {
+ 214            &noleafs_get_object_def,
+ 215            &noleafs_get_value,
+ 216            &noleafs_set_test,
+ 217            &noleafs_set_value,
+ 218            MIB_NODE_RA,
+ 219            1,
+ 220            dot3CollTable_ids,
+ 221            dot3CollTable_nodes
+ 222          };
+ 223          
+ 224          /* .1.3.6.1.2.1.10.7.2.1 */
+ 225          struct mib_list_rootnode xdata dot3StatsTable_root = {
+ 226            &dot3Statsentry_get_object_def,
+ 227            &dot3Statsentry_get_value,
+ 228            &noleafs_set_test,
+ 229            &noleafs_set_value,
+ 230            MIB_NODE_LR,
+ 231            0,
+ 232            NULL,
+ 233            NULL,
+ 234            0
+ 235          };
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 5   
+
+ 236          far const s32_t dot3Statsentry_ids[18] = {
+ 237            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 13, 16, 17, 18, 19, 20, 21
+ 238          };
+ 239          far struct mib_node *const dot3Statsentry_nodes[18] = {
+ 240            (struct mib_node *) &dot3StatsTable_root,
+ 241            (struct mib_node *) &dot3StatsTable_root,
+ 242            (struct mib_node *) &dot3StatsTable_root,
+ 243            (struct mib_node *) &dot3StatsTable_root,
+ 244            (struct mib_node *) &dot3StatsTable_root,
+ 245            (struct mib_node *) &dot3StatsTable_root,
+ 246            (struct mib_node *) &dot3StatsTable_root,
+ 247            (struct mib_node *) &dot3StatsTable_root,
+ 248            (struct mib_node *) &dot3StatsTable_root,
+ 249            (struct mib_node *) &dot3StatsTable_root,
+ 250            (struct mib_node *) &dot3StatsTable_root,
+ 251            (struct mib_node *) &dot3StatsTable_root,
+ 252            (struct mib_node *) &dot3StatsTable_root,
+ 253            (struct mib_node *) &dot3StatsTable_root,
+ 254            (struct mib_node *) &dot3StatsTable_root,
+ 255            (struct mib_node *) &dot3StatsTable_root,
+ 256            (struct mib_node *) &dot3StatsTable_root,
+ 257            (struct mib_node *) &dot3StatsTable_root,
+ 258          };
+ 259          far const struct mib_array_node dot3Statsentry = {
+ 260            &noleafs_get_object_def,
+ 261            &noleafs_get_value,
+ 262            &noleafs_set_test,
+ 263            &noleafs_set_value,
+ 264            MIB_NODE_AR,
+ 265            18,
+ 266            dot3Statsentry_ids,
+ 267            dot3Statsentry_nodes
+ 268          };
+ 269          
+ 270          /* .1.3.6.1.2.1.10.7.2 */
+ 271          far const s32_t dot3StatsTable_ids[1] = { 1 };
+ 272          far struct mib_node * const dot3StatsTable_nodes[1] = {
+ 273            (struct mib_node * const) &dot3Statsentry
+ 274          };
+ 275          struct mib_ram_array_node xdata dot3StatsTable = {
+ 276            &noleafs_get_object_def,
+ 277            &noleafs_get_value,
+ 278            &noleafs_set_test,
+ 279            &noleafs_set_value,
+ 280            MIB_NODE_RA,
+ 281            1,
+ 282            dot3StatsTable_ids,
+ 283            dot3StatsTable_nodes
+ 284          };
+ 285          
+ 286          /* .1.3.6.1.2.1.10.7 */
+ 287          //far const s32_t dot3_ids[5] = {2, 5, 9, 10, 11};
+ 288          far const s32_t dot3_ids[3] = {2, 9, 10 };
+ 289          //far struct mib_node * const dot3_nodes[5] = {
+ 290          far struct mib_node * const dot3_nodes[3] = {
+ 291            (struct mib_node *) &dot3StatsTable,
+ 292            //(struct mib_node *) &dot3CollTable,
+ 293            (struct mib_node *) &dot3ControlTable,
+ 294            (struct mib_node *) &dot3PauseTable
+ 295          //  (struct mib_node *) &dot3HCStatsTable
+ 296          };
+ 297          far const struct mib_array_node dot3 = {
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 6   
+
+ 298            &noleafs_get_object_def,
+ 299            &noleafs_get_value,
+ 300            &noleafs_set_test,
+ 301            &noleafs_set_value,
+ 302            MIB_NODE_AR,
+ 303          //  5,
+ 304            3,
+ 305            dot3_ids,
+ 306            dot3_nodes
+ 307          };
+ 308          
+ 309          /* .1.3.6.1.2.1.10 */
+ 310          far const s32_t transmission_ids[1] = { 7 };
+ 311          far struct mib_node* const transmission_nodes[1] = { (struct mib_node *) &dot3 };
+ 312          struct mib_array_node transmission = {
+ 313            &noleafs_get_object_def,
+ 314            &noleafs_get_value,
+ 315            &noleafs_set_test,
+ 316            &noleafs_set_value,
+ 317            MIB_NODE_AR,
+ 318            1,
+ 319            transmission_ids,
+ 320            transmission_nodes
+ 321          };
+ 322          
+ 323          /*interface*/
+ 324          far const struct snmp_obj_id chipspecific = { 2, {0, 0} };
+ 325          
+ 326          
+ 327          /*
+ 328           * Function: snmp_inc_dot3StatsTable
+ 329           * --------------------------------
+ 330           * Inserts a node into dot3StatsTable for SNMP traversal.
+ 331           * Adds one entry to enable getnext operations.
+ 332           * Sets maxlength to 1 for table access.
+ 333           */
+ 334          void snmp_inc_dot3StatsTable(void) large
+ 335          {
+ 336   1          struct mib_list_node *if_node = NULL;
+ 337   1      
+ 338   1          snmp_mib_node_insert(&dot3StatsTable_root, dot3StatsTable_root.count + 1, &if_node);
+ 339   1          /* enable getnext traversal on filled table */
+ 340   1          dot3StatsTable.maxlength = 1;
+ 341   1      }
+ 342          
+ 343          /*
+ 344           * Function: snmp_insert_dot3CollTable_tree
+ 345           * ----------------------------------------
+ 346           * Inserts a two-level tree entry into dot3CollTable.
+ 347           * Creates nested nodes for ifIndex and collision count.
+ 348           * Used for SNMP getnext traversal of collision statistics.
+ 349           */
+ 350          void snmp_insert_dot3CollTable_tree(u32_t if_index, u32_t dot3CollCount) large
+ 351          {
+ 352   1      
+ 353   1          struct mib_list_rootnode *iprte_rn;
+ 354   1          struct mib_list_node *iprte_node;
+ 355   1          s32_t iprteidx[2];
+ 356   1          u8_t xdata level;
+ 357   1      
+ 358   1          iprteidx[0] = if_index;
+ 359   1          iprteidx[1] = dot3CollCount;
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 7   
+
+ 360   1          level = 0;
+ 361   1          iprte_rn = &dot3CollTable_root;
+ 362   1          while (level < 2)
+ 363   1          {
+ 364   2              iprte_node = NULL;
+ 365   2              snmp_mib_node_insert(iprte_rn, iprteidx[level], &iprte_node);
+ 366   2              if ((level != 1) && (iprte_node != NULL))
+ 367   2              {
+ 368   3                  if (iprte_node->nptr == NULL)
+ 369   3                  {
+ 370   4                      iprte_rn = snmp_mib_lrn_alloc();
+ 371   4                      iprte_node->nptr = (struct mib_node *) iprte_rn;
+ 372   4                      if (iprte_rn != NULL)
+ 373   4                      {
+ 374   5                          if (level == 0)
+ 375   5                          {
+ 376   6                            iprte_rn->get_object_def = dot3CollTable_get_object_def;
+ 377   6                  iprte_rn->get_value = dot3CollTable_get_value;
+ 378   6                          }
+ 379   5                      }
+ 380   4                      else
+ 381   4                      {
+ 382   5                          /* iprte_rn == NULL, malloc failure */
+ 383   5                          DBG_SNMP_PRINTF(("snmp_insert_hisidx_tree() insert failed, mem full"));
+ 384   5                          break;
+ 385   5                      }
+ 386   4                  }
+ 387   3                  else
+ 388   3                  {
+ 389   4                      iprte_rn = (struct mib_list_rootnode *) iprte_node->nptr;
+ 390   4                  }
+ 391   3              }
+ 392   2              level++;
+ 393   2          }
+ 394   1          /* enable getnext traversal on filled table */
+ 395   1      }
+ 396          
+ 397          /*
+ 398           * Function: snmp_inc_dot3ControlTable
+ 399           * -----------------------------------
+ 400           * Inserts a node into dot3ControlTable for SNMP traversal.
+ 401           * Adds one entry to enable getnext operations.
+ 402           * Sets maxlength to 1 for table access.
+ 403           */
+ 404          void snmp_inc_dot3ControlTable(void) large
+ 405          {
+ 406   1          struct mib_list_node *if_node = NULL;
+ 407   1      
+ 408   1          snmp_mib_node_insert(&dot3ControlTable_root, dot3ControlTable_root.count + 1, &if_node);
+ 409   1          /* enable getnext traversal on filled table */
+ 410   1          dot3ControlTable.maxlength = 1;
+ 411   1      }
+ 412          
+ 413          /*
+ 414           * Function: snmp_inc_dot3PauseTable
+ 415           * ---------------------------------
+ 416           * Inserts a node into dot3PauseTable for SNMP traversal.
+ 417           * Adds one entry to enable getnext operations.
+ 418           * Sets maxlength to 1 for table access.
+ 419           */
+ 420          void snmp_inc_dot3PauseTable(void) large
+ 421          {
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 8   
+
+ 422   1          struct mib_list_node *if_node = NULL;
+ 423   1      
+ 424   1          snmp_mib_node_insert(&dot3PauseTable_root, dot3PauseTable_root.count + 1, &if_node);
+ 425   1          /* enable getnext traversal on filled table */
+ 426   1          dot3PauseTable.maxlength = 1;
+ 427   1      }
+ 428          
+ 429          /*
+ 430           * Function: snmp_inc_dot3HCStatsTable
+ 431           * -----------------------------------
+ 432           * Inserts a node into dot3HCStatsTable for SNMP traversal.
+ 433           * Adds one entry to enable getnext operations.
+ 434           * High-capacity statistics table for 64-bit counters.
+ 435           */
+ 436          void snmp_inc_dot3HCStatsTable(void) large
+ 437          {
+ 438   1          struct mib_list_node *if_node = NULL;
+ 439   1      
+ 440   1          snmp_mib_node_insert(&dot3HCStatsTable_root, dot3HCStatsTable_root.count + 1, &if_node);
+ 441   1          /* enable getnext traversal on filled table */
+ 442   1      }
+ 443          
+ 444          /*
+ 445           * Function: dot3Statsentry_get_object_def
+ 446           * ---------------------------------------
+ 447           * Defines dot3Stats entry objects for Ethernet-like MIB.
+ 448           * Handles alignment errors, FCS errors, collision frames, etc.
+ 449           * Sets ASN.1 types as counters with read-only access.
+ 450           */
+ 451          void dot3Statsentry_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 452          {
+ 453   1          u8_t xdata id;
+ 454   1          /* return to object name, adding index depth (1) */
+ 455   1          ident_len += 1;
+ 456   1          ident -= 1;
+ 457   1          if (ident_len == 2)
+ 458   1          {
+ 459   2              od->id_inst_len = ident_len;
+ 460   2              od->id_inst_ptr = ident;
+ 461   2      
+ 462   2              id = ident[0];
+ 463   2              DBG_SNMP_PRINTF(("dot3Statsentry_get_object_def %" U16_F "\n", (u16_t) id));
+ 464   2              switch (id)
+ 465   2              {
+ 466   3      
+ 467   3              case 1:
+ 468   3              case 2:
+ 469   3              case 3:
+ 470   3              case 4:
+ 471   3              case 5:
+ 472   3              case 6:
+ 473   3              case 7:
+ 474   3              case 8:
+ 475   3              case 9:
+ 476   3              case 10:
+ 477   3              case 11:
+ 478   3              case 13:
+ 479   3              case 16:
+ 480   3              case 18:
+ 481   3              case 19:
+ 482   3              case 20:
+ 483   3              case 21:
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 9   
+
+ 484   3                  od->instance = MIB_OBJECT_TAB;
+ 485   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 486   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 487   3                  od->v_len = sizeof(u32_t);
+ 488   3                  break;
+ 489   3      
+ 490   3              case 17:
+ 491   3                  od->instance = MIB_OBJECT_TAB;
+ 492   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 493   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
+ 494   3                  od->v_len = chipspecific.len * sizeof(s32_t);
+ 495   3                  break;
+ 496   3              default:
+ 497   3                  DBG_SNMP_PRINTF(("dot3Statsentry_get_object_def: no such object\n"));
+ 498   3                  od->instance = MIB_OBJECT_NONE;
+ 499   3                  break;
+ 500   3      
+ 501   3      
+ 502   3              }
+ 503   2          }
+ 504   1          else
+ 505   1          {
+ 506   2              DBG_SNMP_PRINTF(("dot3Statsentry_get_object_def: no scalar\n"));
+ 507   2              od->instance = MIB_OBJECT_NONE;
+ 508   2          }
+ 509   1      }
+ 510          
+ 511          /*
+ 512           * Function: dot3Statsentry_get_value
+ 513           * ----------------------------------
+ 514           * Retrieves dot3Stats entry values for Ethernet statistics.
+ 515           * Returns alignment errors, FCS errors, collisions, duplex status, etc.
+ 516           * Uses GET_DOT3_STATS macros to retrieve counter values.
+ 517           */
+ 518          void dot3Statsentry_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 519          {
+ 520   1          u8_t xdata index;
+ 521   1          u8_t xdata id;
+ 522   1      
+ 523   1          /*kill keil warning */
+ 524   1          if (len)
+ 525   1          {
+ 526   2          }
+ 527   1      
+ 528   1          index = od->id_inst_ptr[1];
+ 529   1          id = od->id_inst_ptr[0];
+ 530   1      
+ 531   1          switch (id)
+ 532   1          {
+ 533   2          case 1:                    /* dot3StatsIndex */
+ 534   2              {
+ 535   3                  s32_t *xdata sint_ptr = value;
+ 536   3                  *sint_ptr = od->id_inst_ptr[1];
+ 537   3              }
+ 538   2              break;
+ 539   2          case 2:                    /* dot3StatsAlignmentErrors */
+ 540   2              {
+ 541   3                  u32_t *xdata uint_ptr = value;
+ 542   3                  GET_DOT3_STATS_ALIGNMENT_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 543   3              }
+ 544   2              break;
+ 545   2          case 3:                    /* dot3StatsFCSErrors */
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 10  
+
+ 546   2              {
+ 547   3                  u32_t *xdata uint_ptr = value;
+ 548   3                  GET_DOT3_STATS_FCS_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 549   3      
+ 550   3              }
+ 551   2              break;
+ 552   2          case 4:                    /* dot3StatsSingleCollisionFrames */
+ 553   2              {
+ 554   3                  u32_t *xdata uint_ptr = value;
+ 555   3                  GET_DOT3_STATS_SINGLE_COLLISION_FRAMES( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_p
+             -tr));
+ 556   3              }
+ 557   2              break;
+ 558   2          case 5:                    /* dot3StatsMultipleCollisionFrames */
+ 559   2              {
+ 560   3                  u32_t *xdata uint_ptr = value;
+ 561   3                  GET_DOT3_STATS_MULTIPLE_COLLISION_FRAMES( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint
+             -_ptr));
+ 562   3              }
+ 563   2              break;
+ 564   2          case 6:                    /* dot3StatsSQETestErrors */
+ 565   2              {
+ 566   3                  u32_t *xdata uint_ptr = value;
+ 567   3                  *uint_ptr = 0;
+ 568   3          //GET_DOT3_STATS_SQETEST_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 569   3              }
+ 570   2              break;
+ 571   2          case 7:                    /* dot3StatsDeferredTransmissions */
+ 572   2              {
+ 573   3                  u32_t *xdata uint_ptr = value;
+ 574   3                  GET_DOT3_STATS_DEFERED_TRANSMISSIONS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr
+             -));
+ 575   3      
+ 576   3              }
+ 577   2              break;
+ 578   2      
+ 579   2          case 8:                    /* dot3StatsLateCollisions */
+ 580   2              {
+ 581   3                  u32_t *xdata uint_ptr = value;
+ 582   3                  GET_DOT3_STATS_LATE_COLLISIONS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 583   3              }
+ 584   2              break;
+ 585   2          case 9:                    /* dot3StatsExcessiveCollisions */
+ 586   2              {
+ 587   3                  u32_t *xdata uint_ptr = value;
+ 588   3                  GET_DOT3_STATS_EXCESSIVE_COLLISIONS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr)
+             -);
+ 589   3              }
+ 590   2              break;
+ 591   2          case 10:                   /* dot3StatsInternalMacTransmitErrors */
+ 592   2              {
+ 593   3                  u32_t *uint_ptr = value;
+ 594   3                  *uint_ptr = 0;
+ 595   3                 // GET_DOT3_STATS_INTERNAL_MAC_TRANSMIT_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*
+             -)uint_ptr));
+ 596   3              }
+ 597   2              break;
+ 598   2          case 11:                   /* dot3StatsCarrierSenseErrors */
+ 599   2              {
+ 600   3                  u32_t *xdata uint_ptr = value;
+ 601   3                  *uint_ptr = 0;
+ 602   3                 //GET_DOT3_STATS_CARRIER_SENSE_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 11  
+
+             -));
+ 603   3              }
+ 604   2              break;
+ 605   2          case 13:                   /* dot3StatsFrameTooLongs */
+ 606   2              {
+ 607   3                  u32_t *xdata uint_ptr = value;
+ 608   3                  GET_DOT3_STATS_FRAME_TOO_LONGS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 609   3              }
+ 610   2              break;
+ 611   2          case 16:                   /* dot3StatsInternalMacReceiveErrors */
+ 612   2              {
+ 613   3                  u32_t *xdata uint_ptr = value;
+ 614   3                  *uint_ptr = 0;
+ 615   3             //GET_DOT3_STATS_INTERNAL_MAC_RECEIVE_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_p
+             -tr));
+ 616   3              }
+ 617   2              break;
+ 618   2          case 17:                  /* dot3StatsEtherChipSet */
+ 619   2              {
+ 620   3                  objectidncpy((s32_t *) value, (s32_t *) chipspecific.id, len / sizeof(s32_t));
+ 621   3            //GET_DOT3_STATS_ETHER_CHIPSET( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 622   3              }
+ 623   2              break;
+ 624   2          case 18:                   /* dot3StatsSymbolErrors */
+ 625   2              {
+ 626   3                  u32_t *xdata uint_ptr = value;
+ 627   3                  GET_DOT3_STATS_SYMBOL_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 628   3              }
+ 629   2              break;
+ 630   2          case 19:                   /* dot3StatsDuplexStatus */
+ 631   2              {
+ 632   3                  u32_t *xdata uint_ptr = value;
+ 633   3                  sal_port_macStatus_t status;
+ 634   3                  
+ 635   3                  sal_port_macStatus_get(index-1, &status);
+ 636   3                  if( SAL_PORT_DUPLEX_FULL==status.duplex )
+ 637   3                  {
+ 638   4                      *uint_ptr = (u32_t) PORT_STATUS_DUPLEX_FULL;
+ 639   4                  }
+ 640   3                  else if( SAL_PORT_DUPLEX_HALF==status.duplex )
+ 641   3                  {
+ 642   4                      *uint_ptr = (u32_t) PORT_STATUS_DUPLEX_HALF;
+ 643   4                  }
+ 644   3                  else
+ 645   3                  {
+ 646   4                      *uint_ptr = (u32_t) PORT_STATUS_DUPLEX_UNKNOWN;
+ 647   4                  }
+ 648   3              }
+ 649   2              break;
+ 650   2          case 20:                   /* dot3StatsRateControlAbility */
+ 651   2              {
+ 652   3                  u32_t *xdata uint_ptr = value;
+ 653   3                  *uint_ptr = 1;
+ 654   3             // GET_DOT3_STATS_RATE_CONTROL_ABILITY( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 655   3              }
+ 656   2              break;
+ 657   2          case 21:                   /* dot3StatsRateControlStatus */
+ 658   2              {
+ 659   3                  u32_t *xdata uint_ptr = value;
+ 660   3                  GET_DOT3_STATS_RATE_CONTROL_STATUS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr))
+             -;
+ 661   3      
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 12  
+
+ 662   3              }
+ 663   2              break;
+ 664   2          };
+ 665   1      }
+ 666          
+ 667          /*
+ 668           * Function: dot3CollTable_get_object_def
+ 669           * --------------------------------------
+ 670           * Defines dot3CollTable entry objects for collision statistics.
+ 671           * Handles dot3CollFrequencies object.
+ 672           * Sets ASN.1 type as counter with read-only access.
+ 673           */
+ 674          void dot3CollTable_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 675          {
+ 676   1          u8_t xdata id;
+ 677   1      
+ 678   1          /* return to object name, adding index depth (2) */
+ 679   1          ident_len += 2;
+ 680   1          ident -= 2;
+ 681   1          if (ident_len == 3)
+ 682   1          {
+ 683   2              od->id_inst_len = ident_len;
+ 684   2              od->id_inst_ptr = ident;
+ 685   2      
+ 686   2              id = ident[0];
+ 687   2              DBG_SNMP_PRINTF(("rmon_dot3CollTable_get_object_def  .%" U16_F "\n", (u16_t) id));
+ 688   2              switch (id)
+ 689   2              {
+ 690   3      
+ 691   3              case 3:
+ 692   3                  od->instance = MIB_OBJECT_TAB;
+ 693   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 694   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 695   3                  od->v_len = sizeof(u32_t);
+ 696   3                  break;
+ 697   3              default:
+ 698   3                  DBG_SNMP_PRINTF(("rmon_dot3CollTable_get_object_def: no such object\n"));
+ 699   3                  od->instance = MIB_OBJECT_NONE;
+ 700   3                  break;
+ 701   3              };
+ 702   2          }
+ 703   1          else
+ 704   1          {
+ 705   2              DBG_SNMP_PRINTF(("rmon_dot3CollTable_get_object_def: no scalar\n"));
+ 706   2              od->instance = MIB_OBJECT_NONE;
+ 707   2          }
+ 708   1      
+ 709   1      }
+ 710          
+ 711          /*
+ 712           * Function: dot3CollTable_get_value
+ 713           * ---------------------------------
+ 714           * Retrieves dot3CollTable collision frequency values.
+ 715           * Returns collision count for specified port.
+ 716           * Uses GET_DOT3_COLL_FREQUENCIES macro.
+ 717           */
+ 718          void dot3CollTable_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 719          {
+ 720   1          u8_t xdata id;
+ 721   1          u32_t xdata index;
+ 722   1          u32_t *xdata uint_ptr = value;
+ 723   1      
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 13  
+
+ 724   1          /*kill keil warning */
+ 725   1          if (len)
+ 726   1          {
+ 727   2          }
+ 728   1          id = od->id_inst_ptr[0];
+ 729   1          index = od->id_inst_ptr[1];
+ 730   1      
+ 731   1      
+ 732   1          switch (id)
+ 733   1          {
+ 734   2          case 3:
+ 735   2              GET_DOT3_COLL_FREQUENCIES( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 736   2      
+ 737   2              break;
+ 738   2          }
+ 739   1      
+ 740   1      }
+ 741          
+ 742          /*
+ 743           * Function: dot3ControlTable_get_object_def
+ 744           * -----------------------------------------
+ 745           * Defines dot3ControlTable entry objects for Ethernet control.
+ 746           * Handles dot3ControlFunctionsSupported, InUnknownOpcodes, HCInUnknownOpcodes.
+ 747           * Sets ASN.1 types for OCTET STRING, COUNTER, and COUNTER64.
+ 748           */
+ 749          void dot3ControlTable_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 750          {
+ 751   1          u8_t xdata id;
+ 752   1      
+ 753   1          /* return to object name, adding index depth (1) */
+ 754   1          ident_len += 1;
+ 755   1          ident -= 1;
+ 756   1          if (ident_len == 2)
+ 757   1          {
+ 758   2              od->id_inst_len = ident_len;
+ 759   2              od->id_inst_ptr = ident;
+ 760   2      
+ 761   2              id = ident[0];
+ 762   2              DBG_SNMP_PRINTF(("dot3ControlTable_get_object_def %" U16_F "\n", (u16_t) id));
+ 763   2              switch (id)
+ 764   2              {
+ 765   3      
+ 766   3              case 1:
+ 767   3                  od->instance = MIB_OBJECT_TAB;
+ 768   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 769   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
+ 770   3                  od->v_len = 1;
+ 771   3      
+ 772   3                  break;
+ 773   3              case 2:
+ 774   3                  od->instance = MIB_OBJECT_TAB;
+ 775   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 776   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 777   3                  od->v_len = sizeof(u32_t);
+ 778   3                  break;
+ 779   3              case 3:
+ 780   3                  od->instance = MIB_OBJECT_TAB;
+ 781   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 782   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER64);
+ 783   3                  od->v_len = sizeof(u32_t) + sizeof(u32_t);
+ 784   3                  break;
+ 785   3              default:
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 14  
+
+ 786   3                  DBG_SNMP_PRINTF(("dot3ControlTable_get_object_def: no such object\n"));
+ 787   3                  od->instance = MIB_OBJECT_NONE;
+ 788   3                  break;
+ 789   3      
+ 790   3      
+ 791   3              }
+ 792   2      
+ 793   2      
+ 794   2      
+ 795   2          }
+ 796   1          else
+ 797   1          {
+ 798   2              DBG_SNMP_PRINTF(("dot3ControlTable_get_object_def: no scalar\n"));
+ 799   2              od->instance = MIB_OBJECT_NONE;
+ 800   2          }
+ 801   1      }
+ 802          
+ 803          /*
+ 804           * Function: dot3ControlTable_get_value
+ 805           * ------------------------------------
+ 806           * Retrieves dot3ControlTable control statistics.
+ 807           * Returns supported functions (fixed value), unknown opcodes (32-bit and 64-bit).
+ 808           * Uses GET_CONTROL_UNKNOWN_OPCODES macro for 32-bit counter.
+ 809           */
+ 810          void dot3ControlTable_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 811          {
+ 812   1          u8_t xdata index;
+ 813   1          u8_t xdata id;
+ 814   1          u8_t temp[1];
+ 815   1      
+ 816   1          /*kill keil warning */
+ 817   1          if (len)
+ 818   1          {
+ 819   2          }
+ 820   1      
+ 821   1          index = od->id_inst_ptr[1];
+ 822   1          id = od->id_inst_ptr[0];
+ 823   1      
+ 824   1          switch (id)
+ 825   1          {
+ 826   2          case 1:
+ 827   2              {
+ 828   3                  temp[0] = 0xFF;
+ 829   3                  ocstrncpy(value, temp, len);
+ 830   3              }
+ 831   2              break;
+ 832   2          case 2:
+ 833   2              {
+ 834   3                  u32_t *xdata uint_ptr = value;
+ 835   3      
+ 836   3                  /*dot3ControlInUnknownOpcodes */
+ 837   3                  GET_CONTROL_UNKNOWN_OPCODES( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 838   3      
+ 839   3              }
+ 840   2              break;
+ 841   2          case 3:
+ 842   2              {
+ 843   3                  u32_t xdata value64[2];
+ 844   3      
+ 845   3                  /*dot3HCControlInUnknownOpcodes */
+ 846   3                  GET_HC_CONTROL_UNKNOWN_OPCODES( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64));
+ 847   3            uncpy((u32_t *) value, (u32_t *) value64, 2);
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 15  
+
+ 848   3              }
+ 849   2              break;
+ 850   2      
+ 851   2          }
+ 852   1      
+ 853   1      
+ 854   1      }
+ 855          
+ 856          /*
+ 857           * Function: dot3PauseTable_get_object_def
+ 858           * ---------------------------------------
+ 859           * Defines dot3PauseTable entry objects for PAUSE frame statistics.
+ 860           * Handles admin/oper mode, pause frames sent/received (32-bit and 64-bit).
+ 861           * Sets ASN.1 types for INTEGER, COUNTER, and COUNTER64.
+ 862           */
+ 863          void dot3PauseTable_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 864          {
+ 865   1          u8_t xdata id;
+ 866   1      
+ 867   1          /* return to object name, adding index depth (1) */
+ 868   1          ident_len += 1;
+ 869   1          ident -= 1;
+ 870   1          if (ident_len == 2)
+ 871   1          {
+ 872   2              od->id_inst_len = ident_len;
+ 873   2              od->id_inst_ptr = ident;
+ 874   2      
+ 875   2              id = ident[0];
+ 876   2              DBG_SNMP_PRINTF(("dot3PauseTable_get_object_def %" U16_F "\n", (u16_t) id));
+ 877   2              switch (id)
+ 878   2              {
+ 879   3      
+ 880   3              case 1:
+ 881   3              case 2:
+ 882   3                  od->instance = MIB_OBJECT_TAB;
+ 883   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 884   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 885   3                  od->v_len = sizeof(u32_t);
+ 886   3      
+ 887   3                  break;
+ 888   3              case 3:
+ 889   3              case 4:
+ 890   3                  od->instance = MIB_OBJECT_TAB;
+ 891   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 892   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 893   3                  od->v_len = sizeof(u32_t);
+ 894   3                  break;
+ 895   3              case 5:
+ 896   3              case 6:
+ 897   3                  od->instance = MIB_OBJECT_TAB;
+ 898   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 899   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER64);
+ 900   3                  od->v_len = sizeof(u32_t) + sizeof(u32_t);
+ 901   3                  break;
+ 902   3              default:
+ 903   3                  DBG_SNMP_PRINTF(("dot3PauseTable_get_object_def: no such object\n"));
+ 904   3                  od->instance = MIB_OBJECT_NONE;
+ 905   3                  break;
+ 906   3      
+ 907   3      
+ 908   3              }
+ 909   2          }
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 16  
+
+ 910   1          else
+ 911   1          {
+ 912   2              DBG_SNMP_PRINTF(("dot3PauseTable_get_object_def: no scalar\n"));
+ 913   2              od->instance = MIB_OBJECT_NONE;
+ 914   2          }
+ 915   1      }
+ 916          
+ 917          /*
+ 918           * Function: dot3PauseTable_get_value
+ 919           * ----------------------------------
+ 920           * Retrieves dot3PauseTable PAUSE frame statistics.
+ 921           * Returns admin/oper pause mode, and pause frame counts (32/64-bit).
+ 922           * Uses GET_IN_PAUSE_FRAMES, GET_OUT_PAUSE_FRAMES, and HC versions.
+ 923           */
+ 924          void dot3PauseTable_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 925          {
+ 926   1          u32_t *uint_ptr = value;
+ 927   1          u8_t   index;
+ 928   1          u8_t   id;
+ 929   1          sal_phyAbility_t ability;
+ 930   1      
+ 931   1      
+ 932   1          /*kill keil warning */
+ 933   1          if (len)
+ 934   1          {
+ 935   2          }
+ 936   1      
+ 937   1      
+ 938   1          index = od->id_inst_ptr[1];
+ 939   1          id = od->id_inst_ptr[0];
+ 940   1      
+ 941   1          switch (id)
+ 942   1          {
+ 943   2          case 1:
+ 944   2              sal_port_phyAbility_get((u8_t)index-1, &ability);
+ 945   2              if (ability.FC == SAL_PORT_FLOW_CTRL_DISABLE) {
+ 946   3            *uint_ptr = PORT_STATUS_PAUSE_MODE_DISABLE;
+ 947   3          }
+ 948   2          else if (ability.FC == SAL_PORT_FLOW_CTRL_ENABLE) {
+ 949   3            *uint_ptr = PORT_STATUS_PAUSE_MODE_XMITANDRCV;
+ 950   3          }
+ 951   2      
+ 952   2              break;
+ 953   2          case 2:
+ 954   2              {
+ 955   3                  sal_port_macStatus_t    status;
+ 956   3      
+ 957   3                  sal_port_macStatus_get((u8_t)index-1, &status);
+ 958   3                  if ( SAL_PORT_FLOW_CTRL_DISABLE==status.fc || SAL_DISABLED==status.linkup ) {
+ 959   4                *uint_ptr = PORT_STATUS_PAUSE_MODE_DISABLE;
+ 960   4              }
+ 961   3              else if ( SAL_PORT_FLOW_CTRL_ENABLE==status.fc ) {
+ 962   4                *uint_ptr = PORT_STATUS_PAUSE_MODE_XMITANDRCV;
+ 963   4              }
+ 964   3              }
+ 965   2              break;
+ 966   2          case 3:
+ 967   2              /*dot3InPauseFrames */
+ 968   2              GET_IN_PAUSE_FRAMES( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 969   2              break;
+ 970   2          case 4:
+ 971   2              /*dot3OutPauseFrames */
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 17  
+
+ 972   2              GET_OUT_PAUSE_FRAMES( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 973   2              break;
+ 974   2      
+ 975   2          case 5:
+ 976   2              {
+ 977   3                  u32_t xdata value64[2];
+ 978   3      
+ 979   3                  /*dot3HCInPauseFrames */
+ 980   3                  GET_HC_IN_PAUSE_FRAMES( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64));
+ 981   3            uncpy((u32_t *) value, (u32_t *) value64, 2);
+ 982   3              }
+ 983   2              break;
+ 984   2      
+ 985   2          case 6:
+ 986   2              {
+ 987   3                  u32_t xdata value64[2];
+ 988   3      
+ 989   3                  /*dot3HCOutPauseFrames */
+ 990   3                  GET_HC_OUT_PAUSE_FRAMES( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64));
+ 991   3            uncpy((u32_t *) value, (u32_t *) value64, 2);
+ 992   3              }
+ 993   2              break;
+ 994   2          }
+ 995   1      }
+ 996          
+ 997          /*
+ 998           * Function: dot3HCStatsTable_get_object_def
+ 999           * -----------------------------------------
+1000           * Defines dot3HCStatsTable entry objects for high-capacity Ethernet statistics.
+1001           * Handles 64-bit counters for alignment errors, FCS errors, etc.
+1002           * Sets ASN.1 type as COUNTER64 for all objects.
+1003           */
+1004          void dot3HCStatsTable_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+1005          {
+1006   1          u8_t xdata id;
+1007   1      
+1008   1          /* return to object name, adding index depth (1) */
+1009   1          ident_len += 1;
+1010   1          ident -= 1;
+1011   1          if (ident_len == 2)
+1012   1          {
+1013   2              od->id_inst_len = ident_len;
+1014   2              od->id_inst_ptr = ident;
+1015   2      
+1016   2              id = ident[0];
+1017   2              DBG_SNMP_PRINTF(("dot3HCStatsTable_get_object_def %" U16_F "\n", (u16_t) id));
+1018   2              switch (id)
+1019   2              {
+1020   3      
+1021   3              case 1:
+1022   3              case 2:
+1023   3              case 3:
+1024   3              case 4:
+1025   3              case 5:
+1026   3              case 6:
+1027   3                  od->instance = MIB_OBJECT_TAB;
+1028   3                  od->access = MIB_OBJECT_READ_ONLY;
+1029   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER64);
+1030   3                  od->v_len = sizeof(u32_t) + sizeof(u32_t);
+1031   3                  break;
+1032   3              default:
+1033   3                  DBG_SNMP_PRINTF(("dot3HCStatsTable_get_object_def: no such object\n"));
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 18  
+
+1034   3                  od->instance = MIB_OBJECT_NONE;
+1035   3                  break;
+1036   3      
+1037   3      
+1038   3              }
+1039   2          }
+1040   1          else
+1041   1          {
+1042   2              DBG_SNMP_PRINTF(("dot3HCStatsTable_get_object_def: no scalar\n"));
+1043   2              od->instance = MIB_OBJECT_NONE;
+1044   2          }
+1045   1      }
+1046          
+1047          /*
+1048           * Function: dot3HCStatsTable_get_value
+1049           * ------------------------------------
+1050           * Retrieves dot3HCStatsTable high-capacity Ethernet statistics.
+1051           * Returns 64-bit counters for alignment errors, FCS errors, frame too longs, etc.
+1052           * Uses GET_DOT3_HC_STATS macros and uncpy for 64-bit values.
+1053           */
+1054          void dot3HCStatsTable_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+1055          {
+1056   1          u8_t xdata index;
+1057   1          u8_t xdata id;
+1058   1      
+1059   1          /*kill keil warning */
+1060   1          if (len)
+1061   1          {
+1062   2          }
+1063   1      
+1064   1          index = od->id_inst_ptr[1];
+1065   1          id = od->id_inst_ptr[0];
+1066   1      
+1067   1          switch (id)
+1068   1          {
+1069   2          case 1:
+1070   2              {
+1071   3                  u32_t xdata value64[2];
+1072   3      
+1073   3                  /* dot3HCStatsAligmentError */
+1074   3                  GET_DOT3_HC_STATS_ALIGNMENT_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64)
+             -);
+1075   3            uncpy((u32_t *) value, (u32_t *) value64, 2);
+1076   3      
+1077   3              }
+1078   2              break;
+1079   2      
+1080   2          case 2:
+1081   2              {
+1082   3                  u32_t xdata value64[2];
+1083   3      
+1084   3                  /*dot3HCStatsFCSErrors */
+1085   3                  GET_DOT3_HC_STATS_FCS_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64));
+1086   3            uncpy((u32_t *) value, (u32_t *) value64, 2);
+1087   3      
+1088   3              }
+1089   2      
+1090   2              break;
+1091   2      
+1092   2          case 3:
+1093   2              {
+1094   3                  u32_t xdata value64[2];
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 19  
+
+1095   3      
+1096   3            /* dot3HCStatsInternalMacTransmitErrors */
+1097   3                  value64[0] = 0;
+1098   3                  value64[1] = 0;
+1099   3            //GET_DOT3_HC_STATS_INTERNAL_MAC_TRANSMIT_ERRORS( ((u8_t)index-1)*2, ((u8_t)sizeof(u32_t)), ((u8_t*)val
+             -ue64));
+1100   3                  uncpy((u32_t *) value, (u32_t *) value64, 2);
+1101   3      
+1102   3              }
+1103   2              break;
+1104   2      
+1105   2          case 4:
+1106   2              {
+1107   3                  u32_t xdata value64[2];
+1108   3      
+1109   3            /* dot3HCStatsFrameTooLongs */
+1110   3                  GET_DOT3_HC_STATS_FRAME_TOO_LONGS( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64))
+             -;
+1111   3            uncpy((u32_t *) value, (u32_t *) value64, 2);
+1112   3              }
+1113   2              break;
+1114   2      
+1115   2          case 5:
+1116   2              {
+1117   3                  u32_t xdata value64[2];
+1118   3      
+1119   3            /* dot3HCStatsInternalMacReceiveErrors */
+1120   3                  value64[0] = 0;
+1121   3                  value64[1] = 0;
+1122   3      
+1123   3            //GET_DOT3_HC_STATS_INTERNAL_MAC_RECEIVE_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)valu
+             -e64));
+1124   3                  uncpy((u32_t *) value, (u32_t *) value64, 2);
+1125   3      
+1126   3              }
+1127   2              break;
+1128   2          case 6:
+1129   2              {
+1130   3                  u32_t xdata value64[2];
+1131   3      
+1132   3                  /*dot3HCStatsSymbolErrors */
+1133   3                  GET_DOT3_HC_STATS_SYMBOL_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t))*2, ((u8_t*)value64));
+1134   3                  uncpy((u32_t *) value, (u32_t *) value64, 2);
+1135   3      
+1136   3              }
+1137   2              break;
+1138   2      
+1139   2          }
+1140   1      
+1141   1      
+1142   1      }
+1143          
+1144          #endif /* end of LWPS_SNMP_ETHERNET_LIKE */
+1145          
+1146          #endif /* end of LWPS_SNMP */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   4441    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    241      35
+   PDATA SIZE       =   ----    ----
+C51 COMPILER V9.60.0.0   ETHERNETLIKE                                                      11/02/2026 17:57:43 PAGE 20  
+
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    556    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

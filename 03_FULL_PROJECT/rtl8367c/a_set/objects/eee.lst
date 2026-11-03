@@ -1,0 +1,202 @@
+C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE EEE
+OBJECT MODULE PLACED IN .\objects\eee.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\eee.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) IN
+                    -CDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\inclu
+                    -de\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLAC
+                    -E,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LED
+                    -_MODE) VARBANKING DEBUG PRINT(.\objects\eee.lst) TABS(2) OBJECT(.\objects\eee.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 48156 $
+  13           * $Date: 2014-05-29 16:39:06 +0800 (星期四, 29 五月 2014) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in EEE module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <eee.h>
+  23          #include <string.h>
+  24          
+  25          #include <rtl8367c_asicdrv.h>
+  26          #include <rtl8367c_asicdrv_eee.h>
+  27          #include <rtl8367c_asicdrv_phy.h>
+  28          
+  29          /* Function Name:
+  30           *      rtk_eee_init
+  31           * Description:
+  32           *      EEE function initialization.
+  33           * Input:
+  34           *      None
+  35           * Output:
+  36           *      None
+  37           * Return:
+  38           *      RT_ERR_OK              - OK
+  39           *      RT_ERR_FAILED          - Failed
+  40           *      RT_ERR_SMI             - SMI access error
+  41           * Note:
+  42           *      This API is used to initialize EEE status.
+  43           */
+  44          rtk_api_ret_t rtk_eee_init(void)
+  45          {
+  46   1          rtk_api_ret_t retVal;
+  47   1      
+  48   1          /* Check initialization state */
+  49   1          RTK_CHK_INIT_STATE();
+  50   1      
+  51   1          if((retVal = rtl8367c_setAsicRegBit(0x0018, 10, 1)) != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 2   
+
+  52   1              return retVal;
+  53   1      
+  54   1          if((retVal = rtl8367c_setAsicRegBit(0x0018, 11, 1)) != RT_ERR_OK)
+  55   1              return retVal;
+  56   1      
+  57   1          return RT_ERR_OK;
+  58   1      }
+  59          
+  60          /* Function Name:
+  61           *      rtk_eee_portEnable_set
+  62           * Description:
+  63           *      Set enable status of EEE function.
+  64           * Input:
+  65           *      port - port id.
+  66           *      enable - enable EEE status.
+  67           * Output:
+  68           *      None
+  69           * Return:
+  70           *      RT_ERR_OK              - OK
+  71           *      RT_ERR_FAILED          - Failed
+  72           *      RT_ERR_SMI             - SMI access error
+  73           *      RT_ERR_PORT_ID - Invalid port number.
+  74           *      RT_ERR_ENABLE - Invalid enable input.
+  75           * Note:
+  76           *      This API can set EEE function to the specific port.
+  77           *      The configuration of the port is as following:
+  78           *      - DISABLE
+  79           *      - ENABLE
+  80           */
+  81          rtk_api_ret_t rtk_eee_portEnable_set(rtk_port_t port, rtk_enable_t enable)
+  82          {
+  83   1          rtk_api_ret_t   retVal;
+  84   1          uint32      regData;
+  85   1          uint32    phy_port;
+  86   1      
+  87   1          /* Check initialization state */
+  88   1          RTK_CHK_INIT_STATE();
+  89   1      
+  90   1          /* Check port is UTP port */
+  91   1          RTK_CHK_PORT_IS_UTP(port);
+  92   1      
+  93   1          if (enable>=RTK_ENABLE_END)
+  94   1              return RT_ERR_INPUT;
+  95   1      
+  96   1          phy_port = rtk_switch_port_L2P_get(port);
+  97   1      
+  98   1          if ((retVal = rtl8367c_setAsicEee100M(phy_port,enable))!=RT_ERR_OK)
+  99   1              return retVal;
+ 100   1          if ((retVal = rtl8367c_setAsicEeeGiga(phy_port,enable))!=RT_ERR_OK)
+ 101   1              return retVal;
+ 102   1      
+ 103   1          if ((retVal = rtl8367c_setAsicPHYReg(phy_port, RTL8367C_PHY_PAGE_ADDRESS, 0))!=RT_ERR_OK)
+ 104   1              return retVal;
+ 105   1          if ((retVal = rtl8367c_getAsicPHYReg(phy_port, 0, &regData))!=RT_ERR_OK)
+ 106   1              return retVal;
+ 107   1          regData |= 0x0200;
+ 108   1          if ((retVal = rtl8367c_setAsicPHYReg(phy_port, 0, regData))!=RT_ERR_OK)
+ 109   1              return retVal;
+ 110   1      
+ 111   1          return RT_ERR_OK;
+ 112   1      }
+ 113          
+C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 3   
+
+ 114          #if 0 //NOT USED
+              /* Function Name:
+               *      rtk_eee_portEnable_get
+               * Description:
+               *      Get enable status of EEE function
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - Back pressure status.
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_PORT_ID - Invalid port number.
+               * Note:
+               *      This API can get EEE function to the specific port.
+               *      The configuration of the port is as following:
+               *      - DISABLE
+               *      - ENABLE
+               */
+              
+              rtk_api_ret_t rtk_eee_portEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 regData1, regData2;
+                  uint32    phy_port;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check port is UTP port */
+                  RTK_CHK_PORT_IS_UTP(port);
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  phy_port = rtk_switch_port_L2P_get(port);
+              
+                  if ((retVal = rtl8367c_getAsicEee100M(phy_port,&regData1))!=RT_ERR_OK)
+                      return retVal;
+                  if ((retVal = rtl8367c_getAsicEeeGiga(phy_port,&regData2))!=RT_ERR_OK)
+                      return retVal;
+              
+                  if (regData1==1&&regData2==1)
+                      *pEnable = ENABLED;
+                  else
+                      *pEnable = DISABLED;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 165          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    353    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.0.0   EEE                                                               11/02/2026 17:57:15 PAGE 4   
+
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

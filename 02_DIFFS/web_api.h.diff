@@ -1,0 +1,23 @@
+--- /home/claude/orig/common/include/web/web_api.h	2026-11-02 11:29:21.453708067 +0000
++++ common/include/web/web_api.h	2026-11-02 11:29:44.882839998 +0000
+@@ -9,6 +9,7 @@
+ #define __WEB_API_H__
+ 
+ #include <common_types.h>
++#include <string.h>   /* strlen() for WEB_PUTS */
+ #include "web_err.h"
+ #define DUMMY_CACHE_SIZE  1024
+ 
+@@ -60,6 +61,12 @@
+ #define WEB_DATA(pReq,pData,length)     http_respData(pReq, pData, length)
+ #define WEB_DATA_CONFIG(pReq,pData,length)     http_respData_all_config(pReq, pData, length)
+ #define WEB_PRINTF                      http_respPrintf
++/* FIX: send static text WITHOUT vsprintf. WEB_PRINTF formats into the 256-byte
++ * http_bufPrintf, so any single call producing >255 bytes overflows RAM and kills
++ * the switch (ping timeout when a big page is opened). WEB_PUTS has no size limit
++ * (http_respData chunks into the 1460-byte response buffer). Use it for every
++ * string that has no %-format. NOTE: no %% escaping here - text is sent as-is. */
++#define WEB_PUTS(pReq,s)                http_respData((pReq), (const uint8 *)(s), (int32)strlen(s))
+ 
+ #ifndef OSAL_PRINTF
+ #define OSAL_PRINTF printf

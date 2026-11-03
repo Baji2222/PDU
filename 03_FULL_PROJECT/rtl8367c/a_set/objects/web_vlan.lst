@@ -1,0 +1,1439 @@
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_VLAN
+OBJECT MODULE PLACED IN .\objects\web_vlan.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_vlan.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_vlan.lst) TABS(2) OBJECT(.\objects\web_vlan.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          
+   3          #include <string.h>
+   4          #include <stdio.h>
+   5          
+   6          #include <salvlan.h>
+   7          #include <salflash.h>
+   8          #include <saltrunk.h>
+   9          #include <salportmask.h>
+  10          #include <salutil.h>
+  11          #include <salsys.h>
+  12          
+  13          #include <web/web_api.h>
+  14          #include "web_vlan.h"
+  15          #include "web_util.h"
+  16          // below added by kalyan
+  17          #include "acl.h"
+  18          #include "rtk_error.h"
+  19          #include "salacl.h"
+  20          #include <rtk_api/rtk_switch.h>
+  21          #include <syslog/syslogdefs.h>
+  22          #include <flash_config.h>
+  23          #include <flash_api.h>
+  24          
+  25          
+  26          #ifdef RTL8367C
+  27          extern uint16 phyAllPortMask;
+  28          #endif
+  29          
+  30          
+  31          //u8_t vlanCount = 0; // Current count of VLAN configurations
+  32          u8_t ruleCount = 9;
+  33          
+  34          u16_t vlanIds;          // Array for VLAN IDs
+  35          uint8   ipStr[16];
+  36          uint8   gatewayStr[16];
+  37          
+  38          //extern int32 sal_flash_userData_set(uint32 addr , uint16 length, uint8 *pData);
+  39          //extern int32 sal_flash_userData_get(uint32 addr , uint16 length, uint8 *pData);
+  40          extern int32 sal_flash_vlan_id_set(uint32 addr , uint16 length, uint8 *pData);
+  41          extern int32 sal_flash_vlan_id_get(uint32 addr , uint16 length, uint8 *pData);
+  42          
+  43          /*
+  44           * Function: replace_ports
+  45           * -----------------------
+  46           * Replaces port numbers in VLAN display strings (3->1, 4->2).
+  47           * Handles port range patterns like "3-4" -> "1-2".
+  48           * Used to normalize VLAN display for consistent UI.
+  49           * Modifies string in-place, skips if string is "-".
+  50           */
+  51          void replace_ports(char *str) {
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 2   
+
+  52   1        
+  53   1        char temp[64];
+  54   1          char *src = str;
+  55   1          char *dst = temp;
+  56   1          if (strcmp(str, "-") == 0) {
+  57   2              // leave as is
+  58   2              return;
+  59   2          }
+  60   1      
+  61   1          while (*src) {
+  62   2              if (strncmp(src, "3-4", 3) == 0) {
+  63   3                  strcpy(dst, "1-2");
+  64   3                  dst += 3;
+  65   3                  src += 3;
+  66   3              } else if (strncmp(src, "1-5", 3) == 0) {
+  67   3                  strcpy(dst, "1-2");
+  68   3                  dst += 3;
+  69   3                  src += 3;
+  70   3              } else if (*src == '3') {
+  71   3                  *dst++ = '1';
+  72   3                  src++;
+  73   3              } else if (*src == '4') {
+  74   3                  *dst++ = '2';
+  75   3                  src++;
+  76   3              } else {
+  77   3                  *dst++ = *src++;
+  78   3              }
+  79   2          }
+  80   1      
+  81   1          *dst = '\0';
+  82   1          strcpy(str, temp);
+  83   1      }
+  84          
+  85          /*
+  86           * Function: add_gateway_over_vlan_acl_rule
+  87           * ----------------------------------------
+  88           * Adds ACL rule to redirect gateway traffic to CPU based on VLAN.
+  89           * Uses DIP (Destination IP) and VLAN CTAG as match criteria.
+  90           * Allocates fields dynamically and configures redirect action.
+  91           * Used for VLAN-based routing and management access.
+  92           */
+  93          int add_gateway_over_vlan_acl_rule(uint16 rule_num, uint16 vlan_id, uint32 gateway_ip,uint32 subnetmask) 
+  94          {
+  95   1          rtk_filter_cfg_t cfg;
+  96   1          rtk_filter_action_t act;
+  97   1          rtk_filter_field_t *field1 = NULL;
+  98   1          rtk_filter_field_t *field2 = NULL;
+  99   1          rtk_filter_number_t ruleNum;
+ 100   1          uint32 ret;
+ 101   1        
+ 102   1          sal_ipaddr_t    gateway = 0;
+ 103   1          sal_ipaddr_t    ip = 0;
+ 104   1          sal_ipaddr_t    netmask = 0;
+ 105   1        
+ 106   1          sal_sys_ip_get(&ip, &netmask);
+ 107   1          sal_sys_gateway_get(&gateway);
+ 108   1          
+ 109   1          
+ 110   1          field1 = (rtk_filter_field_t *)malloc(sizeof(rtk_filter_field_t));
+ 111   1          if (!field1) {
+ 112   2              printf("Memory allocation failed for field1 (DIP)\n");
+ 113   2              return RT_ERR_FAILED;
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 3   
+
+ 114   2          }
+ 115   1          memset(field1, 0, sizeof(rtk_filter_field_t));
+ 116   1      
+ 117   1          field2 = (rtk_filter_field_t *)malloc(sizeof(rtk_filter_field_t));
+ 118   1          if (!field2) {
+ 119   2              printf("Memory allocation failed for field2 (VLAN)\n");
+ 120   2              free(field1);
+ 121   2              return RT_ERR_FAILED;
+ 122   2          }
+ 123   1          memset(field2, 0, sizeof(rtk_filter_field_t));
+ 124   1      
+ 125   1          memset(&cfg, 0x00, sizeof(rtk_filter_cfg_t));
+ 126   1          memset(&act, 0x00, sizeof(rtk_filter_action_t));
+ 127   1      
+ 128   1          field1->fieldType = FILTER_FIELD_IPV4_DIP; 
+ 129   1          field1->filter_pattern_union.dip.dataType = FILTER_FIELD_DATA_MASK;
+ 130   1          field1->filter_pattern_union.dip.value = gateway_ip;
+ 131   1          field1->filter_pattern_union.dip.mask = subnetmask; 
+ 132   1          ret = sal_filter_igrAcl_field_add(&cfg, field1);
+ 133   1          if (ret != RT_ERR_OK) {
+ 134   2              printf("Error adding DIP field: %lu\n", ret);
+ 135   2              goto cleanup;
+ 136   2          }
+ 137   1      
+ 138   1          field2->fieldType = FILTER_FIELD_CTAG;
+ 139   1          field2->filter_pattern_union.ctag.vid.dataType = FILTER_FIELD_DATA_MASK;
+ 140   1          field2->filter_pattern_union.ctag.vid.value = vlan_id;
+ 141   1          field2->filter_pattern_union.ctag.vid.mask = 0xFFF; 
+ 142   1          ret = sal_filter_igrAcl_field_add(&cfg, field2);
+ 143   1          if (ret != RT_ERR_OK) {
+ 144   2              printf("Error adding VLAN field: %lu\n", ret);
+ 145   2              goto cleanup;
+ 146   2          }
+ 147   1      
+ 148   1          cfg.activeport.value.bits[0] = phyAllPortMask;
+ 149   1          cfg.activeport.mask.bits[0] = phyAllPortMask;
+ 150   1          cfg.invert = FALSE;
+ 151   1      
+ 152   1          act.actEnable[FILTER_ENACT_REDIRECT] = TRUE;
+ 153   1          act.filterPortmask.bits[0] = (1UL << salPortIdCpu);
+ 154   1      
+ 155   1          ret = sal_filter_igrAcl_cfg_add(rule_num, &cfg, &act, &ruleNum);
+ 156   1          if (ret != RT_ERR_OK) {
+ 157   2              printf("Failed to add Gateway Rule %u (VLAN %u -> CPU): ret=%lu\n", 
+ 158   2                     rule_num, vlan_id, ret);
+ 159   2          } else {
+ 160   2              printf("Gateway Rule %u added (VLAN %u -> CPU)\n", rule_num, vlan_id);
+ 161   2          }
+ 162   1      
+ 163   1      cleanup:
+ 164   1          free(field1);
+ 165   1          free(field2);
+ 166   1          return ret;
+ 167   1      }
+ 168          
+ 169          /*
+ 170           * Function: add_ip_over_vlan_acl_rule
+ 171           * -----------------------------------
+ 172           * Adds ACL rule to redirect source IP traffic to CPU based on VLAN.
+ 173           * Uses SIP (Source IP) and VLAN CTAG as match criteria.
+ 174           * Allocates fields dynamically and configures redirect action.
+ 175           * Used for VLAN-based management access from specific IPs.
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 4   
+
+ 176           */
+ 177          int add_ip_over_vlan_acl_rule(uint16 rule_num, uint16 vlan_id, uint32 ip_address,uint32 subnetmask)
+ 178          {
+ 179   1        
+ 180   1        
+ 181   1          rtk_filter_cfg_t cfg;
+ 182   1          rtk_filter_action_t act;
+ 183   1          rtk_filter_field_t *field1 = NULL;
+ 184   1          rtk_filter_field_t *field2 = NULL;
+ 185   1          rtk_filter_number_t ruleNum;
+ 186   1          uint32 ret;
+ 187   1        
+ 188   1          
+ 189   1          sal_ipaddr_t    ip = 0;
+ 190   1          sal_ipaddr_t    netmask = 0;
+ 191   1          sal_sys_ip_get(&ip, &netmask);
+ 192   1        
+ 193   1          printf("Inside ACL Line 1\n ");
+ 194   1          field1 = (rtk_filter_field_t *)malloc(sizeof(rtk_filter_field_t));
+ 195   1          if (!field1)
+ 196   1          {
+ 197   2              printf("Memory allocation failed for field1\n");
+ 198   2              return RT_ERR_FAILED;
+ 199   2          }
+ 200   1          memset(field1, 0, sizeof(rtk_filter_field_t));
+ 201   1      
+ 202   1          field2 = (rtk_filter_field_t *)malloc(sizeof(rtk_filter_field_t));
+ 203   1          if (!field2)
+ 204   1          {
+ 205   2              printf("Memory allocation failed for field2\n");
+ 206   2              free(field1);
+ 207   2              return RT_ERR_FAILED;
+ 208   2          }
+ 209   1          memset(field2, 0, sizeof(rtk_filter_field_t));
+ 210   1      
+ 211   1          memset(&cfg, 0x00, sizeof(rtk_filter_cfg_t));
+ 212   1          memset(&act, 0x00, sizeof(rtk_filter_action_t));
+ 213   1      
+ 214   1         printf("Inside ACL Line 4\n ");
+ 215   1          field1->fieldType = FILTER_FIELD_IPV4_SIP;
+ 216   1          field1->filter_pattern_union.sip.dataType = FILTER_FIELD_DATA_MASK;
+ 217   1          field1->filter_pattern_union.sip.value = ip_address;
+ 218   1          field1->filter_pattern_union.sip.mask = subnetmask; 
+ 219   1             printf("Inside ACL Line 4.1\n ");
+ 220   1          ret = sal_filter_igrAcl_field_add(&cfg, field1);
+ 221   1          if (ret != RT_ERR_OK)
+ 222   1          {
+ 223   2            printf("Error adding field1: %lu\n", ret);
+ 224   2              free(field1);
+ 225   2              free(field2);
+ 226   2              return ret;
+ 227   2          }
+ 228   1          printf("Inside ACL Line 5\n ");
+ 229   1          field2->fieldType = FILTER_FIELD_CTAG;
+ 230   1          field2->filter_pattern_union.ctag.vid.dataType = FILTER_FIELD_DATA_MASK;
+ 231   1          field2->filter_pattern_union.ctag.vid.value = vlan_id;
+ 232   1          field2->filter_pattern_union.ctag.vid.mask = 0xFFF; 
+ 233   1          ret = sal_filter_igrAcl_field_add(&cfg, field2);
+ 234   1          if (ret != RT_ERR_OK)
+ 235   1          {
+ 236   2              free(field1);
+ 237   2              free(field2);
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 5   
+
+ 238   2              return ret;
+ 239   2          }
+ 240   1           printf("Inside ACL Line 6\n ");
+ 241   1          cfg.activeport.value.bits[0] = phyAllPortMask;
+ 242   1          printf("Inside ACL Line 7\n ");
+ 243   1          cfg.activeport.mask.bits[0] = phyAllPortMask;
+ 244   1          cfg.invert = FALSE;
+ 245   1         printf("Inside ACL Line 8\n ");
+ 246   1          act.actEnable[FILTER_ENACT_REDIRECT] = TRUE;
+ 247   1          act.filterPortmask.bits[0] = (1UL << salPortIdCpu);
+ 248   1         printf("Inside ACL Line 9\n ");
+ 249   1          ret = sal_filter_igrAcl_cfg_add(rule_num, &cfg, &act, &ruleNum);
+ 250   1          if (RT_ERR_OK != ret) {
+ 251   2             printf("\n Failed to add Rule 6 By kalyan: Source IP 192.168.1.114 and VLAN ID 6 redirect to CPU, r
+             -et=%lu\n", ret);
+ 252   2              } else {
+ 253   2                printf("\n Rule 6 Updated successfully By kalyan with VID : %u, ruleNum=%u  SubnetMAsk : 0x%08x 
+             -\n ", vlan_id , ruleNum , subnetmask);
+ 254   2               }
+ 255   1         
+ 256   1           printf("Inside ACL Line 10\n ");
+ 257   1          free(field1);
+ 258   1          free(field2);
+ 259   1      
+ 260   1          return ret;
+ 261   1      }
+ 262          
+ 263          // Modify the VLAN display section with C89-style declarations
+ 264          /*
+ 265           * Function: get_vlan_static
+ 266           * -------------------------
+ 267           * Displays static VLAN configuration page with table and forms.
+ 268           * Shows VLAN list with member/tagged/untagged ports.
+ 269           * Provides form to add/modify VLAN entries.
+ 270           * Handles VLAN 1 special display and prevents deletion.
+ 271           */
+ 272          int32 get_vlan_static(struct http_request_s *pReq, uint16 usVlanId)
+ 273          {
+ 274   1          sal_flash_vlanEntry_t flashVlanEntry;
+ 275   1          sal_flash_vlanDb_t flashVlanDb;
+ 276   1          sal_lPortmask_t lportmask;
+ 277   1          sal_lPortmask_t ltagmask;
+ 278   1          sal_lPortmask_t luntagMask;
+ 279   1          sal_pPortmask_t untagmask;
+ 280   1          int16 radioIndex;
+ 281   1          uint16 slot = 0;
+ 282   1          uint16 portBreakId = 0xffff, portNum;
+ 283   1          uint16 radioId, radioBreakId = 0, radioNum;
+ 284   1          uint16 vlanNum;
+ 285   1          uint8 portmaskStr[128];
+ 286   1          uint8 tagMaskStr[128];
+ 287   1          uint8 untagMaskStr[128];
+ 288   1          uint8 logicPortStr[MAX_LOGIC_ID_LEN];
+ 289   1          uint8 bDrawInTwoLine = FALSE;
+ 290   1          uint8 port;
+ 291   1          Tbool bFound;
+ 292   1          Tbool bTaggedPort;
+ 293   1          Tbool bUntaggedPort;
+ 294   1          /* Variables for tracking unique VLANs */
+ 295   1          uint16 seenVlanIds[MAX_STATIC_VLAN];
+ 296   1          uint16 seenCount;
+ 297   1          uint16 i;
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 6   
+
+ 298   1          uint8 isDuplicate;
+ 299   1      
+ 300   1          /* Load VLAN database from flash first */
+ 301   1          sal_flash_vlan_db_get(&flashVlanDb);
+ 302   1          
+ 303   1          /* Check if the requested VLAN ID exists */
+ 304   1          bFound = FALSE;
+ 305   1          if (usVlanId != 0) {
+ 306   2              for (slot = 0; ((slot < MAX_STATIC_VLAN) && (flashVlanDb.sortedSlot[slot] >= 0)); ++slot) {
+ 307   3                  sal_flash_vlan_sttcEntry_get(flashVlanDb.sortedSlot[slot], &flashVlanEntry);
+ 308   3                  if (flashVlanEntry.vlan_id == usVlanId) {
+ 309   4                      bFound = TRUE;
+ 310   4                      break;
+ 311   4                  }
+ 312   3              }
+ 313   2          }
+ 314   1      
+ 315   1          WEB_BEGIN(pReq);
+ 316   1      
+ 317   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 318   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 319   1      
+ 320   1          // Replace old HTML with minimal modern UI
+ 321   1          WEB_PRINTF(pReq, "<html>\n");
+ 322   1          WEB_PRINTF(pReq, "<head>\n");
+ 323   1          WEB_PRINTF(pReq, "<title>Static VLAN Table</title>\n");
+ 324   1          
+ 325   1          // Minimal CSS
+ 326   1          WEB_PRINTF(pReq, "<style>\n");
+ 327   1          WEB_PRINTF(pReq, "body{font-family:Arial,sans-serif;background:#f4f7fa;margin:0;padding:20px;}\n");
+ 328   1          WEB_PRINTF(pReq, "h1,h2{text-align:center;color:#333;}\n");
+ 329   1          WEB_PRINTF(pReq, ".card{background:white;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);padding
+             -:20px;max-width:900px;margin:0 auto 20px;}\n");
+ 330   1          WEB_PRINTF(pReq, "table{width:100%%;border-collapse:collapse;margin-bottom:15px;}\n");
+ 331   1          WEB_PRINTF(pReq, "th{background:#f0f0f0;padding:8px;}\n");
+ 332   1          WEB_PRINTF(pReq, "td{padding:8px;border-bottom:1px solid #eee;text-align:center;}\n");
+ 333   1          WEB_PRINTF(pReq, "input[type=text]{padding:8px;border:1px solid #ddd;border-radius:4px;width:100%%;box
+             --sizing:border-box;}\n");
+ 334   1          WEB_PRINTF(pReq, ".btn{background:#1e88e5;color:white;border:none;padding:8px 16px;border-radius:4px;c
+             -ursor:pointer;margin-right:8px;}\n");
+ 335   1          WEB_PRINTF(pReq, ".btn-sm{padding:4px 8px;font-size:12px;}\n");
+ 336   1          WEB_PRINTF(pReq, ".form-row{display:flex;margin-bottom:10px;gap:15px;}\n");
+ 337   1          WEB_PRINTF(pReq, ".form-group{flex:1;}\n");
+ 338   1          WEB_PRINTF(pReq, "label{display:block;margin-bottom:5px;font-weight:bold;}\n");
+ 339   1          WEB_PRINTF(pReq, ".radio-group td{text-align:center;}\n");
+ 340   1          WEB_PRINTF(pReq, "a{color:#1e88e5;text-decoration:none;}\n");
+ 341   1          WEB_PRINTF(pReq, "a:hover{text-decoration:underline;}\n");
+ 342   1          WEB_PRINTF(pReq, ".divider{border-top:1px solid #ddd;margin:20px 0;}\n");
+ 343   1          WEB_PRINTF(pReq, "</style>\n");
+ 344   1          
+ 345   1          // Keep original JavaScript
+ 346   1          WEB_PRINTF(pReq, "<script>\n");
+ 347   1          WEB_PRINTF(pReq, "function vlanstatic_submit(){\n");
+ 348   1          WEB_PRINTF(pReq, "var acVlanId=document.getElementById('vlanID').value;\n");
+ 349   1          WEB_PRINTF(pReq, "if(parseInt(acVlanId)>4094||parseInt(acVlanId)<=0)alert(\"Invalid Vlan ID (1-4094)\"
+             -);\n");
+ 350   1          WEB_PRINTF(pReq, "else document.formVlanStatic.submit();\n");
+ 351   1          WEB_PRINTF(pReq, "}\n");
+ 352   1          WEB_PRINTF(pReq, "function selAll(radioIndex,portStart,portEnd){\n");
+ 353   1          WEB_PRINTF(pReq, "for(i=portStart;i<=portEnd;i++)document.getElementById(\"vlanPortRadio_\"+i+\"_\"+ra
+             -dioIndex).checked=true;\n");
+ 354   1          WEB_PRINTF(pReq, "}\n");
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 7   
+
+ 355   1          WEB_PRINTF(pReq, "function vlanstatic_selAll(vlanNum){\n");
+ 356   1          WEB_PRINTF(pReq, "for(i=1;i<vlanNum;i++)document.getElementById(\"vlan_\"+i).checked=true;\n");
+ 357   1          WEB_PRINTF(pReq, "}\n");
+ 358   1          WEB_PRINTF(pReq, "</script>\n");
+ 359   1          WEB_PRINTF(pReq, "</head>\n");
+ 360   1          
+ 361   1          WEB_PRINTF(pReq, "<body>\n");
+ 362   1          WEB_PRINTF(pReq, "<h1>Static VLAN Configuration</h1>\n");
+ 363   1          
+ 364   1          // VLAN Add/Modify Card
+ 365   1          WEB_PRINTF(pReq, "<div class=\"card\">\n");
+ 366   1          WEB_PRINTF(pReq, "<h2>Add/Modify VLAN</h2>\n");
+ 367   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/vlan.cgi?page=static\" name=\"formVlanStatic\" id=\"
+             -formVlanStatic\">\n");
+ 368   1          
+ 369   1          // VLAN ID and Name
+ 370   1          WEB_PRINTF(pReq, "<div class=\"form-row\">\n");
+ 371   1          WEB_PRINTF(pReq, "<div class=\"form-group\">\n");
+ 372   1          WEB_PRINTF(pReq, "<label for=\"vlanID\">VLAN ID (1-4094)</label>\n");
+ 373   1          if (bFound == 1 && usVlanId != 0)
+ 374   1          {
+ 375   2              WEB_PRINTF(pReq, "<input type=\"text\" name=\"vid\" maxlength=\"4\" id=\"vlanID\" value=\"%d\">\n"
+             -,
+ 376   2                         (uint16)flashVlanEntry.vlan_id);
+ 377   2          }
+ 378   1          else
+ 379   1          {
+ 380   2              WEB_PRINTF(pReq, "<input type=\"text\" name=\"vid\" maxlength=\"4\" id=\"vlanID\">\n");
+ 381   2          }
+ 382   1          WEB_PRINTF(pReq, "</div>\n");
+ 383   1          
+ 384   1          WEB_PRINTF(pReq, "<div class=\"form-group\">\n");
+ 385   1          WEB_PRINTF(pReq, "<label for=\"vlanName\">VLAN Name</label>\n");
+ 386   1          if (bFound == 1 && usVlanId != 0)
+ 387   1          {
+ 388   2              WEB_PRINTF(pReq, "<input type=\"text\" name=\"name\" maxlength=\"16\" id=\"vlanName\" value=\"%s\"
+             ->\n",
+ 389   2                         flashVlanEntry.name);
+ 390   2          }
+ 391   1          else
+ 392   1              WEB_PRINTF(pReq, "<input type=\"text\" name=\"name\" maxlength=\"16\" id=\"vlanName\">\n");
+ 393   1          WEB_PRINTF(pReq, "</div>\n");
+ 394   1          WEB_PRINTF(pReq, "</div>\n");
+ 395   1          
+ 396   1          // Port Membership Table
+ 397   1          WEB_PRINTF(pReq, "<table class=\"radio-group\">\n");
+ 398   1          WEB_PRINTF(pReq, "<tr>\n");
+ 399   1          WEB_PRINTF(pReq, "<th>Port</th>\n");
+ 400   1          WEB_PRINTF(pReq, "<th>Select All</th>\n");
+ 401   1          
+ 402   1          portNum = 0;
+ 403   1          for (port = 0; port < 2; ++port)
+ 404   1          {
+ 405   2              if (!(sal_trunk_logicId_exist(port + 2)))
+ 406   2              {
+ 407   3                  continue;
+ 408   3              }
+ 409   2      
+ 410   2              sal_trunk_logicId_toStr(logicPortStr, port + 2);
+ 411   2              WEB_PRINTF(pReq, "<th>%d</th>\n", (uint16)(port + 1));
+ 412   2              portNum++;
+ 413   2          }
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 8   
+
+ 414   1          radioNum = portNum;
+ 415   1      
+ 416   1          WEB_PRINTF(pReq, "</tr>\n");
+ 417   1      
+ 418   1          for (radioIndex = 0; radioIndex < 3; radioIndex++)
+ 419   1          {
+ 420   2              WEB_PRINTF(pReq, "<tr>\n");
+ 421   2              if (radioIndex == 0)
+ 422   2                  WEB_PRINTF(pReq, "<td>Untagged</td>\n");
+ 423   2              else if (radioIndex == 1)
+ 424   2                  WEB_PRINTF(pReq, "<td>Tagged</td>\n");
+ 425   2              else
+ 426   2                  WEB_PRINTF(pReq, "<td>Not Member</td>\n");
+ 427   2      
+ 428   2              WEB_PRINTF(pReq, "<td><button type=\"button\" class=\"btn btn-sm\" onclick=\"selAll(%d, %d, %d)\">
+             -All</button></td>\n",
+ 429   2                         (uint16)radioIndex, (uint16)0, (uint16)(radioNum - 1));
+ 430   2              
+ 431   2              radioId = 0;
+ 432   2              memcpy(&untagmask, &flashVlanEntry.p_portMask, sizeof(sal_pPortmask_t));
+ 433   2              sal_pPortMask_delPorts(&untagmask, &flashVlanEntry.p_tagMask);
+ 434   2              sal_trunk_physicMask_toLogicMask(&ltagmask, &flashVlanEntry.p_tagMask);
+ 435   2              sal_trunk_physicMask_toLogicMask(&luntagMask, &untagmask);
+ 436   2      
+ 437   2              if (bFound == 1 && usVlanId != 0)
+ 438   2              {
+ 439   3                  for (port = 0; port < 2; ++port)
+ 440   3                  {
+ 441   4                      if (!(sal_trunk_logicId_exist(port + 2)))
+ 442   4                      {
+ 443   5                          continue;
+ 444   5                      }
+ 445   4      
+ 446   4                      WEB_PRINTF(pReq, "<td><input type=\"radio\" name=\"vlanPort_%d\" id=\"vlanPortRadio_%d_%d\
+             -" value=\"%d\"",
+ 447   4                                 (uint16)(port + 2), (uint16)radioId, (uint16)radioIndex, (uint16)radioIndex);
+ 448   4      
+ 449   4                      if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&ltagmask, port + 2))
+ 450   4                          bTaggedPort = TRUE;
+ 451   4                      else
+ 452   4                          bTaggedPort = FALSE;
+ 453   4      
+ 454   4                      if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&luntagMask, port + 2))
+ 455   4                          bUntaggedPort = TRUE;
+ 456   4                      else
+ 457   4                          bUntaggedPort = FALSE;
+ 458   4      
+ 459   4                      if ((radioIndex == 0 && bUntaggedPort == 1) || (radioIndex == 1 && bTaggedPort == 1))
+ 460   4                          WEB_PRINTF(pReq, " checked></td>\n");
+ 461   4                      else if (radioIndex == 2 && bTaggedPort == 0 && bUntaggedPort == 0)
+ 462   4                          WEB_PRINTF(pReq, " checked></td>\n");
+ 463   4                      else
+ 464   4                          WEB_PRINTF(pReq, "></td>\n");
+ 465   4      
+ 466   4                      radioId++;
+ 467   4                      if (port == portBreakId)
+ 468   4                      {
+ 469   5                          radioBreakId = radioId - 1;
+ 470   5                          break;
+ 471   5                      }
+ 472   4                  }
+ 473   3              }
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 9   
+
+ 474   2              else
+ 475   2              {
+ 476   3                  for (port = 0; port < 2; ++port)
+ 477   3                  {
+ 478   4                      if (!(sal_trunk_logicId_exist(port + 2)))
+ 479   4                      {
+ 480   5                          continue;
+ 481   5                      }
+ 482   4      
+ 483   4                      if (2 == radioIndex)
+ 484   4                      {
+ 485   5                          WEB_PRINTF(pReq, "<td><input type=\"radio\" name=\"vlanPort_%d\" id=\"vlanPortRadio_%d
+             -_%d\" value=\"%d\" checked></td>\n",
+ 486   5                                     (uint16)(port + 2), (uint16)radioId, (uint16)radioIndex, (uint16)radioIndex
+             -);
+ 487   5                      }
+ 488   4                      else
+ 489   4                      {
+ 490   5                          WEB_PRINTF(pReq, "<td><input type=\"radio\" name=\"vlanPort_%d\" id=\"vlanPortRadio_%d
+             -_%d\" value=\"%d\"></td>\n",
+ 491   5                                     (uint16)(port + 2), (uint16)radioId, (uint16)radioIndex, (uint16)radioIndex
+             -);
+ 492   5                      }
+ 493   4                      radioId++;
+ 494   4                      if (port == portBreakId)
+ 495   4                      {
+ 496   5                          radioBreakId = radioId - 1;
+ 497   5                          break;
+ 498   5                      }
+ 499   4                  }
+ 500   3              }
+ 501   2              WEB_PRINTF(pReq, "</tr>\n");
+ 502   2          }
+ 503   1          WEB_PRINTF(pReq, "</table>\n");
+ 504   1          
+ 505   1          WEB_PRINTF(pReq, "<button type=\"button\" class=\"btn\" onclick=\"vlanstatic_submit()\">Add / Modify</
+             -button>\n");
+ 506   1          WEB_PRINTF(pReq, "</form>\n");
+ 507   1          WEB_PRINTF(pReq, "</div>\n");
+ 508   1          
+ 509   1          // VLAN List Card
+ 510   1          WEB_PRINTF(pReq, "<div class=\"card\">\n");
+ 511   1          WEB_PRINTF(pReq, "<h2>VLAN List</h2>\n");
+ 512   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/vlan.cgi?page=getRmvVlanEntry\" name=\"formVlanStatu
+             -s\">\n");
+ 513   1          WEB_PRINTF(pReq, "<table>\n");
+ 514   1          WEB_PRINTF(pReq, "<tr>\n");
+ 515   1          WEB_PRINTF(pReq, "<th>VLAN ID</th>\n");
+ 516   1          WEB_PRINTF(pReq, "<th>VLAN Name</th>\n");
+ 517   1          WEB_PRINTF(pReq, "<th>Member Ports</th>\n");
+ 518   1          WEB_PRINTF(pReq, "<th>Tagged Ports</th>\n");
+ 519   1          WEB_PRINTF(pReq, "<th>Untagged Ports</th>\n");
+ 520   1          WEB_PRINTF(pReq, "<th>Delete</th>\n");
+ 521   1          WEB_PRINTF(pReq, "</tr>\n");
+ 522   1      
+ 523   1          /* Print static VLAN entries from flash */
+ 524   1          vlanNum = 0;
+ 525   1          
+ 526   1          /* Initialize seen VLANs tracking */
+ 527   1          seenCount = 0;
+ 528   1          memset(seenVlanIds, 0, sizeof(seenVlanIds));
+ 529   1          
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 10  
+
+ 530   1          /* Special handling to always show VLAN 1 */
+ 531   1          bFound = FALSE;
+ 532   1          
+ 533   1          /* First pass - check if VLAN 1 exists in the database */
+ 534   1          for (slot = 0; ((slot < MAX_STATIC_VLAN) && (flashVlanDb.sortedSlot[slot] >= 0)); ++slot)
+ 535   1          {
+ 536   2              sal_flash_vlan_sttcEntry_get(flashVlanDb.sortedSlot[slot], &flashVlanEntry);
+ 537   2              if (flashVlanEntry.vlan_id == 1)
+ 538   2              {
+ 539   3                  bFound = TRUE;
+ 540   3                  break;
+ 541   3              }
+ 542   2          }
+ 543   1          
+ 544   1          /* Display VLAN 1 first if it exists */
+ 545   1          if (bFound)
+ 546   1          {
+ 547   2              /* Process VLAN 1 */
+ 548   2              sal_trunk_physicMask_toLogicMask(&lportmask, &flashVlanEntry.p_portMask);
+ 549   2              if (SAL_ERR_SUCCESS == sal_lPortMask_isZero(&lportmask))
+ 550   2              {
+ 551   3                  strcpy(portmaskStr, "-");
+ 552   3              }
+ 553   2              else
+ 554   2              {
+ 555   3                  lmask_to_comma(portmaskStr, &lportmask);
+ 556   3              }
+ 557   2      
+ 558   2              sal_trunk_physicMask_toLogicMask(&ltagmask, &flashVlanEntry.p_tagMask);
+ 559   2              if (SAL_ERR_SUCCESS == sal_lPortMask_isZero(&ltagmask))
+ 560   2              {
+ 561   3                  strcpy(tagMaskStr, "-");
+ 562   3              }
+ 563   2              else
+ 564   2              {
+ 565   3                  lmask_to_comma(tagMaskStr, &ltagmask);
+ 566   3              }
+ 567   2      
+ 568   2              memcpy(&untagmask, &flashVlanEntry.p_portMask, sizeof(sal_pPortmask_t));
+ 569   2              sal_pPortMask_delPorts(&untagmask, &flashVlanEntry.p_tagMask);
+ 570   2              sal_trunk_physicMask_toLogicMask(&luntagMask, &untagmask);
+ 571   2      
+ 572   2              if (SAL_ERR_SUCCESS == sal_lPortMask_isZero(&luntagMask))
+ 573   2              {
+ 574   3                  strcpy(untagMaskStr, "-");
+ 575   3              }
+ 576   2              else
+ 577   2              {
+ 578   3                  lmask_to_comma(untagMaskStr, &luntagMask);
+ 579   3              }
+ 580   2              replace_ports(portmaskStr);
+ 581   2              replace_ports(tagMaskStr);
+ 582   2              replace_ports(untagMaskStr);
+ 583   2              
+ 584   2              WEB_PRINTF(pReq, "<tr>\n");
+ 585   2      
+ 586   2              WEB_PRINTF(pReq, "<td><a href=\"/vlan.cgi?page=getVlanEntry&pickVlanId=%d\">%d</a></td>\n",
+ 587   2                         (uint16)flashVlanEntry.vlan_id, (uint16)flashVlanEntry.vlan_id);
+ 588   2              WEB_PRINTF(pReq, "<td>%s</td>\n", flashVlanEntry.name);
+ 589   2              WEB_PRINTF(pReq, "<td>%s</td>\n", portmaskStr);
+ 590   2              WEB_PRINTF(pReq, "<td>%s</td>\n", tagMaskStr);
+ 591   2              WEB_PRINTF(pReq, "<td>%s</td>\n", untagMaskStr);
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 11  
+
+ 592   2              
+ 593   2              WEB_PRINTF(pReq, "<td><input type=\"checkbox\" name=\"remove_%d\" id=\"vlan_%d\" disabled></td>\n"
+             -,
+ 594   2                      (uint16)flashVlanEntry.vlan_id, (uint16)vlanNum);
+ 595   2              
+ 596   2              WEB_PRINTF(pReq, "</tr>\n");
+ 597   2              vlanNum++;
+ 598   2              
+ 599   2              /* Mark VLAN 1 as seen */
+ 600   2              seenVlanIds[seenCount] = 1;
+ 601   2              seenCount++;
+ 602   2          }
+ 603   1      
+ 604   1          /* Process all other VLANs */
+ 605   1          for (slot = 0; ((slot < MAX_STATIC_VLAN) && (flashVlanDb.sortedSlot[slot] >= 0)); ++slot)
+ 606   1          {
+ 607   2              sal_flash_vlan_sttcEntry_get(flashVlanDb.sortedSlot[slot], &flashVlanEntry);
+ 608   2              
+ 609   2              /* Skip VLAN 0 entries (invalid) */
+ 610   2              if (flashVlanEntry.vlan_id == 0)
+ 611   2                  continue;
+ 612   2                  
+ 613   2              /* Skip VLAN 1 as we've already processed it */
+ 614   2              if (flashVlanEntry.vlan_id == 1)
+ 615   2                  continue;
+ 616   2                  
+ 617   2              /* Check if we've already seen this VLAN ID */
+ 618   2              isDuplicate = FALSE;
+ 619   2              for (i = 0; i < seenCount; i++) 
+ 620   2              {
+ 621   3                  if (seenVlanIds[i] == flashVlanEntry.vlan_id) 
+ 622   3                  {
+ 623   4                      isDuplicate = TRUE;
+ 624   4                      break;
+ 625   4                  }
+ 626   3              }
+ 627   2              
+ 628   2              /* Skip duplicates */
+ 629   2              if (isDuplicate)
+ 630   2                  continue;
+ 631   2                  
+ 632   2              /* Add to seen list */
+ 633   2              seenVlanIds[seenCount] = flashVlanEntry.vlan_id;
+ 634   2              seenCount++;
+ 635   2      
+ 636   2              sal_trunk_physicMask_toLogicMask(&lportmask, &flashVlanEntry.p_portMask);
+ 637   2              if (SAL_ERR_SUCCESS == sal_lPortMask_isZero(&lportmask))
+ 638   2              {
+ 639   3                  strcpy(portmaskStr, "-");
+ 640   3              }
+ 641   2              else
+ 642   2              {
+ 643   3                  lmask_to_comma(portmaskStr, &lportmask);
+ 644   3              }
+ 645   2      
+ 646   2              sal_trunk_physicMask_toLogicMask(&ltagmask, &flashVlanEntry.p_tagMask);
+ 647   2              if (SAL_ERR_SUCCESS == sal_lPortMask_isZero(&ltagmask))
+ 648   2              {
+ 649   3                  strcpy(tagMaskStr, "-");
+ 650   3              }
+ 651   2              else
+ 652   2              {
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 12  
+
+ 653   3                  lmask_to_comma(tagMaskStr, &ltagmask);
+ 654   3              }
+ 655   2      
+ 656   2              memcpy(&untagmask, &flashVlanEntry.p_portMask, sizeof(sal_pPortmask_t));
+ 657   2              sal_pPortMask_delPorts(&untagmask, &flashVlanEntry.p_tagMask);
+ 658   2              sal_trunk_physicMask_toLogicMask(&luntagMask, &untagmask);
+ 659   2      
+ 660   2              if (SAL_ERR_SUCCESS == sal_lPortMask_isZero(&luntagMask))
+ 661   2              {
+ 662   3                  strcpy(untagMaskStr, "-");
+ 663   3              }
+ 664   2              else
+ 665   2              {
+ 666   3                  lmask_to_comma(untagMaskStr, &luntagMask);
+ 667   3              }
+ 668   2              replace_ports(portmaskStr);
+ 669   2              replace_ports(tagMaskStr);
+ 670   2              replace_ports(untagMaskStr);
+ 671   2                  
+ 672   2              WEB_PRINTF(pReq, "<tr>\n");
+ 673   2      
+ 674   2              WEB_PRINTF(pReq, "<td><a href=\"/vlan.cgi?page=getVlanEntry&pickVlanId=%d\">%d</a></td>\n",
+ 675   2                      (uint16)flashVlanEntry.vlan_id, (uint16)flashVlanEntry.vlan_id);
+ 676   2              WEB_PRINTF(pReq, "<td>%s</td>\n", flashVlanEntry.name);
+ 677   2              WEB_PRINTF(pReq, "<td>%s</td>\n", portmaskStr);
+ 678   2              WEB_PRINTF(pReq, "<td>%s</td>\n", tagMaskStr);
+ 679   2              WEB_PRINTF(pReq, "<td>%s</td>\n", untagMaskStr);
+ 680   2              
+ 681   2              if (flashVlanEntry.vlan_id != 1)
+ 682   2              {
+ 683   3                  /* All VLANs, except VLAN 1, may be removed */
+ 684   3                  WEB_PRINTF(pReq, "<td><input type=\"checkbox\" name=\"remove_%d\" id=\"vlan_%d\"></td>\n",
+ 685   3                             (uint16)flashVlanEntry.vlan_id, (uint16)vlanNum);
+ 686   3              }
+ 687   2              else
+ 688   2              {
+ 689   3                  WEB_PRINTF(pReq, "<td><input type=\"checkbox\" name=\"remove_%d\" id=\"vlan_%d\" disabled></td
+             ->\n",
+ 690   3                             (uint16)flashVlanEntry.vlan_id, (uint16)vlanNum);
+ 691   3              }
+ 692   2              WEB_PRINTF(pReq, "</tr>\n");
+ 693   2              vlanNum++;
+ 694   2          }
+ 695   1          
+ 696   1          // Display a message if no valid VLANs found
+ 697   1          if (vlanNum == 0) {
+ 698   2              WEB_PRINTF(pReq, "<tr><td colspan=\"6\">No VLANs configured</td></tr>\n");
+ 699   2          }
+ 700   1          WEB_PRINTF(pReq, "</table>\n");
+ 701   1          
+ 702   1          WEB_PRINTF(pReq, "<button type=\"submit\" class=\"btn\" name=\"Delete\">Delete</button>\n");
+ 703   1          WEB_PRINTF(pReq, "<button type=\"button\" class=\"btn\" onclick=\"vlanstatic_selAll(%d)\">Select All</
+             -button>\n", (uint16)vlanNum);
+ 704   1          WEB_PRINTF(pReq, "</form>\n");
+ 705   1          WEB_PRINTF(pReq, "</div>\n");
+ 706   1      
+ 707   1          WEB_PRINTF(pReq, "</body>\n");
+ 708   1          WEB_PRINTF(pReq, "</html>\n");
+ 709   1      
+ 710   1          WEB_END(pReq);
+ 711   1      
+ 712   1          return SUCCESS;
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 13  
+
+ 713   1      }
+ 714          
+ 715          /*
+ 716           * Function: get_vlan_portbased
+ 717           * ----------------------------
+ 718           * Displays VLAN port-based configuration page.
+ 719           * Shows form to set PVID, frame type, and port selection.
+ 720           * Displays current port status table with PVID and frame type.
+ 721           * Modern compact UI with form styling.
+ 722           */
+ 723          int32 get_vlan_portbased(struct http_request_s *pReq)
+ 724          {
+ 725   1          sal_vlan_t pvid = 0;
+ 726   1          uint8 port = 0;
+ 727   1          uint8 logicPortStr[MAX_LOGIC_ID_LEN];
+ 728   1          uint8 frameType;
+ 729   1          uint8 frameTypeStr[128];
+ 730   1      
+ 731   1          WEB_BEGIN(pReq);
+ 732   1      
+ 733   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 734   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 735   1      
+ 736   1          WEB_PRINTF(pReq, "<html><head><title>VLAN Port</title><style>\n");
+ 737   1          // Ultra-compact CSS
+ 738   1          WEB_PRINTF(pReq, "body{font:14px Arial;background:#f4f7fa;margin:0;padding:15px}");
+ 739   1          WEB_PRINTF(pReq, "h1{text-align:center;margin:0 0 15px}");
+ 740   1          WEB_PRINTF(pReq, ".c{background:#fff;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.1);padding:15p
+             -x;max-width:700px;margin:0 auto 15px}");
+ 741   1          WEB_PRINTF(pReq, ".r{display:flex;gap:10px}");
+ 742   1          WEB_PRINTF(pReq, ".o{flex:1}");
+ 743   1          WEB_PRINTF(pReq, "label{display:block;font-weight:bold;margin-bottom:3px}");
+ 744   1          WEB_PRINTF(pReq, "input,select{width:100%%;padding:6px;border:1px solid #ddd;border-radius:4px;box-siz
+             -ing:border-box}");
+ 745   1          WEB_PRINTF(pReq, "select[multiple]{height:120px}");
+ 746   1          WEB_PRINTF(pReq, ".b{background:#1e88e5;color:#fff;border:0;padding:8px 15px;border-radius:4px;cursor:
+             -pointer}");
+ 747   1          WEB_PRINTF(pReq, "table{width:100%%;border-collapse:collapse}");
+ 748   1          WEB_PRINTF(pReq, "th{background:#f0f0f0;text-align:center;padding:5px}");
+ 749   1          WEB_PRINTF(pReq, "td{padding:5px;border-bottom:1px solid #eee;text-align:center}");
+ 750   1          WEB_PRINTF(pReq, ".h{font-weight:bold;margin:0 0 10px}");
+ 751   1          WEB_PRINTF(pReq, ".g{margin:0 0 10px}");
+ 752   1          WEB_PRINTF(pReq, "</style></head>\n");
+ 753   1          
+ 754   1          WEB_PRINTF(pReq, "<body><h1>VLAN Port Configuration</h1>\n");
+ 755   1          
+ 756   1          // Port Settings Card
+ 757   1          WEB_PRINTF(pReq, "<div class=\"c\">\n");
+ 758   1          WEB_PRINTF(pReq, "<div class=\"h\">Port Settings</div>\n");
+ 759   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/vlan.cgi?page=port_based\">\n");
+ 760   1          
+ 761   1          WEB_PRINTF(pReq, "<div class=\"r\">\n");
+ 762   1          
+ 763   1          // Port Selection
+ 764   1          WEB_PRINTF(pReq, "<div class=\"o\">\n");
+ 765   1          WEB_PRINTF(pReq, "<label for=\"p\">Select Ports:</label>\n");
+ 766   1          WEB_PRINTF(pReq, "<select id=\"p\" name=\"ports\" multiple size=\"6\">\n");
+ 767   1          for (port = 0; port < 2; ++port)
+ 768   1          {
+ 769   2              if (!(sal_trunk_logicId_exist(port + 2)))
+ 770   2              {
+ 771   3                  continue;
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 14  
+
+ 772   3              }
+ 773   2      
+ 774   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 775   2              WEB_PRINTF(pReq, "<option value=\"%d\">%s</option>\n", (uint16)(port + 2), logicPortStr);
+ 776   2          }
+ 777   1          WEB_PRINTF(pReq, "</select>\n");
+ 778   1          WEB_PRINTF(pReq, "</div>\n");
+ 779   1          
+ 780   1          // Port Settings
+ 781   1          WEB_PRINTF(pReq, "<div class=\"o\">\n");
+ 782   1          
+ 783   1          // PVID
+ 784   1          WEB_PRINTF(pReq, "<div class=\"g\">\n");
+ 785   1          WEB_PRINTF(pReq, "<label for=\"v\">PVID:</label>\n");
+ 786   1          WEB_PRINTF(pReq, "<input type=\"text\" id=\"v\" name=\"pvid\" maxlength=\"4\">\n");
+ 787   1          WEB_PRINTF(pReq, "</div>\n");
+ 788   1          
+ 789   1          // Frame Type
+ 790   1          WEB_PRINTF(pReq, "<div class=\"g\">\n");
+ 791   1          WEB_PRINTF(pReq, "<label for=\"f\">Frame Type:</label>\n");
+ 792   1          WEB_PRINTF(pReq, "<select id=\"f\" name=\"vlan_accept_frame_type\">\n");
+ 793   1          WEB_PRINTF(pReq, "<option value=\"%d\">All</option>\n", (uint16)SAL_ACCEPT_FRAME_TYPE_ALL);
+ 794   1          WEB_PRINTF(pReq, "<option value=\"%d\">Tag-only</option>\n", (uint16)SAL_ACCEPT_FRAME_TYPE_TAG_ONLY);
+ 795   1          WEB_PRINTF(pReq, "<option value=\"%d\">Untag-only</option>\n", (uint16)SAL_ACCEPT_FRAME_TYPE_UNTAG_ONL
+             -Y);
+ 796   1          WEB_PRINTF(pReq, "</select>\n");
+ 797   1          WEB_PRINTF(pReq, "</div>\n");
+ 798   1          
+ 799   1          WEB_PRINTF(pReq, "</div>\n"); // form-col end
+ 800   1          WEB_PRINTF(pReq, "</div>\n"); // form-row end
+ 801   1          
+ 802   1          // Submit button
+ 803   1          WEB_PRINTF(pReq, "<div style=\"text-align:center;margin-top:15px\">\n");
+ 804   1          WEB_PRINTF(pReq, "<input type=\"submit\" class=\"b\" value=\"Apply\">\n");
+ 805   1          WEB_PRINTF(pReq, "</div>\n");
+ 806   1          
+ 807   1          WEB_PRINTF(pReq, "</form>\n");
+ 808   1          WEB_PRINTF(pReq, "</div>\n"); // card end
+ 809   1          
+ 810   1          // Port Status Card
+ 811   1          WEB_PRINTF(pReq, "<div class=\"c\">\n");
+ 812   1          WEB_PRINTF(pReq, "<div class=\"h\">Port Status</div>\n");
+ 813   1          WEB_PRINTF(pReq, "<table>\n");
+ 814   1          WEB_PRINTF(pReq, "<tr>\n");
+ 815   1          WEB_PRINTF(pReq, "<th>Port</th>\n");
+ 816   1          WEB_PRINTF(pReq, "<th>PVID</th>\n");
+ 817   1          WEB_PRINTF(pReq, "<th>Frame Type</th>\n");
+ 818   1          WEB_PRINTF(pReq, "</tr>\n");
+ 819   1      
+ 820   1          for (port = 0; port < 2; ++port)
+ 821   1          {
+ 822   2              if (!(sal_trunk_logicId_exist(port + 2)))
+ 823   2              {
+ 824   3                  continue;
+ 825   3              }
+ 826   2      
+ 827   2              sal_trunk_logicId_toStr(logicPortStr, port + 2);
+ 828   2              sal_vlan_portPvid_get(port + 2, &pvid);
+ 829   2      
+ 830   2              sal_vlan_port_AcceptFrameType_get(port + 2, &frameType);
+ 831   2              switch (frameType)
+ 832   2              {
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 15  
+
+ 833   3              case SAL_ACCEPT_FRAME_TYPE_ALL:
+ 834   3                  strcpy(frameTypeStr, "All");
+ 835   3                  break;
+ 836   3              case SAL_ACCEPT_FRAME_TYPE_TAG_ONLY:
+ 837   3                  strcpy(frameTypeStr, "Tag-only");
+ 838   3                  break;
+ 839   3              case SAL_ACCEPT_FRAME_TYPE_UNTAG_ONLY:
+ 840   3                  strcpy(frameTypeStr, "Untag-only");
+ 841   3                  break;
+ 842   3              default:
+ 843   3                  strcpy(frameTypeStr, "Unknown Mode");
+ 844   3                  break;
+ 845   3              }
+ 846   2              WEB_PRINTF(pReq, "<tr>\n");
+ 847   2              WEB_PRINTF(pReq, "<td>%d</td>\n", (int16)(port + 1));
+ 848   2              WEB_PRINTF(pReq, "<td>%d</td>\n", (int16)pvid);
+ 849   2              WEB_PRINTF(pReq, "<td>%s</td>\n", frameTypeStr);
+ 850   2              WEB_PRINTF(pReq, "</tr>\n");
+ 851   2          }
+ 852   1      
+ 853   1          WEB_PRINTF(pReq, "</table>\n");
+ 854   1          WEB_PRINTF(pReq, "</div>\n"); // card end
+ 855   1      
+ 856   1          WEB_PRINTF(pReq, "</body></html>\n");
+ 857   1      
+ 858   1          WEB_END(pReq);
+ 859   1      
+ 860   1          return SUCCESS;
+ 861   1      }
+ 862          
+ 863          /*
+ 864           * Function: get_vlan_ip
+ 865           * ---------------------
+ 866           * Displays VLAN IP configuration page.
+ 867           * Shows form to set VLAN ID, IP, subnet mask, gateway.
+ 868           * Displays current VLAN IP status table.
+ 869           * Reads VLAN ID from flash and shows current configuration.
+ 870           */
+ 871          int32 get_vlan_ip(struct http_request_s *pReq)
+ 872          {
+ 873   1          int i = 0;
+ 874   1          uint8   get_subnetmask[16];
+ 875   1          uint8   getvlan_id[5];
+ 876   1          u8_t newdevice =0;
+ 877   1          sal_ipaddr_t    gateway = 0;
+ 878   1          sal_ipaddr_t    ip = 0;
+ 879   1          sal_ipaddr_t    netmask = 0;
+ 880   1        
+ 881   1          if(sal_flash_vlan_id_get(FLSH_CONFIG_DUMMY_START , 4 ,getvlan_id) == SAL_ERR_SUCCESS)
+ 882   1          {
+ 883   2            printf("Read VLAN ID inside flash Memory : %s\r\n" , getvlan_id);
+ 884   2            getvlan_id[4] = '\0';  // Null-terminate
+ 885   2            printf("Vlan ID : %s\r\n",getvlan_id);
+ 886   2          }
+ 887   1          
+ 888   1          sal_sys_ip_get(&ip, &netmask);
+ 889   1          ip_to_str(ipStr, (uint8 *)&ip);
+ 890   1          
+ 891   1          printf("IP address from get function: %s",ipStr);
+ 892   1      
+ 893   1          sal_sys_gateway_get(&gateway);
+ 894   1              
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 16  
+
+ 895   1          ip_to_str(gatewayStr, (uint8 *)&gateway);
+ 896   1          ip_to_str(get_subnetmask, (uint8 *)&netmask);
+ 897   1      
+ 898   1          WEB_BEGIN(pReq);
+ 899   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 900   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 901   1      
+ 902   1          WEB_PRINTF(pReq, "<html><head><title>VLAN IP</title><style>\n");
+ 903   1          WEB_PRINTF(pReq, "body{font:14px Arial;padding:15px}");
+ 904   1          WEB_PRINTF(pReq, "table{border-collapse:collapse;width:100%%}");
+ 905   1          WEB_PRINTF(pReq, "th,td{border:1px solid #ddd;padding:8px;text-align:left}");
+ 906   1          WEB_PRINTF(pReq, "th{background:#f2f2f2}");
+ 907   1          WEB_PRINTF(pReq, "input{padding:5px;margin:5px}");
+ 908   1          WEB_PRINTF(pReq, "</style></head>\n");
+ 909   1          
+ 910   1          WEB_PRINTF(pReq, "<body><h2>VLAN IP Configuration</h2>\n");
+ 911   1          
+ 912   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/vlan.cgi?page=vlan_ip\">\n");
+ 913   1          WEB_PRINTF(pReq, "<p>VLAN ID: <input type=\"text\" name=\"vlanId\" size=\"10\"></p>\n");
+ 914   1          WEB_PRINTF(pReq, "<p>IP Address: <input type=\"text\" name=\"ipAddress\" size=\"15\"></p>\n");
+ 915   1          WEB_PRINTF(pReq, "<p>Subnet Mask: <input type=\"text\" name=\"subnetMask\" size=\"15\"></p>\n");
+ 916   1          WEB_PRINTF(pReq, "<p>Gateway: <input type=\"text\" name=\"gateway\" size=\"15\"></p>\n");
+ 917   1          WEB_PRINTF(pReq, "<p><input type=\"submit\" value=\"Apply\"></p>\n");
+ 918   1          WEB_PRINTF(pReq, "</form>\n");
+ 919   1          
+ 920   1          WEB_PRINTF(pReq, "<h3>Current Status</h3>\n");
+ 921   1          WEB_PRINTF(pReq, "<table>\n");
+ 922   1          WEB_PRINTF(pReq, "<tr><th>VLAN ID</th><th>IP Address</th><th>Subnet Mask</th><th>Gateway</th></tr>\n")
+             -;
+ 923   1      
+ 924   1          if(strncmp(getvlan_id,"NEW ",4)!=0)
+ 925   1          {
+ 926   2              WEB_PRINTF(pReq, "<tr><td>%d</td><td>%s</td><td>%s</td><td>%s</td></tr>\n", 
+ 927   2                         vlanIds, ipStr, get_subnetmask, gatewayStr);
+ 928   2          }
+ 929   1          else
+ 930   1          {
+ 931   2              WEB_PRINTF(pReq, "<tr><td colspan=\"4\">No VLAN IP configurations</td></tr>\n");
+ 932   2          }
+ 933   1      
+ 934   1          WEB_PRINTF(pReq, "</table>\n");
+ 935   1          
+ 936   1          WEB_PRINTF(pReq, "</body></html>\n");
+ 937   1      
+ 938   1          WEB_END(pReq);
+ 939   1          return SUCCESS;
+ 940   1      }
+ 941          
+ 942          extern void setReg(uint16, uint16);
+ 943          
+ 944          ///*
+ 945          // * Function: post_vlan_static
+ 946          // * --------------------------
+ 947          // * Processes static VLAN add/modify form submission.
+ 948          // * Extracts VLAN ID, name, and port membership from POST.
+ 949          // * Handles tagged/untagged port selection via radio buttons.
+ 950          // * Calls sal_vlan_sttcEntry_add() to create/update VLAN.
+ 951          // */
+ 952          int32 post_vlan_static(struct http_request_s *pReq)
+ 953          {
+ 954   1          sal_lPortmask_t portmask;
+ 955   1          sal_lPortmask_t tagmask;
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 17  
+
+ 956   1          sal_vlan_t vid = 0;
+ 957   1          int32 ret;
+ 958   1          int iValue;
+ 959   1          uint8 vlanNameStr[MAX_VLAN_NAME_LEN + 1];
+ 960   1          uint8 portIdStr[32];
+ 961   1          uint8 port = 0;
+ 962   1          uint8 radioValue = 0;
+ 963   1          uint8 *pValue;
+ 964   1      
+ 965   1          sal_lPortMask_delAll(&portmask);
+ 966   1          sal_lPortMask_delAll(&tagmask);
+ 967   1      
+ 968   1          WEB_VAR(pReq, "name", &pValue);
+ 969   1          if (pValue)
+ 970   1          {
+ 971   2              strcpy(vlanNameStr, pValue);
+ 972   2          }
+ 973   1      
+ 974   1          WEB_VAR(pReq, "vid", &pValue);
+ 975   1          if (pValue)
+ 976   1          {
+ 977   2              iValue = atoi(pValue);
+ 978   2              if ((iValue < 1) || (iValue > 4094))
+ 979   2              {
+ 980   3                  printerr(pReq, SAL_ERR_VLAN_ID_INVALID);
+ 981   3                  return SUCCESS;
+ 982   3              }
+ 983   2              vid = iValue;
+ 984   2          }
+ 985   1      
+ 986   1          for (port = 0; port < 2; ++port)
+ 987   1          {
+ 988   2              sprintf(portIdStr, "vlanPort_%d", (uint16)(port + 2));
+ 989   2              WEB_VAR(pReq, portIdStr, &pValue);
+ 990   2      
+ 991   2              if (pValue)
+ 992   2              {
+ 993   3                  radioValue = atoi(pValue);
+ 994   3                  if (radioValue == 0 || radioValue == 1) /*member port list*/
+ 995   3                      sal_lPortMask_addPort(&portmask, port + 2);
+ 996   3                  if (radioValue == 1) /*tagged port list*/
+ 997   3                      sal_lPortMask_addPort(&tagmask, port + 2);
+ 998   3              }
+ 999   2          }
+1000   1      
+1001   1          if (vid == 1)
+1002   1          {
+1003   2              /* vid 1 should be called Default_VLAN*/
+1004   2              // memcpy(vlanNameStr,"Default_VLAN",sizeof("Default_VLAN"));
+1005   2              memset(vlanNameStr, 0, sizeof(vlanNameStr));
+1006   2          }
+1007   1      
+1008   1          if ((ret = sal_vlan_sttcEntry_add(vid, vlanNameStr, &portmask, &tagmask)) != SAL_ERR_SUCCESS)
+1009   1          {
+1010   2              printerr(pReq, ret);
+1011   2              return SUCCESS;
+1012   2          }
+1013   1      
+1014   1          get_vlan_static(pReq, 0);
+1015   1          return SUCCESS;
+1016   1      }
+1017          
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 18  
+
+1018          /*
+1019           * Function: post_vlanstaticDelEntry
+1020           * ---------------------------------
+1021           * Processes VLAN deletion from form submission.
+1022           * Scans request for "remove_X" checkbox names.
+1023           * Extracts VLAN ID from checkbox name and deletes entry.
+1024           * Handles both single and multiple VLAN deletions.
+1025           */
+1026          int32 post_vlanstaticDelEntry(struct http_request_s *pReq)
+1027          {
+1028   1          int32 ret;
+1029   1          uint16 vid = 0;
+1030   1          uint16 i;
+1031   1          uint8 *vlanCharStart, *vlanCharEnd;
+1032   1          uint8 *pValue;
+1033   1          uint8 removeStr[32], *vlanChar;
+1034   1      
+1035   1          sprintf(removeStr, "remove_");
+1036   1          pReq->Var_Temp = 0;
+1037   1      
+1038   1          /* Search Variables */
+1039   1          for (i = pReq->Var_Temp; i < pReq->Var_Count; i++)
+1040   1          {
+1041   2              if (0 == strncmp(removeStr, (pReq->pMethod + pReq->Var[i].name_offset), strlen(removeStr)))
+1042   2              {
+1043   3                  vid = 0;
+1044   3      
+1045   3                  vlanCharStart = (pReq->pMethod + pReq->Var[i].name_offset) + strlen(removeStr) + 0;
+1046   3                  vlanCharEnd = (pReq->pMethod + pReq->Var[i].name_offset) + strlen(removeStr) + 3;
+1047   3                  for (vlanChar = vlanCharStart; vlanChar <= vlanCharEnd; vlanChar++)
+1048   3                  {
+1049   4                      if (*vlanChar >= '0' && *vlanChar <= '9')
+1050   4                          vid = vid * 10 + (*vlanChar - '0');
+1051   4                  }
+1052   3      
+1053   3                  if ((ret = sal_vlan_sttcEntry_remove(vid)) != SAL_ERR_SUCCESS)
+1054   3                  {
+1055   4                      printerr(pReq, ret);
+1056   4                      return SUCCESS;
+1057   4                  }
+1058   3              }
+1059   2          }
+1060   1      
+1061   1          WEB_VAR(pReq, "pickVlanId", &pValue);
+1062   1          if (pValue)
+1063   1          {
+1064   2              vid = atoi(pValue);
+1065   2              if ((vid < 1) || (vid > 4094))
+1066   2              {
+1067   3                  printerr(pReq, SAL_ERR_VLAN_ID_INVALID);
+1068   3                  return SUCCESS;
+1069   3              }
+1070   2      
+1071   2              get_vlan_static(pReq, vid);
+1072   2              return 2;
+1073   2          }
+1074   1      
+1075   1          get_vlan_static(pReq, 0);
+1076   1          return SUCCESS;
+1077   1      }
+1078          
+1079          /*
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 19  
+
+1080           * Function: post_vlan_portbased
+1081           * -----------------------------
+1082           * Processes VLAN port-based configuration form submission.
+1083           * Extracts PVID, frame type, and selected ports from POST.
+1084           * Applies PVID, tag mode, and frame type to each selected port.
+1085           * Refreshes port-based VLAN page after applying.
+1086           */
+1087          int32 post_vlan_portbased(struct http_request_s *pReq)
+1088          {
+1089   1          sal_lPortmask_t portmask;
+1090   1          int32 ret;
+1091   1          uint16 vid = 0;
+1092   1          uint8 port = 0;
+1093   1          uint8 mode = SAL_VLAN_TAG_MODE_ORIGINAL, frameType = SAL_ACCEPT_FRAME_TYPE_ALL;
+1094   1          uint8 *pValue;
+1095   1      
+1096   1          sal_lPortMask_delAll(&portmask);
+1097   1      
+1098   1          WEB_VAR(pReq, "pvid", &pValue);
+1099   1          if (pValue)
+1100   1          {
+1101   2              vid = atoi(pValue);
+1102   2              if ((vid < 1) || (vid > 4094))
+1103   2              {
+1104   3                  printerr(pReq, SAL_ERR_VLAN_ID_INVALID);
+1105   3                  return SUCCESS;
+1106   3              }
+1107   2          }
+1108   1      
+1109   1          WEB_VAR(pReq, "vlan_accept_frame_type", &pValue);
+1110   1          if (pValue)
+1111   1          {
+1112   2              frameType = atoi(pValue);
+1113   2              if (frameType != SAL_ACCEPT_FRAME_TYPE_ALL && frameType != SAL_ACCEPT_FRAME_TYPE_TAG_ONLY && frame
+             -Type != SAL_ACCEPT_FRAME_TYPE_UNTAG_ONLY)
+1114   2              {
+1115   3                  printerr(pReq, SAL_ERR_PARAMETER);
+1116   3                  return SUCCESS;
+1117   3              }
+1118   2          }
+1119   1      
+1120   1          WEB_VAR(pReq, "ports", &pValue);
+1121   1          if (pValue)
+1122   1          {
+1123   2              sal_lPortMask_addPort(&portmask, atoi(pValue));
+1124   2          }
+1125   1      
+1126   1          while (pValue != NULL)
+1127   1          {
+1128   2              WEB_VAR(pReq, NULL, &pValue);
+1129   2              if (pValue)
+1130   2              {
+1131   3                  sal_lPortMask_addPort(&portmask, atoi(pValue));
+1132   3              }
+1133   2          }
+1134   1      
+1135   1          for (port = 0; port < 2; ++port)
+1136   1          {
+1137   2              if (!(sal_trunk_logicId_exist(port + 2)))
+1138   2              {
+1139   3                  continue;
+1140   3              }
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 20  
+
+1141   2      
+1142   2              if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&portmask, port + 2))
+1143   2              {
+1144   3                  if ((ret = sal_vlan_portPvid_set(port + 2, vid)) != SAL_ERR_SUCCESS)
+1145   3                  {
+1146   4                      printerr(pReq, ret);
+1147   4                      return SUCCESS;
+1148   4                  }
+1149   3      
+1150   3                  if ((ret = sal_vlan_tagMode_set(port + 2, mode)) != SAL_ERR_SUCCESS)
+1151   3                  {
+1152   4                      printerr(pReq, ret);
+1153   4                      return SUCCESS;
+1154   4                  }
+1155   3      
+1156   3                  if ((ret = sal_vlan_port_AcceptFrameType_set(port + 2, frameType)) != SAL_ERR_SUCCESS)
+1157   3                  {
+1158   4                      printerr(pReq, ret);
+1159   4                      return SUCCESS;
+1160   4                  }
+1161   3              }
+1162   2          }
+1163   1      
+1164   1          get_vlan_portbased(pReq);
+1165   1          return SUCCESS;
+1166   1      }
+1167          
+1168          /*
+1169           * Function: post_vlan_ip
+1170           * ----------------------
+1171           * Processes VLAN IP configuration form submission.
+1172           * Extracts VLAN ID, IP, subnet mask, gateway from POST.
+1173           * Validates all fields (IP format, subnet mask, same subnet).
+1174           * Saves VLAN ID to flash and configures switch IP/gateway.
+1175           * Creates ACL rules for IP and gateway traffic to CPU.
+1176           */
+1177          int32 post_vlan_ip(struct http_request_s *pReq)
+1178          {
+1179   1          uint8   *pValue;
+1180   1          uint32  ip = 0;
+1181   1          uint32  gateway_ip = 0;
+1182   1          uint32  subnet_mask = 0;  
+1183   1          uint8   subnetMaskStr[16];
+1184   1         // uint8   vlan_Id[4];
+1185   1          uint16    ip_rule_index = ruleCount;
+1186   1          uint16    gateway_rule_index = ruleCount + 2;
+1187   1          uint32  temp = subnet_mask;
+1188   1          uint32  inverted = ~temp;
+1189   1          uint8 xdata buf[4];
+1190   1      
+1191   1          // Get and validate VLAN ID
+1192   1          if (WEB_VAR(pReq, "vlanId", &pValue) == SUCCESS && pValue) {
+1193   2            vlanIds = (u16_t)atoi((char *)pValue);
+1194   2            //sprintf(vlan_Id,"%04d",vlanIds);
+1195   2      //      if(sal_flash_vlan_id_set(FLSH_CONFIG_DUMMY_START , 4 ,pValue) == SAL_ERR_SUCCESS)
+1196   2      //        {
+1197   2      //          printf("Write VLAN ID inside flash Memory : %s\r\n" , pValue);
+1198   2      //        }
+1199   2              
+1200   2      
+1201   2          /* read device type, fw version and hw version */    
+1202   2          FLASH_READ((uint32)(FLSH_CONFIG_DUMMY_START), buf, sizeof(buf));
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 21  
+
+1203   2          
+1204   2          /* keep device type, hw version and replace fw version*/
+1205   2          memset(&buf[0], 0, sizeof(buf));
+1206   2          memcpy(&buf[0], pValue, 4);
+1207   2          
+1208   2          FLASH_ERASE_SECTOR(FLSH_CONFIG_DUMMY_START);
+1209   2          FLASH_WRITE((uint32)FLSH_CONFIG_DUMMY_START, buf, 4);
+1210   2            
+1211   2              if(vlanIds < 1 || vlanIds > 4094) {
+1212   3                  printmsg(pReq, "Invalid VLAN ID (1-4094)");
+1213   3                  return SUCCESS;
+1214   3              }
+1215   2          }
+1216   1      
+1217   1          // Get and validate IP Address
+1218   1          memset(ipStr, 0, sizeof(ipStr));
+1219   1          WEB_VAR(pReq, "ipAddress", &pValue);
+1220   1          if (pValue) {
+1221   2            memcpy(ipStr, pValue, sizeof(ipStr));
+1222   2      //      if(sal_flash_userData_set(FLSH_VLAN_IP_ADDRESS , 16 ,ipStr) == SAL_ERR_SUCCESS)
+1223   2      //        {
+1224   2      //          printf("Write VLAN IP inside flash Memory : %s\r\n" , ipStr);
+1225   2      //        }
+1226   2              if (str_to_ip(&ip, ipStr) != 0) {
+1227   3                  printmsg(pReq, "Invalid IP Address format");
+1228   3                  return SUCCESS;
+1229   3              }
+1230   2          }
+1231   1      
+1232   1          // Get and validate Gateway
+1233   1          memset(gatewayStr, 0, sizeof(gatewayStr));
+1234   1          WEB_VAR(pReq, "gateway", &pValue);
+1235   1          if (pValue) {
+1236   2            memcpy(gatewayStr, pValue, sizeof(gatewayStr));
+1237   2      //      if(sal_flash_userData_set(FLSH_VLAN_GATEWAY_ADDRESS , 16 ,gatewayStr) == SAL_ERR_SUCCESS)
+1238   2      //        {
+1239   2      //          printf("Write VLAN Gateway inside flash Memory : %s\r\n" , gatewayStr);
+1240   2      //        }
+1241   2              if (str_to_ip(&gateway_ip, gatewayStr) != 0) {
+1242   3                  printmsg(pReq, "Invalid Gateway format");
+1243   3                  return SUCCESS;
+1244   3              }
+1245   2          }
+1246   1           
+1247   1          // Get and validate Subnet Mask
+1248   1          memset(subnetMaskStr, 0, sizeof(subnetMaskStr));
+1249   1          WEB_VAR(pReq, "subnetMask", &pValue);
+1250   1          if (pValue) {
+1251   2              memcpy(subnetMaskStr, pValue, sizeof(subnetMaskStr));
+1252   2              if (str_to_ip(&subnet_mask, subnetMaskStr) != 0) {
+1253   3                  printmsg(pReq, "Invalid Subnet Mask format");
+1254   3                  return SUCCESS;
+1255   3              }
+1256   2              
+1257   2              // Validate subnet mask (must be a valid netmask)
+1258   2              
+1259   2              if ((inverted & (inverted + 1)) != 0) {
+1260   3                  printmsg(pReq, "Invalid Subnet Mask. Must be a valid netmask (e.g., 255.255.255.0)");
+1261   3                  return SUCCESS;
+1262   3              }
+1263   2              
+1264   2      //        // Store subnet mask in flash
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 22  
+
+1265   2      //        if(sal_flash_userData_set(FLSH_VLAN_SUBNET_ADDRESS, 16, subnetMaskStr) == SAL_ERR_SUCCESS) {
+1266   2      //            printf("Write SubnetMask inside flash Memory: %s\r\n", subnetMaskStr);
+1267   2      //        }
+1268   2          } else {
+1269   2              printmsg(pReq, "Subnet Mask is required");
+1270   2              return SUCCESS;
+1271   2          }
+1272   1      
+1273   1          // Validate that IP and Gateway are in the same subnet (if gateway is provided)
+1274   1          if (gateway_ip != 0 && subnet_mask != 0) {
+1275   2              if ((gateway_ip & subnet_mask) != (ip & subnet_mask)) {
+1276   3                  printmsg(pReq, "IP Address and Gateway must be in the same subnet");
+1277   3                  return SUCCESS;
+1278   3              }
+1279   2          }
+1280   1      
+1281   1          // Validate that IP is not a network or broadcast address
+1282   1          if (subnet_mask != 0) {
+1283   2              uint32 network_addr = ip & subnet_mask;
+1284   2              uint32 broadcast_addr = network_addr | (~subnet_mask);
+1285   2              
+1286   2              if (ip == network_addr) {
+1287   3                  printmsg(pReq, "IP Address cannot be the network address");
+1288   3                  return SUCCESS;
+1289   3              }
+1290   2              
+1291   2              if (ip == broadcast_addr) {
+1292   3                  printmsg(pReq, "IP Address cannot be the broadcast address");
+1293   3                  return SUCCESS;
+1294   3              }
+1295   2          }
+1296   1      
+1297   1          // Configure Gateway
+1298   1          if(sal_sys_gateway_set(gateway_ip) != RT_ERR_OK) {
+1299   2              printmsg(pReq, "Gateway configuration failed");
+1300   2              return SUCCESS;
+1301   2          }
+1302   1      
+1303   1          // Configure Switch IP
+1304   1          if(sal_sys_ip_set(ip, subnet_mask) != RT_ERR_OK) {
+1305   2              printmsg(pReq, "Switch IP configuration failed");
+1306   2              return SUCCESS;
+1307   2          }
+1308   1      
+1309   1          // Add IP-based ACL rule
+1310   1          if(add_ip_over_vlan_acl_rule(ip_rule_index, vlanIds, ip, subnet_mask) != RT_ERR_OK) {
+1311   2            printmsg(pReq, "IP ACL rule creation failed");
+1312   2            printf("IP ACL rule creation failed : %u <--> 0X%02x <--> %ld\r\n",ip_rule_index,ip_rule_index,ip_rule_
+             -index);
+1313   2            printf("Gateway ACL rule creation failed : %u <--> 0X%02x <-->%ld\r\n",gateway_rule_index,gateway_rule_
+             -index,gateway_rule_index);
+1314   2             // vlanCount = 0;
+1315   2              return SUCCESS;
+1316   2          }
+1317   1      
+1318   1          // Add Gateway-based ACL rule
+1319   1          if(add_gateway_over_vlan_acl_rule(gateway_rule_index, vlanIds, gateway_ip, subnet_mask) != RT_ERR_OK) 
+             -{
+1320   2            printmsg(pReq, "Gateway ACL rule creation failed");
+1321   2            //printf("Gateway ACL rule creation failed : %u <--> 0X%02x \r\n",gateway_rule_index,gateway_rule_index
+             -);
+1322   2             // vlanCount = 0;
+C51 COMPILER V9.60.0.0   WEB_VLAN                                                          11/02/2026 17:57:38 PAGE 23  
+
+1323   2              return SUCCESS;
+1324   2          }
+1325   1          
+1326   1          ruleCount += 4;  // Increment for next use
+1327   1          //vlanCount = 1;   // Successfully configured
+1328   1      
+1329   1          get_vlan_ip(pReq);
+1330   1          return SUCCESS;
+1331   1      }
+1332          
+1333          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =  11925    ----
+   CONSTANT SIZE    =   7478    ----
+   XDATA SIZE       =     35    1687
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   7478    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

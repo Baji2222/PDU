@@ -1,0 +1,436 @@
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_LOOP
+OBJECT MODULE PLACED IN .\objects\web_loop.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_loop.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_loop.lst) TABS(2) OBJECT(.\objects\web_loop.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * $Revision$
+   6           * $Date$
+   7           *
+   8           * Purpose : The handler of HTTP request to forwarding function
+   9           *
+  10           * Feature : Response the related request of forwarding function
+  11           *
+  12           */
+  13          #pragma STRING (far)
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          #include <stdlib.h>
+  20          #include <string.h>
+  21          
+  22          #include <salloop.h>
+  23          #include <salerror.h> 
+  24          #include <local/web_config.h>
+  25          #include "salportmask.h"
+  26          
+  27          #include <salutil.h>
+  28          #include <saltrunk.h>
+  29          #include <salsys.h>
+  30          #include <salloop.h>
+  31          
+  32          #include <web/web_api.h>
+  33          #include "web_loop.h"
+  34          #include "web_util.h"
+  35              
+  36          #if __WEB_LOOP__
+  37          /*
+  38           * Symbol Definition
+  39           */
+  40          
+  41          
+  42          /*
+  43           * Data Declaration
+  44           */
+  45          
+  46          
+  47          /*
+  48           * Function Declaration
+  49           */
+  50          
+  51          /*
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 2   
+
+  52           * Function: get_loop
+  53           * ------------------
+  54           * Displays Loop Prevention/Detection configuration page.
+  55           * Shows current loop mode (Off/RLPP/RLDP/STP) with dropdown selection.
+  56           * Displays interval time and recover time input fields.
+  57           * For RLPP mode, shows port enable/disable and loop state table.
+  58           * Uses JavaScript to refresh the page for status updates.
+  59           */
+  60          int32 get_loop(struct http_request_s *pReq)
+  61              {
+  62   1              int32 ret;
+  63   1              sal_loop_mode_t mode;
+  64   1              uint16  interval_time;
+  65   1              uint32  recover_time;
+  66   1              //sal_lPortmask_t stLPortMask;
+  67   1              char    acLogicId[MAX_LOGIC_ID_LEN];
+  68   1              uint16   ucPortId, bEnable, bState;
+  69   1              //sal_enable_t bLink;
+  70   1              sal_lPortmask_t         allPortMask;
+  71   1              
+  72   1              WEB_BEGIN(pReq);
+  73   1          
+  74   1              WEB_STATUS(pReq, HTTP_STATUS_OK);
+  75   1              WEB_HEADER(pReq, "Content-Type: text/html");
+  76   1          
+  77   1              WEB_PRINTF(pReq, "<html>\n");
+  78   1              WEB_PRINTF(pReq, "<head>\n");
+  79   1              WEB_PRINTF(pReq, "<title>Loop Prevention Setting</title>\n");
+  80   1              WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  81   1              WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+  82   1              WEB_PRINTF(pReq, "  function refreshFrame() {\n");
+  83   1              WEB_PRINTF(pReq, "    document.location.replace(document.location.href);}\n");
+  84   1              WEB_PRINTF(pReq, "</script>\n");
+  85   1              WEB_PRINTF(pReq, "</head>\n");
+  86   1              WEB_PRINTF(pReq, "\n");
+  87   1              WEB_PRINTF(pReq, "<body>\n");
+  88   1              WEB_PRINTF(pReq, "<center>\n");
+  89   1              WEB_PRINTF(pReq, "\n");
+  90   1              WEB_PRINTF(pReq, "<fieldset>\n");
+  91   1              WEB_PRINTF(pReq, "<legend>Loop Prevention Setting</legend>\n");
+  92   1              WEB_PRINTF(pReq, "<form method=\"post\" name=\"loop\" action=\"/loop.cgi\">\n");
+  93   1          
+  94   1              WEB_PRINTF(pReq, "<br>\n");
+  95   1              WEB_PRINTF(pReq, "<table border=\"1\">\n");
+  96   1              WEB_PRINTF(pReq, "  <tr>\n");
+  97   1              WEB_PRINTF(pReq, "    <th width=\"200\">Loop function</th>\n");
+  98   1          
+  99   1              WEB_PRINTF(pReq, "      <td width=\"150\">\n");
+ 100   1              WEB_PRINTF(pReq, "        <select name=\"func_type\" style=\"width:150\">\n");
+ 101   1          
+ 102   1              if ((ret = sal_loop_mode_get(&mode)) != SAL_ERR_SUCCESS) 
+ 103   1              {
+ 104   2                  printerr(pReq, ret);
+ 105   2                  return SUCCESS;
+ 106   2              }
+ 107   1          
+ 108   1              switch(mode)
+ 109   1              {
+ 110   2              case SAL_LOOP_MODE_RLPP:
+ 111   2                  WEB_PRINTF(pReq, "      <option value=\"0\" >Off \n");                
+ 112   2                  WEB_PRINTF(pReq, "      <option value=\"1\" selected >Loop Prevention \n");
+ 113   2                  WEB_PRINTF(pReq, "      <option value=\"2\" >Loop Detection \n");
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 3   
+
+ 114   2          
+ 115   2      #if __WEB_STP__
+                          WEB_PRINTF(pReq, "      <option value=\"3\" >Spanning Tree\n");
+              #endif
+ 118   2          
+ 119   2                  break;
+ 120   2              case SAL_LOOP_MODE_RLDP:
+ 121   2                  WEB_PRINTF(pReq, "      <option value=\"0\" >Off \n");                        
+ 122   2                  WEB_PRINTF(pReq, "      <option value=\"1\" >Loop Prevention \n");
+ 123   2                  WEB_PRINTF(pReq, "      <option value=\"2\" selected>Loop Detection \n");
+ 124   2          
+ 125   2      #if __WEB_STP__
+                          WEB_PRINTF(pReq, "      <option value=\"3\" >Spanning Tree\n");
+              #endif
+ 128   2          
+ 129   2                  break;
+ 130   2              case SAL_LOOP_MODE_DISABLE:
+ 131   2                  WEB_PRINTF(pReq, "      <option value=\"0\" selected >Off \n");                        
+ 132   2                  WEB_PRINTF(pReq, "      <option value=\"1\" >Loop Prevention \n");
+ 133   2                  WEB_PRINTF(pReq, "      <option value=\"2\" >Loop Detection \n");
+ 134   2                         
+ 135   2      #if __WEB_STP__
+                          WEB_PRINTF(pReq, "      <option value=\"3\" >Spanning Tree\n");
+              #endif
+ 138   2          
+ 139   2                  break; 
+ 140   2          
+ 141   2      #if __WEB_STP__
+                      case SAL_LOOP_MODE_STP:
+                          WEB_PRINTF(pReq, "      <option value=\"0\" >Off \n");                        
+                          WEB_PRINTF(pReq, "      <option value=\"1\" >Loop Prevention \n");
+                          WEB_PRINTF(pReq, "      <option value=\"2\" >Loop Detection \n");  
+                          WEB_PRINTF(pReq, "      <option value=\"3\" selected >Spanning Tree\n");
+                          break;
+              #endif
+ 149   2          
+ 150   2              default:
+ 151   2                  printmsg(pReq, "Loop hander: LOOP_HANDLER_OFF!\n");
+ 152   2                  return SUCCESS;
+ 153   2              }
+ 154   1              
+ 155   1              WEB_PRINTF(pReq, "        </select>\n");
+ 156   1              WEB_PRINTF(pReq, "      </td>\n");
+ 157   1          
+ 158   1              WEB_PRINTF(pReq, "  </tr>\n");
+ 159   1          
+ 160   1              WEB_PRINTF(pReq, "    <tr>\n");
+ 161   1              WEB_PRINTF(pReq, "      <th>Time Interval (1~32767)</th>\n");
+ 162   1              sal_loop_interval_time_get(&interval_time);
+ 163   1              WEB_PRINTF(pReq, "      <td><input type=\"text\" size= \"8\" maxlength=\"7\" name=\"interval_time\
+             -" value=\"%d\">sec</td>\n", interval_time);
+ 164   1              WEB_PRINTF(pReq, "    </tr>\n");
+ 165   1              WEB_PRINTF(pReq, "    <tr>\n");
+ 166   1              WEB_PRINTF(pReq, "      <th>Recover Time (0 or 4~1000000)</th>\n");
+ 167   1              sal_loop_recover_time_get(&recover_time);
+ 168   1              WEB_PRINTF(pReq, "      <td><input type=\"text\" size= \"8\" maxlength=\"7\" name=\"recover_time\"
+             - value=\"%lu\">sec</td>\n", recover_time);
+ 169   1              WEB_PRINTF(pReq, "    </tr>\n");
+ 170   1          
+ 171   1              WEB_PRINTF(pReq, "</table>\n");
+ 172   1              WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 173   1              WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 4   
+
+ 174   1              WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"loop\">\n");
+ 175   1              WEB_PRINTF(pReq, "</form>\n");
+ 176   1          
+ 177   1              
+ 178   1              if(mode == SAL_LOOP_MODE_RLPP)
+ 179   1              {
+ 180   2                  WEB_PRINTF(pReq, "<hr>\n");
+ 181   2                  WEB_PRINTF(pReq, "<form method=\"post\" action=\"/loop_port.cgi\">\n");
+ 182   2                  WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 183   2                  WEB_PRINTF(pReq, "    <tr>\n");
+ 184   2                  WEB_PRINTF(pReq, "      <th>Port</th>\n");
+ 185   2                  WEB_PRINTF(pReq, "      <th>State</th>\n");
+ 186   2                  WEB_PRINTF(pReq, "    </tr>\n");
+ 187   2                  WEB_PRINTF(pReq, "    <tr>\n");
+ 188   2                  WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 189   2                  WEB_PRINTF(pReq, "        <select name=\"portid\" multiple size=\"6\" >\n");
+ 190   2      #if 1
+ 191   2                  sal_lPortMask_addAll(&allPortMask);
+ 192   2      
+ 193   2                  for (ucPortId = 0; ucPortId < SAL_PORT_ID_CPU; ++ucPortId)
+ 194   2                  {
+ 195   3                      if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&allPortMask, ucPortId))
+ 196   3                      {
+ 197   4                          continue;
+ 198   4                      }
+ 199   3                      sal_trunk_logicId_toStr_rlpp(acLogicId, ucPortId);
+ 200   3                      WEB_PRINTF(pReq, "          <option value=\"%d\">%s\n", ucPortId, acLogicId);
+ 201   3                      
+ 202   3                  }
+ 203   2      
+ 204   2      #else
+                          for (ucPortId = 0; ucPortId < SAL_PORT_ID_CPU; ++ucPortId) {
+                              if (!(sal_trunk_logicId_exist(ucPortId)))
+                              {
+                                  continue;
+                              }
+              
+                              sal_trunk_logicId_toStr_rlpp(acLogicId, ucPortId);
+                              WEB_PRINTF(pReq, "          <option value=\"%d\">%s\n", ucPortId, acLogicId);
+                          }    
+              #endif
+ 215   2                  WEB_PRINTF(pReq, "      </td>\n");
+ 216   2          
+ 217   2                  WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 218   2                  WEB_PRINTF(pReq, "        <select name=\"portEnable\">\n");
+ 219   2                  WEB_PRINTF(pReq, "          <option value= 0 >Disable\n");
+ 220   2                  WEB_PRINTF(pReq, "          <option value= 1 >Enable\n");
+ 221   2                  WEB_PRINTF(pReq, "        </select>\n");
+ 222   2                  WEB_PRINTF(pReq, "      </td>\n");
+ 223   2                  
+ 224   2                  WEB_PRINTF(pReq, "    </tr>\n");
+ 225   2                  WEB_PRINTF(pReq, "  </table>\n");
+ 226   2          
+ 227   2                  WEB_PRINTF(pReq, "<br>\n");
+ 228   2                  WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 229   2                  WEB_PRINTF(pReq, "  <tr>\n");
+ 230   2                  WEB_PRINTF(pReq, "    <th width=\"150\">Port</th>\n");
+ 231   2                  WEB_PRINTF(pReq, "    <th width=\"150\">Loop State</th>\n");
+ 232   2                  WEB_PRINTF(pReq, "    <th width=\"150\">Loop Status</th>\n");
+ 233   2                  WEB_PRINTF(pReq, "  </tr>\n");
+ 234   2      
+ 235   2                  sal_lPortMask_addAll(&allPortMask);
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 5   
+
+ 236   2      
+ 237   2                  for (ucPortId = 0; ucPortId < SAL_PORT_ID_CPU; ++ucPortId)
+ 238   2                  {
+ 239   3                      if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&allPortMask, ucPortId))
+ 240   3                      {
+ 241   4                          continue;
+ 242   4                      }
+ 243   3                      sal_trunk_logicId_toStr_rlpp(acLogicId, ucPortId);
+ 244   3                      sal_loop_port_enable_get(ucPortId, &bEnable);
+ 245   3                      sal_loop_port_state_get(ucPortId, &bState);
+ 246   3                      //sal_port_link_get(ucPortId, &bLink);
+ 247   3                      //sal_port_link_get(ucPortId, &bLink);
+ 248   3                      
+ 249   3                      WEB_PRINTF(pReq, "  <tr>\n");
+ 250   3                      WEB_PRINTF(pReq, "    <td>%s</td>\n", acLogicId);
+ 251   3                      WEB_PRINTF(pReq, "    <td>");
+ 252   3                      if (bEnable) {
+ 253   4                          WEB_PRINTF(pReq, "Enabled");
+ 254   4                      }
+ 255   3                      else {
+ 256   4                          WEB_PRINTF(pReq, "Disabled");
+ 257   4                      }
+ 258   3                      WEB_PRINTF(pReq, "</td>\n");
+ 259   3                      WEB_PRINTF(pReq, "    <td>");
+ 260   3                      switch (bState)
+ 261   3                      {
+ 262   4                          case SAL_RLPP_DISABLE_STATE:
+ 263   4                              WEB_PRINTF(pReq, "Disable");
+ 264   4                              break;
+ 265   4                          case SAL_RLPP_BLOCKING_STATE:
+ 266   4                              WEB_PRINTF(pReq, "BLOCKING");
+ 267   4                              break; 
+ 268   4                          case SAL_RLPP_LISTENING_STATE:
+ 269   4                              WEB_PRINTF(pReq, "LISTENING");
+ 270   4                              break;
+ 271   4                          case SAL_RLPP_FORWARDING_STATE:
+ 272   4                              WEB_PRINTF(pReq, "FORWARDING");
+ 273   4                              break;
+ 274   4                        
+ 275   4                      }
+ 276   3                      WEB_PRINTF(pReq, "</td>\n");
+ 277   3                      WEB_PRINTF(pReq, "  </tr>\n");
+ 278   3                  }
+ 279   2          
+ 280   2                  WEB_PRINTF(pReq, "</table>\n");
+ 281   2                  
+ 282   2                  WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 283   2                  WEB_PRINTF(pReq, "  <input type=\"submit\" style=\"width:80\" value=\"Apply\">\n"); 
+ 284   2                  WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"rlp\">\n");
+ 285   2                  WEB_PRINTF(pReq, "</form>\n");
+ 286   2              }
+ 287   1              WEB_PRINTF(pReq, "</fieldset>\n");
+ 288   1              WEB_PRINTF(pReq, "</center>\n");
+ 289   1              WEB_PRINTF(pReq, "</body>\n");
+ 290   1              WEB_PRINTF(pReq, "</html>\n");
+ 291   1          
+ 292   1              WEB_END(pReq);
+ 293   1          
+ 294   1              return SUCCESS;
+ 295   1          }
+ 296          
+ 297          /*
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 6   
+
+ 298           * Function: post_loop
+ 299           * -------------------
+ 300           * Processes Loop Prevention/Detection form submission.
+ 301           * Extracts interval time, recover time, and loop mode from POST data.
+ 302           * Validates and applies new loop mode setting via sal_loop_mode_set().
+ 303           * Returns to GET handler to refresh the page with updated state.
+ 304           */
+ 305          int32 post_loop(struct http_request_s *pReq)
+ 306          {
+ 307   1          int32           ret;
+ 308   1          uint8           *pValue;
+ 309   1          sal_loop_mode_t mode;
+ 310   1          uint16 int_time, rec_time;
+ 311   1          sal_loop_mode_t mode_old;
+ 312   1      
+ 313   1          WEB_VAR(pReq, "interval_time", &pValue);
+ 314   1          if (pValue) {
+ 315   2              int_time = atoi(pValue);
+ 316   2          }
+ 317   1          sal_loop_interval_time_set(int_time);
+ 318   1      
+ 319   1          WEB_VAR(pReq, "recover_time", &pValue);
+ 320   1          if (pValue) {
+ 321   2              rec_time = atoi(pValue);
+ 322   2          }
+ 323   1          sal_loop_recover_time_set(rec_time);
+ 324   1      
+ 325   1          WEB_VAR(pReq, "func_type", &pValue);
+ 326   1          if (pValue) {
+ 327   2              mode = atoi(pValue);
+ 328   2          }
+ 329   1          
+ 330   1          sal_loop_mode_get(&mode_old);
+ 331   1          if(mode_old == mode)
+ 332   1          {
+ 333   2              get_loop(pReq);
+ 334   2              return SAL_ERR_SUCCESS;
+ 335   2          }
+ 336   1              
+ 337   1          if ((ret = sal_loop_mode_set(mode)) != SAL_ERR_SUCCESS) 
+ 338   1          {
+ 339   2              printerr(pReq, ret);
+ 340   2              return SUCCESS;
+ 341   2          }
+ 342   1      
+ 343   1              get_loop(pReq);
+ 344   1      
+ 345   1          return SUCCESS;
+ 346   1      }
+ 347          
+ 348          /*
+ 349           * Function: post_loop_port
+ 350           * ------------------------
+ 351           * Processes port-level loop prevention configuration.
+ 352           * Extracts selected port IDs and enable/disable state from POST data.
+ 353           * Applies port enable setting to all selected ports via sal_loop_port_enable_set().
+ 354           * Returns to GET handler to refresh the page with updated port states.
+ 355           */
+ 356          int32 post_loop_port (http_request_t *pReq)
+ 357          {
+ 358   1          uint8  *pValue;
+ 359   1          uint16   ucPortId[MAX_LOGIC_COMBO_PORT];
+C51 COMPILER V9.60.0.0   WEB_LOOP                                                          11/02/2026 17:57:34 PAGE 7   
+
+ 360   1          uint16   ucPortNum = 0, portEnable = 0, i;
+ 361   1          
+ 362   1          
+ 363   1          WEB_VAR(pReq, "portid", &pValue);
+ 364   1          if (pValue) {
+ 365   2              ucPortId[ucPortNum++] = atoi(pValue);
+ 366   2          }
+ 367   1      
+ 368   1          while(pValue != NULL)
+ 369   1          {
+ 370   2              WEB_VAR(pReq, NULL, &pValue);
+ 371   2              if (pValue) {
+ 372   3                  ucPortId[ucPortNum++] = atoi(pValue);
+ 373   3              }
+ 374   2          }
+ 375   1      
+ 376   1          WEB_VAR(pReq, "portEnable", &pValue);
+ 377   1          if (pValue) {
+ 378   2              portEnable = atoi(pValue);        
+ 379   2          }
+ 380   1      
+ 381   1          for (i = 0; i < ucPortNum; ++i) {
+ 382   2              sal_loop_port_enable_set(ucPortId[i], portEnable);
+ 383   2              
+ 384   2          }
+ 385   1      
+ 386   1          get_loop(pReq);
+ 387   1      
+ 388   1          return SUCCESS;
+ 389   1      }
+ 390          
+ 391          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3024    ----
+   CONSTANT SIZE    =   2074    ----
+   XDATA SIZE       =   ----      82
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   2074    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

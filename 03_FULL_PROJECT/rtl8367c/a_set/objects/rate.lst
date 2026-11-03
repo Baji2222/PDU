@@ -1,0 +1,674 @@
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RATE
+OBJECT MODULE PLACED IN .\objects\rate.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\rate.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) I
+                    -NCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\incl
+                    -ude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLA
+                    -CE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LE
+                    -D_MODE) VARBANKING DEBUG PRINT(.\objects\rate.lst) TABS(2) OBJECT(.\objects\rate.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in rate module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <rate.h>
+  23          #include <qos.h>
+  24          #include <string.h>
+  25          #include <stdio.h>
+  26          
+  27          #include <rtl8367c_asicdrv.h>
+  28          #include <rtl8367c_asicdrv_meter.h>
+  29          #include <rtl8367c_asicdrv_inbwctrl.h>
+  30          #include <rtl8367c_asicdrv_scheduling.h>
+  31          #if 0//Not used
+              /* Function Name:
+               *      rtk_rate_shareMeter_set
+               * Description:
+               *      Set meter configuration
+               * Input:
+               *      index       - shared meter index
+               *      type        - shared meter type
+               *      rate        - rate of share meter
+               *      ifg_include - include IFG or not, ENABLE:include DISABLE:exclude
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               *      RT_ERR_RATE             - Invalid rate
+               *      RT_ERR_INPUT            - Invalid input parameters
+               * Note:
+               *      The API can set shared meter rate and ifg include for each meter.
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 2   
+
+               *      The rate unit is 1 kbps and the range is from 8k to 1048568k if type is METER_TYPE_KBPS and
+               *      the granularity of rate is 8 kbps.
+               *      The rate unit is packets per second and the range is 1 ~ 0x1FFF if type is METER_TYPE_PPS.
+               *      The ifg_include parameter is used
+               *      for rate calculation with/without inter-frame-gap and preamble.
+               */
+              rtk_api_ret_t rtk_rate_shareMeter_set(rtk_meter_id_t index, rtk_meter_type_t type, rtk_rate_t rate, rtk_en
+             -able_t ifg_include)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (index > RTK_MAX_METER_ID)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if (type >= METER_TYPE_END)
+                      return RT_ERR_INPUT;
+              
+                  if (ifg_include >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  switch (type)
+                  {
+                      case METER_TYPE_KBPS:
+                          if (rate > RTL8367C_QOS_RATE_INPUT_MAX_HSG || rate < RTL8367C_QOS_RATE_INPUT_MIN)
+                              return RT_ERR_RATE ;
+              
+                          if ((retVal = rtl8367c_setAsicShareMeter(index, rate >> 3, ifg_include)) != RT_ERR_OK)
+                              return retVal;
+              
+                          break;
+                      case METER_TYPE_PPS:
+                          if (rate > RTL8367C_QOS_PPS_INPUT_MAX || rate < RTL8367C_QOS_PPS_INPUT_MIN)
+                              return RT_ERR_RATE ;
+              
+                          if ((retVal = rtl8367c_setAsicShareMeter(index, rate, ifg_include)) != RT_ERR_OK)
+                              return retVal;
+              
+                          break;
+                      default:
+                          return RT_ERR_INPUT;
+                  }
+              
+                  /* Set Type */
+                  if ((retVal = rtl8367c_setAsicShareMeterType(index, (uint32)type)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_rate_shareMeter_get
+               * Description:
+               *      Get meter configuration
+               * Input:
+               *      index        - shared meter index
+               * Output:
+               *      pType        - Meter Type
+               *      pRate        - pointer of rate of share meter
+               *      pIfg_include - include IFG or not, ENABLE:include DISABLE:exclude
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 3   
+
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_rate_shareMeter_get(rtk_meter_id_t index, rtk_meter_type_t *pType, rtk_rate_t *pRate, rt
+             -k_enable_t *pIfg_include)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 regData;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (index > RTK_MAX_METER_ID)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(NULL == pType)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pRate)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pIfg_include)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicShareMeter(index, &regData, pIfg_include)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_getAsicShareMeterType(index, (uint32 *)pType)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if(*pType == METER_TYPE_KBPS)
+                      *pRate = regData<<3;
+                  else
+                      *pRate = regData;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_rate_shareMeterBucket_set
+               * Description:
+               *      Set meter Bucket Size
+               * Input:
+               *      index        - shared meter index
+               *      bucket_size  - Bucket Size
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_INPUT            - Error Input
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      The API can set shared meter bucket size.
+               */
+              rtk_api_ret_t rtk_rate_shareMeterBucket_set(rtk_meter_id_t index, uint32 bucket_size)
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 4   
+
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (index > RTK_MAX_METER_ID)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(bucket_size > RTL8367C_METERBUCKETSIZEMAX)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicShareMeterBucketSize(index, bucket_size)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_rate_shareMeterBucket_get
+               * Description:
+               *      Get meter Bucket Size
+               * Input:
+               *      index        - shared meter index
+               * Output:
+               *      pBucket_size - Bucket Size
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      The API can get shared meter bucket size.
+               */
+              rtk_api_ret_t rtk_rate_shareMeterBucket_get(rtk_meter_id_t index, uint32 *pBucket_size)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (index > RTK_MAX_METER_ID)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(NULL == pBucket_size)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicShareMeterBucketSize(index, pBucket_size)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 227          /* Function Name:
+ 228           *      rtk_rate_igrBandwidthCtrlRate_set
+ 229           * Description:
+ 230           *      Set port ingress bandwidth control
+ 231           * Input:
+ 232           *      port        - Port id
+ 233           *      rate        - Rate of share meter
+ 234           *      ifg_include - include IFG or not, ENABLE:include DISABLE:exclude
+ 235           *      fc_enable   - enable flow control or not, ENABLE:use flow control DISABLE:drop
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 5   
+
+ 236           * Output:
+ 237           *      None
+ 238           * Return:
+ 239           *      RT_ERR_OK           - OK
+ 240           *      RT_ERR_FAILED       - Failed
+ 241           *      RT_ERR_SMI          - SMI access error
+ 242           *      RT_ERR_PORT_ID      - Invalid port number.
+ 243           *      RT_ERR_ENABLE       - Invalid IFG parameter.
+ 244           *      RT_ERR_INBW_RATE    - Invalid ingress rate parameter.
+ 245           * Note:
+ 246           *      The rate unit is 1 kbps and the range is from 8k to 1048568k. The granularity of rate is 8 kbps.
+ 247           *      The ifg_include parameter is used for rate calculation with/without inter-frame-gap and preamble.
+ 248           */
+ 249          rtk_api_ret_t rtk_rate_igrBandwidthCtrlRate_set(rtk_port_t port, rtk_rate_t rate, rtk_enable_t ifg_include
+             -, rtk_enable_t fc_enable)
+ 250          {
+ 251   1          rtk_api_ret_t retVal;
+ 252   1      
+ 253   1          /* Check initialization state */
+ 254   1          RTK_CHK_INIT_STATE();
+ 255   1      
+ 256   1          /* Check Port Valid */
+ 257   1          RTK_CHK_PORT_VALID(port);
+ 258   1      
+ 259   1          if(ifg_include >= RTK_ENABLE_END)
+ 260   1              return RT_ERR_INPUT;
+ 261   1      
+ 262   1          if(fc_enable >= RTK_ENABLE_END)
+ 263   1              return RT_ERR_INPUT;
+ 264   1      
+ 265   1          if(rtk_switch_isHsgPort(port) == RT_ERR_OK)
+ 266   1          {
+ 267   2              if ((rate > RTL8367C_QOS_RATE_INPUT_MAX_HSG) || (rate < RTL8367C_QOS_RATE_INPUT_MIN))
+ 268   2                  return RT_ERR_QOS_EBW_RATE ;
+ 269   2          }
+ 270   1          else
+ 271   1          {
+ 272   2              if ((rate > RTL8367C_QOS_RATE_INPUT_MAX) || (rate < RTL8367C_QOS_RATE_INPUT_MIN))
+ 273   2                  return RT_ERR_QOS_EBW_RATE ;
+ 274   2          }
+ 275   1      
+ 276   1          if ((retVal = rtl8367c_setAsicPortIngressBandwidth(rtk_switch_port_L2P_get(port), rate>>3, ifg_include
+             -,fc_enable)) != RT_ERR_OK)
+ 277   1              return retVal;
+ 278   1      
+ 279   1          return RT_ERR_OK;
+ 280   1      }
+ 281          #if !defined(LWS_LOADER)
+ 282          /* Function Name:
+ 283           *      rtk_rate_igrBandwidthCtrlRate_get
+ 284           * Description:
+ 285           *      Get port ingress bandwidth control
+ 286           * Input:
+ 287           *      port - Port id
+ 288           * Output:
+ 289           *      pRate           - Rate of share meter
+ 290           *      pIfg_include    - Rate's calculation including IFG, ENABLE:include DISABLE:exclude
+ 291           *      pFc_enable      - enable flow control or not, ENABLE:use flow control DISABLE:drop
+ 292           * Return:
+ 293           *      RT_ERR_OK           - OK
+ 294           *      RT_ERR_FAILED       - Failed
+ 295           *      RT_ERR_SMI          - SMI access error
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 6   
+
+ 296           *      RT_ERR_PORT_ID      - Invalid port number.
+ 297           *      RT_ERR_INPUT        - Invalid input parameters.
+ 298           * Note:
+ 299           *     The rate unit is 1 kbps and the range is from 8k to 1048568k. The granularity of rate is 8 kbps.
+ 300           *     The ifg_include parameter is used for rate calculation with/without inter-frame-gap and preamble.
+ 301           */
+ 302          rtk_api_ret_t rtk_rate_igrBandwidthCtrlRate_get(rtk_port_t port, rtk_rate_t *pRate, rtk_enable_t *pIfg_inc
+             -lude, rtk_enable_t *pFc_enable)
+ 303          {
+ 304   1          rtk_api_ret_t retVal;
+ 305   1          uint32 regData;
+ 306   1          uint32 ifg, fc;
+ 307   1      
+ 308   1          /* Check initialization state */
+ 309   1          RTK_CHK_INIT_STATE();
+ 310   1      
+ 311   1          /* Check Port Valid */
+ 312   1          RTK_CHK_PORT_VALID(port);
+ 313   1      
+ 314   1          if(NULL == pIfg_include)
+ 315   1              return RT_ERR_NULL_POINTER;
+ 316   1      
+ 317   1          if(NULL == pFc_enable)
+ 318   1              return RT_ERR_NULL_POINTER;
+ 319   1      
+ 320   1          if ((retVal = rtl8367c_getAsicPortIngressBandwidth(rtk_switch_port_L2P_get(port), &regData, &ifg, &fc)
+             -) != RT_ERR_OK)
+ 321   1              return retVal;
+ 322   1          *pRate = regData<<3;
+ 323   1          *pIfg_include = ifg;
+ 324   1          *pFc_enable = fc;
+ 325   1      
+ 326   1          return RT_ERR_OK;
+ 327   1      }
+ 328          #endif
+ 329          /* Function Name:
+ 330           *      rtk_rate_egrBandwidthCtrlRate_set
+ 331           * Description:
+ 332           *      Set port egress bandwidth control
+ 333           * Input:
+ 334           *      port        - Port id
+ 335           *      rate        - Rate of egress bandwidth
+ 336           *      ifg_include - include IFG or not, ENABLE:include DISABLE:exclude
+ 337           * Output:
+ 338           *      None
+ 339           * Return:
+ 340           *      RT_ERR_OK           - OK
+ 341           *      RT_ERR_FAILED       - Failed
+ 342           *      RT_ERR_SMI          - SMI access error
+ 343           *      RT_ERR_PORT_ID      - Invalid port number.
+ 344           *      RT_ERR_INPUT        - Invalid input parameters.
+ 345           *      RT_ERR_QOS_EBW_RATE - Invalid egress bandwidth/rate
+ 346           * Note:
+ 347           *     The rate unit is 1 kbps and the range is from 8k to 1048568k. The granularity of rate is 8 kbps.
+ 348           *     The ifg_include parameter is used for rate calculation with/without inter-frame-gap and preamble.
+ 349           */
+ 350          rtk_api_ret_t rtk_rate_egrBandwidthCtrlRate_set( rtk_port_t port, rtk_rate_t rate,  rtk_enable_t ifg_inclu
+             -de)
+ 351          {
+ 352   1          rtk_api_ret_t retVal;
+ 353   1      
+ 354   1          /* Check initialization state */
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 7   
+
+ 355   1          RTK_CHK_INIT_STATE();
+ 356   1      
+ 357   1          /* Check Port Valid */
+ 358   1          RTK_CHK_PORT_VALID(port);
+ 359   1      
+ 360   1          if(rtk_switch_isHsgPort(port) == RT_ERR_OK)
+ 361   1          {
+ 362   2              if ((rate > RTL8367C_QOS_RATE_INPUT_MAX_HSG) || (rate < RTL8367C_QOS_RATE_INPUT_MIN))
+ 363   2                  return RT_ERR_QOS_EBW_RATE ;
+ 364   2          }
+ 365   1          else
+ 366   1          {
+ 367   2              if ((rate > RTL8367C_QOS_RATE_INPUT_MAX) || (rate < RTL8367C_QOS_RATE_INPUT_MIN))
+ 368   2                  return RT_ERR_QOS_EBW_RATE ;
+ 369   2          }
+ 370   1      
+ 371   1          if (ifg_include >= RTK_ENABLE_END)
+ 372   1              return RT_ERR_ENABLE;
+ 373   1      
+ 374   1          if ((retVal = rtl8367c_setAsicPortEgressRate(rtk_switch_port_L2P_get(port), rate>>3)) != RT_ERR_OK)
+ 375   1              return retVal;
+ 376   1      
+ 377   1          if ((retVal = rtl8367c_setAsicPortEgressRateIfg(ifg_include)) != RT_ERR_OK)
+ 378   1              return retVal;
+ 379   1      
+ 380   1          return RT_ERR_OK;
+ 381   1      }
+ 382          #if !defined(LWS_LOADER)
+ 383          /* Function Name:
+ 384           *      rtk_rate_egrBandwidthCtrlRate_get
+ 385           * Description:
+ 386           *      Get port egress bandwidth control
+ 387           * Input:
+ 388           *      port - Port id
+ 389           * Output:
+ 390           *      pRate           - Rate of egress bandwidth
+ 391           *      pIfg_include    - Rate's calculation including IFG, ENABLE:include DISABLE:exclude
+ 392           * Return:
+ 393           *      RT_ERR_OK           - OK
+ 394           *      RT_ERR_FAILED       - Failed
+ 395           *      RT_ERR_SMI          - SMI access error
+ 396           *      RT_ERR_PORT_ID      - Invalid port number.
+ 397           *      RT_ERR_INPUT        - Invalid input parameters.
+ 398           * Note:
+ 399           *     The rate unit is 1 kbps and the range is from 8k to 1048568k. The granularity of rate is 8 kbps.
+ 400           *     The ifg_include parameter is used for rate calculation with/without inter-frame-gap and preamble.
+ 401           */
+ 402          rtk_api_ret_t rtk_rate_egrBandwidthCtrlRate_get(rtk_port_t port, rtk_rate_t *pRate, rtk_enable_t *pIfg_inc
+             -lude)
+ 403          {
+ 404   1          rtk_api_ret_t retVal;
+ 405   1          uint32 regData;
+ 406   1          uint32 ifg;
+ 407   1      
+ 408   1          /* Check initialization state */
+ 409   1          RTK_CHK_INIT_STATE();
+ 410   1      
+ 411   1          /* Check Port Valid */
+ 412   1          RTK_CHK_PORT_VALID(port);
+ 413   1      
+ 414   1          if(NULL == pRate)
+ 415   1              return RT_ERR_NULL_POINTER;
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 8   
+
+ 416   1      
+ 417   1          if(NULL == pIfg_include)
+ 418   1              return RT_ERR_NULL_POINTER;
+ 419   1      
+ 420   1          if ((retVal = rtl8367c_getAsicPortEgressRate(rtk_switch_port_L2P_get(port), &regData)) != RT_ERR_OK)
+ 421   1              return retVal;
+ 422   1      
+ 423   1          *pRate = regData << 3;
+ 424   1      
+ 425   1          if ((retVal = rtl8367c_getAsicPortEgressRateIfg(&ifg)) != RT_ERR_OK)
+ 426   1              return retVal;
+ 427   1          *pIfg_include = ifg;
+ 428   1      
+ 429   1          return RT_ERR_OK;
+ 430   1      }
+ 431          #endif
+ 432          #if 0//Not used
+              /* Function Name:
+               *      rtk_rate_egrQueueBwCtrlEnable_get
+               * Description:
+               *      Get enable status of egress bandwidth control on specified queue.
+               * Input:
+               *      unit    - unit id
+               *      port    - port id
+               *      queue   - queue id
+               * Output:
+               *      pEnable - Pointer to enable status of egress queue bandwidth control
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_PORT_ID          - invalid port id
+               *      RT_ERR_QUEUE_ID         - invalid queue id
+               *      RT_ERR_NULL_POINTER     - input parameter may be null pointer
+               * Note:
+               *      None
+               */
+              rtk_api_ret_t rtk_rate_egrQueueBwCtrlEnable_get(rtk_port_t port, rtk_qid_t queue, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  /*for whole port function, the queue value should be 0xFF*/
+                  if (queue != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_QUEUE_ID;
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicAprEnable(rtk_switch_port_L2P_get(port),pEnable))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_rate_egrQueueBwCtrlEnable_set
+               * Description:
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 9   
+
+               *      Set enable status of egress bandwidth control on specified queue.
+               * Input:
+               *      port   - port id
+               *      queue  - queue id
+               *      enable - enable status of egress queue bandwidth control
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_PORT_ID          - invalid port id
+               *      RT_ERR_QUEUE_ID         - invalid queue id
+               *      RT_ERR_INPUT            - invalid input parameter
+               * Note:
+               *      None
+               */
+              rtk_api_ret_t rtk_rate_egrQueueBwCtrlEnable_set(rtk_port_t port, rtk_qid_t queue, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  /*for whole port function, the queue value should be 0xFF*/
+                  if (queue != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_QUEUE_ID;
+              
+                  if (enable>=RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicAprEnable(rtk_switch_port_L2P_get(port), enable))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_rate_egrQueueBwCtrlRate_get
+               * Description:
+               *      Get rate of egress bandwidth control on specified queue.
+               * Input:
+               *      port  - port id
+               *      queue - queue id
+               *      pIndex - shared meter index
+               * Output:
+               *      pRate - pointer to rate of egress queue bandwidth control
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_PORT_ID          - invalid port id
+               *      RT_ERR_QUEUE_ID         - invalid queue id
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter id
+               * Note:
+               *    The actual rate control is set in shared meters.
+               *    The unit of granularity is 8Kbps.
+               */
+              rtk_api_ret_t rtk_rate_egrQueueBwCtrlRate_get(rtk_port_t port, rtk_qid_t queue, rtk_meter_id_t *pIndex)
+              {
+                  rtk_api_ret_t retVal;
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 10  
+
+                  uint32 offset_idx;
+                  uint32 phy_port;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (queue >= RTK_MAX_NUM_OF_QUEUE)
+                      return RT_ERR_QUEUE_ID;
+              
+                  if(NULL == pIndex)
+                      return RT_ERR_NULL_POINTER;
+              
+                  phy_port = rtk_switch_port_L2P_get(port);
+                  if ((retVal=rtl8367c_getAsicAprMeter(phy_port, queue,&offset_idx))!=RT_ERR_OK)
+                      return retVal;
+              
+                  *pIndex = offset_idx + ((phy_port%4)*8);
+              
+                   return RT_ERR_OK;
+              }
+              
+              
+              /* Function Name:
+               *      rtk_rate_egrQueueBwCtrlRate_set
+               * Description:
+               *      Set rate of egress bandwidth control on specified queue.
+               * Input:
+               *      port  - port id
+               *      queue - queue id
+               *      index - shared meter index
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_PORT_ID          - invalid port id
+               *      RT_ERR_QUEUE_ID         - invalid queue id
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter id
+               * Note:
+               *    The actual rate control is set in shared meters.
+               *    The unit of granularity is 8Kbps.
+               */
+              rtk_api_ret_t rtk_rate_egrQueueBwCtrlRate_set(rtk_port_t port, rtk_qid_t queue, rtk_meter_id_t index)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 offset_idx;
+                  uint32 phy_port;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (queue >= RTK_MAX_NUM_OF_QUEUE)
+                      return RT_ERR_QUEUE_ID;
+              
+                  if (index > RTK_MAX_METER_ID)
+                      return RT_ERR_FILTER_METER_ID;
+C51 COMPILER V9.60.0.0   RATE                                                              11/02/2026 17:57:12 PAGE 11  
+
+              
+                  phy_port = rtk_switch_port_L2P_get(port);
+                  if (index < ((phy_port%4)*8) ||  index > (7 + (phy_port%4)*8))
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  offset_idx = index - ((phy_port%4)*8);
+              
+                  if ((retVal=rtl8367c_setAsicAprMeter(phy_port,queue,offset_idx))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 615          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    770    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      50
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

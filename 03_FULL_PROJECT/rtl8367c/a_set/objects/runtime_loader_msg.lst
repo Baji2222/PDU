@@ -1,0 +1,170 @@
+C51 COMPILER V9.60.0.0   RUNTIME_LOADER_MSG                                                11/02/2026 17:56:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RUNTIME_LOADER_MSG
+OBJECT MODULE PLACED IN .\objects\runtime_loader_msg.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\runtime_loader_msg.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR
+                    -(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\c
+                    -ommon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS
+                    -,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_
+                    -8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\runtime_loader_msg.lst) TABS(2) OBJECT(.\objects\runtime_loader_msg.o
+                    -bj)
+
+line level    source
+
+   1          #include <common.h>
+   2          #include <runtime_loader_msg.h>
+   3          
+   4          /* loader cold/warm start magic number */
+   5          #define MAGIC_NUMBER_ADDR_LOADER(index)     (0x172e + (index))
+   6          #define MAGIC_NUMBER_0                      0x5555
+   7          #define MAGIC_NUMBER_1                      0x1234
+   8          #define MAGIC_NUMBER_2                      0x5678
+   9          #define MAGIC_NUMBER_3                      0xAAAA
+  10          
+  11          /* register address of runtime cold/warm start indicator  */
+  12          #define MAGIC_NUMBER_ADDR_RUNTIME(index)    (0x172a + (index))
+  13          
+  14          #define IP_ADDR_H                   0x1723
+  15          #define IP_ADDR_L                   0x1724
+  16          #define NETMASK_ADDR_H              0x1725
+  17          #define NETMASK_ADDR_L              0x1726
+  18          #define GATEWAY_ADDR_H              0x1727
+  19          #define GATEWAY_ADDR_L              0x1728
+  20          
+  21          #if !defined(LWS_LOADER)
+  22          // Runtime IP Set: Stores IP, netmask and gateway addresses in registers for runtime use
+  23          // Converts byte arrays to 16-bit register values and writes to designated register addresses
+  24          void runtime_ip_set(uint8 *pIp, uint8 *pNetmask, uint8 *pGateway)
+  25          {
+  26   1          setReg(IP_ADDR_H, (uint16)pIp[1] | ((uint16)pIp[0] << 8));
+  27   1          setReg(IP_ADDR_L, (uint16)pIp[3] | ((uint16)pIp[2] << 8));
+  28   1          setReg(NETMASK_ADDR_H, (uint16)pNetmask[1] | ((uint16)pNetmask[0] << 8));
+  29   1          setReg(NETMASK_ADDR_L, (uint16)pNetmask[3] | ((uint16)pNetmask[2] << 8));
+  30   1          setReg(GATEWAY_ADDR_H, (uint16)pGateway[1] | ((uint16)pGateway[0] << 8));
+  31   1          setReg(GATEWAY_ADDR_L, (uint16)pGateway[3] | ((uint16)pGateway[2] << 8));
+  32   1      }
+  33          #endif
+  34          
+  35          #if defined(LWS_LOADER)
+              // Runtime IP Get: Reads IP, netmask and gateway addresses from registers for loader use
+              // Extracts byte values from 16-bit register data and populates output arrays
+              void runtime_ip_get(uint8 *pIp, uint8 *pNetmask, uint8 *pGateway)
+              {
+                  uint16 tmp;
+              
+                  tmp = getReg(IP_ADDR_H);
+                  pIp[0] = (tmp >> 8) & 0xFF;
+                  pIp[1] = tmp & 0xFF;    
+                  tmp = getReg(IP_ADDR_L);
+                  pIp[2] = (tmp >> 8) & 0xFF;
+                  pIp[3] = tmp & 0xFF;    
+              
+                  tmp = getReg(NETMASK_ADDR_H);
+                  pNetmask[0] = (tmp >> 8) & 0xFF;
+C51 COMPILER V9.60.0.0   RUNTIME_LOADER_MSG                                                11/02/2026 17:56:56 PAGE 2   
+
+                  pNetmask[1] = tmp & 0xFF;    
+                  tmp = getReg(NETMASK_ADDR_L);
+                  pNetmask[2] = (tmp >> 8) & 0xFF;
+                  pNetmask[3] = tmp & 0xFF;    
+              
+                  tmp = getReg(GATEWAY_ADDR_H);
+                  pGateway[0] = (tmp >> 8) & 0xFF;
+                  pGateway[1] = tmp & 0xFF;    
+                  tmp = getReg(GATEWAY_ADDR_L);
+                  pGateway[2] = (tmp >> 8) & 0xFF;
+                  pGateway[3] = tmp & 0xFF;    
+              }
+              #endif
+  64          #if 0//NOT used
+              
+              void runtime_start_mode_get(uint8* start_mode)
+              {
+                  if(getReg(MAGIC_NUMBER_ADDR_RUNTIME(0)) == MAGIC_NUMBER_0 && \
+                     getReg(MAGIC_NUMBER_ADDR_RUNTIME(1)) == MAGIC_NUMBER_1 && \
+                     getReg(MAGIC_NUMBER_ADDR_RUNTIME(2)) == MAGIC_NUMBER_2 && \       
+                     getReg(MAGIC_NUMBER_ADDR_RUNTIME(3)) == MAGIC_NUMBER_3) 
+                  {
+                      *start_mode = START_MODE_WARM;
+                  }
+                  else
+                      *start_mode = START_MODE_COLD;
+              }
+              #endif
+  79          
+  80          // Loader Start Mode Get: Checks magic number pattern to determine if loader is warm or cold starting
+  81          // Returns START_MODE_WARM if magic pattern matches, otherwise START_MODE_COLD
+  82          void loader_start_mode_get(uint8* start_mode)
+  83          {
+  84   1          if(getReg(MAGIC_NUMBER_ADDR_LOADER(0)) == MAGIC_NUMBER_0 && \
+  85   1             getReg(MAGIC_NUMBER_ADDR_LOADER(1)) == MAGIC_NUMBER_1 && \
+  86   1             getReg(MAGIC_NUMBER_ADDR_LOADER(2)) == MAGIC_NUMBER_2 && \       
+  87   1             getReg(MAGIC_NUMBER_ADDR_LOADER(3)) == MAGIC_NUMBER_3) 
+  88   1          {
+  89   2              *start_mode = START_MODE_WARM;
+  90   2          }
+  91   1          else
+  92   1              *start_mode = START_MODE_COLD;
+  93   1      }
+  94          
+  95          #if 0
+              void runtime_start_mode_set(uint8 start_mode)
+              {
+                  if(START_MODE_WARM == start_mode)
+                  {
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(0), MAGIC_NUMBER_0);
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(1), MAGIC_NUMBER_1);        
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(2), MAGIC_NUMBER_2);        
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(3), MAGIC_NUMBER_3);        
+                  }
+                  else if(START_MODE_COLD == start_mode)
+                  {
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(0), 0);
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(1), 0);        
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(2), 0);        
+                      setReg(MAGIC_NUMBER_ADDR_RUNTIME(3), 0);        
+                  }
+              }
+C51 COMPILER V9.60.0.0   RUNTIME_LOADER_MSG                                                11/02/2026 17:56:56 PAGE 3   
+
+              #endif
+ 114          #if !defined(LWS_LOADER)
+ 115          // Loader Start Mode Set: Writes magic number pattern to indicate warm or cold start for loader
+ 116          // Sets magic pattern for warm start or clears it for cold start to persist across reboot
+ 117          void loader_start_mode_set(uint8 start_mode)
+ 118          {
+ 119   1          if(START_MODE_WARM == start_mode)
+ 120   1          {
+ 121   2              setReg(MAGIC_NUMBER_ADDR_LOADER(0), MAGIC_NUMBER_0);
+ 122   2              setReg(MAGIC_NUMBER_ADDR_LOADER(1), MAGIC_NUMBER_1);        
+ 123   2              setReg(MAGIC_NUMBER_ADDR_LOADER(2), MAGIC_NUMBER_2);        
+ 124   2              setReg(MAGIC_NUMBER_ADDR_LOADER(3), MAGIC_NUMBER_3);        
+ 125   2          }
+ 126   1          else if(START_MODE_COLD == start_mode)
+ 127   1          {
+ 128   2              setReg(MAGIC_NUMBER_ADDR_LOADER(0), 0);
+ 129   2              setReg(MAGIC_NUMBER_ADDR_LOADER(1), 0);        
+ 130   2              setReg(MAGIC_NUMBER_ADDR_LOADER(2), 0);        
+ 131   2              setReg(MAGIC_NUMBER_ADDR_LOADER(3), 0);        
+ 132   2          }
+ 133   1      }
+ 134          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    412    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      13
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

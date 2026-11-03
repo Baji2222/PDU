@@ -1,0 +1,731 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INT
+                    -VECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;.
+                    -.\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_AP
+                    -I_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82
+                    -l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv.lst) TABS(2) OBJECT(.\objects\rtl8367c_asicdrv
+                    -.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature :
+  17           *
+  18           */
+  19          
+  20          #include <rtl8367c_asicdrv.h>
+  21          #include <string.h>
+  22          #include <stdio.h>
+  23          
+  24          #if defined(RTK_X86_ASICDRV)
+              #include <I2Clib.h>
+              #else
+  27          #include <smi.h>
+  28          #endif
+  29          
+  30          /*for driver verify testing only*/
+  31          #ifdef CONFIG_RTL8367C_ASICDRV_TEST
+              #define CLE_VIRTUAL_REG_SIZE        0x10000
+              uint16 CleVirtualReg[CLE_VIRTUAL_REG_SIZE];
+              #endif
+  35          
+  36          #if defined(CONFIG_RTL865X_CLE) || defined (RTK_X86_CLE)
+              uint32 cleDebuggingDisplay;
+              #endif
+  39          
+  40          #ifdef EMBEDDED_SUPPORT
+  41          extern void setReg(uint16, uint16);
+  42          extern uint16 getReg(uint16);
+  43          #endif
+  44          
+  45          /* Function Name:
+  46           *      rtl8367c_setAsicRegBit
+  47           * Description:
+  48           *      Set a bit value of a specified register
+  49           * Input:
+  50           *      reg     - register's address
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 2   
+
+  51           *      bit     - bit location
+  52           *      value   - value to set. It can be value 0 or 1.
+  53           * Output:
+  54           *      None
+  55           * Return:
+  56           *      RT_ERR_OK       - Success
+  57           *      RT_ERR_SMI      - SMI access error
+  58           *      RT_ERR_INPUT    - Invalid input parameter
+  59           * Note:
+  60           *      Set a bit of a specified register to 1 or 0.
+  61           */
+  62          ret_t rtl8367c_setAsicRegBit(uint32 reg, uint32 bits, uint32 value)
+  63          {
+  64   1      
+  65   1      #if defined(RTK_X86_ASICDRV)
+                  uint32 regData;
+                  ret_t retVal;
+              
+                  if(bit >= RTL8367C_REGBITLENGTH)
+                      return RT_ERR_INPUT;
+              
+                  retVal = Access_Read(reg, 2, &regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+                  if(value)
+                      regData = regData | (1 << bit);
+                  else
+                      regData = regData & (~(1 << bit));
+              
+                  retVal = Access_Write(reg,2, regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+              
+              #elif defined(CONFIG_RTL8367C_ASICDRV_TEST)
+              
+                  if(bit >= RTL8367C_REGBITLENGTH)
+                      return RT_ERR_INPUT;
+              
+                  else if(reg >= CLE_VIRTUAL_REG_SIZE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(value)
+                  {
+                      CleVirtualReg[reg] =  CleVirtualReg[reg] | (1 << bit);
+                  }
+                  else
+                  {
+                      CleVirtualReg[reg] =  CleVirtualReg[reg] & (~(1 << bit));
+                  }
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n", reg, CleVirtualReg[reg]);
+              
+              #elif defined(EMBEDDED_SUPPORT)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 3   
+
+ 113   1          uint32 regData;    
+ 114   1          bits &= 0xFFFF;
+ 115   1          reg &= 0xFFFF;
+ 116   1      
+ 117   1          if(reg > RTL8367C_REGDATAMAX )
+ 118   1              return RT_ERR_INPUT;
+ 119   1      
+ 120   1          if(bits >= (uint32)(1UL << RTL8367C_REGBITLENGTH) )
+ 121   1        return RT_ERR_INPUT;  
+ 122   1      
+ 123   1          regData = getReg(reg);
+ 124   1        if(value)
+ 125   1          regData = regData | (1<<bits);
+ 126   1        else
+ 127   1              regData = regData & (~(1<<bits));
+ 128   1      //    printf("setReg(0x%lx,0x%lx);\n",reg,regData);
+ 129   1        
+ 130   1          setReg(reg, regData);
+ 131   1      
+ 132   1      #else
+                  uint32 regData;
+                  ret_t retVal;
+              
+                  if(bit >= RTL8367C_REGBITLENGTH)
+                      return RT_ERR_INPUT;
+              
+                  retVal = smi_read(reg, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+              
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+                #endif
+                  if(value)
+                      regData = regData | (1 << bit);
+                  else
+                      regData = regData & (~(1 << bit));
+              
+                  retVal = smi_write(reg, regData);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+              
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n", reg, regData);
+                #endif
+              
+              #endif
+ 162   1          return RT_ERR_OK;
+ 163   1      }
+ 164          #if !defined(LWS_LOADER)
+ 165          /* Function Name:
+ 166           *      rtl8367c_getAsicRegBit
+ 167           * Description:
+ 168           *      Get a bit value of a specified register
+ 169           * Input:
+ 170           *      reg     - register's address
+ 171           *      bit     - bit location
+ 172           *      value   - value to get.
+ 173           * Output:
+ 174           *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 4   
+
+ 175           * Return:
+ 176           *      RT_ERR_OK       - Success
+ 177           *      RT_ERR_SMI      - SMI access error
+ 178           *      RT_ERR_INPUT    - Invalid input parameter
+ 179           * Note:
+ 180           *      None
+ 181           */
+ 182          ret_t rtl8367c_getAsicRegBit(uint32 reg, uint32 bits, uint32 *pValue)
+ 183          {
+ 184   1      
+ 185   1      #if defined(RTK_X86_ASICDRV)
+              
+                  uint32 regData;
+                  ret_t retVal;
+              
+                  if(bit >= RTL8367C_REGBITLENGTH)
+                      return RT_ERR_INPUT;
+              
+                  retVal = Access_Read(reg, 2, &regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  *pValue = (regData & (0x1 << bit)) >> bit;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+              #elif defined(CONFIG_RTL8367C_ASICDRV_TEST)
+              
+                  if(bit >= RTL8367C_REGBITLENGTH)
+                      return RT_ERR_INPUT;
+              
+                  if(reg >= CLE_VIRTUAL_REG_SIZE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  *pValue = (CleVirtualReg[reg] & (0x1 << bit)) >> bit;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, CleVirtualReg[reg]);
+              
+              #elif defined(EMBEDDED_SUPPORT)
+ 216   1          uint16 regData;    
+ 217   1          //uint16 bitsShift;  
+ 218   1          bits&= 0xFFFF;
+ 219   1          reg &= 0xFFFF;
+ 220   1          if ( reg > RTL8367C_REGDATAMAX )
+ 221   1            return RT_ERR_INPUT;
+ 222   1      
+ 223   1          if(bits>= RTL8367C_REGBITLENGTH )
+ 224   1            return RT_ERR_INPUT;  
+ 225   1      
+ 226   1         /* bitsShift = 0;
+ 227   1          while(!(bits & (1UL << bitsShift)))
+ 228   1          {
+ 229   1            bitsShift++;
+ 230   1            if(bitsShift >= RTL8367C_REGBITLENGTH)
+ 231   1              return RT_ERR_INPUT;
+ 232   1          }*/
+ 233   1          regData = getReg(reg);
+ 234   1          regData = regData >> bits;
+ 235   1        regData &=1;
+ 236   1        *pValue = regData;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 5   
+
+ 237   1            
+ 238   1      #else
+                  uint32 regData;
+                  ret_t retVal;
+              
+                  retVal = smi_read(reg, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+              
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+                #endif
+              
+                  *pValue = (regData & (0x1 << bit)) >> bit;
+              
+              #endif
+ 254   1          return RT_ERR_OK;
+ 255   1      }
+ 256          #endif
+ 257          /* Function Name:
+ 258           *      rtl8367c_setAsicRegBits
+ 259           * Description:
+ 260           *      Set bits value of a specified register
+ 261           * Input:
+ 262           *      reg     - register's address
+ 263           *      bits    - bits mask for setting
+ 264           *      value   - bits value for setting
+ 265           * Output:
+ 266           *      None
+ 267           * Return:
+ 268           *      RT_ERR_OK       - Success
+ 269           *      RT_ERR_SMI      - SMI access error
+ 270           *      RT_ERR_INPUT    - Invalid input parameter
+ 271           * Note:
+ 272           *      Set bits of a specified register to value. Both bits and value are be treated as bit-mask
+ 273           */
+ 274          ret_t rtl8367c_setAsicRegBits(uint32 reg, uint32 bits, uint32 value)
+ 275          {
+ 276   1      
+ 277   1      #if defined(RTK_X86_ASICDRV)
+              
+                  uint32 regData;
+                  ret_t retVal;
+                  uint32 bitsShift;
+                  uint32 valueShifted;
+              
+                  if(bits >= (1 << RTL8367C_REGBITLENGTH) )
+                      return RT_ERR_INPUT;
+              
+                  bitsShift = 0;
+                  while(!(bits & (1 << bitsShift)))
+                  {
+                      bitsShift++;
+                      if(bitsShift >= RTL8367C_REGBITLENGTH)
+                          return RT_ERR_INPUT;
+                  }
+              
+                  valueShifted = value << bitsShift;
+                  if(valueShifted > RTL8367C_REGDATAMAX)
+                      return RT_ERR_INPUT;
+              
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 6   
+
+                  retVal = Access_Read(reg, 2, &regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+                  regData = regData & (~bits);
+                  regData = regData | (valueShifted & bits);
+              
+                  retVal = Access_Write(reg,2, regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+              #elif defined(CONFIG_RTL8367C_ASICDRV_TEST)
+                  uint32 regData;
+                  uint32 bitsShift;
+                  uint32 valueShifted;
+              
+                  if(bits >= (1 << RTL8367C_REGBITLENGTH) )
+                      return RT_ERR_INPUT;
+              
+                  bitsShift = 0;
+                  while(!(bits & (1 << bitsShift)))
+                  {
+                      bitsShift++;
+                      if(bitsShift >= RTL8367C_REGBITLENGTH)
+                          return RT_ERR_INPUT;
+                  }
+                  valueShifted = value << bitsShift;
+              
+                  if(valueShifted > RTL8367C_REGDATAMAX)
+                      return RT_ERR_INPUT;
+              
+                  if(reg >= CLE_VIRTUAL_REG_SIZE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  regData = CleVirtualReg[reg] & (~bits);
+                  regData = regData | (valueShifted & bits);
+              
+                  CleVirtualReg[reg] = regData;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+              #elif defined(EMBEDDED_SUPPORT)
+ 348   1          uint32 regData;
+ 349   1          uint32 bitsShift;
+ 350   1          uint32 valueShifted;
+ 351   1      
+ 352   1          reg &= 0xFFFF;
+ 353   1          bits &= 0xFFFF;
+ 354   1          if((uint16)reg > RTL8367C_REGDATAMAX )
+ 355   1              return RT_ERR_INPUT;
+ 356   1      
+ 357   1          if((uint16)bits >= (0x10000)/*(1 << RTL8367C_REGBITLENGTH)*/)
+ 358   1              return RT_ERR_INPUT;
+ 359   1      
+ 360   1          bitsShift = 0;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 7   
+
+ 361   1          while(!(bits & (1 << bitsShift)))
+ 362   1          {
+ 363   2              bitsShift++;
+ 364   2              if(bitsShift >= RTL8367C_REGBITLENGTH)
+ 365   2                  return RT_ERR_INPUT;
+ 366   2          }
+ 367   1      
+ 368   1          valueShifted = value << bitsShift;
+ 369   1          if(valueShifted > RTL8367C_REGDATAMAX)
+ 370   1              return RT_ERR_INPUT;
+ 371   1      
+ 372   1          regData = getReg(reg);
+ 373   1          regData = (regData & (~bits));
+ 374   1          regData = regData | ( bits&valueShifted);
+ 375   1      //printf("setReg(0x%lx,0x%lx);\n",reg,regData);
+ 376   1          setReg(reg, regData);
+ 377   1      
+ 378   1      #else
+                  uint32 regData;
+                  ret_t retVal;
+                  uint32 bitsShift;
+                  uint32 valueShifted;
+              
+                  if(bits >= (1 << RTL8367C_REGBITLENGTH) )
+                      return RT_ERR_INPUT;
+              
+                  bitsShift = 0;
+                  while(!(bits & (1 << bitsShift)))
+                  {
+                      bitsShift++;
+                      if(bitsShift >= RTL8367C_REGBITLENGTH)
+                          return RT_ERR_INPUT;
+                  }
+                  valueShifted = value << bitsShift;
+              
+                  if(valueShifted > RTL8367C_REGDATAMAX)
+                      return RT_ERR_INPUT;
+              
+                  retVal = smi_read(reg, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+                #endif
+              
+                  regData = regData & (~bits);
+                  regData = regData | (valueShifted & bits);
+              
+                  retVal = smi_write(reg, regData);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n", reg, regData);
+                #endif
+              #endif
+ 418   1          return RT_ERR_OK;
+ 419   1      }
+ 420          #if !defined(LWS_LOADER)
+ 421          /* Function Name:
+ 422           *      rtl8367c_getAsicRegBits
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 8   
+
+ 423           * Description:
+ 424           *      Get bits value of a specified register
+ 425           * Input:
+ 426           *      reg     - register's address
+ 427           *      bits    - bits mask for setting
+ 428           *      value   - bits value for setting
+ 429           * Output:
+ 430           *      None
+ 431           * Return:
+ 432           *      RT_ERR_OK       - Success
+ 433           *      RT_ERR_SMI      - SMI access error
+ 434           *      RT_ERR_INPUT    - Invalid input parameter
+ 435           * Note:
+ 436           *      None
+ 437           */
+ 438          ret_t rtl8367c_getAsicRegBits(uint32 reg, uint32 bits, uint32 *pValue)
+ 439          {
+ 440   1      
+ 441   1      #if defined(RTK_X86_ASICDRV)
+              
+                  uint32 regData;
+                  ret_t retVal;
+                  uint32 bitsShift;
+              
+                  if(bits >= (1 << RTL8367C_REGBITLENGTH) )
+                      return RT_ERR_INPUT;
+              
+                  bitsShift = 0;
+                  while(!(bits & (1 << bitsShift)))
+                  {
+                      bitsShift++;
+                      if(bitsShift >= RTL8367C_REGBITLENGTH)
+                          return RT_ERR_INPUT;
+                  }
+              
+                  retVal = Access_Read(reg, 2, &regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  *pValue = (regData & bits) >> bitsShift;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+              #elif defined(CONFIG_RTL8367C_ASICDRV_TEST)
+                  uint32 bitsShift;
+              
+                  if(bits >= (1 << RTL8367C_REGBITLENGTH) )
+                      return RT_ERR_INPUT;
+              
+                  bitsShift = 0;
+                  while(!(bits & (1 << bitsShift)))
+                  {
+                      bitsShift++;
+                      if(bitsShift >= RTL8367C_REGBITLENGTH)
+                          return RT_ERR_INPUT;
+                  }
+              
+                  if(reg >= CLE_VIRTUAL_REG_SIZE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                   *pValue = (CleVirtualReg[reg] & bits) >> bitsShift;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 9   
+
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, CleVirtualReg[reg]);
+              
+              #elif defined(EMBEDDED_SUPPORT)
+ 490   1          uint32 regData;
+ 491   1          uint32 bitsShift;
+ 492   1      
+ 493   1          reg &= 0xFFFF;
+ 494   1          bits &= 0xFFFF;
+ 495   1          if(reg > RTL8367C_REGDATAMAX )
+ 496   1              return RT_ERR_INPUT;
+ 497   1      
+ 498   1          if(bits >= (1UL << RTL8367C_REGBITLENGTH) )
+ 499   1              return RT_ERR_INPUT;
+ 500   1      
+ 501   1          bitsShift = 0;
+ 502   1          while(!(bits & (1UL << bitsShift)))
+ 503   1          {
+ 504   2              bitsShift++;
+ 505   2              if(bitsShift >= RTL8367C_REGBITLENGTH)
+ 506   2                  return RT_ERR_INPUT;
+ 507   2          }
+ 508   1      
+ 509   1          regData = getReg(reg);
+ 510   1          *pValue = (regData & bits) >> bitsShift;
+ 511   1      
+ 512   1      #else
+                  uint32 regData;
+                  ret_t retVal;
+                  uint32 bitsShift;
+              
+                  if(bits>= (1<<RTL8367C_REGBITLENGTH) )
+                      return RT_ERR_INPUT;
+              
+                  bitsShift = 0;
+                  while(!(bits & (1 << bitsShift)))
+                  {
+                      bitsShift++;
+                      if(bitsShift >= RTL8367C_REGBITLENGTH)
+                          return RT_ERR_INPUT;
+                  }
+              
+                  retVal = smi_read(reg, &regData);
+                  if(retVal != RT_ERR_OK) return RT_ERR_SMI;
+              
+                  *pValue = (regData & bits) >> bitsShift;
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n",reg, regData);
+                #endif
+              
+              #endif
+ 538   1          return RT_ERR_OK;
+ 539   1      }
+ 540          #endif
+ 541          /* Function Name:
+ 542           *      rtl8367c_setAsicReg
+ 543           * Description:
+ 544           *      Set content of asic register
+ 545           * Input:
+ 546           *      reg     - register's address
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 10  
+
+ 547           *      value   - Value setting to register
+ 548           * Output:
+ 549           *      None
+ 550           * Return:
+ 551           *      RT_ERR_OK       - Success
+ 552           *      RT_ERR_SMI      - SMI access error
+ 553           * Note:
+ 554           *      The value will be set to ASIC mapping address only and it is always return RT_ERR_OK while setting
+             - un-mapping address registers
+ 555           */
+ 556          ret_t rtl8367c_setAsicReg(uint32 reg, uint32 value)
+ 557          {
+ 558   1      #if defined(RTK_X86_ASICDRV)/*RTK-CNSD2-NickWu-20061222: for x86 compile*/
+              
+                  ret_t retVal;
+              
+                  retVal = Access_Write(reg,2,value);
+                  if(TRUE != retVal) return RT_ERR_SMI;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n",reg,value);
+              
+              #elif defined(CONFIG_RTL8367C_ASICDRV_TEST)
+              
+                  /*MIBs emulating*/
+                  if(reg == RTL8367C_REG_MIB_ADDRESS)
+                  {
+                      CleVirtualReg[RTL8367C_MIB_COUNTER_BASE_REG] = 0x1;
+                      CleVirtualReg[RTL8367C_MIB_COUNTER_BASE_REG+1] = 0x2;
+                      CleVirtualReg[RTL8367C_MIB_COUNTER_BASE_REG+2] = 0x3;
+                      CleVirtualReg[RTL8367C_MIB_COUNTER_BASE_REG+3] = 0x4;
+                  }
+              
+                  if(reg >= CLE_VIRTUAL_REG_SIZE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  CleVirtualReg[reg] = value;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n",reg,CleVirtualReg[reg]);
+              
+              #elif defined(EMBEDDED_SUPPORT)
+ 588   1          reg &= 0xFFFF;
+ 589   1          value &= 0xFFFF;
+ 590   1      
+ 591   1          if(reg > RTL8367C_REGDATAMAX || value > RTL8367C_REGDATAMAX )
+ 592   1            return RT_ERR_INPUT;
+ 593   1      //printf("setReg(0x%lx,0x%lx);\n",reg,value);
+ 594   1          setReg(reg, value);
+ 595   1      #else
+                  ret_t retVal;
+              
+                  retVal = smi_write(reg, value);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("W[0x%4.4x]=0x%4.4x\n",reg,value);
+                #endif
+              
+              #endif
+ 607   1      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 11  
+
+ 608   1          return RT_ERR_OK;
+ 609   1      }
+ 610          /* Function Name:
+ 611           *      rtl8367c_getAsicReg
+ 612           * Description:
+ 613           *      Get content of asic register
+ 614           * Input:
+ 615           *      reg     - register's address
+ 616           *      value   - Value setting to register
+ 617           * Output:
+ 618           *      None
+ 619           * Return:
+ 620           *      RT_ERR_OK       - Success
+ 621           *      RT_ERR_SMI      - SMI access error
+ 622           * Note:
+ 623           *      Value 0x0000 will be returned for ASIC un-mapping address
+ 624           */
+ 625          ret_t rtl8367c_getAsicReg(uint32 reg, uint32 *pValue)
+ 626          {
+ 627   1      
+ 628   1      #if defined(RTK_X86_ASICDRV)
+              
+                  uint32 regData;
+                  ret_t retVal;
+              
+                  retVal = Access_Read(reg, 2, &regData);
+                  if(TRUE != retVal)
+                      return RT_ERR_SMI;
+              
+                  *pValue = regData;
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+              
+              #elif defined(CONFIG_RTL8367C_ASICDRV_TEST)
+                  if(reg >= CLE_VIRTUAL_REG_SIZE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  *pValue = CleVirtualReg[reg];
+              
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, CleVirtualReg[reg]);
+              
+              #elif defined(EMBEDDED_SUPPORT)
+ 652   1          reg &= 0xFFFF;
+ 653   1      
+ 654   1          if(reg > RTL8367C_REGDATAMAX  )
+ 655   1            return RT_ERR_INPUT;
+ 656   1        *pValue = getReg(reg);
+ 657   1          *pValue = (*pValue)& 0xFFFF;
+ 658   1      #else
+                  uint32 regData;
+                  ret_t retVal;
+              
+                  retVal = smi_read(reg, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return RT_ERR_SMI;
+              
+                  *pValue = regData;
+                #ifdef CONFIG_RTL865X_CLE
+                  if(0x8367B == cleDebuggingDisplay)
+                      PRINT("R[0x%4.4x]=0x%4.4x\n", reg, regData);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV                                                  11/02/2026 17:57:15 PAGE 12  
+
+                #endif
+              
+              #endif
+ 673   1      
+ 674   1          return RT_ERR_OK;
+ 675   1      }
+ 676          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1163    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      87
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

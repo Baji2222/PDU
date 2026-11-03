@@ -1,0 +1,811 @@
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE LWPS_API
+OBJECT MODULE PLACED IN .\objects\lwps_api.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\lwps_api.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTV
+                    -ECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..
+                    -\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API
+                    -_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l
+                    -,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\lwps_api.lst) TABS(2) OBJECT(.\objects\lwps_api.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright Realtek Semiconductor Corporation, 2008
+   4           * All rights reserved.
+   5           *
+   6           * Program  : Light-weight Protocol Stack
+   7           * Abstract : 
+   8           * Author   : 
+   9           * $Id: $
+  10           */
+  11          #include <local/lwps_config.h>
+  12          
+  13          #if LWPS_ENABLE && LWPS_API
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <common_types.h>
+  19          #include <lwps/lwps.h>
+  20          
+  21          /*
+  22           * Symbol Definition
+  23           */
+  24          #define LWPS_SOCKET_MAX         ((TCP_CONNECTION_MAX) + (UDP_MAX_CONNECTION))
+  25          #define LWPS_SOCKET_TCP_BEGIN   (0)
+  26          #define LWPS_SOCKET_TCP_END     (TCP_CONNECTION_MAX - 1)
+  27          #define LWPS_SOCKET_UDP_BEGIN   (TCP_CONNECTION_MAX)
+  28          #define LWPS_SOCKET_UDP_END     ((TCP_CONNECTION_MAX) + (UDP_MAX_CONNECTION) - 1)
+  29          
+  30          typedef struct lwps_socket_s {
+  31              int8   valid;
+  32              uint8  l3type;
+  33              uint8  l4type;
+  34              uint8  status;
+  35          
+  36              int32 backlog_cnt;
+  37              int32 backlog_max;
+  38          
+  39              struct lwps_socket_s *parent;
+  40              struct lwps_handler_s handler;
+  41              void *cookie;   /* for User used */
+  42          } lwps_socket_t;
+  43          
+  44          
+  45          /*
+  46           * Data Declaration
+  47           */
+  48          static lwps_socket_t xdata lwps_socket_entry[LWPS_SOCKET_MAX];
+  49          const ip_addr_t      xdata ip_addr_any = { { 0, 0, 0, 0 } };
+  50                uint8          xdata lwps_events;
+  51                uint16         xdata lwps_events_parm0;
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 2   
+
+  52          
+  53          
+  54          /*
+  55           * Macro Definition
+  56           */
+  57          #define SOCKETID_INVALID_RET(sid, ret)  do {    \
+  58              if ((sid < 0) || (sid >= LWPS_SOCKET_MAX) || (TRUE != lwps_socket_entry[sid].valid))    \
+  59              {                                                                                       \
+  60                  OSAL_PRINTF("%s():%d Socket ID (%d) is INVALID!\n", __FILE__, (uint16)__LINE__, sid);   \
+  61                  return ret;                                                                         \
+  62              }                                                                                       \
+  63          } while (0)
+  64          
+  65          
+  66          /*
+  67           * Function Declaration
+  68           */
+  69          /* TCP Handler */
+  70          // TCP Handler Connect: Callback function invoked when TCP connection is established
+  71          // Synchronizes handler from parent socket and calls user's event_connect callback
+  72          void tcp_handler_connect_func(int32 parentPcbId, int32 pcbId, ip_addr_t ip, uint16 port) reentrant
+  73          {
+  74   1          int32 parentSocketId = LWPS_SOCKET_TCP_BEGIN + parentPcbId;
+  75   1          int32 socketId = LWPS_SOCKET_TCP_BEGIN + pcbId;
+  76   1      
+  77   1          //DBG_LWPS_API_PRINTF("%s():%d - debug\n", __FILE__, (uint16)__LINE__);
+  78   1      
+  79   1          DBG_LWPS_API_PRINTF("%s():%d - pcbId = %d, socketId = %d, port = %d\n", \
+  80   1              __FILE__, (uint16)__LINE__, (uint16)pcbId, (uint16)socketId, port);
+  81   1      
+  82   1          /* [FIXME] Check backlog limitation here */
+  83   1      
+  84   1          /* Sync handler */
+  85   1          if (parentSocketId != socketId)
+  86   1          {
+  87   2              DBG_LWPS_API_PRINTF("%s():%d Sync Handler - parentSocketId = %d, socketId = %d\n", \
+  88   2                  __FILE__, (uint16)__LINE__, (uint16)parentSocketId, (uint16)socketId);
+  89   2      
+  90   2              lwps_socket_entry[socketId].handler = lwps_socket_entry[parentSocketId].handler;
+  91   2              lwps_socket_entry[socketId].valid = TRUE;
+  92   2          }
+  93   1      
+  94   1          if (lwps_socket_entry[socketId].handler.event_connect == NULL)
+  95   1          {
+  96   2              OSAL_PRINTF("%s():%d - pcbId = %d, socketId = %d (NO HANDLER)!\n", \
+  97   2                  __FILE__, (uint16)__LINE__, (uint16)pcbId, (uint16)socketId);
+  98   2      
+  99   2              return;
+ 100   2          }
+ 101   1      
+ 102   1          lwps_socket_entry[socketId].handler.event_connect(parentSocketId, socketId, ip, port);
+ 103   1      }
+ 104          
+ 105          // TCP Handler Disconnect: Callback function invoked when TCP connection is closed
+ 106          // Calls user's event_disconnect callback and clears the socket entry
+ 107          void tcp_handler_disconnect_func(int32 pcbId) reentrant
+ 108          {
+ 109   1          int32 socketId = LWPS_SOCKET_TCP_BEGIN + pcbId;
+ 110   1      
+ 111   1          DBG_LWPS_API_PRINTF("%s():%d - pcbId = %d, socketId = %d\n", \
+ 112   1              __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 113   1      
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 3   
+
+ 114   1          if (lwps_socket_entry[socketId].valid != TRUE)
+ 115   1          {
+ 116   2              return;
+ 117   2          }
+ 118   1      
+ 119   1          if (lwps_socket_entry[socketId].handler.event_disconnect == NULL)
+ 120   1          {
+ 121   2              OSAL_PRINTF("%s():%d - pcbId = %d, socketId = %d (NO HANDLER)!\n", \
+ 122   2                  __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 123   2      
+ 124   2              return;
+ 125   2          }
+ 126   1      
+ 127   1          lwps_socket_entry[socketId].handler.event_disconnect(socketId);
+ 128   1      
+ 129   1          /* clear this slot */
+ 130   1          lwps_socket_entry[socketId].handler.event_connect = NULL;
+ 131   1          lwps_socket_entry[socketId].handler.event_disconnect = NULL;
+ 132   1          lwps_socket_entry[socketId].handler.event_recv = NULL;
+ 133   1          lwps_socket_entry[socketId].handler.event_recvfrom = NULL;
+ 134   1          lwps_socket_entry[socketId].valid = FALSE;
+ 135   1      }
+ 136          
+ 137          // TCP Handler Receive: Callback function invoked when TCP data is received
+ 138          // Calls user's event_recv callback with received data and length
+ 139          void tcp_handler_recv_func(int32 pcbId, uint8 *pData, uint32 length) reentrant
+ 140          {
+ 141   1          int32 socketId = LWPS_SOCKET_TCP_BEGIN + pcbId;
+ 142   1      
+ 143   1          DBG_LWPS_API_PRINTF("%s():%d - pcbId = %d, socketId = %d\n", \
+ 144   1              __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 145   1      
+ 146   1          if (lwps_socket_entry[socketId].valid != TRUE)
+ 147   1          {
+ 148   2              return;
+ 149   2          }
+ 150   1      
+ 151   1      #if 0
+                  /* dump packet (data ~ tail) */
+                  {
+                      uint32 i;
+                      
+                      OSAL_PRINTF("[TCP-tcp_handler_recv_func] Receive data ... length = %d\n", length);
+                      for (i=0; i<length; i++)
+                      {
+                          if ((i & 0xf) == 0x0) OSAL_PRINTF("[%03X] ", i);
+                          OSAL_PRINTF("%02X ", *(pData + i));
+                          if ((i & 0xf) == 0xf) OSAL_PRINTF("\n");
+                      }
+                      if ((i & 0xf) != 0x1) OSAL_PRINTF("\n");
+                  }
+              #endif
+ 166   1      
+ 167   1          if (lwps_socket_entry[socketId].handler.event_recv == NULL)
+ 168   1          {
+ 169   2              OSAL_PRINTF("%s():%d - pcbId = %ld, socketId = %ld (NO HANDLER)!\n", \
+ 170   2                  __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 171   2      
+ 172   2              return;
+ 173   2          }
+ 174   1      
+ 175   1          lwps_socket_entry[socketId].handler.event_recv(socketId, pData, length);
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 4   
+
+ 176   1      }
+ 177          
+ 178          /* UDP Handler */
+ 179          // UDP Handler Connect: Callback for UDP connection establishment (connectionless)
+ 180          // Synchronizes handler and calls user's event_connect callback
+ 181          void udp_handler_connect_func(int32 parentPcbId, int32 pcbId, ip_addr_t ip, uint16 port) reentrant
+ 182          {
+ 183   1          int32 parentSocketId = LWPS_SOCKET_TCP_BEGIN + parentPcbId;
+ 184   1          int32 socketId = LWPS_SOCKET_TCP_BEGIN + pcbId;
+ 185   1      
+ 186   1          OSAL_PRINTF("%s():%d - debug\n", __FILE__, (uint16)__LINE__);
+ 187   1      
+ 188   1          OSAL_PRINTF("%s():%d - pcbId = %d, socketId = %d\n", \
+ 189   1              __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 190   1      
+ 191   1          /* [FIXME] Check backlog limitation here */
+ 192   1      
+ 193   1          /* Sync handler */
+ 194   1          if (parentSocketId != socketId)
+ 195   1          {
+ 196   2              OSAL_PRINTF("%s():%d Sync Handler - parentSocketId = %d, socketId = %d\n", \
+ 197   2                  __FILE__, (uint16)__LINE__, parentSocketId, socketId);
+ 198   2      
+ 199   2              lwps_socket_entry[socketId].handler = lwps_socket_entry[parentSocketId].handler;
+ 200   2              lwps_socket_entry[socketId].valid = TRUE;
+ 201   2          }
+ 202   1      
+ 203   1          if (lwps_socket_entry[socketId].handler.event_connect == NULL)
+ 204   1          {
+ 205   2              OSAL_PRINTF("%s():%d - pcbId = %d, socketId = %d (NO HANDLER)!\n", \
+ 206   2                  __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 207   2      
+ 208   2              return;
+ 209   2          }
+ 210   1      
+ 211   1          lwps_socket_entry[socketId].handler.event_connect(parentSocketId, socketId, ip, port);
+ 212   1      }
+ 213          
+ 214          // UDP Handler Disconnect: Callback for UDP disconnection
+ 215          // Calls user's event_disconnect callback when UDP socket is closed
+ 216          void udp_handler_disconnect_func(int32 pcbId) reentrant
+ 217          {
+ 218   1          int32 socketId = LWPS_SOCKET_TCP_BEGIN + pcbId;
+ 219   1      
+ 220   1          OSAL_PRINTF("%s():%d - pcbId = %d, socketId = %d\n", \
+ 221   1              __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 222   1      
+ 223   1          if (lwps_socket_entry[socketId].handler.event_disconnect == NULL)
+ 224   1          {
+ 225   2              OSAL_PRINTF("%s():%d - pcbId = %d, socketId = %d (NO HANDLER)!\n", \
+ 226   2                  __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 227   2      
+ 228   2              return;
+ 229   2          }
+ 230   1      
+ 231   1          lwps_socket_entry[socketId].handler.event_disconnect(socketId);
+ 232   1      }
+ 233          
+ 234          // UDP Handler Receive From: Callback invoked when UDP data is received from a specific source
+ 235          // Calls user's event_recvfrom callback with data, length, source IP, and port
+ 236          void udp_handler_recvfrom_func(int32 pcbId, uint8 *pData, uint32 length, ip_addr_t ip, uint16 port) reentr
+             -ant
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 5   
+
+ 237          {
+ 238   1          int32 socketId = LWPS_SOCKET_UDP_BEGIN + pcbId;
+ 239   1      
+ 240   1          DBG_LWPS_API_PRINTF("%s():%d - pcbId = %d, socketId = %d\n", \
+ 241   1              __FILE__, (uint16)__LINE__, (uint16)pcbId, (uint16)socketId);
+ 242   1      
+ 243   1      #if 0
+                  /* dump packet (data ~ tail) */
+                  {
+                      uint32 i;
+                      
+                      OSAL_PRINTF("[TCP-tcp_handler_recv_func] Receive data ...\n");
+                      for (i=0; i<length; i++)
+                      {
+                          if ((i & 0xf) == 0x0) OSAL_PRINTF("[%03X] ", i);
+                          OSAL_PRINTF("%02X ", *(pData + i));
+                          if ((i & 0xf) == 0xf) OSAL_PRINTF("\n");
+                      }
+                      if ((i & 0xf) != 0x1) OSAL_PRINTF("\n");
+                  }
+              #endif
+ 258   1      
+ 259   1          if (lwps_socket_entry[socketId].handler.event_recvfrom == NULL)
+ 260   1          {
+ 261   2              DBG_LWPS_API_PRINTF("%s():%d - pcbId = %d, socketId = %d (NO HANDLER)!\n", \
+ 262   2                  __FILE__, (uint16)__LINE__, pcbId, socketId);
+ 263   2      
+ 264   2              return;
+ 265   2          }
+ 266   1      
+ 267   1          DBG_LWPS_API_PRINTF("%s():%d - pcbId = %d, socketId = %d\n", \
+ 268   1              __FILE__, (uint16)__LINE__, (uint16)pcbId, (uint16)socketId);
+ 269   1      #if 0
+              #if LWPS_SNMP
+                  if(lwps_socket_entry[socketId].handler.event_recvfrom == snmp_recv)
+                  {
+                      snmp_recv(socketId, pData, length, ip, port);
+                  }   
+                  else
+              #endif
+              #endif
+ 278   1          { 
+ 279   2              lwps_socket_entry[socketId].handler.event_recvfrom(socketId, pData, length, ip, port);
+ 280   2          }
+ 281   1          DBG_LWPS_API_PRINTF("%s():%d %d.%d.%d", __FILE__, __LINE__, ip.addr[0], ip.addr[1], ip.addr[2], ip.add
+             -r[3]);
+ 282   1      }
+ 283          
+ 284          // LWPS API Initialize: Initializes the socket API layer and registers protocol handlers
+ 285          // Sets up TCP and UDP handlers, initializes socket table, and associates PCB with sockets
+ 286          int32 lwps_api_init(void) large
+ 287          {
+ 288   1          tcp_handler_t xdata tcpHandler;
+ 289   1          tcp_pcb_t     xdata *pTcpPCB;
+ 290   1          udp_handler_t xdata udpHandler;
+ 291   1          udp_pcb_t     xdata *pUdpPCB;
+ 292   1          uint32        xdata i;
+ 293   1      
+ 294   1          DBG_LWPS_API_PRINTF("%s():%d, sizeof(lwps_socket_t) = %d\n", \
+ 295   1              __FILE__, (uint16)__LINE__, (uint16)sizeof(lwps_socket_t));
+ 296   1              
+ 297   1              
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 6   
+
+ 298   1          lwps_events = 0;
+ 299   1      
+ 300   1      #if LWPS_TCP
+ 301   1          /* Set TCP handler */
+ 302   1          tcpHandler.event_connect    = tcp_handler_connect_func;
+ 303   1          tcpHandler.event_disconnect = tcp_handler_disconnect_func;
+ 304   1          tcpHandler.event_recv       = tcp_handler_recv_func;
+ 305   1          if (LWPS_OK != tcp_setHandler(&tcpHandler))
+ 306   1          {
+ 307   2              OSAL_PRINTF("%s():%d - Set TCP Handler failed!\n", __FILE__, (uint16)__LINE__);
+ 308   2              return LWPS_ERR;
+ 309   2          }
+ 310   1      #endif /* end of LWPS_TCP */
+ 311   1      
+ 312   1      #if LWPS_UDP
+ 313   1          /* Set UDP handler */
+ 314   1          udpHandler.event_connect    = udp_handler_connect_func;
+ 315   1          udpHandler.event_disconnect = udp_handler_disconnect_func;
+ 316   1          udpHandler.event_recvfrom   = udp_handler_recvfrom_func;
+ 317   1          if (LWPS_OK != udp_setHandler(&udpHandler))
+ 318   1          {
+ 319   2              OSAL_PRINTF("%s():%d - Set UDP Handler failed!\n", __FILE__, (uint16)__LINE__);
+ 320   2              return LWPS_ERR;
+ 321   2          }
+ 322   1      #endif /* end of LWPS_UDP */
+ 323   1      
+ 324   1      
+ 325   1          for (i=0; i<LWPS_SOCKET_MAX; i++)
+ 326   1          {
+ 327   2              memset(&lwps_socket_entry[i], 0, sizeof(lwps_socket_t));
+ 328   2              lwps_socket_entry[i].l3type = LWPS_L3TYPE_IP;
+ 329   2              lwps_socket_entry[i].handler.event_connect = NULL;
+ 330   2              lwps_socket_entry[i].handler.event_disconnect = NULL;
+ 331   2              lwps_socket_entry[i].handler.event_recv = NULL;
+ 332   2              lwps_socket_entry[i].handler.event_recvfrom = NULL;
+ 333   2              lwps_socket_entry[i].valid = FALSE;
+ 334   2      
+ 335   2      #if LWPS_TCP
+ 336   2              if ((i >= LWPS_SOCKET_TCP_BEGIN) && (i <= LWPS_SOCKET_TCP_END))
+ 337   2              {
+ 338   3                  lwps_socket_entry[i].l4type = LWPS_L4TYPE_TCP;
+ 339   3                  if (LWPS_OK != tcp_getPCB((i - LWPS_SOCKET_TCP_BEGIN), (tcp_pcb_t **)&pTcpPCB))
+ 340   3                  {
+ 341   4                      OSAL_PRINTF("%s():%d - tcp_getPCB error!\n", __FILE__, (uint16)__LINE__);
+ 342   4                      return LWPS_ERR;
+ 343   4                  }
+ 344   3                  pTcpPCB->cookie = (void *)&lwps_socket_entry[i];
+ 345   3              }
+ 346   2      #endif /* end of LWPS_TCP */
+ 347   2      #if LWPS_UDP
+ 348   2              if ((i >= LWPS_SOCKET_UDP_BEGIN) && (i <= LWPS_SOCKET_UDP_END))
+ 349   2              {
+ 350   3                  lwps_socket_entry[i].l4type = LWPS_L4TYPE_UDP;
+ 351   3                  if (LWPS_OK != udp_getPCB((i - LWPS_SOCKET_UDP_BEGIN), (udp_pcb_t **)&pUdpPCB))
+ 352   3                  {
+ 353   4                      OSAL_PRINTF("%s():%d - udp_getPCB error!\n", __FILE__, (uint16)__LINE__);
+ 354   4                      return LWPS_ERR;
+ 355   4                  }
+ 356   3                  pUdpPCB->cookie = (void *)&lwps_socket_entry[i];
+ 357   3              }
+ 358   2      #endif /* end of LWPS_UDP */
+ 359   2      
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 7   
+
+ 360   2          }
+ 361   1      
+ 362   1          return LWPS_OK;
+ 363   1      }
+ 364          
+ 365          // LWPS Socket: Creates a new socket of specified type (TCP or UDP)
+ 366          // Allocates socket entry, sets handlers, and returns socket ID
+ 367          int32 lwps_socket(uint8 l3type, uint8 l4type, lwps_handler_t handler) large
+ 368          {
+ 369   1          int32 xdata i;
+ 370   1      
+ 371   1        
+ 372   1          DBG_LWPS_API_PRINTF("%s():%d l3type = %d, l4type = %d\n", \
+ 373   1              __FILE__, (uint16)__LINE__, (uint16)l3type, (uint16)l4type);
+ 374   1          
+ 375   1      
+ 376   1          if (LWPS_L3TYPE_IP != l3type)
+ 377   1          {
+ 378   2              OSAL_PRINTF("%s():%d l3type (%d) is NOT support!\n", \
+ 379   2                  __FILE__, (uint16)__LINE__, (uint16)l3type);
+ 380   2              return -1;
+ 381   2          }
+ 382   1      
+ 383   1          if (LWPS_L4TYPE_TCP == l4type)
+ 384   1          {
+ 385   2              /* Find a empty TCP socket */
+ 386   2              for (i=LWPS_SOCKET_TCP_BEGIN; i<=LWPS_SOCKET_TCP_END; i++)
+ 387   2              {
+ 388   3                  if (lwps_socket_entry[i].valid == FALSE)
+ 389   3                  {
+ 390   4                      lwps_socket_entry[i].handler.event_connect = handler.event_connect;
+ 391   4                      lwps_socket_entry[i].handler.event_disconnect = handler.event_disconnect;
+ 392   4                      lwps_socket_entry[i].handler.event_recv = handler.event_recv;
+ 393   4                      lwps_socket_entry[i].handler.event_recvfrom = NULL;
+ 394   4                      lwps_socket_entry[i].valid = TRUE;
+ 395   4      
+ 396   4                      DBG_LWPS_API_PRINTF("%s():%d - Get TCP Socket, socketId = %d, l4type = %d\n", \
+ 397   4                          __FILE__, (uint16)__LINE__, (uint16)i, (uint16)lwps_socket_entry[i].l4type);
+ 398   4      
+ 399   4                      return i;
+ 400   4                  }
+ 401   3              }
+ 402   2          }
+ 403   1          else if (LWPS_L4TYPE_UDP == l4type)
+ 404   1          {
+ 405   2              /* Find a empty UDP socket */
+ 406   2              for (i=LWPS_SOCKET_UDP_BEGIN; i<=LWPS_SOCKET_UDP_END; i++)
+ 407   2              {
+ 408   3                DBG_LWPS_API_PRINTF("%s():%d [%d].value=0x%04X\n", \
+ 409   3                          __FILE__, (uint16)__LINE__, (uint16)i, (uint16)lwps_socket_entry[i].valid);
+ 410   3                  if (lwps_socket_entry[i].valid == FALSE)
+ 411   3                  {
+ 412   4                      lwps_socket_entry[i].handler.event_connect = handler.event_connect;
+ 413   4                      lwps_socket_entry[i].handler.event_disconnect = handler.event_disconnect;
+ 414   4                      lwps_socket_entry[i].handler.event_recv = NULL;
+ 415   4                      lwps_socket_entry[i].handler.event_recvfrom = handler.event_recvfrom;
+ 416   4                      lwps_socket_entry[i].valid = TRUE;
+ 417   4      
+ 418   4                      DBG_LWPS_API_PRINTF("%s():%d - Get UDP Socket, socketId = %d, l4type = %d\n", \
+ 419   4                          __FILE__, (uint16)__LINE__, (uint16)i, (uint16)lwps_socket_entry[i].l4type);
+ 420   4                      
+ 421   4                      return i;
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 8   
+
+ 422   4                  }
+ 423   3              }
+ 424   2          }
+ 425   1      
+ 426   1          return -1;   /* SOCKET NOT FOUND */
+ 427   1      }
+ 428          
+ 429          // LWPS Close: Closes a socket and releases associated resources
+ 430          // Performs close operation based on socket type (TCP or UDP)
+ 431          void lwps_close(int32 socketId) large
+ 432          {
+ 433   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, (uint16)socketId);
+ 434   1      
+ 435   1          SOCKETID_INVALID_RET(socketId, );
+ 436   1      
+ 437   1          /* do something */
+ 438   1      
+ 439   1          DBG_LWPS_API_PRINTF("%s():%d - Close Socket, socketId = %d, l4type = %d\n", \
+ 440   1              __FILE__, (uint16)__LINE__, (uint16)socketId, (uint16)lwps_socket_entry[socketId].l4type);
+ 441   1      
+ 442   1          /* Closing */
+ 443   1          switch (lwps_socket_entry[socketId].l4type)
+ 444   1          {
+ 445   2          case LWPS_L4TYPE_TCP:
+ 446   2            lwps_events |= LWPS_EVENT_TCP_CLOSE;
+ 447   2            lwps_events_parm0 = (socketId - LWPS_SOCKET_TCP_BEGIN);
+ 448   2            /*
+ 449   2              if (LWPS_OK != tcp_close((socketId - LWPS_SOCKET_TCP_BEGIN)))
+ 450   2              {
+ 451   2                  OSAL_PRINTF("%s():%d - tcp_close(%d) failed!\n", \
+ 452   2                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_TCP_BEGIN));
+ 453   2      
+ 454   2                  return;
+ 455   2              }
+ 456   2              */
+ 457   2              break;
+ 458   2          case LWPS_L4TYPE_UDP:
+ 459   2            //lwps_events |= LWPS_EVENT_UDP_CLOSE;
+ 460   2            //lwps_events_parm0 = (socketId - LWPS_SOCKET_UDP_BEGIN);
+ 461   2      #if LWPS_UDP
+ 462   2              if (LWPS_OK != udp_close((socketId - LWPS_SOCKET_UDP_BEGIN)))
+ 463   2              {
+ 464   3                  OSAL_PRINTF("%s():%d - udp_close(%d) failed!\n", \
+ 465   3                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_UDP_BEGIN));
+ 466   3      
+ 467   3                  return;
+ 468   3              }
+ 469   2          lwps_socket_entry[socketId].handler.event_connect = NULL;
+ 470   2          lwps_socket_entry[socketId].handler.event_disconnect = NULL;
+ 471   2          lwps_socket_entry[socketId].handler.event_recv = NULL;
+ 472   2          lwps_socket_entry[socketId].handler.event_recvfrom = NULL;
+ 473   2          lwps_socket_entry[socketId].valid = FALSE;
+ 474   2      #endif /* end of LWPS_UDP */        
+ 475   2              break;
+ 476   2          default:
+ 477   2              OSAL_PRINTF("%s():%d - l4type (%d) is NOT support!\n");
+ 478   2              return;
+ 479   2              break;
+ 480   2          }
+ 481   1      
+ 482   1      }
+ 483          
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 9   
+
+ 484          // LWPS Socket Set Cookie: Stores user-defined cookie pointer in socket entry
+ 485          // Allows application to associate custom data with socket
+ 486          void lwps_socket_setCookie(int32 socketId, void *pCookie) large
+ 487          {
+ 488   1          SOCKETID_INVALID_RET(socketId, );
+ 489   1      
+ 490   1          lwps_socket_entry[socketId].cookie = pCookie;
+ 491   1      }
+ 492          
+ 493          // LWPS Socket Get Cookie: Retrieves user-defined cookie pointer from socket entry
+ 494          // Returns previously stored custom data associated with socket
+ 495          void *lwps_socket_getCookie(int32 socketId) large
+ 496          {
+ 497   1          SOCKETID_INVALID_RET(socketId, NULL);
+ 498   1      
+ 499   1          return lwps_socket_entry[socketId].cookie;
+ 500   1      }
+ 501          
+ 502          // LWPS Bind: Binds a socket to a specific IP address and port
+ 503          // Associates socket with local address/port for listening or sending
+ 504          int32 lwps_bind(int32 socketId, ip_addr_t ip, uint16 port) large
+ 505          {
+ 506   1          SOCKETID_INVALID_RET(socketId, LWPS_ERR);
+ 507   1      
+ 508   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d, L3TYPE = %d, L4TYPE = %d\n", \
+ 509   1              __FILE__, (uint16)__LINE__, (uint16)socketId, \
+ 510   1              (uint16)lwps_socket_entry[socketId].l3type, \
+ 511   1              (uint16)lwps_socket_entry[socketId].l4type);
+ 512   1      
+ 513   1          /* Binding */
+ 514   1          switch (lwps_socket_entry[socketId].l4type)
+ 515   1          {
+ 516   2          case LWPS_L4TYPE_TCP:
+ 517   2      #if LWPS_TCP
+ 518   2              if (LWPS_OK != tcp_bind((socketId - LWPS_SOCKET_TCP_BEGIN), ip, port))
+ 519   2              {
+ 520   3                  OSAL_PRINTF("%s():%d - tcp_bind(%d) failed!\n", \
+ 521   3                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_TCP_BEGIN));
+ 522   3      
+ 523   3                  return LWPS_ERR;
+ 524   3              }
+ 525   2      #endif /* end of LWPS_TCP */
+ 526   2              break;
+ 527   2          case LWPS_L4TYPE_UDP:
+ 528   2      #if LWPS_UDP
+ 529   2              if (LWPS_OK != udp_bind((socketId - LWPS_SOCKET_UDP_BEGIN), ip, port))
+ 530   2              {
+ 531   3                  OSAL_PRINTF("%s():%d - udp_bind(%d) failed!\n", \
+ 532   3                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_UDP_BEGIN));
+ 533   3      
+ 534   3                  return LWPS_ERR;
+ 535   3              }
+ 536   2      #endif /* end of LWPS_UDP */ 
+ 537   2              break;
+ 538   2          default:
+ 539   2              OSAL_PRINTF("%s():%d - l4type (%d) is NOT support!\n", \
+ 540   2                  __FILE__, (uint16)__LINE__, lwps_socket_entry[socketId].l4type);
+ 541   2              return LWPS_ERR;
+ 542   2              break;
+ 543   2          }
+ 544   1      
+ 545   1          return LWPS_OK;
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 10  
+
+ 546   1      }
+ 547          
+ 548          // LWPS Listen: Places a TCP socket in listening mode for incoming connections
+ 549          // Sets backlog limit for pending connection requests
+ 550          int32 lwps_listen(int32 socketId, int32 backlog) large
+ 551          {
+ 552   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d, backlog = %d\n", \
+ 553   1              __FILE__, (uint16)__LINE__, (uint16)socketId, (uint16)backlog);
+ 554   1      
+ 555   1          SOCKETID_INVALID_RET(socketId, LWPS_ERR);
+ 556   1      
+ 557   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d, L3TYPE = %d, L4TYPE = %d\n", \
+ 558   1              __FILE__, (uint16)__LINE__, (uint16)socketId, \
+ 559   1              (uint16)lwps_socket_entry[socketId].l3type, \
+ 560   1              (uint16)lwps_socket_entry[socketId].l4type);
+ 561   1      
+ 562   1          /* Listening */
+ 563   1          switch (lwps_socket_entry[socketId].l4type)
+ 564   1          {
+ 565   2          case LWPS_L4TYPE_TCP:
+ 566   2      #if LWPS_TCP
+ 567   2              if (LWPS_OK != tcp_listen((socketId - LWPS_SOCKET_TCP_BEGIN), backlog))
+ 568   2              {
+ 569   3                  OSAL_PRINTF("%s():%d - tcp_listen(%d) failed!\n", \
+ 570   3                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_TCP_BEGIN));
+ 571   3      
+ 572   3                  return LWPS_ERR;
+ 573   3              }
+ 574   2      #endif /* end of LWPS_TCP */
+ 575   2              break;
+ 576   2      
+ 577   2          default:
+ 578   2              OSAL_PRINTF("%s():%d - l4type (%d) is NOT support!\n");
+ 579   2              return LWPS_ERR;
+ 580   2              break;
+ 581   2          }
+ 582   1      
+ 583   1          return LWPS_OK;
+ 584   1      }
+ 585          
+ 586          #if 0 /* lwps_connect function */
+              int32 lwps_connect(int32 socketId, ip_addr_t ip, uint16 port) large
+              {
+                  DBG_LWPS_API_PRINTF("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, socketId);
+              
+                  SOCKETID_INVALID_RET(socketId, LWPS_ERR);
+              
+                  return LWPS_OK;
+              }
+              #endif /* end of lwps_connect function */
+ 596          
+ 597          #if 0 /* lwps_from_to function */
+              int32 lwps_from_to(int32 socketId, ip_addr_t ip, uint16 port) large
+              {
+                  OSAL_PRINTF("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, socketId);
+              
+                  SOCKETID_INVALID_RET(socketId, LWPS_ERR);
+              
+                  OSAL_PRINTF("%s():%d socketId = %d, L3TYPE = %d, L4TYPE = %d\n", \
+                      __FILE__, (uint16)__LINE__, socketId, \
+                      lwps_socket_entry[socketId].l3type, \
+                      lwps_socket_entry[socketId].l4type);
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 11  
+
+              
+                  /* Transmit */
+                  switch (lwps_socket_entry[socketId].l4type)
+                  {
+                  case LWPS_L4TYPE_UDP:
+                      if (LWPS_OK != udp_from_to((socketId - LWPS_SOCKET_UDP_BEGIN), ip, port))
+                      {
+                          OSAL_PRINTF("%s():%d - udp_from_to(%d) failed!\n", \
+                              __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_UDP_BEGIN));
+              
+                          return LWPS_ERR;
+                      }
+                      break;
+              
+                  default:
+                      OSAL_PRINTF("%s():%d - l4type (%d) is NOT support!\n");
+                      return LWPS_ERR;
+                      break;
+                  }
+              
+                  return LWPS_OK;
+              }
+              #endif /* end of lwps_from_to function */
+ 631          
+ 632          // LWPS Send: Sends data over a TCP socket connection
+ 633          // Transmits data to the connected peer via TCP protocol
+ 634          int32 lwps_send(int32 socketId, uint8 *send_data, int32 length) large
+ 635          {
+ 636   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, socketId);
+ 637   1      
+ 638   1          SOCKETID_INVALID_RET(socketId, LWPS_ERR);
+ 639   1      
+ 640   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d, L3TYPE = %d, L4TYPE = %d\n", \
+ 641   1              __FILE__, (uint16)__LINE__, (uint16)socketId, \
+ 642   1              (uint16)lwps_socket_entry[socketId].l3type, \
+ 643   1              (uint16)lwps_socket_entry[socketId].l4type);
+ 644   1      
+ 645   1          /* Transmit */
+ 646   1          switch (lwps_socket_entry[socketId].l4type)
+ 647   1          {
+ 648   2          case LWPS_L4TYPE_TCP:
+ 649   2      #if LWPS_TCP
+ 650   2              if (LWPS_OK != tcp_send((socketId - LWPS_SOCKET_TCP_BEGIN), send_data, length))
+ 651   2              {
+ 652   3                  OSAL_PRINTF("%s():%d - tcp_send(%d) failed!\n", \
+ 653   3                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_TCP_BEGIN));
+ 654   3      
+ 655   3                  return LWPS_ERR;
+ 656   3              }
+ 657   2      #endif /* end of LWPS_TCP */
+ 658   2              break;
+ 659   2      
+ 660   2          default:
+ 661   2              OSAL_PRINTF("%s():%d - l4type (%d) is NOT support!\n");
+ 662   2              return LWPS_ERR;
+ 663   2              break;
+ 664   2          }
+ 665   1      
+ 666   1          return LWPS_OK;
+ 667   1      }
+ 668          
+ 669          #if (defined( LWS_A_SET) || defined( UPGRADE_TFTP))
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 12  
+
+ 670          // LWPS Send To: Sends data over UDP socket to a specified destination
+ 671          // Transmits UDP datagram to target IP address and port
+ 672          int32 lwps_sendto(int32 socketId, uint8 *send_data, int32 length, ip_addr_t ip, uint16 port) large
+ 673          {
+ 674   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, (uint16)socketId);
+ 675   1      
+ 676   1          SOCKETID_INVALID_RET(socketId, LWPS_ERR);
+ 677   1      
+ 678   1          DBG_LWPS_API_PRINTF("%s():%d socketId = %d, L3TYPE = %d, L4TYPE = %d\n", \
+ 679   1              __FILE__, (uint16)__LINE__, (uint16)socketId, \
+ 680   1              (uint16)lwps_socket_entry[socketId].l3type, \
+ 681   1              (uint16)lwps_socket_entry[socketId].l4type);
+ 682   1      
+ 683   1          /* Transmit */
+ 684   1          switch (lwps_socket_entry[socketId].l4type)
+ 685   1          {
+ 686   2          case LWPS_L4TYPE_UDP:
+ 687   2      #if LWPS_UDP
+ 688   2              if (LWPS_OK != udp_sendto((socketId - LWPS_SOCKET_UDP_BEGIN), send_data, length, ip, port))
+ 689   2              {
+ 690   3                  OSAL_PRINTF("%s():%d - udp_output(%d) failed!\n", \
+ 691   3                      __FILE__, (uint16)__LINE__, (socketId - LWPS_SOCKET_UDP_BEGIN));
+ 692   3      
+ 693   3                  return LWPS_ERR;
+ 694   3              }
+ 695   2      #endif /* end of LWPS_UDP */
+ 696   2              break;
+ 697   2      
+ 698   2          default:
+ 699   2              OSAL_PRINTF("%s():%d - l4type (%d) is NOT support!\n");
+ 700   2              return LWPS_ERR;
+ 701   2              break;
+ 702   2          }
+ 703   1      
+ 704   1          return LWPS_OK;
+ 705   1      }
+ 706          #endif
+ 707          
+ 708          /* ARP related API */
+ 709          // LWPS ARP Check: Checks if IP address exists in ARP table
+ 710          // Wrapper function for etharp_check API
+ 711          int32 lwps_arp_check(ip_addr_t ip) large
+ 712          {
+ 713   1          return etharp_check(ip);
+ 714   1      }
+ 715          
+ 716          // LWPS ARP Request: Sends ARP request to resolve IP address
+ 717          // Wrapper function for etharp_request API
+ 718          int32 lwps_arp_request(ip_addr_t ip) large
+ 719          {
+ 720   1          return etharp_request(ip);
+ 721   1      }
+ 722          
+ 723          // LWPS Event Handler: Processes pending socket events (close operations)
+ 724          // Handles deferred TCP/UDP close operations from event queue
+ 725          int32 lwps_event_handler(void){
+ 726   1      #if LWPS_TCP
+ 727   1        if( lwps_events&LWPS_EVENT_TCP_CLOSE )
+ 728   1          {
+ 729   2          if (LWPS_OK != tcp_close(lwps_events_parm0))
+ 730   2              {
+ 731   3                  OSAL_PRINTF("%s():%d - tcp_close(%d) failed!\n", \
+C51 COMPILER V9.60.0.0   LWPS_API                                                          11/02/2026 17:56:58 PAGE 13  
+
+ 732   3                      __FILE__, (uint16)__LINE__, lwps_events_parm0);
+ 733   3      
+ 734   3                  return LWPS_ERR;
+ 735   3              }
+ 736   2        }
+ 737   1      #endif /* end of LWPS_TCP */
+ 738   1      #if LWPS_UDP
+ 739   1          if( lwps_events&LWPS_EVENT_UDP_CLOSE )
+ 740   1          {
+ 741   2          if (LWPS_OK != udp_close(lwps_events_parm0))
+ 742   2              {
+ 743   3                  OSAL_PRINTF("%s():%d - udp_close(%d) failed!\n", \
+ 744   3                      __FILE__, (uint16)__LINE__, lwps_events_parm0);
+ 745   3      
+ 746   3                  return LWPS_ERR;
+ 747   3              }
+ 748   2        }
+ 749   1      #endif /* end of LWPS_UDP */
+ 750   1        lwps_events = 0;
+ 751   1        return LWPS_OK;
+ 752   1      }
+ 753          
+ 754          #endif /* end of LWPS_ENABLE && LWPS_API */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5489    ----
+   CONSTANT SIZE    =   1152    ----
+   XDATA SIZE       =    967     113
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1152    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

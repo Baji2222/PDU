@@ -1,0 +1,423 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_TRUNKING
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_trunking.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_trunking.c LARGE OMF2 OPTIMIZE(8,SIZE) B
+                    -ROWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\com
+                    -mon\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPO
+                    -RT,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMP
+                    -ATIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_trunking.lst) TABS(2) OBJECT(.\object
+                    -s\rtl8367c_asicdrv_trunking.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Port trunking related functions
+  17           *
+  18           */
+  19          
+  20          #include <rtl8367c_asicdrv_trunking.h>
+  21          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicTrunkingMode
+               * Description:
+               *      Set port trunking mode
+               * Input:
+               *      mode    - 1:dumb 0:user defined
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicTrunkingMode(uint32 mode)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_DUMB_OFFSET, mode);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicTrunkingMode
+               * Description:
+               *      Get port trunking mode
+               * Input:
+               *      pMode   - 1:dumb 0:user defined
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 2   
+
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicTrunkingMode(uint32* pMode)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_DUMB_OFFSET, pMode);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicTrunkingFc
+               * Description:
+               *      Set port trunking flow control
+               * Input:
+               *      group       - Trunk Group ID
+               *      enabled     - 0:disable, 1:enable
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicTrunkingFc(uint32 group, uint32 enabled)
+              {
+                  ret_t       retVal;
+              
+                  if(group > RTL8367C_MAX_TRUNK_GID)
+                      return RT_ERR_LA_TRUNK_ID;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_PORT_TRUNK_DROP_CTRL, RTL8367C_PORT_TRUNK_DROP_CTRL_O
+             -FFSET, ENABLED)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_PORT_TRUNK_FLOWCTRL, (RTL8367C_EN_FLOWCTRL_TG0_OFFSET + gro
+             -up), enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicTrunkingFc
+               * Description:
+               *      Get port trunking flow control
+               * Input:
+               *      group       - Trunk Group ID
+               *      pEnabled    - 0:disable, 1:enable
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicTrunkingFc(uint32 group, uint32* pEnabled)
+              {
+                  if(group > RTL8367C_MAX_TRUNK_GID)
+                      return RT_ERR_LA_TRUNK_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_PORT_TRUNK_FLOWCTRL, (RTL8367C_EN_FLOWCTRL_TG0_OFFSET + gro
+             -up), pEnabled);
+              }
+              #endif
+ 108          /* Function Name:
+ 109           *      rtl8367c_setAsicTrunkingGroup
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 3   
+
+ 110           * Description:
+ 111           *      Set trunking group available port mask
+ 112           * Input:
+ 113           *      group       - Trunk Group ID
+ 114           *      portmask    - Logic trunking enable port mask, max 4 ports
+ 115           * Output:
+ 116           *      None
+ 117           * Return:
+ 118           *      RT_ERR_OK   - Success
+ 119           *      RT_ERR_SMI  - SMI access error
+ 120           * Note:
+ 121           *      None
+ 122           */
+ 123          ret_t rtl8367c_setAsicTrunkingGroup(uint32 group, uint32 portmask)
+ 124          {
+ 125   1          if(group > RTL8367C_MAX_TRUNK_GID)
+ 126   1              return RT_ERR_LA_TRUNK_ID;
+ 127   1          return rtl8367c_setAsicRegBits(RTL8367C_REG_PORT_TRUNK_GROUP_MASK, RTL8367C_PORT_TRUNK_GROUP0_MASK_MAS
+             -K << (group * 4), portmask);
+ 128   1      }
+ 129          /* Function Name:
+ 130           *      rtl8367c_getAsicTrunkingGroup
+ 131           * Description:
+ 132           *      Get trunking group available port mask
+ 133           * Input:
+ 134           *      group       - Trunk Group ID
+ 135           * Output:
+ 136           *      pPortmask   - Logic trunking enable port mask, max 4 ports
+ 137           * Return:
+ 138           *      RT_ERR_OK   - Success
+ 139           *      RT_ERR_SMI  - SMI access error
+ 140           * Note:
+ 141           *      None
+ 142           */
+ 143          ret_t rtl8367c_getAsicTrunkingGroup(uint32 group, uint32* pPortmask)
+ 144          {
+ 145   1          if(group > RTL8367C_MAX_TRUNK_GID)
+ 146   1              return RT_ERR_LA_TRUNK_ID;
+ 147   1      
+ 148   1          return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_GROUP_MASK, RTL8367C_PORT_TRUNK_GROUP0_MASK_MAS
+             -K << (group * 4), pPortmask);
+ 149   1      }
+ 150          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicTrunkingFlood
+               * Description:
+               *      Set port trunking flood function
+               * Input:
+               *      enabled     - Port trunking flooding function 0:disable 1:enable
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicTrunkingFlood(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_FLOOD_OFFSET, enabled)
+             -;
+              }
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 4   
+
+              /* Function Name:
+               *      rtl8367c_getAsicTrunkingFlood
+               * Description:
+               *      Get port trunking flood function
+               * Input:
+               *      pEnabled    - Port trunking flooding function 0:disable 1:enable
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicTrunkingFlood(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_FLOOD_OFFSET, pEnabled
+             -);
+              }
+              #endif
+ 188          /* Function Name:
+ 189           *      rtl8367c_setAsicTrunkingHashSelect
+ 190           * Description:
+ 191           *      Set port trunking hash select sources
+ 192           * Input:
+ 193           *      hashsel     - hash sources mask
+ 194           * Output:
+ 195           *      None
+ 196           * Return:
+ 197           *      RT_ERR_OK   - Success
+ 198           *      RT_ERR_SMI  - SMI access error
+ 199           * Note:
+ 200           *      7 bits mask for link aggregation group0 hash parameter selection {DIP, SIP, DMAC, SMAC, SPA}
+ 201           *      0b0000001: SPA
+ 202           *      0b0000010: SMAC
+ 203           *      0b0000100: DMAC
+ 204           *      0b0001000: SIP
+ 205           *      0b0010000: DIP
+ 206           *      0b0100000: TCP/UDP Source Port
+ 207           *      0b1000000: TCP/UDP Destination Port
+ 208           */
+ 209          ret_t rtl8367c_setAsicTrunkingHashSelect(uint32 hashsel)
+ 210          {
+ 211   1          return rtl8367c_setAsicRegBits(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_HASH_MASK, hashsel);
+ 212   1      }
+ 213          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicTrunkingHashSelect
+               * Description:
+               *      Get port trunking hash select sources
+               * Input:
+               *      pHashsel    - hash sources mask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicTrunkingHashSelect(uint32* pHashsel)
+              {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 5   
+
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_CTRL, RTL8367C_PORT_TRUNK_HASH_MASK, pHashsel);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicQeueuEmptyStatus
+               * Description:
+               *      Get current output queue if empty status
+               * Input:
+               *      portmask    - queue empty port mask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicQeueuEmptyStatus(uint32* portmask)
+              {
+                  return rtl8367c_getAsicReg(RTL8367C_REG_PORT_QEMPTY, portmask);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicTrunkingHashTable
+               * Description:
+               *      Set port trunking hash value mapping table
+               * Input:
+               *      hashval     - hashing value 0-15
+               *      portId      - trunking port id 0-3
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number
+               *      RT_ERR_OUT_OF_RANGE - Invalid hashing value (0-15)
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicTrunkingHashTable(uint32 hashval, uint32 portId)
+              {
+                  if(hashval > RTL8367C_TRUNKING_HASHVALUE_MAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(portId >= RTL8367C_TRUNKING_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  if(hashval >= 8)
+                      return rtl8367c_setAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL1, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL1_HASH8_MASK<<((hashval-8)*2), portId);
+                  else
+                      return rtl8367c_setAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL0, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL0_HASH0_MASK<<(hashval*2), portId);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicTrunkingHashTable
+               * Description:
+               *      Get port trunking hash value mapping table
+               * Input:
+               *      hashval     - hashing value 0-15
+               *      pPortId         - trunking port id 0-3
+               * Output:
+               *      None
+               * Return:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 6   
+
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_OUT_OF_RANGE - Invalid hashing value (0-15)
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicTrunkingHashTable(uint32 hashval, uint32* pPortId)
+              {
+                  if(hashval > RTL8367C_TRUNKING_HASHVALUE_MAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(hashval >= 8)
+                      return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL1, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL1_HASH8_MASK<<((hashval-8)*2), pPortId);
+                  else
+                      return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL0, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL0_HASH0_MASK<<(hashval*2), pPortId);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicTrunkingHashTable1
+               * Description:
+               *      Set port trunking hash value mapping table
+               * Input:
+               *      hashval     - hashing value 0-15
+               *      portId      - trunking port id 0-3
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number
+               *      RT_ERR_OUT_OF_RANGE - Invalid hashing value (0-15)
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicTrunkingHashTable1(uint32 hashval, uint32 portId)
+              {
+                  if(hashval > RTL8367C_TRUNKING_HASHVALUE_MAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(portId >= RTL8367C_TRUNKING1_PORTN0)
+                      return RT_ERR_PORT_ID;
+              
+                  if(hashval >= 8)
+                      return rtl8367c_setAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL3, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL3_HASH8_MASK<<((hashval-8)*2), portId);
+                  else
+                      return rtl8367c_setAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL2, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL2_HASH0_MASK<<(hashval*2), portId);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicTrunkingHashTable1
+               * Description:
+               *      Get port trunking hash value mapping table
+               * Input:
+               *      hashval     - hashing value 0-15
+               *      pPortId         - trunking port id 0-3
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_TRUNKING                                         11/02/2026 17:57:27 PAGE 7   
+
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_OUT_OF_RANGE - Invalid hashing value (0-15)
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicTrunkingHashTable1(uint32 hashval, uint32* pPortId)
+              {
+                  if(hashval > RTL8367C_TRUNKING_HASHVALUE_MAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(hashval >= 8)
+                      return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL3, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL3_HASH8_MASK<<((hashval-8)*2), pPortId);
+                  else
+                      return rtl8367c_getAsicRegBits(RTL8367C_REG_PORT_TRUNK_HASH_MAPPING_CTRL2, RTL8367C_PORT_TRUNK_HAS
+             -H_MAPPING_CTRL2_HASH0_MASK<<(hashval*2), pPortId);
+              }
+              #endif
+ 364          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    238    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      19
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

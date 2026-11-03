@@ -1,0 +1,1682 @@
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     1
+
+
+MACRO ASSEMBLER AX51 V3.15.3.0
+OBJECT MODULE PLACED IN .\objects\check_boot.OBJ
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\AX51.EXE .\objects\check_boot.src PR(.\objects\check_boot.ls1) EP DEBUG
+
+LOC    OBJ             LINE     SOURCE
+
+                          1     ; .\objects\check_boot.SRC generated from: src\check_boot.c
+                          2     ; COMPILER INVOKED BY:
+                          3     ;        C:\Keil_v5\C51\BIN\C51.EXE src\check_boot.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE 
+                               INCDIR(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\
+                               ..\common\sal;..\..\common\include\sal;.\include\local;..\include\asicDrv;..\src\web;..\i
+                               nclude\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_625,FLASH
+                               _2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\check_boot.lst) TABS(2) SRC(.\objects\check_boot.SRC)
+                          4     
+                          5     $nomod51 
+                          6     
+                          7     NAME    CHECK_BOOT
+                          8     
+ 0080                     9     P0      DATA    080H
+ 00C0.3                  10     TB81    BIT     0C0H.3
+ 0090                    11     P1      DATA    090H
+ 00A0                    12     P2      DATA    0A0H
+ 00C0.7                  13     SM01    BIT     0C0H.7
+ 00B0                    14     P3      DATA    0B0H
+ 00C0.6                  15     SM11    BIT     0C0H.6
+ 00B0.4                  16     T0      BIT     0B0H.4
+ 00D0.6                  17     AC      BIT     0D0H.6
+ 00C0.5                  18     SM21    BIT     0C0H.5
+ 00B0.5                  19     T1      BIT     0B0H.5
+ 0090.0                  20     T2      BIT     090H.0
+ 00A8.7                  21     EA      BIT     0A8H.7
+ 00C4                    22     GPIO2_E DATA    0C4H
+ 00C3                    23     GPIO2_I DATA    0C3H
+ 00A8                    24     IE      DATA    0A8H
+ 0080.2                  25     SPI_CMD_ISSUE   BIT     080H.2
+ 0085                    26     DPH1    DATA    085H
+ 00D0.1                  27     FL      BIT     0D0H.1
+ 00C2                    28     GPIO2_O DATA    0C2H
+ 0084                    29     DPL1    DATA    084H
+ 00B0.7                  30     RD      BIT     0B0H.7
+ 00C8.6                  31     EXF2    BIT     0C8H.6
+ 00C0.4                  32     REN1    BIT     0C0H.4
+ 00B8                    33     IP      DATA    0B8H
+ 0097                    34     DATA_BANK       DATA    097H
+ 0096                    35     CODE_BANK       DATA    096H
+ 0098.0                  36     RI      BIT     098H.0
+ 0080.1                  37     CACHE_CLEAN     BIT     080H.1
+ 00A6                    38     INDACC_RDATA_H  DATA    0A6H
+ 00B0.2                  39     INT0    BIT     0B0H.2
+ 00D0.7                  40     CY      BIT     0D0H.7
+ 0098.1                  41     TI      BIT     098H.1
+ 00B0.3                  42     INT1    BIT     0B0H.3
+ 0090.4                  43     INT2    BIT     090H.4
+ 009C                    44     SPI_RI_CMD      DATA    09CH
+ 00B0.0                  45     RXD0    BIT     0B0H.0
+ 0090.5                  46     INT3    BIT     090H.5
+ 00A7                    47     INDACC_RDATA_L  DATA    0A7H
+ 008F                    48     SPC_FNC DATA    08FH
+ 0090.2                  49     RXD1    BIT     090H.2
+ 0090.6                  50     INT4    BIT     090H.6
+ 00A4                    51     INDACC_WDATA_H  DATA    0A4H
+ 00B0.1                  52     TXD0    BIT     0B0H.1
+ 0090.7                  53     INT5    BIT     090H.7
+ 0090.3                  54     TXD1    BIT     090H.3
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     2
+
+ 00CB                    55     RCAP2H  DATA    0CBH
+ 0081                    56     SP      DATA    081H
+ 0090.1                  57     T2EX    BIT     090H.1
+ 00A5                    58     INDACC_WDATA_L  DATA    0A5H
+ 00D0.2                  59     OV      BIT     0D0H.2
+ 00CA                    60     RCAP2L  DATA    0CAH
+ 00B1                    61     SPI_S_RCMD      DATA    0B1H
+ 009D                    62     SPI_S_CONF      DATA    09DH
+ 00B0.6                  63     WR      BIT     0B0H.6
+ 00C8.1                  64     C_T2    BIT     0C8H.1
+ 0080.0                  65     SPI_CTRL_BUSY   BIT     080H.0
+ 00B7                    66     PEDMA_LEN       DATA    0B7H
+ 00E8.4                  67     EWDI    BIT     0E8H.4
+ 00C8.5                  68     RCLK    BIT     0C8H.5
+ 00B2                    69     SPI_S_WCMD      DATA    0B2H
+ 0091                    70     EXIF    DATA    091H
+ 00C8.4                  71     TCLK    BIT     0C8H.4
+ 0087                    72     PCON    DATA    087H
+ 0096                    73     FLASH_MSB       DATA    096H
+ 0089                    74     TMOD    DATA    089H
+ 0088                    75     TCON    DATA    088H
+ 00F8.4                  76     PWDI    BIT     0F8H.4
+ 009E                    77     SPI_S_ACCESS    DATA    09EH
+ 00B3                    78     PEDMA_E_ADDR0   DATA    0B3H
+ 00B4                    79     PEDMA_E_ADDR1   DATA    0B4H
+ 0088.1                  80     IE0     BIT     088H.1
+ 0088.3                  81     IE1     BIT     088H.3
+ 00BB                    82     SSIO    DATA    0BBH
+ 00BA                    83     SSPH    DATA    0BAH
+ 00F0                    84     B       DATA    0F0H
+ 00B9                    85     SSPL    DATA    0B9H
+ 00C8.0                  86     CP_RL2  BIT     0C8H.0
+ 00B5                    87     PEDMA_P_ADDR0   DATA    0B5H
+ 00E0                    88     ACC     DATA    0E0H
+ 00B6                    89     PEDMA_P_ADDR1   DATA    0B6H
+ 00A8.4                  90     ES0     BIT     0A8H.4
+ 00A8.1                  91     ET0     BIT     0A8H.1
+ 00A8.6                  92     ES1     BIT     0A8H.6
+ 00BC                    93     SPI_DSEL_CYCLE  DATA    0BCH
+ 00A2                    94     INDACC_ADDR_H   DATA    0A2H
+ 00A8.3                  95     ET1     BIT     0A8H.3
+ 0088.5                  96     TF0     BIT     088H.5
+ 00A8.5                  97     ET2     BIT     0A8H.5
+ 0088.7                  98     TF1     BIT     088H.7
+ 0098.2                  99     RB8     BIT     098H.2
+ 008C                   100     TH0     DATA    08CH
+ 00C0.0                 101     RI1     BIT     0C0H.0
+ 00C8.7                 102     TF2     BIT     0C8H.7
+ 00AC                   103     SPI_S_DATA0     DATA    0ACH
+ 00A8.0                 104     EX0     BIT     0A8H.0
+ 0088.0                 105     IT0     BIT     088H.0
+ 008D                   106     TH1     DATA    08DH
+ 00AD                   107     SPI_S_DATA1     DATA    0ADH
+ 00A9                   108     SPI_S_ADDR0     DATA    0A9H
+ 00A3                   109     INDACC_ADDR_L   DATA    0A3H
+ 0098.3                 110     TB8     BIT     098H.3
+ 00A8.2                 111     EX1     BIT     0A8H.2
+ 0088.2                 112     IT1     BIT     088H.2
+ 00C0.1                 113     TI1     BIT     0C0H.1
+ 00AE                   114     SPI_S_DATA2     DATA    0AEH
+ 00AA                   115     SPI_S_ADDR1     DATA    0AAH
+ 00CD                   116     TH2     DATA    0CDH
+ 00D0.0                 117     P       BIT     0D0H.0
+ 00E8.0                 118     EX2     BIT     0E8H.0
+ 00AF                   119     SPI_S_DATA3     DATA    0AFH
+ 00AB                   120     SPI_S_ADDR2     DATA    0ABH
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     3
+
+ 0098.7                 121     SM0     BIT     098H.7
+ 008A                   122     TL0     DATA    08AH
+ 00E8.1                 123     EX3     BIT     0E8H.1
+ 0098.6                 124     SM1     BIT     098H.6
+ 008B                   125     TL1     DATA    08BH
+ 00E8.2                 126     EX4     BIT     0E8H.2
+ 0098.5                 127     SM2     BIT     098H.5
+ 00E8.3                 128     EX5     BIT     0E8H.3
+ 00CC                   129     TL2     DATA    0CCH
+ 00B8.4                 130     PS0     BIT     0B8H.4
+ 00E8                   131     EIE     DATA    0E8H
+ 00B8.1                 132     PT0     BIT     0B8H.1
+ 00B8.6                 133     PS1     BIT     0B8H.6
+ 00B8.3                 134     PT1     BIT     0B8H.3
+ 00D0.3                 135     RS0     BIT     0D0H.3
+ 008E                   136     SYNC_CTRL       DATA    08EH
+ 0093                   137     GPIO_E  DATA    093H
+ 00B8.5                 138     PT2     BIT     0B8H.5
+ 0088.4                 139     TR0     BIT     088H.4
+ 00D0.4                 140     RS1     BIT     0D0H.4
+ 0088.6                 141     TR1     BIT     088H.6
+ 00B8.0                 142     PX0     BIT     0B8H.0
+ 00C8.2                 143     TR2     BIT     0C8H.2
+ 00B8.2                 144     PX1     BIT     0B8H.2
+ 00A0                   145     INDACC_CMD      DATA    0A0H
+ 0095                   146     GPIO_I  DATA    095H
+ 00F8.0                 147     PX2     BIT     0F8H.0
+ 00F8.1                 148     PX3     BIT     0F8H.1
+ 0083                   149     DPH     DATA    083H
+ 00F8.2                 150     PX4     BIT     0F8H.2
+ 00F8.3                 151     PX5     BIT     0F8H.3
+ 00F8                   152     EIP     DATA    0F8H
+ 0094                   153     GPIO_O  DATA    094H
+ 0082                   154     DPL     DATA    082H
+ 0099                   155     SBUF0   DATA    099H
+ 00C1                   156     SBUF1   DATA    0C1H
+ 00C8.3                 157     EXEN2   BIT     0C8H.3
+ 0098                   158     SCON0   DATA    098H
+ 0098.4                 159     REN     BIT     098H.4
+ 00C0                   160     SCON1   DATA    0C0H
+ 00C8                   161     T2CON   DATA    0C8H
+ 0086                   162     DPS     DATA    086H
+ 00A1                   163     INDACC_STATUS   DATA    0A1H
+ 0080                   164     CACHE_CRTL      DATA    080H
+ 009A                   165     SPI_IO_CONF     DATA    09AH
+ 00D8                   166     EICON   DATA    0D8H
+ 008E                   167     CKCON   DATA    08EH
+ 009B                   168     SPI_RI_CONF     DATA    09BH
+ 00D0.5                 169     F0      BIT     0D0H.5
+ 00D0                   170     PSW     DATA    0D0H
+ 00C0.2                 171     RB81    BIT     0C0H.2
+------                  172     ?PR?_check_header?CHECK_BOOT             SEGMENT CODE 
+------                  173     ?XD?_check_header?CHECK_BOOT             SEGMENT XDATA OVERLAYABLE
+------                  174     ?PR?_sum_up_payload?CHECK_BOOT           SEGMENT CODE 
+------                  175     ?XD?_sum_up_payload?CHECK_BOOT           SEGMENT XDATA OVERLAYABLE
+------                  176     ?PR?_check_boot?CHECK_BOOT               SEGMENT CODE 
+------                  177     ?XD?_check_boot?CHECK_BOOT               SEGMENT XDATA OVERLAYABLE
+------                  178     ?PR?get_runtime_header?CHECK_BOOT        SEGMENT CODE 
+------                  179     ?PR?_print_runtime_header?CHECK_BOOT     SEGMENT CODE 
+------                  180     ?XD?_print_runtime_header?CHECK_BOOT     SEGMENT XDATA OVERLAYABLE
+------                  181     ?FC?CHECK_BOOT       SEGMENT HCONST INSEG 
+------                  182     ?XD?CHECK_BOOT       SEGMENT XDATA 
+                        183             EXTRN   CODE (_printf)
+                        184             EXTRN   XDATA (?_printf?BYTE)
+                        185             EXTRN   CODE (?C?PSTXDATA)
+                        186             EXTRN   CODE (?C?LLDPTR)
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     4
+
+                        187             EXTRN   CODE (?C?ULCMP)
+                        188             EXTRN   CODE (?C?LSTXDATA)
+                        189             EXTRN   CODE (?C?PLDXDATA)
+                        190             EXTRN   CODE (?C?LSTPTR)
+                        191             EXTRN   CODE (?C?LLDXDATA0)
+                        192             EXTRN   CODE (?C?CLDPTR)
+                        193             EXTRN   CODE (?C?LADD)
+                        194             EXTRN   CODE (?C?IILDX)
+                        195             EXTRN   CODE (?C?LLDXDATA)
+                        196             EXTRN   CODE (?C?ICALL)
+                        197             EXTRN   CODE (?C?LLDCODE)
+                        198             PUBLIC  _print_runtime_header
+                        199             PUBLIC  get_runtime_header
+                        200             PUBLIC  _check_boot
+                        201             PUBLIC  _check_header
+                        202     
+------                  203             RSEG  ?XD?_check_boot?CHECK_BOOT
+000000                  204     ?_check_boot?BYTE:
+000000                  205       to_bootup?248:   DS   1
+000001                  206             ORG  1
+000001                  207             sum?249:   DS   4
+000005                  208             ORG  5
+000005                  209      org_chksum?250:   DS   4
+000009                  210             ORG  9
+000009                  211      org_length?251:   DS   4
+00000D                  212             ORG  13
+00000D                  213        irom_sum?252:   DS   4
+000011                  214             ORG  17
+000011                  215      banked_sum?253:   DS   4
+000015                  216             ORG  21
+000015                  217               i?254:   DS   2
+000017                  218             ORG  23
+000017                  219          u8_ptr?255:   DS   2
+000019                  220             ORG  25
+000019                  221     u8_code_ptr?256:   DS   2
+                        222     
+------                  223             RSEG  ?XD?_check_header?CHECK_BOOT
+000000                  224     ?_check_header?BYTE:
+000000                  225             sum?041:   DS   4
+000004                  226             ORG  4
+000004                  227      org_chksum?042:   DS   4
+000008                  228             ORG  8
+000008                  229               i?043:   DS   2
+00000A                  230             ORG  10
+00000A                  231          u8_ptr?044:   DS   3
+00000D                  232             ORG  13
+00000D                  233       rt_header?045:   DS   3
+                        234     
+------                  235             RSEG  ?XD?_print_runtime_header?CHECK_BOOT
+000000                  236     ?_print_runtime_header?BYTE:
+000000                  237               p?458:   DS   3
+000003                  238             ORG  3
+000003                  239               q?459:   DS   3
+                        240     
+------                  241             RSEG  ?XD?_sum_up_payload?CHECK_BOOT
+000000                  242     ?_sum_up_payload?BYTE:
+000000                  243             len?146:   DS   4
+000004                  244             ORG  4
+000004                  245             sum?147:   DS   4
+                        246     
+------                  247             RSEG  ?XD?CHECK_BOOT
+000000                  248           rt_header:   DS   20
+                        249     
+------                  250             RSEG  ?FC?CHECK_BOOT
+000000                  251     ?SC_0:
+000000 20202020         252             DB  ' ' ,' ' ,' ' ,' ' ,'H' ,'d' ,'r' ,' ' ,'C' ,'h' 
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     5
+
+000004 48647220                 
+000008 4368                     
+00000A 6B73756D         253             DB  'k' ,'s' ,'u' ,'m' ,' ' ,'E' ,'r' ,'r' ,'o' ,'r' 
+00000E 20457272                 
+000012 6F72                     
+000014 0A00             254             DB  00AH,000H
+                        255     
+000016                  256     ?SC_22:
+000016 20202020         257             DB  ' ' ,' ' ,' ' ,' ' ,'P' ,'a' ,'y' ,'L' ,'o' ,'a' 
+00001A 5061794C                 
+00001E 6F61                     
+000020 64204368         258             DB  'd' ,' ' ,'C' ,'h' ,'k' ,'s' ,'u' ,'m' ,' ' ,'E' 
+000024 6B73756D                 
+000028 2045                     
+00002A 72726F72         259             DB  'r' ,'r' ,'o' ,'r' ,00AH,000H
+00002E 0A00                     
+                        260     
+000030                  261     ?SC_48:
+000030 20202020         262             DB  ' ' ,' ' ,' ' ,' ' ,'C' ,'h' ,'k' ,'s' ,'u' ,'m' 
+000034 43686B73                 
+000038 756D                     
+00003A 20436F72         263             DB  ' ' ,'C' ,'o' ,'r' ,'r' ,'e' ,'c' ,'t' ,'!' ,00AH
+00003E 72656374                 
+000042 210A                     
+000044 00               264             DB  000H
+                        265     
+000045                  266     ?SC_69:
+000045 20202020         267             DB  ' ' ,' ' ,' ' ,' ' ,'R' ,'u' ,'n' ,'T' ,'i' ,'m' 
+000049 52756E54                 
+00004D 696D                     
+00004F 65204B65         268             DB  'e' ,' ' ,'K' ,'e' ,'r' ,'n' ,'e' ,'l' ,' ' ,'S' 
+000053 726E656C                 
+000057 2053                     
+000059 74617274         269             DB  't' ,'a' ,'r' ,'t' ,'i' ,'n' ,'g' ,'.' ,'.' ,'.' 
+00005D 696E672E                 
+000061 2E2E                     
+000063 2E20200A         270             DB  '.' ,' ' ,' ' ,00AH,000H
+000067 00                       
+                        271     
+000068                  272     ?SC_104:
+000068 20202020         273             DB  ' ' ,' ' ,' ' ,' ' ,'m' ,'a' ,'g' ,'i' ,'c' ,'_' 
+00006C 6D616769                 
+000070 635F                     
+000072 6E756D62         274             DB  'n' ,'u' ,'m' ,'b' ,'e' ,'r' ,':' ,' ' ,' ' ,'0' 
+000076 65723A20                 
+00007A 2030                     
+00007C 78253038         275             DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+000080 6C780A00                 
+                        276     
+000084                  277     ?SC_132:
+000084 20202020         278             DB  ' ' ,' ' ,' ' ,' ' ,'l' ,'e' ,'n' ,'g' ,'t' ,'h' 
+000088 6C656E67                 
+00008C 7468                     
+00008E 3A202020         279             DB  ':' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,'0' 
+000092 20202020                 
+000096 2030                     
+000098 78253038         280             DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,' ' ,'(' ,'%' ,'l' 
+00009C 6C782028                 
+0000A0 256C                     
+0000A2 64290A00         281             DB  'd' ,')' ,00AH,000H
+                        282     
+0000A6                  283     ?SC_166:
+0000A6 20202020         284             DB  ' ' ,' ' ,' ' ,' ' ,'h' ,'e' ,'a' ,'d' ,'e' ,'r' 
+0000AA 68656164                 
+0000AE 6572                     
+0000B0 5F63686B         285             DB  '_' ,'c' ,'h' ,'k' ,'s' ,'u' ,'m' ,':' ,' ' ,'0' 
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     6
+
+0000B4 73756D3A                 
+0000B8 2030                     
+0000BA 78253038         286             DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+0000BE 6C780A00                 
+                        287     
+0000C2                  288     ?SC_194:
+0000C2 20202020         289             DB  ' ' ,' ' ,' ' ,' ' ,'p' ,'a' ,'y' ,'l' ,'o' ,'a' 
+0000C6 7061796C                 
+0000CA 6F61                     
+0000CC 645F6368         290             DB  'd' ,'_' ,'c' ,'h' ,'k' ,'s' ,'u' ,'m' ,':' ,'0' 
+0000D0 6B73756D                 
+0000D4 3A30                     
+0000D6 78253038         291             DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+0000DA 6C780A00                 
+                        292     
+0000DE                  293     ?SC_222:
+0000DE 20202020         294             DB  ' ' ,' ' ,' ' ,' ' ,'r' ,'e' ,'s' ,'e' ,'r' ,'v' 
+0000E2 72657365                 
+0000E6 7276                     
+0000E8 65643A20         295             DB  'e' ,'d' ,':' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,'0' 
+0000EC 20202020                 
+0000F0 2030                     
+0000F2 78253038         296             DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+0000F6 6C780A00                 
+                        297     
+                        298     ; #pragma STRING (far)
+                        299     ; 
+                        300     ; #include <local/config.h>
+                        301     ; #include <reg_sfr.h>
+                        302     ; 
+                        303     ; #include <common.h>
+                        304     ; #include <asicreg.h>
+                        305     ; #include <image.h>
+                        306     ; 
+                        307     ; #include <stdio.h>
+                        308     ; 
+                        309     ; 
+                        310     ; typedef void (*rt_entry)(void);
+                        311     ; void print_runtime_header(void *p);
+                        312     ; void *get_runtime_header(void);
+                        313     ; u8_t check_header(u8_t *hdr_adr){
+                        314     
+------                  315             RSEG  ?PR?_check_header?CHECK_BOOT
+000000                  316     _check_header:
+                        317             USING   0
+                        318                             ; SOURCE LINE # 16
+                        319     ;---- Variable 'hdr_adr?040' assigned to Register 'R1/R2/R3' ----
+                        320     ;       u32_t sum, org_chksum;
+                        321     ;       u16_t i;
+                        322     ;       u8_t *u8_ptr;
+                        323     ;       runTimeImageHeader_t *rt_header = (runTimeImageHeader_t *)hdr_adr;
+                        324                             ; SOURCE LINE # 20
+000000 900000     F     325             MOV     DPTR,#rt_header?045
+000003 120000     E     326             LCALL   ?C?PSTXDATA
+                        327     ; 
+                        328     ;       /* Check Magic Number */
+                        329     ;       if( RUNTIME_MAGIC_NUMBER!=rt_header->magic_number ){
+                        330                             ; SOURCE LINE # 23
+000006 120000     E     331             LCALL   ?C?LLDPTR
+000009 7B78             332             MOV     R3,#078H
+00000B 7A56             333             MOV     R2,#056H
+00000D 7934             334             MOV     R1,#034H
+00000F 7812             335             MOV     R0,#012H
+000011 C3               336             CLR     C
+000012 120000     E     337             LCALL   ?C?ULCMP
+000015 6003             338             JZ      ?C0001
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     7
+
+                        339     ;               /* TBC Magic Number Error */
+                        340     ;               return 1;
+                        341                             ; SOURCE LINE # 25
+000017 7F01             342             MOV     R7,#01H
+000019 22               343             RET     
+                        344     ;       }
+                        345                             ; SOURCE LINE # 26
+00001A                  346     ?C0001:
+                        347     ; 
+                        348     ;       /* Check Header Checksum */
+                        349     ;       sum = 0;
+                        350                             ; SOURCE LINE # 29
+00001A E4               351             CLR     A
+00001B FF               352             MOV     R7,A
+00001C FE               353             MOV     R6,A
+00001D FD               354             MOV     R5,A
+00001E FC               355             MOV     R4,A
+00001F 900000     F     356             MOV     DPTR,#sum?041
+000022 120000     E     357             LCALL   ?C?LSTXDATA
+                        358     ;       u8_ptr = (u8_t*)rt_header;
+                        359                             ; SOURCE LINE # 30
+000025 900000     F     360             MOV     DPTR,#rt_header?045
+000028 120000     E     361             LCALL   ?C?PLDXDATA
+00002B 900000     F     362             MOV     DPTR,#u8_ptr?044
+00002E 120000     E     363             LCALL   ?C?PSTXDATA
+                        364     ;       org_chksum = rt_header->header_chksum;
+                        365                             ; SOURCE LINE # 31
+000031 900000     F     366             MOV     DPTR,#rt_header?045
+000034 120000     E     367             LCALL   ?C?PLDXDATA
+000037 E9               368             MOV     A,R1
+000038 2408             369             ADD     A,#08H
+00003A F9               370             MOV     R1,A
+00003B E4               371             CLR     A
+00003C 3A               372             ADDC    A,R2
+00003D FA               373             MOV     R2,A
+00003E 120000     E     374             LCALL   ?C?LLDPTR
+000041 900000     F     375             MOV     DPTR,#org_chksum?042
+000044 120000     E     376             LCALL   ?C?LSTXDATA
+                        377     ;       rt_header->header_chksum = 0;
+                        378                             ; SOURCE LINE # 32
+000047 E4               379             CLR     A
+000048 FF               380             MOV     R7,A
+000049 FE               381             MOV     R6,A
+00004A FD               382             MOV     R5,A
+00004B FC               383             MOV     R4,A
+00004C 120000     E     384             LCALL   ?C?LSTPTR
+                        385     ; 
+                        386     ;       for (i=0; i<sizeof(runTimeImageHeader_t); i++, u8_ptr++){
+                        387                             ; SOURCE LINE # 34
+00004F E4               388             CLR     A
+000050 900000     F     389             MOV     DPTR,#i?043
+000053 F0               390             MOVX    @DPTR,A
+000054 A3               391             INC     DPTR
+000055 F0               392             MOVX    @DPTR,A
+000056                  393     ?C0003:
+000056 C3               394             CLR     C
+000057 900000     F     395             MOV     DPTR,#i?043+01H
+00005A E0               396             MOVX    A,@DPTR
+00005B 9414             397             SUBB    A,#014H
+00005D 900000     F     398             MOV     DPTR,#i?043
+000060 E0               399             MOVX    A,@DPTR
+000061 9400             400             SUBB    A,#00H
+000063 503F             401             JNC     ?C0004
+                        402     ;               sum += *u8_ptr;
+                        403                             ; SOURCE LINE # 35
+000065 900000     F     404             MOV     DPTR,#sum?041
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     8
+
+000068 120000     E     405             LCALL   ?C?LLDXDATA0
+00006B C001             406             PUSH    AR1
+00006D C002             407             PUSH    AR2
+00006F C003             408             PUSH    AR3
+000071 900000     F     409             MOV     DPTR,#u8_ptr?044
+000074 120000     E     410             LCALL   ?C?PLDXDATA
+000077 120000     E     411             LCALL   ?C?CLDPTR
+00007A FF               412             MOV     R7,A
+00007B E4               413             CLR     A
+00007C FC               414             MOV     R4,A
+00007D FD               415             MOV     R5,A
+00007E FE               416             MOV     R6,A
+00007F D003             417             POP     AR3
+000081 D002             418             POP     AR2
+000083 D001             419             POP     AR1
+000085 120000     E     420             LCALL   ?C?LADD
+000088 900000     F     421             MOV     DPTR,#sum?041
+00008B 120000     E     422             LCALL   ?C?LSTXDATA
+                        423     ;       }
+                        424                             ; SOURCE LINE # 36
+00008E 900000     F     425             MOV     DPTR,#i?043
+000091 E4               426             CLR     A
+000092 75F001           427             MOV     B,#01H
+000095 120000     E     428             LCALL   ?C?IILDX
+000098 900000     F     429             MOV     DPTR,#u8_ptr?044+01H
+00009B E4               430             CLR     A
+00009C 75F001           431             MOV     B,#01H
+00009F 120000     E     432             LCALL   ?C?IILDX
+0000A2 80B2             433             SJMP    ?C0003
+0000A4                  434     ?C0004:
+                        435     ;       
+                        436     ;       if( org_chksum!=sum ){
+                        437                             ; SOURCE LINE # 38
+0000A4 900000     F     438             MOV     DPTR,#sum?041
+0000A7 120000     E     439             LCALL   ?C?LLDXDATA
+0000AA 900000     F     440             MOV     DPTR,#org_chksum?042
+0000AD 120000     E     441             LCALL   ?C?LLDXDATA0
+0000B0 C3               442             CLR     C
+0000B1 120000     E     443             LCALL   ?C?ULCMP
+0000B4 6003             444             JZ      ?C0006
+                        445     ;               /* TBC header_chksum Error */
+                        446     ;               return 1;
+                        447                             ; SOURCE LINE # 40
+0000B6 7F01             448             MOV     R7,#01H
+0000B8 22               449             RET     
+                        450     ;       }
+                        451                             ; SOURCE LINE # 41
+0000B9                  452     ?C0006:
+                        453     ;       rt_header->header_chksum = org_chksum;
+                        454                             ; SOURCE LINE # 42
+0000B9 900000     F     455             MOV     DPTR,#org_chksum?042
+0000BC 120000     E     456             LCALL   ?C?LLDXDATA
+0000BF 900000     F     457             MOV     DPTR,#rt_header?045
+0000C2 120000     E     458             LCALL   ?C?PLDXDATA
+0000C5 E9               459             MOV     A,R1
+0000C6 2408             460             ADD     A,#08H
+0000C8 F9               461             MOV     R1,A
+0000C9 E4               462             CLR     A
+0000CA 3A               463             ADDC    A,R2
+0000CB FA               464             MOV     R2,A
+0000CC 120000     E     465             LCALL   ?C?LSTPTR
+                        466     ; 
+                        467     ;       return 0;
+                        468                             ; SOURCE LINE # 44
+0000CF 7F00             469             MOV     R7,#00H
+                        470     ; }
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE     9
+
+                        471                             ; SOURCE LINE # 45
+0000D1                  472     ?C0002:
+0000D1 22               473             RET     
+                        474     ; END OF _check_header
+                        475     
+                        476     ; 
+                        477     ; 
+                        478     ; 
+                        479     ; // this function should be in irom
+                        480     ; static uint32 sum_up_payload(uint32 len) large {
+                        481     
+------                  482             RSEG  ?PR?_sum_up_payload?CHECK_BOOT
+000000                  483     _sum_up_payload:
+                        484             USING   0
+                        485                             ; SOURCE LINE # 50
+000000 900000     F     486             MOV     DPTR,#len?146
+000003 120000     E     487             LCALL   ?C?LSTXDATA
+                        488     ;     uint32 sum=0;
+                        489                             ; SOURCE LINE # 51
+000006 E4               490             CLR     A
+000007 FF               491             MOV     R7,A
+000008 FE               492             MOV     R6,A
+000009 FD               493             MOV     R5,A
+00000A FC               494             MOV     R4,A
+00000B 900000     F     495             MOV     DPTR,#sum?147
+00000E 120000     E     496             LCALL   ?C?LSTXDATA
+                        497     ;     
+                        498     ;     #pragma asm
+                        499     ;         PUSH    CODE_BANK
+000011 C096             500               PUSH    CODE_BANK
+                        501     ;         MOV     CODE_BANK, #(RUNTIME_HEADER_BANK)
+000013 759603           502               MOV     CODE_BANK, #((0x03))
+000016                  503     ?C0007:
+                        504     ;     #pragma endasm
+                        505     ;     
+                        506     ;     while(len>=BANK_SIZE) {
+                        507                             ; SOURCE LINE # 58
+000016 E4               508             CLR     A
+000017 FF               509             MOV     R7,A
+000018 7EC0             510             MOV     R6,#0C0H
+00001A FD               511             MOV     R5,A
+00001B FC               512             MOV     R4,A
+00001C 900000     F     513             MOV     DPTR,#len?146
+00001F 120000     E     514             LCALL   ?C?LLDXDATA0
+000022 C3               515             CLR     C
+000023 120000     E     516             LCALL   ?C?ULCMP
+000026 5003             517             JNC     $ + 5H
+000028 020000     F     518             LJMP    ?C0008
+                        519     ;         #pragma asm
+                        520     ;             // R4/R5/R6: sum (R4: LSB, R6: MSB)
+                        521               
+                        522     ;             CLR     A
+00002B E4               523               CLR     A
+                        524     ;             MOV     R4, A
+00002C FC               525               MOV     R4, A
+                        526     ;             MOV     R5, A
+00002D FD               527               MOV     R5, A
+                        528     ;             MOV     R6, A
+00002E FE               529               MOV     R6, A
+                        530     ;             MOV     DPTR, #(IROM_size)
+00002F 904000           531               MOV     DPTR, #((16*1024))
+                        532     ;             // do {
+                        533               
+                        534     ; ?sumup_002:
+000032                  535               ?sumup_002:
+                        536     ;                 // R0:R1: sub-sum (R0: LSB, R1: MSB)
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    10
+
+                        537               
+                        538     ;                 // R2: 8-bit counter 
+                        539               
+                        540     ;                 CLR     A
+000032 E4               541               CLR     A
+                        542     ;                 MOV     R0, A
+000033 F8               543               MOV     R0, A
+                        544     ;                 MOV     R1, A
+000034 F9               545               MOV     R1, A
+                        546     ;                 MOV     R2, A
+000035 FA               547               MOV     R2, A
+                        548     ;     
+                        549               
+                        550     ;                 // do {(R0:R1) += *(dptr++); R2++;} while(R2!=0);
+                        551               
+                        552     ; ?sumup_003:
+000036                  553               ?sumup_003:
+                        554     ;                     CLR     A
+000036 E4               555               CLR     A
+                        556     ;                     MOVC    A, @A+DPTR
+000037 93               557               MOVC    A, @A+DPTR
+                        558     ;                     ADD     A, R0
+000038 28               559               ADD     A, R0
+                        560     ;                     MOV     R0, A
+000039 F8               561               MOV     R0, A
+                        562     ;                     CLR     A
+00003A E4               563               CLR     A
+                        564     ;                     ADDC    A, R1
+00003B 39               565               ADDC    A, R1
+                        566     ;                     MOV     R1, A
+00003C F9               567               MOV     R1, A
+                        568     ;                     INC     DPTR
+00003D A3               569               INC     DPTR
+                        570     ;                     DJNZ    R2, ?sumup_003
+00003E DAF6             571               DJNZ    R2, ?sumup_003
+                        572     ;                 
+                        573               
+                        574     ;                 // (R4:R5:R6) += (R0:R1)
+                        575               
+                        576     ;                 MOV     A, R0
+000040 E8               577               MOV     A, R0
+                        578     ;                 ADD     A, R4
+000041 2C               579               ADD     A, R4
+                        580     ;                 MOV     R4, A
+000042 FC               581               MOV     R4, A
+                        582     ;                 MOV     A, R1
+000043 E9               583               MOV     A, R1
+                        584     ;                 ADDC    A, R5
+000044 3D               585               ADDC    A, R5
+                        586     ;                 MOV     R5, A
+000045 FD               587               MOV     R5, A
+                        588     ;                 CLR     A
+000046 E4               589               CLR     A
+                        590     ;                 ADDC    A, R6
+000047 3E               591               ADDC    A, R6
+                        592     ;                 MOV     R6, A
+000048 FE               593               MOV     R6, A
+                        594     ;             
+                        595               
+                        596     ;             // while (dptr!=0);
+                        597               
+                        598     ;             MOV     A, DPH
+000049 E583             599               MOV     A, DPH
+                        600     ;             JNZ     ?sumup_002
+00004B 70E5             601               JNZ     ?sumup_002
+                        602     ;             
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    11
+
+                        603               
+                        604     ;             // sum += (R4:R5:R6)
+                        605               
+                        606     ;             MOV     DPTR, #(sum?147 + 3)
+00004D 900000     F     607               MOV     DPTR, #(sum?147 + 3)
+                        608     ;             MOVX    A, @DPTR
+000050 E0               609               MOVX    A, @DPTR
+                        610     ;             ADD     A, R4
+000051 2C               611               ADD     A, R4
+                        612     ;             MOVX    @DPTR, A
+000052 F0               613               MOVX    @DPTR, A
+                        614     ;             MOV     DPTR, #(sum?147 + 2)
+000053 900000     F     615               MOV     DPTR, #(sum?147 + 2)
+                        616     ;             MOVX    A, @DPTR
+000056 E0               617               MOVX    A, @DPTR
+                        618     ;             ADDC    A, R5
+000057 3D               619               ADDC    A, R5
+                        620     ;             MOVX    @DPTR, A
+000058 F0               621               MOVX    @DPTR, A
+                        622     ;             MOV     DPTR, #(sum?147 + 1)
+000059 900000     F     623               MOV     DPTR, #(sum?147 + 1)
+                        624     ;             MOVX    A, @DPTR
+00005C E0               625               MOVX    A, @DPTR
+                        626     ;             ADDC    A, R6
+00005D 3E               627               ADDC    A, R6
+                        628     ;             MOVX    @DPTR, A
+00005E F0               629               MOVX    @DPTR, A
+                        630     ;             MOV     DPTR, #(sum?147 + 0)
+00005F 900000     F     631               MOV     DPTR, #(sum?147 + 0)
+                        632     ;             MOVX    A, @DPTR
+000062 E0               633               MOVX    A, @DPTR
+                        634     ;             ADDC    A, #0
+000063 3400             635               ADDC    A, #0
+                        636     ;             MOVX    @DPTR, A
+000065 F0               637               MOVX    @DPTR, A
+                        638     ;             
+                        639               
+                        640     ;             MOV     A, CODE_BANK 
+000066 E596             641               MOV     A, CODE_BANK 
+                        642     ;             INC     A
+000068 04               643               INC     A
+                        644     ;             MOV     CODE_BANK, A
+000069 F596             645               MOV     CODE_BANK, A
+                        646     ;         #pragma endasm
+                        647     ;         len -= BANK_SIZE;
+                        648                             ; SOURCE LINE # 124
+00006B 900000     F     649             MOV     DPTR,#len?146
+00006E 120000     E     650             LCALL   ?C?LLDXDATA
+000071 C3               651             CLR     C
+000072 EF               652             MOV     A,R7
+000073 9400             653             SUBB    A,#00H
+000075 FF               654             MOV     R7,A
+000076 EE               655             MOV     A,R6
+000077 94C0             656             SUBB    A,#0C0H
+000079 FE               657             MOV     R6,A
+00007A ED               658             MOV     A,R5
+00007B 9400             659             SUBB    A,#00H
+00007D FD               660             MOV     R5,A
+00007E EC               661             MOV     A,R4
+00007F 9400             662             SUBB    A,#00H
+000081 FC               663             MOV     R4,A
+000082 900000     F     664             MOV     DPTR,#len?146
+000085 120000     E     665             LCALL   ?C?LSTXDATA
+                        666     ;     }        
+                        667                             ; SOURCE LINE # 125
+000088 020000     F     668             LJMP    ?C0007
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    12
+
+00008B                  669     ?C0008:
+                        670     ;     #pragma asm    
+                        671     ;         // (R0:R1)=(unsigned int)len;
+                        672               
+                        673     ;         MOV     DPTR, #(len?146 + 2)
+00008B 900000     F     674               MOV     DPTR, #(len?146 + 2)
+                        675     ;         MOVX    A, @DPTR
+00008E E0               676               MOVX    A, @DPTR
+                        677     ;         MOV     R1, A
+00008F F9               678               MOV     R1, A
+                        679     ;         INC     DPTR
+000090 A3               680               INC     DPTR
+                        681     ;         MOVX    A, @DPTR
+000091 E0               682               MOVX    A, @DPTR
+                        683     ;         MOV     R0, A
+000092 F8               684               MOV     R0, A
+                        685     ;         
+                        686               
+                        687     ;         // (R4:R5:R6:R7)=sum
+                        688               
+                        689     ;         MOV     DPTR, #(sum?147)
+000093 900000     F     690               MOV     DPTR, #(sum?147)
+                        691     ;         MOVX    A, @DPTR
+000096 E0               692               MOVX    A, @DPTR
+                        693     ;         MOV     R7, A
+000097 FF               694               MOV     R7, A
+                        695     ;         INC     DPTR
+000098 A3               696               INC     DPTR
+                        697     ;         MOVX    A, @DPTR
+000099 E0               698               MOVX    A, @DPTR
+                        699     ;         MOV     R6, A
+00009A FE               700               MOV     R6, A
+                        701     ;         INC     DPTR
+00009B A3               702               INC     DPTR
+                        703     ;         MOVX    A, @DPTR
+00009C E0               704               MOVX    A, @DPTR
+                        705     ;         MOV     R5, A
+00009D FD               706               MOV     R5, A
+                        707     ;         INC     DPTR
+00009E A3               708               INC     DPTR
+                        709     ;         MOVX    A, @DPTR
+00009F E0               710               MOVX    A, @DPTR
+                        711     ;         MOV     R4, A
+0000A0 FC               712               MOV     R4, A
+                        713     ;         
+                        714               
+                        715     ;         // DPTR=IROM
+                        716               
+                        717     ;         MOV     DPTR, #(IROM_size)
+0000A1 904000           718               MOV     DPTR, #((16*1024))
+                        719     ;         
+                        720               
+                        721     ;         // while ((len--)!=0) {
+                        722               
+                        723     ; ?sumup_012:
+0000A4                  724               ?sumup_012:
+                        725     ;         MOV     A, R0
+0000A4 E8               726               MOV     A, R0
+                        727     ;         ORL     A, R1
+0000A5 49               728               ORL     A, R1
+                        729     ;         JZ      ?sumup_011
+0000A6 6015             730               JZ      ?sumup_011
+                        731     ;         DEC     R0
+0000A8 18               732               DEC     R0
+                        733     ;         CJNE    R0, #(0xFF), ?sumup_013
+0000A9 B8FF01           734               CJNE    R0, #(0xFF), ?sumup_013
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    13
+
+                        735     ;         DEC     R1
+0000AC 19               736               DEC     R1
+                        737     ; ?sumup_013:
+0000AD                  738               ?sumup_013:
+                        739     ;         //      sum += *(dptr++)
+                        740               
+                        741     ;             CLR     A
+0000AD E4               742               CLR     A
+                        743     ;             MOVC    A, @A+DPTR
+0000AE 93               744               MOVC    A, @A+DPTR
+                        745     ;             ADD     A, R4
+0000AF 2C               746               ADD     A, R4
+                        747     ;             MOV     R4, A
+0000B0 FC               748               MOV     R4, A
+                        749     ;             CLR     A
+0000B1 E4               750               CLR     A
+                        751     ;             ADDC    A, R5
+0000B2 3D               752               ADDC    A, R5
+                        753     ;             MOV     R5, A
+0000B3 FD               754               MOV     R5, A
+                        755     ;             CLR     A
+0000B4 E4               756               CLR     A
+                        757     ;             ADDC    A, R6
+0000B5 3E               758               ADDC    A, R6
+                        759     ;             MOV     R6, A
+0000B6 FE               760               MOV     R6, A
+                        761     ;             CLR     A
+0000B7 E4               762               CLR     A
+                        763     ;             ADDC    A, R7
+0000B8 3F               764               ADDC    A, R7
+                        765     ;             MOV     R7, A
+0000B9 FF               766               MOV     R7, A
+                        767     ;             
+                        768               
+                        769     ;             INC     DPTR
+0000BA A3               770               INC     DPTR
+                        771     ;         // }
+                        772               
+                        773     ;         SJMP    ?sumup_012
+0000BB 80E7             774               SJMP    ?sumup_012
+                        775     ; ?sumup_011:
+0000BD                  776               ?sumup_011:
+                        777     ;         
+                        778               
+                        779     ;         // sum=(R4:R5:R6:R7)
+                        780               
+                        781     ;         MOV     DPTR, #(sum?147)
+0000BD 900000     F     782               MOV     DPTR, #(sum?147)
+                        783     ;         MOV     A, R7
+0000C0 EF               784               MOV     A, R7
+                        785     ;         MOVX    @DPTR, A
+0000C1 F0               786               MOVX    @DPTR, A
+                        787     ;         INC     DPTR
+0000C2 A3               788               INC     DPTR
+                        789     ;         MOV     A, R6
+0000C3 EE               790               MOV     A, R6
+                        791     ;         MOVX    @DPTR, A
+0000C4 F0               792               MOVX    @DPTR, A
+                        793     ;         INC     DPTR
+0000C5 A3               794               INC     DPTR
+                        795     ;         MOV     A, R5
+0000C6 ED               796               MOV     A, R5
+                        797     ;         MOVX    @DPTR, A
+0000C7 F0               798               MOVX    @DPTR, A
+                        799     ;         INC     DPTR
+0000C8 A3               800               INC     DPTR
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    14
+
+                        801     ;         MOV     A, R4
+0000C9 EC               802               MOV     A, R4
+                        803     ;         MOVX    @DPTR, A
+0000CA F0               804               MOVX    @DPTR, A
+                        805     ;         
+                        806               
+                        807     ;         POP     CODE_BANK
+0000CB D096             808               POP     CODE_BANK
+                        809     ;     #pragma endasm    
+                        810     ;     
+                        811     ;     return sum;
+                        812                             ; SOURCE LINE # 198
+0000CD 900000     F     813             MOV     DPTR,#sum?147
+0000D0 020000     E     814             LJMP    ?C?LLDXDATA
+                        815     ; END OF _sum_up_payload
+                        816     
+                        817     ; }
+                        818     ; 
+                        819     ; 
+                        820     ; static runTimeImageHeader_t xdata rt_header ; //_at_ 0x1400;
+                        821     ; //static u8_t bank_reg_backup _at_ 0x13ff;
+                        822     ; void check_boot(uint8 to_bootup) large {
+                        823     
+------                  824             RSEG  ?PR?_check_boot?CHECK_BOOT
+000000                  825     _check_boot:
+                        826             USING   0
+                        827                             ; SOURCE LINE # 204
+000000 900000     F     828             MOV     DPTR,#to_bootup?248
+000003 EF               829             MOV     A,R7
+000004 F0               830             MOVX    @DPTR,A
+                        831     ;       u32_t sum, org_chksum, org_length, irom_sum, banked_sum;
+                        832     ;       u16_t i;
+                        833     ;       u8_t xdata *u8_ptr;
+                        834     ;       u8_t code *u8_code_ptr;
+                        835     ;       rt_entry fp;
+                        836     ;       
+                        837     ;       get_runtime_header();
+                        838                             ; SOURCE LINE # 211
+000005 120000     F     839             LCALL   get_runtime_header
+                        840     ;         //print_runtime_header(NULL);
+                        841     ;         
+                        842     ;       if ( 0!=check_header((u8_t*)&rt_header) ){
+                        843                             ; SOURCE LINE # 214
+000008 7B01             844             MOV     R3,#01H
+00000A 7A00       F     845             MOV     R2,#HIGH (rt_header)
+00000C 7900       F     846             MOV     R1,#LOW (rt_header)
+00000E 120000     F     847             LCALL   _check_header
+000011 EF               848             MOV     A,R7
+000012 6009             849             JZ      ?C0010
+                        850     ;               OSAL_PRINTF("    Hdr Chksum Error\n");
+                        851                             ; SOURCE LINE # 215
+000014 7B00       F     852             MOV     R3,#MBYTE (?SC_0)
+000016 7A00       F     853             MOV     R2,#HIGH (?SC_0)
+000018 7900       F     854             MOV     R1,#LOW (?SC_0)
+00001A 020000     F     855             LJMP    ?C0025
+                        856     ;               return ;
+                        857     ;       }
+                        858                             ; SOURCE LINE # 217
+00001D                  859     ?C0010:
+                        860     ; 
+                        861     ;       /* Check Image Payload Checksum */      
+                        862     ;       u8_code_ptr = (u8_t code *)0x1000;
+                        863                             ; SOURCE LINE # 220
+00001D 900000     F     864             MOV     DPTR,#u8_code_ptr?256
+000020 7410             865             MOV     A,#010H
+000022 F0               866             MOVX    @DPTR,A
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    15
+
+000023 A3               867             INC     DPTR
+000024 E4               868             CLR     A
+000025 F0               869             MOVX    @DPTR,A
+                        870     ;       //OSAL_PRINTF("    First 4 bytes of iROM Part: %02bx:%02bx:%02bx:%02bx\n", 
+                        871     ;           //u8_code_ptr[0], u8_code_ptr[1], u8_code_ptr[2], u8_code_ptr[3]);
+                        872     ;       
+                        873     ;       // irom checksum
+                        874     ;       sum = 0;
+                        875                             ; SOURCE LINE # 225
+000026 FF               876             MOV     R7,A
+000027 FE               877             MOV     R6,A
+000028 FD               878             MOV     R5,A
+000029 FC               879             MOV     R4,A
+00002A 900000     F     880             MOV     DPTR,#sum?249
+00002D 120000     E     881             LCALL   ?C?LSTXDATA
+                        882     ;       for (i=0; i<(RUNTIME_IROM_SIZE-2); i++, u8_code_ptr++){
+                        883                             ; SOURCE LINE # 226
+000030 E4               884             CLR     A
+000031 900000     F     885             MOV     DPTR,#i?254
+000034 F0               886             MOVX    @DPTR,A
+000035 A3               887             INC     DPTR
+000036 F0               888             MOVX    @DPTR,A
+000037                  889     ?C0012:
+000037 900000     F     890             MOV     DPTR,#i?254
+00003A E0               891             MOVX    A,@DPTR
+00003B FE               892             MOV     R6,A
+00003C A3               893             INC     DPTR
+00003D E0               894             MOVX    A,@DPTR
+00003E FF               895             MOV     R7,A
+00003F E4               896             CLR     A
+000040 FC               897             MOV     R4,A
+000041 FD               898             MOV     R5,A
+000042 7BFE             899             MOV     R3,#0FEH
+000044 7A2F             900             MOV     R2,#02FH
+000046 F9               901             MOV     R1,A
+000047 F8               902             MOV     R0,A
+000048 D3               903             SETB    C
+000049 120000     E     904             LCALL   ?C?ULCMP
+00004C 4037             905             JC      ?C0013
+                        906     ;               sum += *u8_code_ptr;
+                        907                             ; SOURCE LINE # 227
+00004E 900000     F     908             MOV     DPTR,#sum?249
+000051 120000     E     909             LCALL   ?C?LLDXDATA0
+000054 900000     F     910             MOV     DPTR,#u8_code_ptr?256
+000057 E0               911             MOVX    A,@DPTR
+000058 FE               912             MOV     R6,A
+000059 A3               913             INC     DPTR
+00005A E0               914             MOVX    A,@DPTR
+00005B F582             915             MOV     DPL,A
+00005D 8E83             916             MOV     DPH,R6
+00005F E4               917             CLR     A
+000060 93               918             MOVC    A,@A+DPTR
+000061 FF               919             MOV     R7,A
+000062 E4               920             CLR     A
+000063 FC               921             MOV     R4,A
+000064 FD               922             MOV     R5,A
+000065 FE               923             MOV     R6,A
+000066 120000     E     924             LCALL   ?C?LADD
+000069 900000     F     925             MOV     DPTR,#sum?249
+00006C 120000     E     926             LCALL   ?C?LSTXDATA
+                        927     ;       }
+                        928                             ; SOURCE LINE # 228
+00006F 900000     F     929             MOV     DPTR,#i?254
+000072 E4               930             CLR     A
+000073 75F001           931             MOV     B,#01H
+000076 120000     E     932             LCALL   ?C?IILDX
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    16
+
+000079 900000     F     933             MOV     DPTR,#u8_code_ptr?256
+00007C E4               934             CLR     A
+00007D 75F001           935             MOV     B,#01H
+000080 120000     E     936             LCALL   ?C?IILDX
+000083 80B2             937             SJMP    ?C0012
+000085                  938     ?C0013:
+                        939     ;       irom_sum=sum;
+                        940                             ; SOURCE LINE # 229
+000085 900000     F     941             MOV     DPTR,#sum?249
+000088 120000     E     942             LCALL   ?C?LLDXDATA
+00008B 900000     F     943             MOV     DPTR,#irom_sum?252
+00008E 120000     E     944             LCALL   ?C?LSTXDATA
+                        945     ;       
+                        946     ;       // compensate checksum
+                        947     ;       banked_sum=0;
+                        948                             ; SOURCE LINE # 232
+000091 E4               949             CLR     A
+000092 FF               950             MOV     R7,A
+000093 FE               951             MOV     R6,A
+000094 FD               952             MOV     R5,A
+000095 FC               953             MOV     R4,A
+000096 900000     F     954             MOV     DPTR,#banked_sum?253
+000099 120000     E     955             LCALL   ?C?LSTXDATA
+                        956     ;       u8_ptr = (u8_t xdata *)(&rt_header);
+                        957                             ; SOURCE LINE # 233
+00009C 900000     F     958             MOV     DPTR,#u8_ptr?255
+00009F 7400       F     959             MOV     A,#HIGH (rt_header)
+0000A1 F0               960             MOVX    @DPTR,A
+0000A2 A3               961             INC     DPTR
+0000A3 7400       F     962             MOV     A,#LOW (rt_header)
+0000A5 F0               963             MOVX    @DPTR,A
+                        964     ;       for(i=0; i<sizeof(runTimeImageHeader_t); i++, u8_ptr++){
+                        965                             ; SOURCE LINE # 234
+0000A6 E4               966             CLR     A
+0000A7 900000     F     967             MOV     DPTR,#i?254
+0000AA F0               968             MOVX    @DPTR,A
+0000AB A3               969             INC     DPTR
+0000AC F0               970             MOVX    @DPTR,A
+0000AD                  971     ?C0015:
+0000AD C3               972             CLR     C
+0000AE 900000     F     973             MOV     DPTR,#i?254+01H
+0000B1 E0               974             MOVX    A,@DPTR
+0000B2 9414             975             SUBB    A,#014H
+0000B4 900000     F     976             MOV     DPTR,#i?254
+0000B7 E0               977             MOVX    A,@DPTR
+0000B8 9400             978             SUBB    A,#00H
+0000BA 5047             979             JNC     ?C0016
+                        980     ;               banked_sum += 0xFFUL - *u8_ptr;
+                        981                             ; SOURCE LINE # 235
+0000BC 900000     F     982             MOV     DPTR,#banked_sum?253
+0000BF 120000     E     983             LCALL   ?C?LLDXDATA0
+0000C2 C003             984             PUSH    AR3
+0000C4 900000     F     985             MOV     DPTR,#u8_ptr?255
+0000C7 E0               986             MOVX    A,@DPTR
+0000C8 FE               987             MOV     R6,A
+0000C9 A3               988             INC     DPTR
+0000CA E0               989             MOVX    A,@DPTR
+0000CB F582             990             MOV     DPL,A
+0000CD 8E83             991             MOV     DPH,R6
+0000CF E0               992             MOVX    A,@DPTR
+0000D0 FB               993             MOV     R3,A
+0000D1 C3               994             CLR     C
+0000D2 74FF             995             MOV     A,#0FFH
+0000D4 9B               996             SUBB    A,R3
+0000D5 FF               997             MOV     R7,A
+0000D6 E4               998             CLR     A
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    17
+
+0000D7 9400             999             SUBB    A,#00H
+0000D9 FE              1000             MOV     R6,A
+0000DA E4              1001             CLR     A
+0000DB 9400            1002             SUBB    A,#00H
+0000DD FD              1003             MOV     R5,A
+0000DE E4              1004             CLR     A
+0000DF 9400            1005             SUBB    A,#00H
+0000E1 FC              1006             MOV     R4,A
+0000E2 D003            1007             POP     AR3
+0000E4 120000     E    1008             LCALL   ?C?LADD
+0000E7 900000     F    1009             MOV     DPTR,#banked_sum?253
+0000EA 120000     E    1010             LCALL   ?C?LSTXDATA
+                       1011     ;       }
+                       1012                             ; SOURCE LINE # 236
+0000ED 900000     F    1013             MOV     DPTR,#i?254
+0000F0 E4              1014             CLR     A
+0000F1 75F001          1015             MOV     B,#01H
+0000F4 120000     E    1016             LCALL   ?C?IILDX
+0000F7 900000     F    1017             MOV     DPTR,#u8_ptr?255
+0000FA E4              1018             CLR     A
+0000FB 75F001          1019             MOV     B,#01H
+0000FE 120000     E    1020             LCALL   ?C?IILDX
+000101 80AA            1021             SJMP    ?C0015
+000103                 1022     ?C0016:
+                       1023     ;       org_length = rt_header.length - (RUNTIME_IROM_SIZE - 2);
+                       1024                             ; SOURCE LINE # 237
+000103 900000     F    1025             MOV     DPTR,#rt_header+04H
+000106 120000     E    1026             LCALL   ?C?LLDXDATA
+000109 EF              1027             MOV     A,R7
+00010A 2402            1028             ADD     A,#02H
+00010C FF              1029             MOV     R7,A
+00010D EE              1030             MOV     A,R6
+00010E 34D0            1031             ADDC    A,#0D0H
+000110 FE              1032             MOV     R6,A
+000111 ED              1033             MOV     A,R5
+000112 34FF            1034             ADDC    A,#0FFH
+000114 FD              1035             MOV     R5,A
+000115 EC              1036             MOV     A,R4
+000116 34FF            1037             ADDC    A,#0FFH
+000118 FC              1038             MOV     R4,A
+000119 900000     F    1039             MOV     DPTR,#org_length?251
+00011C 120000     E    1040             LCALL   ?C?LSTXDATA
+                       1041     ; 
+                       1042     ;         banked_sum+=sum_up_payload(org_length);
+                       1043                             ; SOURCE LINE # 239
+00011F 900000     F    1044             MOV     DPTR,#banked_sum?253
+000122 120000     E    1045             LCALL   ?C?LLDXDATA0
+000125 C000            1046             PUSH    AR0
+000127 C001            1047             PUSH    AR1
+000129 C002            1048             PUSH    AR2
+00012B C003            1049             PUSH    AR3
+00012D 900000     F    1050             MOV     DPTR,#org_length?251
+000130 120000     E    1051             LCALL   ?C?LLDXDATA
+000133 120000     F    1052             LCALL   _sum_up_payload
+000136 D003            1053             POP     AR3
+000138 D002            1054             POP     AR2
+00013A D001            1055             POP     AR1
+00013C D000            1056             POP     AR0
+00013E 120000     E    1057             LCALL   ?C?LADD
+000141 900000     F    1058             MOV     DPTR,#banked_sum?253
+000144 120000     E    1059             LCALL   ?C?LSTXDATA
+                       1060     ;     
+                       1061     ;         sum+=banked_sum;
+                       1062                             ; SOURCE LINE # 241
+000147 900000     F    1063             MOV     DPTR,#sum?249
+00014A 120000     E    1064             LCALL   ?C?LLDXDATA
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    18
+
+00014D 900000     F    1065             MOV     DPTR,#banked_sum?253
+000150 120000     E    1066             LCALL   ?C?LLDXDATA0
+000153 120000     E    1067             LCALL   ?C?LADD
+000156 900000     F    1068             MOV     DPTR,#sum?249
+000159 120000     E    1069             LCALL   ?C?LSTXDATA
+                       1070     ;       
+                       1071     ;       org_chksum = rt_header.payload_chksum;
+                       1072                             ; SOURCE LINE # 243
+00015C 900000     F    1073             MOV     DPTR,#rt_header+0CH
+00015F 120000     E    1074             LCALL   ?C?LLDXDATA
+000162 900000     F    1075             MOV     DPTR,#org_chksum?250
+000165 120000     E    1076             LCALL   ?C?LSTXDATA
+                       1077     ;       if( org_chksum!=sum ){
+                       1078                             ; SOURCE LINE # 244
+000168 900000     F    1079             MOV     DPTR,#sum?249
+00016B 120000     E    1080             LCALL   ?C?LLDXDATA
+00016E 900000     F    1081             MOV     DPTR,#org_chksum?250
+000171 120000     E    1082             LCALL   ?C?LLDXDATA0
+000174 C3              1083             CLR     C
+000175 120000     E    1084             LCALL   ?C?ULCMP
+000178 6009            1085             JZ      ?C0018
+                       1086     ;               OSAL_PRINTF("    PayLoad Chksum Error\n");
+                       1087                             ; SOURCE LINE # 245
+00017A 7B00       F    1088             MOV     R3,#MBYTE (?SC_22)
+00017C 7A00       F    1089             MOV     R2,#HIGH (?SC_22)
+00017E 7900       F    1090             MOV     R1,#LOW (?SC_22)
+000180                 1091     ?C0025:
+000180 020000     E    1092             LJMP    _printf
+                       1093     ;               //OSAL_PRINTF("      Org=0x%08lx, sum=0x%08lx\n", org_chksum, sum);
+                       1094     ;               //OSAL_PRINTF("      iROM sum=0x%08lx\n", irom_sum);
+                       1095     ;               //OSAL_PRINTF("      banked area sum=0x%08lx\n", banked_sum);
+                       1096     ;               return;
+                       1097     ;       }
+                       1098                             ; SOURCE LINE # 250
+000183                 1099     ?C0018:
+                       1100     ;       OSAL_PRINTF("    Chksum Correct!\n");
+                       1101                             ; SOURCE LINE # 251
+000183 7B00       F    1102             MOV     R3,#MBYTE (?SC_48)
+000185 7A00       F    1103             MOV     R2,#HIGH (?SC_48)
+000187 7900       F    1104             MOV     R1,#LOW (?SC_48)
+000189 120000     E    1105             LCALL   _printf
+                       1106     ;     if (to_bootup) {
+                       1107                             ; SOURCE LINE # 252
+00018C 900000     F    1108             MOV     DPTR,#to_bootup?248
+00018F E0              1109             MOVX    A,@DPTR
+000190 6010            1110             JZ      ?C0011
+                       1111     ;       OSAL_PRINTF("    RunTime Kernel Starting....  \n");
+                       1112                             ; SOURCE LINE # 253
+000192 7B00       F    1113             MOV     R3,#MBYTE (?SC_69)
+000194 7A00       F    1114             MOV     R2,#HIGH (?SC_69)
+000196 7900       F    1115             MOV     R1,#LOW (?SC_69)
+000198 120000     E    1116             LCALL   _printf
+                       1117     ;       fp = (rt_entry)(0x1000);
+                       1118                             ; SOURCE LINE # 254
+00019B 7A10            1119             MOV     R2,#010H
+00019D 7900            1120             MOV     R1,#00H
+                       1121     ;---- Variable 'fp?257' assigned to Register 'R1/R2/R3' ----
+                       1122     ;       fp();
+                       1123                             ; SOURCE LINE # 255
+00019F 120000     E    1124             LCALL   ?C?ICALL
+                       1125     ;     }
+                       1126                             ; SOURCE LINE # 256
+                       1127     ; }
+                       1128                             ; SOURCE LINE # 257
+0001A2                 1129     ?C0011:
+0001A2 22              1130             RET     
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    19
+
+                       1131     ; END OF _check_boot
+                       1132     
+                       1133     ; 
+                       1134     ; void *get_runtime_header(void) {
+                       1135     
+------                 1136             RSEG  ?PR?get_runtime_header?CHECK_BOOT
+000000                 1137     get_runtime_header:
+                       1138             USING   0
+                       1139                             ; SOURCE LINE # 259
+                       1140     ;     //runTimeImageHeader_t xdata *rt_header_far = (runTimeImageHeader_t *)(RUNTIME_HEA
+                               DER_ADDRESS&0xFFFF);
+                       1141     ;     #define rt_header_code ((runTimeImageHeader_t code *)(RUNTIME_HEADER_ADDRESS&0xFFF
+                               F))
+                       1142     ;     #pragma asm
+                       1143     ;         PUSH    CODE_BANK
+000000 C096            1144               PUSH    CODE_BANK
+                       1145     ;         MOV     CODE_BANK, #(RUNTIME_HEADER_BANK)
+000002 759603          1146               MOV     CODE_BANK, #((0x03))
+                       1147     ;     #pragma endasm
+                       1148     ; 
+                       1149     ;     rt_header.magic_number   = rt_header_code->magic_number;
+                       1150                             ; SOURCE LINE # 267
+000005 905000          1151             MOV     DPTR,#05000H
+000008 120000     E    1152             LCALL   ?C?LLDCODE
+00000B 900000     F    1153             MOV     DPTR,#rt_header
+00000E 120000     E    1154             LCALL   ?C?LSTXDATA
+                       1155     ;     rt_header.length         = rt_header_code->length;
+                       1156                             ; SOURCE LINE # 268
+000011 905004          1157             MOV     DPTR,#05004H
+000014 120000     E    1158             LCALL   ?C?LLDCODE
+000017 900000     F    1159             MOV     DPTR,#rt_header+04H
+00001A 120000     E    1160             LCALL   ?C?LSTXDATA
+                       1161     ;     rt_header.header_chksum  = rt_header_code->header_chksum;
+                       1162                             ; SOURCE LINE # 269
+00001D 905008          1163             MOV     DPTR,#05008H
+000020 120000     E    1164             LCALL   ?C?LLDCODE
+000023 900000     F    1165             MOV     DPTR,#rt_header+08H
+000026 120000     E    1166             LCALL   ?C?LSTXDATA
+                       1167     ;     rt_header.payload_chksum = rt_header_code->payload_chksum;
+                       1168                             ; SOURCE LINE # 270
+000029 90500C          1169             MOV     DPTR,#0500CH
+00002C 120000     E    1170             LCALL   ?C?LLDCODE
+00002F 900000     F    1171             MOV     DPTR,#rt_header+0CH
+000032 120000     E    1172             LCALL   ?C?LSTXDATA
+                       1173     ;     rt_header.reserved       = rt_header_code->reserved;
+                       1174                             ; SOURCE LINE # 271
+000035 905010          1175             MOV     DPTR,#05010H
+000038 120000     E    1176             LCALL   ?C?LLDCODE
+00003B 900000     F    1177             MOV     DPTR,#rt_header+010H
+00003E 120000     E    1178             LCALL   ?C?LSTXDATA
+                       1179     ;     
+                       1180     ;     #pragma asm
+                       1181     ;         POP     CODE_BANK
+000041 D096            1182               POP     CODE_BANK
+                       1183     ;     #pragma endasm
+                       1184     ;     
+                       1185     ;     return &rt_header;
+                       1186                             ; SOURCE LINE # 277
+000043 7B01            1187             MOV     R3,#01H
+000045 7A00       F    1188             MOV     R2,#HIGH (rt_header)
+000047 7900       F    1189             MOV     R1,#LOW (rt_header)
+                       1190     ; }
+                       1191                             ; SOURCE LINE # 278
+000049 22              1192             RET     
+                       1193     ; END OF get_runtime_header
+                       1194     
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    20
+
+                       1195     ; 
+                       1196     ; void print_runtime_header(void *p) {
+                       1197     
+------                 1198             RSEG  ?PR?_print_runtime_header?CHECK_BOOT
+000000                 1199     _print_runtime_header:
+                       1200             USING   0
+                       1201                             ; SOURCE LINE # 280
+000000 900000     F    1202             MOV     DPTR,#p?458
+000003 120000     E    1203             LCALL   ?C?PSTXDATA
+                       1204     ;     runTimeImageHeader_t *q=(p!=NULL)?(runTimeImageHeader_t *)p:&rt_header;
+                       1205                             ; SOURCE LINE # 281
+000006 900000     F    1206             MOV     DPTR,#p?458
+000009 120000     E    1207             LCALL   ?C?PLDXDATA
+00000C E9              1208             MOV     A,R1
+00000D 4A              1209             ORL     A,R2
+00000E 4B              1210             ORL     A,R3
+00000F 6008            1211             JZ      ?C0021
+000011 900000     F    1212             MOV     DPTR,#p?458
+000014 120000     E    1213             LCALL   ?C?PLDXDATA
+000017 8006            1214             SJMP    ?C0022
+000019                 1215     ?C0021:
+000019 7B01            1216             MOV     R3,#01H
+00001B 7A00       F    1217             MOV     R2,#HIGH (rt_header)
+00001D 7900       F    1218             MOV     R1,#LOW (rt_header)
+00001F                 1219     ?C0022:
+00001F 900000     F    1220             MOV     DPTR,#q?459
+000022 120000     E    1221             LCALL   ?C?PSTXDATA
+                       1222     ;     OSAL_PRINTF("    magic_number:  0x%08lx\n", q->magic_number);
+                       1223                             ; SOURCE LINE # 282
+000025 900000     F    1224             MOV     DPTR,#q?459
+000028 120000     E    1225             LCALL   ?C?PLDXDATA
+00002B 120000     E    1226             LCALL   ?C?LLDPTR
+00002E 900000     E    1227             MOV     DPTR,#?_printf?BYTE+03H
+000031 120000     E    1228             LCALL   ?C?LSTXDATA
+000034 7B00       F    1229             MOV     R3,#MBYTE (?SC_104)
+000036 7A00       F    1230             MOV     R2,#HIGH (?SC_104)
+000038 7900       F    1231             MOV     R1,#LOW (?SC_104)
+00003A 120000     E    1232             LCALL   _printf
+                       1233     ;     OSAL_PRINTF("    length:        0x%08lx (%ld)\n", q->length, q->length);
+                       1234                             ; SOURCE LINE # 283
+00003D 900000     F    1235             MOV     DPTR,#q?459
+000040 120000     E    1236             LCALL   ?C?PLDXDATA
+000043 E9              1237             MOV     A,R1
+000044 2404            1238             ADD     A,#04H
+000046 F9              1239             MOV     R1,A
+000047 E4              1240             CLR     A
+000048 3A              1241             ADDC    A,R2
+000049 FA              1242             MOV     R2,A
+00004A 120000     E    1243             LCALL   ?C?LLDPTR
+00004D 900000     E    1244             MOV     DPTR,#?_printf?BYTE+03H
+000050 120000     E    1245             LCALL   ?C?LSTXDATA
+000053 120000     E    1246             LCALL   ?C?LLDPTR
+000056 900000     E    1247             MOV     DPTR,#?_printf?BYTE+07H
+000059 120000     E    1248             LCALL   ?C?LSTXDATA
+00005C 7B00       F    1249             MOV     R3,#MBYTE (?SC_132)
+00005E 7A00       F    1250             MOV     R2,#HIGH (?SC_132)
+000060 7900       F    1251             MOV     R1,#LOW (?SC_132)
+000062 120000     E    1252             LCALL   _printf
+                       1253     ;     OSAL_PRINTF("    header_chksum: 0x%08lx\n", q->header_chksum);
+                       1254                             ; SOURCE LINE # 284
+000065 900000     F    1255             MOV     DPTR,#q?459
+000068 120000     E    1256             LCALL   ?C?PLDXDATA
+00006B E9              1257             MOV     A,R1
+00006C 2408            1258             ADD     A,#08H
+00006E F9              1259             MOV     R1,A
+00006F E4              1260             CLR     A
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    21
+
+000070 3A              1261             ADDC    A,R2
+000071 FA              1262             MOV     R2,A
+000072 120000     E    1263             LCALL   ?C?LLDPTR
+000075 900000     E    1264             MOV     DPTR,#?_printf?BYTE+03H
+000078 120000     E    1265             LCALL   ?C?LSTXDATA
+00007B 7B00       F    1266             MOV     R3,#MBYTE (?SC_166)
+00007D 7A00       F    1267             MOV     R2,#HIGH (?SC_166)
+00007F 7900       F    1268             MOV     R1,#LOW (?SC_166)
+000081 120000     E    1269             LCALL   _printf
+                       1270     ;     OSAL_PRINTF("    payload_chksum:0x%08lx\n", q->payload_chksum);
+                       1271                             ; SOURCE LINE # 285
+000084 900000     F    1272             MOV     DPTR,#q?459
+000087 120000     E    1273             LCALL   ?C?PLDXDATA
+00008A E9              1274             MOV     A,R1
+00008B 240C            1275             ADD     A,#0CH
+00008D F9              1276             MOV     R1,A
+00008E E4              1277             CLR     A
+00008F 3A              1278             ADDC    A,R2
+000090 FA              1279             MOV     R2,A
+000091 120000     E    1280             LCALL   ?C?LLDPTR
+000094 900000     E    1281             MOV     DPTR,#?_printf?BYTE+03H
+000097 120000     E    1282             LCALL   ?C?LSTXDATA
+00009A 7B00       F    1283             MOV     R3,#MBYTE (?SC_194)
+00009C 7A00       F    1284             MOV     R2,#HIGH (?SC_194)
+00009E 7900       F    1285             MOV     R1,#LOW (?SC_194)
+0000A0 120000     E    1286             LCALL   _printf
+                       1287     ;     OSAL_PRINTF("    reserved:      0x%08lx\n", q->reserved);
+                       1288                             ; SOURCE LINE # 286
+0000A3 900000     F    1289             MOV     DPTR,#q?459
+0000A6 120000     E    1290             LCALL   ?C?PLDXDATA
+0000A9 E9              1291             MOV     A,R1
+0000AA 2410            1292             ADD     A,#010H
+0000AC F9              1293             MOV     R1,A
+0000AD E4              1294             CLR     A
+0000AE 3A              1295             ADDC    A,R2
+0000AF FA              1296             MOV     R2,A
+0000B0 120000     E    1297             LCALL   ?C?LLDPTR
+0000B3 900000     E    1298             MOV     DPTR,#?_printf?BYTE+03H
+0000B6 120000     E    1299             LCALL   ?C?LSTXDATA
+0000B9 7B00       F    1300             MOV     R3,#MBYTE (?SC_222)
+0000BB 7A00       F    1301             MOV     R2,#HIGH (?SC_222)
+0000BD 7900       F    1302             MOV     R1,#LOW (?SC_222)
+0000BF 020000     E    1303             LJMP    _printf
+                       1304     ; END OF _print_runtime_header
+                       1305     
+                       1306             END
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    22
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E                                    T Y P E  V A L U E     ATTRIBUTES
+
+?_CHECK_BOOT?BYTE . . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+?_CHECK_HEADER?BYTE . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_CHECK_HEADER?CHECK_BOOT
+?_PRINT_RUNTIME_HEADER?BYTE . . . . . .    X  ADDR  0000H     R   SEG=?XD?_PRINT_RUNTIME_HEADER?CHECK_BOOT
+?_PRINTF?BYTE . . . . . . . . . . . . .    X  ADDR  -------       EXT
+?_SUM_UP_PAYLOAD?BYTE . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_SUM_UP_PAYLOAD?CHECK_BOOT
+?C0001. . . . . . . . . . . . . . . . .    C  ADDR  001AH     R   SEG=?PR?_CHECK_HEADER?CHECK_BOOT
+?C0002. . . . . . . . . . . . . . . . .    C  ADDR  00D1H     R   SEG=?PR?_CHECK_HEADER?CHECK_BOOT
+?C0003. . . . . . . . . . . . . . . . .    C  ADDR  0056H     R   SEG=?PR?_CHECK_HEADER?CHECK_BOOT
+?C0004. . . . . . . . . . . . . . . . .    C  ADDR  00A4H     R   SEG=?PR?_CHECK_HEADER?CHECK_BOOT
+?C0006. . . . . . . . . . . . . . . . .    C  ADDR  00B9H     R   SEG=?PR?_CHECK_HEADER?CHECK_BOOT
+?C0007. . . . . . . . . . . . . . . . .    C  ADDR  0016H     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?C0008. . . . . . . . . . . . . . . . .    C  ADDR  008BH     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?C0010. . . . . . . . . . . . . . . . .    C  ADDR  001DH     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0011. . . . . . . . . . . . . . . . .    C  ADDR  01A2H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0012. . . . . . . . . . . . . . . . .    C  ADDR  0037H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0013. . . . . . . . . . . . . . . . .    C  ADDR  0085H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0015. . . . . . . . . . . . . . . . .    C  ADDR  00ADH     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0016. . . . . . . . . . . . . . . . .    C  ADDR  0103H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0018. . . . . . . . . . . . . . . . .    C  ADDR  0183H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C0021. . . . . . . . . . . . . . . . .    C  ADDR  0019H     R   SEG=?PR?_PRINT_RUNTIME_HEADER?CHECK_BOOT
+?C0022. . . . . . . . . . . . . . . . .    C  ADDR  001FH     R   SEG=?PR?_PRINT_RUNTIME_HEADER?CHECK_BOOT
+?C0025. . . . . . . . . . . . . . . . .    C  ADDR  0180H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+?C?CLDPTR . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?ICALL. . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?IILDX. . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LADD . . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LLDCODE. . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LLDPTR . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LLDXDATA . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LLDXDATA0. . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LSTPTR . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?LSTXDATA . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?PLDXDATA . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?PSTXDATA . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?C?ULCMP. . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+?FC?CHECK_BOOT. . . . . . . . . . . . .    HC SEG   0000FAH       REL=INSEG, ALN=BYTE
+?PR?_CHECK_BOOT?CHECK_BOOT. . . . . . .    C  SEG   0001A3H       REL=UNIT, ALN=BYTE
+?PR?_CHECK_HEADER?CHECK_BOOT. . . . . .    C  SEG   0000D2H       REL=UNIT, ALN=BYTE
+?PR?_PRINT_RUNTIME_HEADER?CHECK_BOOT. .    C  SEG   0000C2H       REL=UNIT, ALN=BYTE
+?PR?_SUM_UP_PAYLOAD?CHECK_BOOT. . . . .    C  SEG   0000D3H       REL=UNIT, ALN=BYTE
+?PR?GET_RUNTIME_HEADER?CHECK_BOOT . . .    C  SEG   00004AH       REL=UNIT, ALN=BYTE
+?SC_0 . . . . . . . . . . . . . . . . .    HC ADDR  0000H     R   SEG=?FC?CHECK_BOOT
+?SC_104 . . . . . . . . . . . . . . . .    HC ADDR  0068H     R   SEG=?FC?CHECK_BOOT
+?SC_132 . . . . . . . . . . . . . . . .    HC ADDR  0084H     R   SEG=?FC?CHECK_BOOT
+?SC_166 . . . . . . . . . . . . . . . .    HC ADDR  00A6H     R   SEG=?FC?CHECK_BOOT
+?SC_194 . . . . . . . . . . . . . . . .    HC ADDR  00C2H     R   SEG=?FC?CHECK_BOOT
+?SC_22. . . . . . . . . . . . . . . . .    HC ADDR  0016H     R   SEG=?FC?CHECK_BOOT
+?SC_222 . . . . . . . . . . . . . . . .    HC ADDR  00DEH     R   SEG=?FC?CHECK_BOOT
+?SC_48. . . . . . . . . . . . . . . . .    HC ADDR  0030H     R   SEG=?FC?CHECK_BOOT
+?SC_69. . . . . . . . . . . . . . . . .    HC ADDR  0045H     R   SEG=?FC?CHECK_BOOT
+?SUMUP_002. . . . . . . . . . . . . . .    C  ADDR  0032H     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?SUMUP_003. . . . . . . . . . . . . . .    C  ADDR  0036H     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?SUMUP_011. . . . . . . . . . . . . . .    C  ADDR  00BDH     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?SUMUP_012. . . . . . . . . . . . . . .    C  ADDR  00A4H     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?SUMUP_013. . . . . . . . . . . . . . .    C  ADDR  00ADH     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+?XD?_CHECK_BOOT?CHECK_BOOT. . . . . . .    X  SEG   00001BH       REL=UNIT, ALN=BYTE
+?XD?_CHECK_HEADER?CHECK_BOOT. . . . . .    X  SEG   000010H       REL=UNIT, ALN=BYTE
+?XD?_PRINT_RUNTIME_HEADER?CHECK_BOOT. .    X  SEG   000006H       REL=UNIT, ALN=BYTE
+?XD?_SUM_UP_PAYLOAD?CHECK_BOOT. . . . .    X  SEG   000008H       REL=UNIT, ALN=BYTE
+?XD?CHECK_BOOT. . . . . . . . . . . . .    X  SEG   000014H       REL=UNIT, ALN=BYTE
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    23
+
+_CHECK_BOOT . . . . . . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?_CHECK_BOOT?CHECK_BOOT
+_CHECK_HEADER . . . . . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?_CHECK_HEADER?CHECK_BOOT
+_PRINT_RUNTIME_HEADER . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?_PRINT_RUNTIME_HEADER?CHECK_BOOT
+_PRINTF . . . . . . . . . . . . . . . .    C  ADDR  -------       EXT
+_SUM_UP_PAYLOAD . . . . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?_SUM_UP_PAYLOAD?CHECK_BOOT
+AC. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.6   A   
+ACC . . . . . . . . . . . . . . . . . .    D  ADDR  00E0H     A   
+AR0 . . . . . . . . . . . . . . . . . .    D  ADDR  0000H     A   
+AR1 . . . . . . . . . . . . . . . . . .    D  ADDR  0001H     A   
+AR2 . . . . . . . . . . . . . . . . . .    D  ADDR  0002H     A   
+AR3 . . . . . . . . . . . . . . . . . .    D  ADDR  0003H     A   
+B . . . . . . . . . . . . . . . . . . .    D  ADDR  00F0H     A   
+BANKED_SUM?253. . . . . . . . . . . . .    X  ADDR  0011H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+C_T2. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.1   A   
+CACHE_CLEAN . . . . . . . . . . . . . .    B  ADDR  0080H.1   A   
+CACHE_CRTL. . . . . . . . . . . . . . .    D  ADDR  0080H     A   
+CHECK_BOOT. . . . . . . . . . . . . . .    -- ----  -------       
+CKCON . . . . . . . . . . . . . . . . .    D  ADDR  008EH     A   
+CODE_BANK . . . . . . . . . . . . . . .    D  ADDR  0096H     A   
+CP_RL2. . . . . . . . . . . . . . . . .    B  ADDR  00C8H.0   A   
+CY. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.7   A   
+DATA_BANK . . . . . . . . . . . . . . .    D  ADDR  0097H     A   
+DPH . . . . . . . . . . . . . . . . . .    D  ADDR  0083H     A   
+DPH1. . . . . . . . . . . . . . . . . .    D  ADDR  0085H     A   
+DPL . . . . . . . . . . . . . . . . . .    D  ADDR  0082H     A   
+DPL1. . . . . . . . . . . . . . . . . .    D  ADDR  0084H     A   
+DPS . . . . . . . . . . . . . . . . . .    D  ADDR  0086H     A   
+EA. . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.7   A   
+EICON . . . . . . . . . . . . . . . . .    D  ADDR  00D8H     A   
+EIE . . . . . . . . . . . . . . . . . .    D  ADDR  00E8H     A   
+EIP . . . . . . . . . . . . . . . . . .    D  ADDR  00F8H     A   
+ES0 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.4   A   
+ES1 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.6   A   
+ET0 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.1   A   
+ET1 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.3   A   
+ET2 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.5   A   
+EWDI. . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.4   A   
+EX0 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.0   A   
+EX1 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.2   A   
+EX2 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.0   A   
+EX3 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.1   A   
+EX4 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.2   A   
+EX5 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.3   A   
+EXEN2 . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.3   A   
+EXF2. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.6   A   
+EXIF. . . . . . . . . . . . . . . . . .    D  ADDR  0091H     A   
+F0. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.5   A   
+FL. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.1   A   
+FLASH_MSB . . . . . . . . . . . . . . .    D  ADDR  0096H     A   
+GET_RUNTIME_HEADER. . . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?GET_RUNTIME_HEADER?CHECK_BOOT
+GPIO2_E . . . . . . . . . . . . . . . .    D  ADDR  00C4H     A   
+GPIO2_I . . . . . . . . . . . . . . . .    D  ADDR  00C3H     A   
+GPIO2_O . . . . . . . . . . . . . . . .    D  ADDR  00C2H     A   
+GPIO_E. . . . . . . . . . . . . . . . .    D  ADDR  0093H     A   
+GPIO_I. . . . . . . . . . . . . . . . .    D  ADDR  0095H     A   
+GPIO_O. . . . . . . . . . . . . . . . .    D  ADDR  0094H     A   
+I?043 . . . . . . . . . . . . . . . . .    X  ADDR  0008H     R   SEG=?XD?_CHECK_HEADER?CHECK_BOOT
+I?254 . . . . . . . . . . . . . . . . .    X  ADDR  0015H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+IE. . . . . . . . . . . . . . . . . . .    D  ADDR  00A8H     A   
+IE0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.1   A   
+IE1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.3   A   
+INDACC_ADDR_H . . . . . . . . . . . . .    D  ADDR  00A2H     A   
+INDACC_ADDR_L . . . . . . . . . . . . .    D  ADDR  00A3H     A   
+INDACC_CMD. . . . . . . . . . . . . . .    D  ADDR  00A0H     A   
+INDACC_RDATA_H. . . . . . . . . . . . .    D  ADDR  00A6H     A   
+INDACC_RDATA_L. . . . . . . . . . . . .    D  ADDR  00A7H     A   
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    24
+
+INDACC_STATUS . . . . . . . . . . . . .    D  ADDR  00A1H     A   
+INDACC_WDATA_H. . . . . . . . . . . . .    D  ADDR  00A4H     A   
+INDACC_WDATA_L. . . . . . . . . . . . .    D  ADDR  00A5H     A   
+INT0. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.2   A   
+INT1. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.3   A   
+INT2. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.4   A   
+INT3. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.5   A   
+INT4. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.6   A   
+INT5. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.7   A   
+IP. . . . . . . . . . . . . . . . . . .    D  ADDR  00B8H     A   
+IROM_SUM?252. . . . . . . . . . . . . .    X  ADDR  000DH     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+IT0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.0   A   
+IT1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.2   A   
+LEN?146 . . . . . . . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_SUM_UP_PAYLOAD?CHECK_BOOT
+ORG_CHKSUM?042. . . . . . . . . . . . .    X  ADDR  0004H     R   SEG=?XD?_CHECK_HEADER?CHECK_BOOT
+ORG_CHKSUM?250. . . . . . . . . . . . .    X  ADDR  0005H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+ORG_LENGTH?251. . . . . . . . . . . . .    X  ADDR  0009H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+OV. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.2   A   
+P . . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.0   A   
+P0. . . . . . . . . . . . . . . . . . .    D  ADDR  0080H     A   
+P1. . . . . . . . . . . . . . . . . . .    D  ADDR  0090H     A   
+P2. . . . . . . . . . . . . . . . . . .    D  ADDR  00A0H     A   
+P3. . . . . . . . . . . . . . . . . . .    D  ADDR  00B0H     A   
+P?458 . . . . . . . . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_PRINT_RUNTIME_HEADER?CHECK_BOOT
+PCON. . . . . . . . . . . . . . . . . .    D  ADDR  0087H     A   
+PEDMA_E_ADDR0 . . . . . . . . . . . . .    D  ADDR  00B3H     A   
+PEDMA_E_ADDR1 . . . . . . . . . . . . .    D  ADDR  00B4H     A   
+PEDMA_LEN . . . . . . . . . . . . . . .    D  ADDR  00B7H     A   
+PEDMA_P_ADDR0 . . . . . . . . . . . . .    D  ADDR  00B5H     A   
+PEDMA_P_ADDR1 . . . . . . . . . . . . .    D  ADDR  00B6H     A   
+PS0 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.4   A   
+PS1 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.6   A   
+PSW . . . . . . . . . . . . . . . . . .    D  ADDR  00D0H     A   
+PT0 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.1   A   
+PT1 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.3   A   
+PT2 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.5   A   
+PWDI. . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.4   A   
+PX0 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.0   A   
+PX1 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.2   A   
+PX2 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.0   A   
+PX3 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.1   A   
+PX4 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.2   A   
+PX5 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.3   A   
+Q?459 . . . . . . . . . . . . . . . . .    X  ADDR  0003H     R   SEG=?XD?_PRINT_RUNTIME_HEADER?CHECK_BOOT
+RB8 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.2   A   
+RB81. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.2   A   
+RCAP2H. . . . . . . . . . . . . . . . .    D  ADDR  00CBH     A   
+RCAP2L. . . . . . . . . . . . . . . . .    D  ADDR  00CAH     A   
+RCLK. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.5   A   
+RD. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.7   A   
+REN . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.4   A   
+REN1. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.4   A   
+RI. . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.0   A   
+RI1 . . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.0   A   
+RS0 . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.3   A   
+RS1 . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.4   A   
+RT_HEADER . . . . . . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?CHECK_BOOT
+RT_HEADER?045 . . . . . . . . . . . . .    X  ADDR  000DH     R   SEG=?XD?_CHECK_HEADER?CHECK_BOOT
+RXD0. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.0   A   
+RXD1. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.2   A   
+SBUF0 . . . . . . . . . . . . . . . . .    D  ADDR  0099H     A   
+SBUF1 . . . . . . . . . . . . . . . . .    D  ADDR  00C1H     A   
+SCON0 . . . . . . . . . . . . . . . . .    D  ADDR  0098H     A   
+SCON1 . . . . . . . . . . . . . . . . .    D  ADDR  00C0H     A   
+SM0 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.7   A   
+SM01. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.7   A   
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    25
+
+SM1 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.6   A   
+SM11. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.6   A   
+SM2 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.5   A   
+SM21. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.5   A   
+SP. . . . . . . . . . . . . . . . . . .    D  ADDR  0081H     A   
+SPC_FNC . . . . . . . . . . . . . . . .    D  ADDR  008FH     A   
+SPI_CMD_ISSUE . . . . . . . . . . . . .    B  ADDR  0080H.2   A   
+SPI_CTRL_BUSY . . . . . . . . . . . . .    B  ADDR  0080H.0   A   
+SPI_DSEL_CYCLE. . . . . . . . . . . . .    D  ADDR  00BCH     A   
+SPI_IO_CONF . . . . . . . . . . . . . .    D  ADDR  009AH     A   
+SPI_RI_CMD. . . . . . . . . . . . . . .    D  ADDR  009CH     A   
+SPI_RI_CONF . . . . . . . . . . . . . .    D  ADDR  009BH     A   
+SPI_S_ACCESS. . . . . . . . . . . . . .    D  ADDR  009EH     A   
+SPI_S_ADDR0 . . . . . . . . . . . . . .    D  ADDR  00A9H     A   
+SPI_S_ADDR1 . . . . . . . . . . . . . .    D  ADDR  00AAH     A   
+SPI_S_ADDR2 . . . . . . . . . . . . . .    D  ADDR  00ABH     A   
+SPI_S_CONF. . . . . . . . . . . . . . .    D  ADDR  009DH     A   
+SPI_S_DATA0 . . . . . . . . . . . . . .    D  ADDR  00ACH     A   
+SPI_S_DATA1 . . . . . . . . . . . . . .    D  ADDR  00ADH     A   
+SPI_S_DATA2 . . . . . . . . . . . . . .    D  ADDR  00AEH     A   
+SPI_S_DATA3 . . . . . . . . . . . . . .    D  ADDR  00AFH     A   
+SPI_S_RCMD. . . . . . . . . . . . . . .    D  ADDR  00B1H     A   
+SPI_S_WCMD. . . . . . . . . . . . . . .    D  ADDR  00B2H     A   
+SSIO. . . . . . . . . . . . . . . . . .    D  ADDR  00BBH     A   
+SSPH. . . . . . . . . . . . . . . . . .    D  ADDR  00BAH     A   
+SSPL. . . . . . . . . . . . . . . . . .    D  ADDR  00B9H     A   
+SUM?041 . . . . . . . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_CHECK_HEADER?CHECK_BOOT
+SUM?147 . . . . . . . . . . . . . . . .    X  ADDR  0004H     R   SEG=?XD?_SUM_UP_PAYLOAD?CHECK_BOOT
+SUM?249 . . . . . . . . . . . . . . . .    X  ADDR  0001H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+SYNC_CTRL . . . . . . . . . . . . . . .    D  ADDR  008EH     A   
+T0. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.4   A   
+T1. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.5   A   
+T2. . . . . . . . . . . . . . . . . . .    B  ADDR  0090H.0   A   
+T2CON . . . . . . . . . . . . . . . . .    D  ADDR  00C8H     A   
+T2EX. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.1   A   
+TB8 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.3   A   
+TB81. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.3   A   
+TCLK. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.4   A   
+TCON. . . . . . . . . . . . . . . . . .    D  ADDR  0088H     A   
+TF0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.5   A   
+TF1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.7   A   
+TF2 . . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.7   A   
+TH0 . . . . . . . . . . . . . . . . . .    D  ADDR  008CH     A   
+TH1 . . . . . . . . . . . . . . . . . .    D  ADDR  008DH     A   
+TH2 . . . . . . . . . . . . . . . . . .    D  ADDR  00CDH     A   
+TI. . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.1   A   
+TI1 . . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.1   A   
+TL0 . . . . . . . . . . . . . . . . . .    D  ADDR  008AH     A   
+TL1 . . . . . . . . . . . . . . . . . .    D  ADDR  008BH     A   
+TL2 . . . . . . . . . . . . . . . . . .    D  ADDR  00CCH     A   
+TMOD. . . . . . . . . . . . . . . . . .    D  ADDR  0089H     A   
+TO_BOOTUP?248 . . . . . . . . . . . . .    X  ADDR  0000H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+TR0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.4   A   
+TR1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.6   A   
+TR2 . . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.2   A   
+TXD0. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.1   A   
+TXD1. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.3   A   
+U8_CODE_PTR?256 . . . . . . . . . . . .    X  ADDR  0019H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+U8_PTR?044. . . . . . . . . . . . . . .    X  ADDR  000AH     R   SEG=?XD?_CHECK_HEADER?CHECK_BOOT
+U8_PTR?255. . . . . . . . . . . . . . .    X  ADDR  0017H     R   SEG=?XD?_CHECK_BOOT?CHECK_BOOT
+WR. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.6   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S).
+AX51 MACRO ASSEMBLER  CHECK_BOOT                                                            08/20/25 22:07:54 PAGE    26
+

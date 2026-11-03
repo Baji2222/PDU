@@ -1,0 +1,327 @@
+C51 COMPILER V9.60.0.0   WEB_IGMP                                                          11/02/2026 17:57:39 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_IGMP
+OBJECT MODULE PLACED IN .\objects\web_igmp.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_igmp.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_igmp.lst) TABS(2) OBJECT(.\objects\web_igmp.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * $Revision$
+   6           * $Date$
+   7           *
+   8           * Purpose : The handler of HTTP request to forwarding function
+   9           *
+  10           * Feature : Response the related request of forwarding function
+  11           *
+  12           */
+  13          #pragma STRING (far)
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          #include <stdlib.h>
+  20          
+  21          #include <local/web_config.h>
+  22          
+  23          #include <saligmp.h>
+  24          #include <salutil.h>
+  25          
+  26          #include <web/web_api.h>
+  27          #include "web_loop.h"
+  28          #include "web_util.h"
+  29          #include <salsys.h>
+  30          #include <saltrunk.h>
+  31          
+  32          
+  33          #if __WEB_IGMP__  
+  34          /*
+  35           * Symbol Definition
+  36           */
+  37          
+  38          
+  39          /*
+  40           * Data Declaration
+  41           */
+  42          
+  43          
+  44          /*
+  45           * Function Declaration
+  46           */
+  47          
+  48          /*
+  49           * Function: get_igmp_dump
+  50           * -----------------------
+  51           * Displays IGMP snooping configuration and status page.
+C51 COMPILER V9.60.0.0   WEB_IGMP                                                          11/02/2026 17:57:39 PAGE 2   
+
+  52           * Shows IGMP enable/disable checkbox and static/dynamic router ports.
+  53           * Lists all current IGMP group entries with IP, ports, and VLAN ID.
+  54           * Provides forms to enable/disable IGMP and configure static router ports.
+  55           */
+  56          int32 get_igmp_dump(struct http_request_s *pReq)
+  57          {
+  58   1          sal_igmp_entry_t igmp_entry;
+  59   1          uint8            currTail;
+  60   1          char             ipStr[16];
+  61   1          char             portMaskStr[128];
+  62   1          sal_lPortmask_t  portmask;
+  63   1          sal_enable_t     enable;
+  64   1          uint16           usPortId;
+  65   1          char             acLogicId[MAX_LOGIC_ID_LEN];
+  66   1          bool             bPortCheck;
+  67   1          sal_lPortmask_t  lPortMask;
+  68   1          sal_lPortmask_t  lstaticmask, ldynamicmask;
+  69   1      
+  70   1          sal_igmp_state_get(&enable);
+  71   1          WEB_BEGIN(pReq);
+  72   1      
+  73   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  74   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  75   1      
+  76   1          WEB_PRINTF(pReq, "<html>\n");
+  77   1          WEB_PRINTF(pReq, "<head>\n");
+  78   1          WEB_PRINTF(pReq, "<title>IGMP</title>\n");
+  79   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  80   1          WEB_PRINTF(pReq, "</head>\n");
+  81   1          WEB_PRINTF(pReq, "\n");
+  82   1          WEB_PRINTF(pReq, "<body>\n");
+  83   1      
+  84   1      
+  85   1          WEB_PRINTF(pReq, "<center>\n");
+  86   1          WEB_PRINTF(pReq, "<fieldset>\n");
+  87   1          WEB_PRINTF(pReq, "<legend>IGMP Enable Setting</legend>\n");
+  88   1          WEB_PRINTF(pReq, "<form method=\"post\" name=\"igmp\" action=\"/igmp.cgi?page=enable_igmp\">\n");
+  89   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+  90   1          WEB_PRINTF(pReq, "    <tr>\n");
+  91   1          WEB_PRINTF(pReq, "      <th bgcolor=\"#99ccff\" width=\"180\">Enable</th>\n");
+  92   1          if (enable == SAL_ENABLED)
+  93   1              WEB_PRINTF(pReq, "      <td style=\"text-align:left;\" width=\"180\"><input type=\"checkbox\" name
+             -=\"enable_igmp\"  checked></td>\n");
+  94   1          else
+  95   1              WEB_PRINTF(pReq, "      <td style=\"text-align:left;\" width=\"180\"><input type=\"checkbox\" name
+             -=\"enable_igmp\"></td>\n");
+  96   1          WEB_PRINTF(pReq, "    </tr>\n");
+  97   1          WEB_PRINTF(pReq, "  </table>\n");
+  98   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+  99   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+ 100   1          WEB_PRINTF(pReq, "</form>\n");
+ 101   1      
+ 102   1          if(enable == SAL_ENABLED)
+ 103   1          {
+ 104   2              WEB_PRINTF(pReq, "<hr>\n");
+ 105   2              WEB_PRINTF(pReq, "<form method=\"post\" action=\"/igmp.cgi?page=igmp_static_router\">\n");
+ 106   2              WEB_PRINTF(pReq, "  <table border=\"0\" style=\"font-family:Sans-serif\">\n");
+ 107   2              WEB_PRINTF(pReq, "    <tr>\n");
+ 108   2      
+ 109   2              WEB_PRINTF(pReq, "      <td colspan=\"2\" style=\"text-align:left\">\n");
+ 110   2              WEB_PRINTF(pReq, "        <table border=\"1\" style=\"font-size:12px\">\n");
+ 111   2              WEB_PRINTF(pReq, "          <tr>\n");
+C51 COMPILER V9.60.0.0   WEB_IGMP                                                          11/02/2026 17:57:39 PAGE 3   
+
+ 112   2              WEB_PRINTF(pReq, "            <th width=\"120\">Router Port</th>\n");
+ 113   2          
+ 114   2              for (usPortId = 0; usPortId < SAL_PORT_ID_CPU; ++usPortId)
+ 115   2              {
+ 116   3                  if (!(sal_trunk_logicId_exist(usPortId)))
+ 117   3                  {
+ 118   4                      continue;
+ 119   4                  }
+ 120   3          
+ 121   3                  sal_trunk_logicId_toStr(acLogicId, usPortId);
+ 122   3                  if (usPortId < SAL_MAX_PHY_PORT)
+ 123   3                      WEB_PRINTF(pReq, "            <td>%d</td>\n", usPortId+1);
+ 124   3                  else
+ 125   3                      WEB_PRINTF(pReq, "            <td>%s</td>\n", acLogicId);
+ 126   3              }
+ 127   2          
+ 128   2              WEB_PRINTF(pReq, "          </tr>\n");
+ 129   2              WEB_PRINTF(pReq, "          <tr>\n");
+ 130   2              WEB_PRINTF(pReq, "            <th width=\"120\">static</th>\n");
+ 131   2      
+ 132   2              sal_igmp_staticRouter_get(&lPortMask);
+ 133   2              sal_trunk_physicMask_toLogicMask(&lstaticmask, &lPortMask);
+*** WARNING C182 IN LINE 133 OF ..\src\web\web_igmp.c: pointer to different objects
+ 134   2              for (usPortId = 0; usPortId < SAL_PORT_ID_CPU; ++usPortId)
+ 135   2              {
+ 136   3                  if (!(sal_trunk_logicId_exist(usPortId)))
+ 137   3                  {
+ 138   4                      continue;
+ 139   4                  }
+ 140   3                  bPortCheck = (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&lstaticmask, usPortId))? 1:0;
+ 141   3                  WEB_PRINTF(pReq, "            <td align=\"center\"><input type=\"checkbox\" name=\"lPort_%u\"%
+             -s></td>\n", \
+ 142   3                      usPortId, (bPortCheck)? " checked" : "");
+ 143   3              }
+ 144   2              WEB_PRINTF(pReq, "          </tr>\n");
+ 145   2      
+ 146   2              WEB_PRINTF(pReq, "          <tr>\n");
+ 147   2              WEB_PRINTF(pReq, "            <th width=\"120\">dynamic</th>\n");
+ 148   2      
+ 149   2              sal_igmp_dynamicRouter_get(&lPortMask);
+ 150   2              sal_trunk_physicMask_toLogicMask(&ldynamicmask, &lPortMask);
+*** WARNING C182 IN LINE 150 OF ..\src\web\web_igmp.c: pointer to different objects
+ 151   2              for (usPortId = 0; usPortId < SAL_PORT_ID_CPU; ++usPortId)
+ 152   2              {
+ 153   3                  if (!(sal_trunk_logicId_exist(usPortId)))
+ 154   3                  {
+ 155   4                      continue;
+ 156   4                  }
+ 157   3                  bPortCheck = (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&ldynamicmask, usPortId))? 1:0;
+ 158   3                  WEB_PRINTF(pReq, "            <td align=\"center\"><input type=\"checkbox\" name=\"lPort_%u\"%
+             -s disabled = true></td>\n", \
+ 159   3                      usPortId, (bPortCheck)? " checked" : "");
+ 160   3              }
+ 161   2              WEB_PRINTF(pReq, "          </tr>\n");
+ 162   2              WEB_PRINTF(pReq, "        </table>\n");
+ 163   2              WEB_PRINTF(pReq, "      </td>\n");
+ 164   2              WEB_PRINTF(pReq, "    </tr>\n");
+ 165   2              WEB_PRINTF(pReq, "  </table>\n");
+ 166   2              WEB_PRINTF(pReq, "  <br>\n");
+ 167   2              WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"set\">\n");
+ 168   2              WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"Add / Modify\">\n");
+ 169   2              WEB_PRINTF(pReq, "</form>\n");
+C51 COMPILER V9.60.0.0   WEB_IGMP                                                          11/02/2026 17:57:39 PAGE 4   
+
+ 170   2          }
+ 171   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 172   1          WEB_PRINTF(pReq, "</center>\n");
+ 173   1          
+ 174   1          WEB_PRINTF(pReq, "<center>\n");
+ 175   1          WEB_PRINTF(pReq, "\n");
+ 176   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 177   1          WEB_PRINTF(pReq, "<legend>Dump IGMP entry</legend>\n");    
+ 178   1          WEB_PRINTF(pReq, "<br>\n");
+ 179   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 180   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 181   1          WEB_PRINTF(pReq, "    <th width=\"150\">IP Address</th>\n");
+ 182   1          WEB_PRINTF(pReq, "    <th width=\"250\">Ports</th>\n");
+ 183   1          WEB_PRINTF(pReq, "    <th width=\"50\">Vid</th>\n");
+ 184   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 185   1      
+ 186   1          currTail = FALSE;
+ 187   1          
+ 188   1          while(1)
+ 189   1          {
+ 190   2              sal_igmp_nextEntry_get(&igmp_entry, &currTail);
+ 191   2      
+ 192   2              if(FALSE == currTail)
+ 193   2              {
+ 194   3                  ipStr[0] = '\0';
+ 195   3                  ip_to_str(ipStr, (uint8 *)&igmp_entry.group_addr);
+ 196   3      
+ 197   3                  sal_lPortMask_copyPMask(&portmask, &igmp_entry.fwd_portmask);
+ 198   3                  lmask_to_comma(portMaskStr, &portmask);
+ 199   3              
+ 200   3                  WEB_PRINTF(pReq, "    <tr>\n");        
+ 201   3                  WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", ipStr);
+ 202   3                  WEB_PRINTF(pReq, "      <td align=\"center\" style=\"width:200px;\">%s</td>\n", portMaskStr);
+ 203   3                  WEB_PRINTF(pReq, "      <td align=\"center\">%d</td>\n", igmp_entry.vid);            
+ 204   3                  WEB_PRINTF(pReq, "    </tr>\n");            
+ 205   3              }
+ 206   2              else
+ 207   2              {
+ 208   3                  break;
+ 209   3              }
+ 210   2          }
+ 211   1                  
+ 212   1          WEB_PRINTF(pReq, "</table>");
+ 213   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 214   1          WEB_PRINTF(pReq, "</center>\n");
+ 215   1          WEB_PRINTF(pReq, "</body>\n");
+ 216   1          WEB_PRINTF(pReq, "</html>\n");
+ 217   1      
+ 218   1          WEB_END(pReq);
+ 219   1      
+ 220   1          return SUCCESS;
+ 221   1      }
+ 222          
+ 223          /*
+ 224           * Function: post_igmp_state
+ 225           * -------------------------
+ 226           * Processes IGMP enable/disable form submission.
+ 227           * Extracts checkbox state from POST data.
+ 228           * Calls sal_igmp_state_set() to enable/disable IGMP snooping.
+ 229           * Refreshes IGMP configuration page after applying.
+ 230           */
+ 231          int32 post_igmp_state (struct http_request_s *pReq)
+C51 COMPILER V9.60.0.0   WEB_IGMP                                                          11/02/2026 17:57:39 PAGE 5   
+
+ 232          {
+ 233   1          uint8  *pValue;
+ 234   1          sal_enable_t enable_igmp;
+ 235   1      
+ 236   1          WEB_VAR(pReq, "enable_igmp", &pValue);
+ 237   1          if (pValue)
+ 238   1                  enable_igmp = SAL_ENABLED;
+ 239   1              else
+ 240   1                  enable_igmp = SAL_DISABLED;
+ 241   1          
+ 242   1      
+ 243   1          sal_igmp_state_set(enable_igmp);
+ 244   1      
+ 245   1          get_igmp_dump(pReq);
+ 246   1          return SUCCESS;
+ 247   1      }
+ 248          
+ 249          /*
+ 250           * Function: post_igmp_static_router
+ 251           * ---------------------------------
+ 252           * Processes static router port configuration form submission.
+ 253           * Scans all ports for checkbox named "lPort_X".
+ 254           * Builds port mask from checked checkboxes.
+ 255           * Calls sal_igmp_staticRouter_set() to apply static router ports.
+ 256           */
+ 257          int32 post_igmp_static_router (struct http_request_s *pReq)
+ 258          {
+ 259   1          uint16   portId = 0;
+ 260   1          sal_lPortmask_t lPortMask;
+ 261   1          uint8   *pValue;
+ 262   1          uint8   strPort[16];    /* `lPort_xxxxxxx` */
+ 263   1      
+ 264   1          sal_lPortMask_delAll(&lPortMask);
+ 265   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 266   1          {
+ 267   2              sprintf(strPort, "lPort_%u", portId);
+ 268   2              WEB_VAR(pReq, strPort, &pValue);
+ 269   2              if (pValue)
+ 270   2              {
+ 271   3                  sal_lPortMask_addPort(&lPortMask, portId);
+ 272   3              }
+ 273   2          }
+ 274   1          sal_igmp_staticRouter_set(lPortMask);
+ 275   1      
+ 276   1          get_igmp_dump(pReq);
+ 277   1          return SUCCESS;
+ 278   1      
+ 279   1      }
+ 280          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2380    ----
+   CONSTANT SIZE    =   1787    ----
+   XDATA SIZE       =   ----     221
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+C51 COMPILER V9.60.0.0   WEB_IGMP                                                          11/02/2026 17:57:39 PAGE 6   
+
+   FAR CONST SIZE   =   1787    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  2 WARNING(S),  0 ERROR(S)

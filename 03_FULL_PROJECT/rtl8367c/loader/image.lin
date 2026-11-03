@@ -1,0 +1,138 @@
+BankArea (0x004000, 0x00FFFF)
+;NOOVERLAY
+;DISABLEWARNING (16)
+;IBANKING (96H)
+IXREF
+
+OVERLAY(?PR?LWPS_API_INIT?LWPS_API                 ~  ?PR?_?TCP_HANDLER_CONNECT_FUNC?LWPS_API,
+        ?PR?_TCP_STATE_UPDATE?TCP                  !  ?PR?_?TCP_HANDLER_CONNECT_FUNC?LWPS_API)
+OVERLAY(?PR?LWPS_API_INIT?LWPS_API                 ~  ?PR?_?TCP_HANDLER_DISCONNECT_FUNC?LWPS_API,
+        ?PR?_TCP_STATE_UPDATE?TCP                  !  ?PR?_?TCP_HANDLER_DISCONNECT_FUNC?LWPS_API)
+OVERLAY(?PR?LWPS_API_INIT?LWPS_API                 ~  ?PR?_?TCP_HANDLER_RECV_FUNC?LWPS_API,
+        ?PR?_TCP_UP_HANDLE_IP?TCP                  !  ?PR?_?TCP_HANDLER_RECV_FUNC?LWPS_API)
+        
+OVERLAY(?PR?LWPS_API_INIT?LWPS_API                 ~  ?PR?_?UDP_HANDLER_RECVFROM_FUNC?LWPS_API,
+        ?PR?_UDP_UP_HANDLE_IP?UDP                  !  ?PR?_?UDP_HANDLER_RECVFROM_FUNC?LWPS_API)
+        
+OVERLAY(?PR?HTTPD_INIT?HTTPD                       ~  ?PR?_?LWPS_HTTPD_CONNECT?HTTPD,
+        ?PR?_?TCP_HANDLER_CONNECT_FUNC?LWPS_API    !  ?PR?_?LWPS_HTTPD_CONNECT?HTTPD)
+OVERLAY(?PR?HTTPD_INIT?HTTPD                       ~  ?PR?_?LWPS_HTTPD_DISCONNECT?HTTPD,
+        ?PR?_?TCP_HANDLER_DISCONNECT_FUNC?LWPS_API !  ?PR?_?LWPS_HTTPD_DISCONNECT?HTTPD)
+OVERLAY(?PR?HTTPD_INIT?HTTPD                       ~  ?PR?_?LWPS_HTTPD_RECEIVE?HTTPD,
+        ?PR?_?TCP_HANDLER_RECV_FUNC?LWPS_API       !  ?PR?_?LWPS_HTTPD_RECEIVE?HTTPD)
+        
+OVERLAY(?PR?_TCP_STATE_UPDATE?TCP                  !  ?PR?_?LWPS_HTTPD_CONNECT?HTTPD,
+        ?PR?_TCP_STATE_UPDATE?TCP                  !  ?PR?_?LWPS_HTTPD_DISCONNECT?HTTPD)
+
+;TFTP OVERLAY
+;OVERLAY(?PR?_TFTPC_READ?TFTPC                      ~  ?PR?_?LWPS_TFTPC_RECVFROM?TFTPC,
+;        ?PR?_?UDP_HANDLER_RECVFROM_FUNC?LWPS_API   !  ?PR?_?LWPS_TFTPC_RECVFROM?TFTPC)
+
+        
+CLASSES (
+    XDATA (X:0x0-X:0xBFFF), 
+    HDATA (X:0x0-X:0xBFFF), 
+    HCONST(C:0x14000-C:0x1FFFF)
+)
+
+SEGMENTS ( 
+                ?BANK?SWITCH(),
+                  ?PR?LOADER_MAIN?LOADER_START(),
+                  ?PR?*?MAIN(B01:0x4000),
+                  ?C_INITSEG(B01:),         ;; should be consistent with STARTUP.A51
+                   ?PR?*?NIC(B01:),
+;                     ?CO?NIC(B01:),
+                  ?PR?*?INIT(B01:),
+                    ?FC?INIT(B01:),
+;              ?PR?*?GETCHAR(B01:),
+;         ?PR?*?UPGRADE_TFTPC(B01:),
+        ?PR?_PUTCHAR?PUTCHAR(B01:),
+           ?PR?PRINTF?PRINTF(B01:),
+   ?PR?*?SPIFLASHDRV_WRAPPER(B01:),         ;; SPIFLASHDRV_WRAPPER and SPIFLASHVIEWER should be in the same bank
+     ?CO?SPIFLASHDRV_WRAPPER(B01:),
+        ?PR?*?SPIFLASHVIEWER(B01:),
+          ?CO?SPIFLASHVIEWER(B01:),
+        ?PR?_STRTOUL?STRTOUL(B01:),
+            ?PR?*?CHECK_BOOT(B01:),
+  ?PR?_SUM_UP_PAYLOAD?CHECK_BOOT(),
+?PR?GET_RUNTIME_HEADER?CHECK_BOOT(),
+              ?FC?CHECK_BOOT(B01:),
+                   ?PR?*?ETH(B01:),
+                ?PR?*?ETHARP(B01:),
+                  ?PR?*?ICMP(B01:),
+              ?PR?*?LWPS_API(B01:),
+                   ?PR?*?TCP(B01:),
+                   ?PR?*?UDP(B01:),
+                ?FC?LWPS_API(B01:),
+                     ?FC?TCP(B01:),
+                     ?FC?UDP(B01:),
+                  ?FC?ETHARP(B01:),
+                    ?FC?MAIN(B01:),
+                   ?PR?*?DSR(B01:),
+;           ?FC?UPGRADE_TFTPC(B01:),
+               ?PR?*?MEM_LIB(B01:),
+;                 ?PR?*?TFTPC(B01:),
+;                   ?FC?TFTPC(B01:),
+;               ?PR?*?SALUTIL(B01:),
+                ?PR?*SALFWUG(B01:),
+                    ?FC?ICMP(B01:),
+          ?PR?_STRSTR?STRSTR(B01:),
+                ?PR?*?SALSYS(B01:),
+                  ?FC?SALSYS(B01:),
+    ?PR?*?RUNTIME_LOADER_MSG(B01:),
+              ?PR?*?SALFLASH(B01:),
+                    ?PR?*?IP(B01:),   
+              ?PR?*?HTML_API(B01:),
+            ?PR?*?RTK_SWITCH(B01:),
+               ?PR?*?UTILIES(B01:),
+                           
+     ?PR?*?USER_EVENTS(B02:0x4000),
+                 ?PR?*?HTTPD(B02:),            
+  ?PR?_INIT_MEMPOOL?INIT_MEM(B02:),                 
+          ?PR?_MALLOC?MALLOC(B02:),                 
+              ?CO?RTK_SWITCH(B02:),
+                ?PR?*?SALNIC(B02:),
+              ?PR?_FREE?FREE(B02:),
+               ?PR?*?WEB_API(B02:),
+                ?PR?*?STRLEN(B02:),
+               ?PR?*?STRNCMP(B02:),
+               ?PR?*?STRNCPY(B02:),
+;              ?PR?*?VSPRINTF(B02:),
+              ?PR?*?WEB_UTIL(B02:),
+;              ?PR?*?WEB_TFTP(B02:),
+            ?PR?*?WEB_HIDDEN(B02:),
+             ?PR?*?WEB_INDEX(B02:),
+              ?PR?*?WEB_INFO(B02:),
+              ?PR?*?WEB_MENU(B02:),
+              ?PR?*?WEB_FILE(B02:),
+              ?PR?*?WEB_HTTP(B02:),
+             ?PR?*?WEB_IMAGE(B02:),
+;            ?PR?*?WEB_RELOAD(B02:),
+      ?PR?*?RTL8367C_ASICDRV(B02:),
+;  ?PR?*?RTL8367C_ASICDRV_PHY(B02:),
+  ?PR?*?RTL8367C_ASICDRV_LUT(B02:),
+  ?PR?*?RTL8367C_ASICDRV_PHY(B02:),
+  ?PR?*?RTL8367C_ASICDRV_RMA(B02:),
+  ?PR?*?RTL8367C_ASICDRV_SCHEDULING(B02:), 
+    ?PR?*?RTL8367C_ASICDRV_INBWCTRL(B02:), 
+?PR?*?RTL8367C_ASICDRV_MIRROR(B02:),
+ ?PR?*?RTL8367C_ASICDRV_PORT(B02:),   
+                  ?PR?*?PORT(B02:), 
+               ?PR?*?WEB_SYS(B02:), 
+                 ?FC?WEB_API(B02:),
+;                ?FC?WEB_UTIL(B02:),
+                   ?FC?HTTPD(B02:),
+;                ?FC?WEB_TFTP(B02:),
+              ?FC?WEB_HIDDEN(B02:),
+               ?FC?WEB_INDEX(B02:),
+                ?FC?WEB_INFO(B02:),
+                ?FC?WEB_MENU(B02:),
+                ?FC?WEB_FILE(B02:),
+                ?FC?WEB_HTTP(B02:),
+;              ?FC?WEB_RELOAD(B02:),
+               ?FC?WEB_IMAGE(B02:),
+                 ?FC?WEB_SYS(B02:),            
+                ?FC?HTML_API(B02:),
+               ?PR?*?SALVLAN(B02:),
+                  ?PR?*?RATE(B02:)               
+)

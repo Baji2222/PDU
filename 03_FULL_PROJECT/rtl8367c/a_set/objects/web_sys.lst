@@ -1,0 +1,356 @@
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYS
+OBJECT MODULE PLACED IN .\objects\web_sys.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_sys.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_sys.lst) TABS(2) OBJECT(.\objects\web_sys.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to System function
+  10           *
+  11           * Feature : Response the request related to System function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          
+  20          #include <salsys.h>
+  21          #include <salflash.h>
+  22          
+  23          #include <web/web_api.h>
+  24          #include "web_sys.h"
+  25          #include <salsys.h>
+  26          #include <syslog/syslogdefs.h>
+  27          
+  28          /*
+  29           * Symbol Definition
+  30           */
+  31          
+  32          
+  33          /*
+  34           * Data Declaration
+  35           */
+  36          
+  37          /*
+  38           * Array: htm_reboot
+  39           * -----------------
+  40           * HTML page for system reboot confirmation.
+  41           * Displays reboot button with warning message.
+  42           * Uses POST method to trigger reboot action.
+  43           * Styled with clean, minimal design.
+  44           */
+  45          uint8 const far htm_reboot[] = "\
+  46          <html><head><title>Reboot</title><style>\
+  47          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+  48          fieldset{width:350px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  49          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  50          input[type=submit]{background:#f44336;color:#fff;border:0;padding:8px 16px;cursor:pointer;border-radius:3p
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 2   
+
+             -x;font-weight:bold;margin-top:15px}\
+  51          .msg{color:#444;margin-bottom:15px}\
+  52          </style></head>\
+  53          <body>\
+  54          <fieldset>\
+  55          <legend>System Reboot</legend>\
+  56          <form method=\"post\" action=\"reboot.cgi\">\
+  57          <div class=\"msg\">Reboot the switch to apply changes</div>\
+  58          <input type=\"submit\" value=\"Reboot Now\">\
+  59          <input type=\"hidden\" name=\"cmd\" value=\"reboot\">\
+  60          </form>\
+  61          </fieldset>\
+  62          </body></html>\n\
+  63          ";
+  64          
+  65          /*
+  66           * Array: htm_rebooting
+  67           * --------------------
+  68           * HTML page shown during system reboot process.
+  69           * Displays progress bar animation using CSS keyframes.
+  70           * Auto-refreshes to home page after 12 seconds.
+  71           * Indicates device is restarting with visual feedback.
+  72           */
+  73          uint8 const far htm_rebooting[] = "\
+  74          <html><head><title>Rebooting</title><style>\
+  75          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+  76          fieldset{width:350px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  77          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  78          .p{height:5px;margin:15px 0;background:#eee;border-radius:3px;overflow:hidden}\
+  79          .b{height:100%;width:0;background:#1e88e5;display:block;animation:f 8s forwards}\
+  80          @keyframes f{to{width:100%}}\
+  81          .msg{color:#444;margin-bottom:10px}\
+  82          .note{font-size:12px;color:#777;margin-top:10px}\
+  83          </style>\
+  84          <script>setTimeout(function(){location.href='/'},12000)</script></head>\
+  85          <body>\
+  86          <fieldset>\
+  87          <legend>System Reboot</legend>\
+  88          <div class=\"msg\">Please wait while the device reboots...</div>\
+  89          <div class=\"p\"><span class=\"b\"></span></div>\
+  90          <div class=\"note\">The page will refresh automatically</div>\
+  91          </fieldset>\
+  92          </body></html>\n\
+  93          ";
+  94          
+  95          /*
+  96           * Array: htm_reset
+  97           * ----------------
+  98           * HTML page for factory reset confirmation.
+  99           * Displays reset button with warning message.
+ 100           * Warns user that all configuration will be lost.
+ 101           * Uses POST method to trigger factory reset.
+ 102           */
+ 103          uint8 const far htm_reset[] = "\
+ 104          <html><head><title>Factory Reset</title><style>\
+ 105          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+ 106          fieldset{width:350px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+ 107          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+ 108          input[type=submit]{background:#f44336;color:#fff;border:0;padding:8px 16px;cursor:pointer;border-radius:3p
+             -x;font-weight:bold;margin-top:15px}\
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 3   
+
+ 109          .msg{color:#444;margin-bottom:15px}\
+ 110          .warning{color:#f44336;font-size:12px;margin-top:10px}\
+ 111          </style></head>\
+ 112          <body>\
+ 113          <fieldset>\
+ 114          <legend>Factory Reset</legend>\
+ 115          <form method=\"post\" action=\"reset.cgi\">\
+ 116          <div class=\"msg\">Reset to default factory settings and restart the system.</div>\
+ 117          <input type=\"submit\" value=\"Factory Default\">\
+ 118          <input type=\"hidden\" name=\"cmd\" value=\"factory_default\">\
+ 119          <div class=\"warning\">Warning: All configuration will be lost!</div>\
+ 120          </form>\
+ 121          </fieldset>\
+ 122          </body></html>\n\
+ 123          ";
+ 124          
+ 125          /*
+ 126           * Array: htm_reset_process
+ 127           * ------------------------
+ 128           * HTML page shown during factory reset process.
+ 129           * Displays progress bar animation.
+ 130           * Auto-refreshes to home page after 15 seconds.
+ 131           * Indicates device is resetting to defaults.
+ 132           */
+ 133          uint8 const far htm_reset_process[] = "\
+ 134          <html><head><title>Factory Reset</title><style>\
+ 135          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+ 136          fieldset{width:350px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+ 137          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+ 138          .p{height:5px;margin:15px 0;background:#eee;border-radius:3px;overflow:hidden}\
+ 139          .b{height:100%;width:0;background:#1e88e5;display:block;animation:f 8s forwards}\
+ 140          @keyframes f{to{width:100%}}\
+ 141          .msg{color:#444;margin-bottom:10px}\
+ 142          .note{font-size:12px;color:#777;margin-top:10px}\
+ 143          </style>\
+ 144          <script>setTimeout(function(){location.href='/'},15000)</script></head>\
+ 145          <body>\
+ 146          <fieldset>\
+ 147          <legend>Factory Reset</legend>\
+ 148          <div class=\"msg\">Resetting to factory defaults...</div>\
+ 149          <div class=\"p\"><span class=\"b\"></span></div>\
+ 150          <div class=\"note\">The device will restart automatically</div>\
+ 151          </fieldset>\
+ 152          </body></html>\n\
+ 153          ";
+ 154          
+ 155          /*
+ 156           * Array: htm_save
+ 157           * ---------------
+ 158           * HTML page shown after configuration save.
+ 159           * Displays success message to confirm save operation.
+ 160           * Simple, clean design with green success indicator.
+ 161           * No auto-redirect, user can navigate manually.
+ 162           */
+ 163          uint8 const far htm_save[] = "\
+ 164          <html><head><title>Configuration Saved</title><style>\
+ 165          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+ 166          fieldset{width:350px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+ 167          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+ 168          .success{color:#4caf50;font-weight:bold;margin:10px 0}\
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 4   
+
+ 169          </style></head>\
+ 170          <body>\
+ 171          <fieldset>\
+ 172          <legend>Save Configuration</legend>\
+ 173          <div class=\"success\">Configuration has been saved successfully.</div>\
+ 174          </fieldset>\
+ 175          </body></html>\n\
+ 176          ";
+ 177          
+ 178          
+ 179          /*
+ 180           * Function Declaration
+ 181           */
+ 182          
+ 183          /*
+ 184           * Function: get_reboot
+ 185           * --------------------
+ 186           * Serves the system reboot confirmation page.
+ 187           * Displays HTML with reboot button and warning message.
+ 188           * GET handler for reboot.cgi page.
+ 189           */
+ 190          int32 get_reboot(struct http_request_s *pReq)
+ 191          {
+ 192   1          WEB_BEGIN(pReq);
+ 193   1      
+ 194   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 195   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 196   1      
+ 197   1          WEB_DATA(pReq, htm_reboot, sizeof(htm_reboot));
+ 198   1      
+ 199   1          WEB_END(pReq);
+ 200   1      
+ 201   1          return SUCCESS;
+ 202   1      }
+ 203          
+ 204          /*
+ 205           * Function: get_reset
+ 206           * -------------------
+ 207           * Serves the factory reset confirmation page.
+ 208           * Displays HTML with reset button and warning about data loss.
+ 209           * GET handler for reset.cgi page.
+ 210           */
+ 211          int32 get_reset(struct http_request_s *pReq)
+ 212          {
+ 213   1          WEB_BEGIN(pReq);
+ 214   1      
+ 215   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 216   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 217   1      
+ 218   1          WEB_DATA(pReq, htm_reset, sizeof(htm_reset));
+ 219   1      
+ 220   1          WEB_END(pReq);
+ 221   1      
+ 222   1          return SUCCESS;
+ 223   1      }
+ 224          
+ 225          /*
+ 226           * Function: get_save
+ 227           * ------------------
+ 228           * Saves current configuration to flash and displays confirmation.
+ 229           * Calls sal_flash_cfg_save() to persist configuration.
+ 230           * Shows success page after save operation completes.
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 5   
+
+ 231           * GET handler for save.cgi page.
+ 232           */
+ 233          int32 get_save(struct http_request_s *pReq)
+ 234          {
+ 235   1          sal_flash_cfg_save();
+ 236   1      
+ 237   1          WEB_BEGIN(pReq);
+ 238   1      
+ 239   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 240   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 241   1      
+ 242   1          WEB_DATA(pReq, htm_save, sizeof(htm_save));
+ 243   1      
+ 244   1          WEB_END(pReq);
+ 245   1      
+ 246   1          return SUCCESS;
+ 247   1      }
+ 248          
+ 249          //extern Tint32 lws_reboot_timer;
+ 250          
+ 251          /*
+ 252           * Function: post_reboot
+ 253           * ---------------------
+ 254           * Handles system reboot request from form submission.
+ 255           * Logs reboot event to syslog.
+ 256           * Shows rebooting progress page to user.
+ 257           * Calls sal_sys_system_reboot() to restart the device.
+ 258           */
+ 259          int32 post_reboot(struct http_request_s *pReq)
+ 260          {   
+ 261   1        syslog_add_new_buf_entry(SYSLOG_MSG_SYSTEM_REBOOTED, 0);
+ 262   1      
+ 263   1          /* Reboot */    
+ 264   1          WEB_BEGIN(pReq);
+ 265   1      
+ 266   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 267   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 268   1      
+ 269   1          WEB_DATA(pReq, htm_rebooting, sizeof(htm_rebooting));
+ 270   1      
+ 271   1          WEB_END(pReq);
+ 272   1      
+ 273   1          sal_sys_system_reboot();
+ 274   1          printf("Rebooting....\n");
+ 275   1      
+ 276   1          return SUCCESS;
+ 277   1      }
+ 278          
+ 279          /*
+ 280           * Function: post_factdefault_load
+ 281           * -------------------------------
+ 282           * Handles factory reset request from form submission.
+ 283           * Logs factory reset event to syslog.
+ 284           * Calls sal_flash_cfg_reset() to restore default config.
+ 285           * Shows reset progress page and reboots the system.
+ 286           */
+ 287          int32 post_factdefault_load(struct http_request_s *pReq)
+ 288          {
+ 289   1        syslog_add_new_buf_entry(SYSLOG_MSG_FACTORY_RESET, 0);
+ 290   1      
+ 291   1          sal_flash_cfg_reset();
+ 292   1          
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           11/02/2026 17:57:37 PAGE 6   
+
+ 293   1          /* Reboot */
+ 294   1          //lws_reboot_timer = 2;
+ 295   1      
+ 296   1          WEB_BEGIN(pReq);
+ 297   1      
+ 298   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 299   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 300   1      
+ 301   1          WEB_DATA(pReq, htm_reset_process, sizeof(htm_reset_process));
+ 302   1      
+ 303   1          WEB_END(pReq);
+ 304   1      
+ 305   1          sal_sys_system_reboot();
+ 306   1          
+ 307   1          return SUCCESS;
+ 308   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    553    ----
+   CONSTANT SIZE    =   4124    ----
+   XDATA SIZE       =   ----      15
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   4124    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

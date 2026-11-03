@@ -1,0 +1,146 @@
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           08/20/2025 22:07:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYS
+OBJECT MODULE PLACED IN .\objects\web_sys.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\web\web_sys.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..
+                    -\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\l
+                    -ocal;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_6
+                    -25,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\web_sys.lst) TABS(2) OBJECT(.\objects\web_sys.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to System function
+  10           *
+  11           * Feature : Response the request related to System function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          
+  20          #include <web/web_api.h>
+  21          #include "web_sys.h"
+  22          
+  23          /*
+  24           * Symbol Definition
+  25           */
+  26          
+  27          
+  28          /*
+  29           * Data Declaration
+  30           */
+  31          uint8 const far htm_reboot[] = "\
+  32          <html><head><title>Reboot</title><style>\
+  33          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+  34          fieldset{width:300px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  35          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  36          input{background:#f44336;color:#fff;border:0;padding:8px 16px;cursor:pointer;border-radius:3px;margin-top:
+             -10px;font-weight:bold}\
+  37          .m{margin-bottom:15px;color:#444}\
+  38          </style></head>\
+  39          <body>\
+  40          <fieldset>\
+  41          <legend>System Reboot</legend>\
+  42          <form method=post action=reboot.cgi>\
+  43          <div class=\"m\">Reboot the switch to apply changes</div>\
+  44          <input type=submit value=\"Reboot Now\">\
+  45          <input type=hidden name=cmd value=reboot>\
+  46          </form>\
+  47          </fieldset>\
+  48          </body></html>\n\
+  49          ";
+  50          
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           08/20/2025 22:07:56 PAGE 2   
+
+  51          
+  52          uint8 const far htm_rebooting[] = "\
+  53          <html><head><title>Rebooting</title><style>\
+  54          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+  55          fieldset{width:300px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  56          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  57          .p{height:5px;margin:15px 0;background:#eee}\
+  58          .b{height:100%;width:0;background:#1e88e5;display:block;animation:f 8s forwards}\
+  59          @keyframes f{to{width:100%}}\
+  60          .m{margin-bottom:15px;color:#444}\
+  61          .s{font-size:12px;color:#777;margin-top:10px}\
+  62          </style>\
+  63          <script>setTimeout(function(){location.href='/'},12000)</script></head>\
+  64          <body>\
+  65          <fieldset>\
+  66          <legend>System Reboot</legend>\
+  67          <div class=\"m\">Please wait while the device reboots...</div>\
+  68          <div class=\"p\"><span class=\"b\"></span></div>\
+  69          <div class=\"s\">The page will refresh automatically</div>\
+  70          </fieldset>\
+  71          </body></html>\n\
+  72          ";
+  73          
+  74          /*
+  75           * Function Declaration
+  76           */
+  77          int32 get_reboot(struct http_request_s *pReq)
+  78          {
+  79   1          WEB_BEGIN(pReq);
+  80   1      
+  81   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  82   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  83   1      
+  84   1          WEB_DATA(pReq, htm_reboot, sizeof(htm_reboot));
+  85   1      
+  86   1          WEB_END(pReq);
+  87   1      
+  88   1          return SUCCESS;
+  89   1      }
+  90          
+  91          int32 post_reboot(struct http_request_s *pReq)
+  92          {   
+  93   1      
+  94   1          /* Reboot */    
+  95   1          WEB_BEGIN(pReq);
+  96   1      
+  97   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  98   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  99   1      
+ 100   1          WEB_DATA(pReq, htm_rebooting, sizeof(htm_rebooting));
+ 101   1      
+ 102   1          WEB_END(pReq);
+ 103   1          
+ 104   1          sal_sys_system_reboot();
+*** WARNING C206 IN LINE 104 OF src\web\web_sys.c: 'sal_sys_system_reboot': missing function-prototype
+ 105   1      
+ 106   1          return SUCCESS;
+ 107   1      }
+ 108          
+
+
+C51 COMPILER V9.60.0.0   WEB_SYS                                                           08/20/2025 22:07:56 PAGE 3   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    203    ----
+   CONSTANT SIZE    =   1637    ----
+   XDATA SIZE       =   ----       6
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1637    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

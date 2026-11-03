@@ -1,0 +1,160 @@
+C51 COMPILER V9.60.0.0   SPIFLASHDRV_WRAPPER                                               11/02/2026 17:56:52 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SPIFLASHDRV_WRAPPER
+OBJECT MODULE PLACED IN .\objects\SPIFLashDrv_wrapper.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\drivers\SPIFLashDrv_wrapper.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE 
+                    -INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sa
+                    -l;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK
+                    -_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE
+                    -_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\SPIFLashDrv_wrapper.lst) TABS(2) OBJECT(.\objects\SPIFLashDr
+                    -v_wrapper.obj)
+
+line level    source
+
+   1          #include <stdio.h>
+   2          #include <lwps\lwps.h>
+   3          #include <local/flash_config.h>
+   4          #include "SPIFlashDrv.h"
+   5          
+   6          
+   7          code uint32 flash_protect_area[] = { CONFIG_FLASH_PROTECT };
+   8          code uint8 num_flash_protected_area=FLASH_PROTECT_REGION;
+   9          static uint8 __spi_flash_op_wrapper(uint8 *buf, uint32 start_adr, uint16 len, uint8 op) {
+  10   1          struct spi_write_flash_argument_t arg;
+  11   1          uint16 clen;
+  12   1      /*
+  13   1          if (start_adr&0xff) {
+  14   1              OSAL_PRINTF("        __spi_flash_op_wrapper: f_addr=0x%08lx, len=%d, op=%bd\n", 
+  15   1                  start_adr, len, op);
+  16   1          }
+  17   1      */
+  18   1          arg.op=op;
+  19   1          arg.f_addr=start_adr;
+  20   1          if ((op==SPI_FLASH_OP_READ)||(op==SPI_FLASH_OP_WRITE)) {
+  21   2              arg.x_addr=(((uint16)buf)&0xffff);
+  22   2              while (len>0) {
+  23   3                  clen=(len>256)?256:len;
+  24   3                  arg.len=(clen&0xff);
+  25   3                  (*spi_flash_driver_entry)(((uint16)&arg)&0xffff);
+  26   3                  arg.f_addr += clen;
+  27   3                  arg.x_addr += clen;
+  28   3                  len -= clen;
+  29   3              }
+  30   2              return TRUE;
+  31   2          } else {
+  32   2              // op=SPI_FLASH_OP_ERASE/SPI_FLASH_OP_ERASE_BLOCKING/SPI_FLASH_OP_INIT
+  33   2              return (*spi_flash_driver_entry)(((uint16)&arg)&0xffff);
+  34   2          }
+  35   1      }
+  36          // SPI Flash Erase: Erases a sector/block at specified address with blocking/non-blocking option
+  37          // Performs alignment, chip size, and protected region validation before erasing
+  38          uint8 spi_flash_erase(uint32 erase_block_adr, uint8 blocking) large {
+  39   1      /*
+  40   1          OSAL_PRINTF("      spi_flash_erase: entry=%p, addr=0x%08lx, blocking=%bd\n", 
+  41   1              spi_flash_driver_entry, erase_block_adr, blocking); 
+  42   1      */
+  43   1      
+  44   1          /* Error Check */
+  45   1          #ifdef CONFIG_CHECK_CHIP_SIZE
+  46   1              if( (erase_block_adr)>(spi_chip0_chip_size) ){
+  47   2                  SPI_ERROR_MSG(("adr[0x%08lX] is larger than ChipSize[0x%08lX]!\n", 
+  48   2                          erase_block_adr, (spi_chip0_chip_size)));
+  49   2                  
+  50   2                  return FALSE;
+C51 COMPILER V9.60.0.0   SPIFLASHDRV_WRAPPER                                               11/02/2026 17:56:52 PAGE 2   
+
+  51   2              }
+  52   1          #endif
+  53   1          if( 0!= (erase_block_adr%CONFIG_SPI_SECTOR_SIZE) ){
+  54   2              SPI_ERROR_MSG(("erase_block_adr is not aligned!\n"));
+  55   2              return FALSE;
+  56   2          }
+  57   1          #ifdef CONFIG_CHECK_PROTECT_REGION
+  58   1          {   uint8 i;
+  59   2              for (i=0; i<FLASH_PROTECT_REGION; i+=2){
+  60   3                  if (erase_block_adr<flash_protect_area[i]) continue;
+  61   3                  if (erase_block_adr>=flash_protect_area[i+1]) continue;
+  62   3                  return FALSE;
+  63   3              }
+  64   2          }
+  65   1          #endif
+  66   1          return __spi_flash_op_wrapper(NULL, erase_block_adr, 0, 
+  67   1              (blocking==SPI_ERASE_NONBLOCK)?SPI_FLASH_OP_ERASE:SPI_FLASH_OP_ERASE_BLOCKING);
+  68   1      }
+  69          // SPI Flash Write: Writes data to flash at specified address with automatic page alignment handling
+  70          // Validates chip size limits and protected regions before performing write operation
+  71          uint8 spi_flash_write(uint32 start_adr, uint8 *buf, uint16 len) large {
+  72   1          uint32 xdata align_adr = 0, pre_size = 0;
+  73   1      /*
+  74   1          if (start_adr&0xff) {
+  75   1              OSAL_PRINTF("      spi_flash_write: entry=%p, addr=0x%08lx, len=%d\n", 
+  76   1                  spi_flash_driver_entry, start_adr, len); 
+  77   1          }
+  78   1      */
+  79   1          #ifdef CONFIG_CHECK_CHIP_SIZE
+  80   1              if( (start_adr+len)>spi_chip0_chip_size ){
+  81   2                  SPI_ERROR_MSG(("[adr+len=0x%08lX] is larger than ChipSize[0x%08lX]!\n", 
+  82   2                      start_adr+len, spi_chip0_chip_size));
+  83   2                  return FALSE;
+  84   2              }
+  85   1          #endif
+  86   1      
+  87   1          #ifdef CONFIG_CHECK_PROTECT_REGION
+  88   1          { uint8 i;
+  89   2              for (i=0; i<FLASH_PROTECT_REGION; i+=2){
+  90   3                  if ((start_adr+len) <= flash_protect_area[i]) continue;
+  91   3                  if (start_adr>=flash_protect_area[i+1]) continue;
+  92   3                  SPI_ERROR_MSG(("flash write area is protected!\n"));
+  93   3                  return FALSE;
+  94   3              }
+  95   2          }
+  96   1          #endif
+  97   1          
+  98   1          /* align page size */
+  99   1          align_adr = start_adr&(~CONFIG_SPI_PAGE_MASK);
+ 100   1          pre_size = CONFIG_SPI_PAGE_SIZE-(start_adr-align_adr);
+ 101   1          
+ 102   1          if( (0!=start_adr%CONFIG_SPI_PAGE_SIZE) &&  ( len>pre_size ) ){
+ 103   2              __spi_flash_op_wrapper(buf, start_adr, pre_size, SPI_FLASH_OP_WRITE);
+ 104   2              start_adr += pre_size;
+ 105   2              buf += pre_size;
+ 106   2              len -= pre_size;
+ 107   2          }
+ 108   1          __spi_flash_op_wrapper(buf, start_adr, len, SPI_FLASH_OP_WRITE);
+ 109   1          
+ 110   1          return TRUE;
+ 111   1      }
+ 112          
+C51 COMPILER V9.60.0.0   SPIFLASHDRV_WRAPPER                                               11/02/2026 17:56:52 PAGE 3   
+
+ 113          // SPI Flash Read: Reads data from flash at specified address into provided buffer
+ 114          // Validates chip size limits before performing read operation
+ 115          uint8 spi_flash_read(uint32 start_adr, uint8 *buf, uint16 len) large {
+ 116   1          #ifdef CONFIG_CHECK_CHIP_SIZE
+ 117   1              if ((start_adr+len)>spi_chip0_chip_size) {
+ 118   2                  SPI_ERROR_MSG(("start_adr+len is larger than chip_size!\n"));
+ 119   2                  return FALSE;
+ 120   2              }
+ 121   1          #endif
+ 122   1          __spi_flash_op_wrapper(buf, start_adr, len, SPI_FLASH_OP_READ);
+ 123   1          return TRUE;
+ 124   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    860    ----
+   CONSTANT SIZE    =     17    ----
+   XDATA SIZE       =   ----      53
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

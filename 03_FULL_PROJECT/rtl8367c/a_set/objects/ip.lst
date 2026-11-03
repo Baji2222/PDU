@@ -1,0 +1,360 @@
+C51 COMPILER V9.60.0.0   IP                                                                11/02/2026 17:56:58 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE IP
+OBJECT MODULE PLACED IN .\objects\ip.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\ip.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(
+                    -0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\co
+                    -mmon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,
+                    -SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8
+                    -G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\ip.lst) TABS(2) OBJECT(.\objects\ip.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          /*
+   3           * Copyright Realtek Semiconductor Corporation, 2008
+   4           * All rights reserved.
+   5           *
+   6           * Program  : Light-weight Protocol Stack
+   7           * Abstract : 
+   8           * Author   : 
+   9           * $Id: $
+  10           */
+  11          
+  12          #include <local/lwps_config.h>
+  13          
+  14          #if LWPS_IP
+  15          
+  16          /*
+  17           * Include Files
+  18           */
+  19          
+  20          #include <lwps/lwps.h>
+  21          
+  22          
+  23          /*
+  24           * Symbol Definition
+  25           */
+  26          
+  27          
+  28          /*
+  29           * Data Declaration
+  30           */
+  31          static uint16    xdata ip_hdr_id_number = 0;
+  32          static ip_addr_t xdata ip_addr_bcast = { { 255, 255, 255, 255 } };
+  33          
+  34          
+  35          /*
+  36           * Macro Definition
+  37           */
+  38          
+  39          
+  40          /*
+  41           * Function Declaration
+  42           */
+  43          #if DBG_LWPS_IP_ENABLE
+              //static void ip_hdr_dump(ip_hdr_t *pIpHdr)
+              // IP Header Dump: Prints formatted IP header fields for debugging purposes
+              // Displays version, header length, TOS, length, ID, flags, TTL, protocol, checksum and addresses
+              void ip_hdr_dump(ip_hdr_t *pIpHdr)
+              {
+                  OSAL_PRINTF("-- [IP HDR dump] ------------------------------\n");
+                  OSAL_PRINTF("    Version: 0x%01X\n", (uint16)pIpHdr->version);
+                  OSAL_PRINTF("    Hdr-Len: 0x%01X\n", (uint16)pIpHdr->hdr_len);
+C51 COMPILER V9.60.0.0   IP                                                                11/02/2026 17:56:58 PAGE 2   
+
+                  OSAL_PRINTF("        TOS: 0x%02X\n", (uint16)pIpHdr->tos);
+                  OSAL_PRINTF("     Length: 0x%04X (%d Bytes)\n", (uint16)pIpHdr->length, (uint16)pIpHdr->length);
+                  OSAL_PRINTF("  Id Number: 0x%04X (%d)\n", (uint16)pIpHdr->id_number, (uint16)pIpHdr->id_number);
+                  OSAL_PRINTF(" FragOffset: 0x%04X (%d)\n", (uint16)pIpHdr->frag_offset, (uint16)pIpHdr->frag_offset);
+                  OSAL_PRINTF("        TTL: 0x%02X (%d)\n", (uint16)pIpHdr->ttl, (uint16)pIpHdr->ttl);
+                  OSAL_PRINTF("      Proto: 0x%02X (%d)\n", (uint16)pIpHdr->proto, (uint16)pIpHdr->proto);
+                  OSAL_PRINTF("   Checksum: 0x%04X\n", (uint16)pIpHdr->chksum);
+                  OSAL_PRINTF("     Src-IP: %d.%d.%d.%d\n", \
+                      (uint16)pIpHdr->src_ip[0], \
+                      (uint16)pIpHdr->src_ip[1], \
+                      (uint16)pIpHdr->src_ip[2], \
+                      (uint16)pIpHdr->src_ip[3]);
+                  OSAL_PRINTF("     Dst-IP: %d.%d.%d.%d\n", \
+                      (uint16)pIpHdr->dst_ip[0], \
+                      (uint16)pIpHdr->dst_ip[1], \
+                      (uint16)pIpHdr->dst_ip[2], \
+                      (uint16)pIpHdr->dst_ip[3]);
+                  OSAL_PRINTF("-----------------------------------------------\n");
+              }
+              #endif /*DBG_LWPS_IP_ENABLE*/
+  72          
+  73          // IP Initialize: Initializes the IP protocol layer
+  74          // Returns LWPS_OK on successful initialization
+  75          uint32 ip_init(void)
+  76          {
+  77   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+  78   1      
+  79   1          return LWPS_OK;
+  80   1      }
+  81          
+  82          // IP Up: Processes incoming IP packets and dispatches to appropriate protocol handlers
+  83          // Validates destination IP, then routes to ICMP, IGMP, TCP, or UDP based on protocol field
+  84          uint32 ip_up(pktBuf_t *pBuf)
+  85          {
+  86   1          ip_hdr_t xdata *pIpHdr = (ip_hdr_t *)pBuf->l3;
+  87   1      
+  88   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+  89   1      
+  90   1      #if LWPS_ETHARP
+  91   1          if ((!IS_IPADDR_EQUAL(pIpHdr->dst_ip, ip_addr_bcast.addr)) &&
+  92   1              (!IS_IPADDR_EQUAL(pIpHdr->dst_ip, this_ip))            &&
+  93   1              (0xE0!=(0xE0&pIpHdr->dst_ip[0]))
+  94   1             )
+  95   1          {
+  96   2              DBG_LWPS_IP_PRINTF(("ip_up(): DIP(%d.%d.%d.%d) != MyIP(%d.%d.%d.%d) --> Drop!\n", \
+  97   2                  (uint16)pIpHdr->dst_ip[0], (uint16)pIpHdr->dst_ip[1], \
+  98   2                  (uint16)pIpHdr->dst_ip[2], (uint16)pIpHdr->dst_ip[3], \
+  99   2                  (uint16)this_ip[0],        (uint16)this_ip[1], \
+ 100   2                  (uint16)this_ip[2],        (uint16)this_ip[3]));
+ 101   2                  
+ 102   2              return LWPS_OK;
+ 103   2          }
+ 104   1      #endif /* end of LWPS_ETHARP */
+ 105   1      
+ 106   1          /* Layer 4 protocol */
+ 107   1          pBuf->l4 = (pBuf->l3 + (pIpHdr->hdr_len)*4);
+ 108   1      
+ 109   1        ip_hdr_dump(pIpHdr);
+ 110   1        DBG_LWPS_IP_PRINTF(("%s:%d, size = %d\n", __FILE__, (uint16)__LINE__, (uint16)pBuf->size));
+ 111   1      
+ 112   1          switch (pIpHdr->proto) {
+ 113   2      #if  LWPS_ICMP
+C51 COMPILER V9.60.0.0   IP                                                                11/02/2026 17:56:58 PAGE 3   
+
+ 114   2          case IP_PROTO_ICMP: /* ICMP */
+ 115   2              pBuf->l4fmt = L4FMT_ICMP;
+ 116   2              if (LWPS_OK != icmp_up(pBuf)) {
+ 117   3                  return LWPS_ERR;
+ 118   3              }
+ 119   2              break;
+ 120   2      #endif  /* end of LWPS_ICMP */
+ 121   2      
+ 122   2      #if  LWPS_IGMP
+ 123   2          case IP_PROTO_IGMP: /* IGMP */
+ 124   2              pBuf->l4fmt = L4FMT_IGMP;
+ 125   2              if (LWPS_OK != igmp_up(pBuf)) {
+ 126   3                  return LWPS_ERR;
+ 127   3              }
+ 128   2              break;
+ 129   2      #endif  /* end of LWPS_IGMP */
+ 130   2      
+ 131   2      #if LWPS_TCP
+ 132   2          case IP_PROTO_TCP:  /* TCP */
+ 133   2              pBuf->l4fmt = L4FMT_TCP;
+ 134   2              if (LWPS_OK != tcp_up(pBuf)) {
+ 135   3                  return LWPS_ERR;
+ 136   3              }
+ 137   2              break;
+ 138   2      #endif  /* end of LWPS_TCP */
+ 139   2      
+ 140   2      #if LWPS_UDP
+ 141   2          case IP_PROTO_UDP:  /* UDP */
+ 142   2              pBuf->l4fmt = L4FMT_UDP;
+ 143   2              if (LWPS_OK != udp_up(pBuf)) {
+ 144   3                  return LWPS_ERR;
+ 145   3              }
+ 146   2              break;
+ 147   2      #endif  /* end of LWPS_UDP */
+ 148   2      
+ 149   2          default:
+ 150   2              DBG_LWPS_IP_PRINTF(("ip_up(): IP proto (%d) is not supported!\n", pIpHdr->proto));
+ 151   2              break;
+ 152   2          }
+ 153   1      
+ 154   1        //ip_hdr_dump(pBuf->l3);
+ 155   1          return LWPS_OK;
+ 156   1      }
+ 157          
+ 158          #if LWPS_ICMP
+ 159          // IP Down Handle ICMP: Prepares ICMP packet for transmission by adding IP header
+ 160          // Sets IP header fields for ICMP protocol and copies source/destination addresses
+ 161          static uint32 ip_down_handle_icmp(pktBuf_t *pBuf, ip_addr_t *pIpAddr)
+ 162          {
+ 163   1          ip_hdr_t xdata *pIpHdr_Output;
+ 164   1      
+ 165   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 166   1      
+ 167   1          /* Insert IP Header into the packet(pBuf) */
+ 168   1          pBuf->l3 = pBuf->l4 - sizeof(ip_hdr_t);
+ 169   1          pBuf->size += sizeof(ip_hdr_t);
+ 170   1          pIpHdr_Output = (ip_hdr_t *)pBuf->l3;
+ 171   1      
+ 172   1          /* IP Header Setting */
+ 173   1          pIpHdr_Output->length = pBuf->size;
+ 174   1          pIpHdr_Output->version = 4;
+ 175   1          pIpHdr_Output->hdr_len = 5;
+C51 COMPILER V9.60.0.0   IP                                                                11/02/2026 17:56:58 PAGE 4   
+
+ 176   1          pIpHdr_Output->tos = 0;
+ 177   1          pIpHdr_Output->id_number = ip_hdr_id_number++;
+ 178   1          pIpHdr_Output->frag_offset = 0; /* Not support fragment packet */
+ 179   1          pIpHdr_Output->ttl = IP_HDR_DEFAULT_TTL;
+ 180   1          pIpHdr_Output->proto = IP_PROTO_ICMP;
+ 181   1          pIpHdr_Output->chksum = 0;  /* Always let NIC recalculate */
+ 182   1          IPADDR_COPY(pIpHdr_Output->src_ip, this_ip);
+ 183   1          IPADDR_COPY(pIpHdr_Output->dst_ip, pIpAddr->addr);
+ 184   1      
+ 185   1          //ip_hdr_dump(pIpHdr_Output);
+ 186   1      
+ 187   1          return LWPS_OK;
+ 188   1      } /* end of ip_down_handle_icmp */
+ 189          #endif  /* LWPS_ICMP */
+ 190          
+ 191          #if LWPS_TCP
+ 192          // IP Down Handle TCP: Prepares TCP packet for transmission by adding IP header
+ 193          // Sets IP header fields for TCP protocol with DF flag for no fragmentation
+ 194          static uint32 ip_down_handle_tcp(pktBuf_t *pBuf, ip_addr_t *pIpAddr)
+ 195          {
+ 196   1      
+ 197   1          ip_hdr_t xdata *pIpHdr_Output;
+ 198   1      
+ 199   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 200   1      
+ 201   1      
+ 202   1          /* Insert IP Header into the packet(pBuf) */
+ 203   1          pBuf->l3 = pBuf->l4 - sizeof(ip_hdr_t);
+ 204   1          pBuf->size += sizeof(ip_hdr_t);
+ 205   1          pIpHdr_Output = (ip_hdr_t *)pBuf->l3;
+ 206   1      
+ 207   1          /* IP Header Setting */
+ 208   1          pIpHdr_Output->version = 4;
+ 209   1          pIpHdr_Output->hdr_len = 5;
+ 210   1          pIpHdr_Output->tos = 0;
+ 211   1          pIpHdr_Output->length = pBuf->size;
+ 212   1          pIpHdr_Output->id_number = ip_hdr_id_number++;
+ 213   1          pIpHdr_Output->frag_offset = 0 | IP_FLAG_DF; /* Not support fragment packet */
+ 214   1          pIpHdr_Output->ttl = IP_HDR_DEFAULT_TTL;
+ 215   1          pIpHdr_Output->proto = IP_PROTO_TCP;
+ 216   1          pIpHdr_Output->chksum = 0;  /* Always let NIC recalculate */
+ 217   1          IPADDR_COPY(pIpHdr_Output->src_ip, this_ip);   /* [FIXME] */
+ 218   1          IPADDR_COPY(pIpHdr_Output->dst_ip, pIpAddr->addr);
+ 219   1      
+ 220   1          //ip_hdr_dump(pIpHdr_Output);
+ 221   1      
+ 222   1          return LWPS_OK;
+ 223   1      } /* end of ip_down_handle_tcp */
+ 224          #endif  /* LWPS_TCP */
+ 225          
+ 226          #if LWPS_UDP
+ 227          // IP Down Handle UDP: Prepares UDP packet for transmission by adding IP header
+ 228          // Sets IP header fields for UDP protocol with DF flag for no fragmentation
+ 229          static uint32 ip_down_handle_udp(pktBuf_t *pBuf, ip_addr_t *pIpAddr)
+ 230          {
+ 231   1          ip_hdr_t xdata *pIpHdr_Output;
+ 232   1      
+ 233   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 234   1      
+ 235   1          /* Insert IP Header into the packet(pBuf) */
+ 236   1          pBuf->l3 = pBuf->l4 - sizeof(ip_hdr_t);
+ 237   1          pBuf->size += sizeof(ip_hdr_t);
+C51 COMPILER V9.60.0.0   IP                                                                11/02/2026 17:56:58 PAGE 5   
+
+ 238   1          pIpHdr_Output = (ip_hdr_t *)pBuf->l3;
+ 239   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 240   1      
+ 241   1          /* IP Header Setting */
+ 242   1          pIpHdr_Output->version = 4;
+ 243   1          pIpHdr_Output->hdr_len = 5;
+ 244   1          pIpHdr_Output->tos = 0;
+ 245   1          pIpHdr_Output->length = pBuf->size;
+ 246   1          pIpHdr_Output->id_number = ip_hdr_id_number++;
+ 247   1          pIpHdr_Output->frag_offset = 0 | IP_FLAG_DF; /* Not support fragment packet */
+ 248   1          pIpHdr_Output->ttl = IP_HDR_DEFAULT_TTL;
+ 249   1          pIpHdr_Output->proto = IP_PROTO_UDP;
+ 250   1          pIpHdr_Output->chksum = 0;  /* Always let NIC recalculate */
+ 251   1          //pIpHdr_Output->src_ip = pIpHdr->dst_ip;
+ 252   1          //IPADDR_COPY(pIpHdr_Output->src_ip, pBuf->netif_tx->ip_addr.addr);
+ 253   1          IPADDR_COPY(pIpHdr_Output->src_ip, this_ip);    /* [FIXME] */
+ 254   1          //pIpHdr_Output->dst_ip = pIpHdr->src_ip;
+ 255   1          IPADDR_COPY(pIpHdr_Output->dst_ip, pIpAddr->addr);
+ 256   1      
+ 257   1          //ip_hdr_dump(pIpHdr_Output);
+ 258   1      
+ 259   1          return LWPS_OK;
+ 260   1      } /* end of ip_down_handle_udp */
+ 261          #endif  /* LWPS_UDP */
+ 262          
+ 263          // IP Down: Prepares packets for transmission by adding IP headers based on layer 4 protocol
+ 264          // Dispatches to protocol-specific handlers and forwards to Ethernet layer
+ 265          uint32 ip_down(pktBuf_t *pBuf, ip_addr_t *pIpAddr)
+ 266          {
+ 267   1          DBG_LWPS_IP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 268   1      
+ 269   1          /* Check parameter */
+ 270   1          /*if ((pBuf == NULL) || (pIpAddr == NULL)) {
+ 271   1              DBG_LWPS_IP_PRINTF(("%s():%d - pBuf or pIpHdr is NULL\n", __FILE__, (uint16)__LINE__));
+ 272   1              return LWPS_ERR_NULLPOINT;
+ 273   1          }*/
+ 274   1      
+ 275   1          switch (pBuf->l4fmt) {
+ 276   2      #if LWPS_ICMP
+ 277   2          case L4FMT_ICMP:
+ 278   2              if (LWPS_OK != ip_down_handle_icmp(pBuf, pIpAddr)) {
+ 279   3                  return LWPS_OK;
+ 280   3              }
+ 281   2              break;
+ 282   2      #endif  /* LWPS_ICMP */
+ 283   2      
+ 284   2      #if LWPS_TCP
+ 285   2          case L4FMT_TCP:
+ 286   2              if (LWPS_OK != ip_down_handle_tcp(pBuf, pIpAddr)) {
+ 287   3                  //lwps_pbuf_free(pBuf);
+ 288   3                  return LWPS_OK;
+ 289   3              }
+ 290   2              break;
+ 291   2      #endif  /* LWPS_TCP */
+ 292   2      
+ 293   2      #if LWPS_UDP
+ 294   2          case L4FMT_UDP:
+ 295   2              if (LWPS_OK != ip_down_handle_udp(pBuf, pIpAddr)) {
+ 296   3                  //lwps_pbuf_free(pBuf);
+ 297   3                  return LWPS_OK;
+ 298   3              }
+ 299   2              break;
+C51 COMPILER V9.60.0.0   IP                                                                11/02/2026 17:56:58 PAGE 6   
+
+ 300   2      #endif  /* LWPS_UDP */
+ 301   2      
+ 302   2          default:
+ 303   2              DBG_LWPS_IP_PRINTF(("ip_down(): L4FMT (%d) is not supported!\n", (uint16)pBuf->l4fmt));
+ 304   2              return LWPS_ERR;
+ 305   2              break;
+ 306   2          }
+ 307   1      
+ 308   1          pBuf->l3fmt = L3FMT_IP;
+ 309   1          DBG_LWPS_IP_PRINTF(("%s:%d, size = %d\n", __FILE__, (uint16)__LINE__, (uint16)pBuf->size));
+ 310   1          if (LWPS_OK != eth_down(pBuf)) {
+ 311   2              //OSAL_PRINTF("%s():%d - lwps_pbuf_tx failed (drop packet)!\n", __FILE__, (uint16)__LINE__);
+ 312   2              //lwps_pbuf_free(pBuf);
+ 313   2              /* DO NOT return ERROR, Just release this packet */
+ 314   2          }
+ 315   1      
+ 316   1          return LWPS_OK;
+ 317   1      } /* end of ip_down */
+ 318          
+ 319          #endif /* end of LWPS_IP */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2014    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      6      29
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

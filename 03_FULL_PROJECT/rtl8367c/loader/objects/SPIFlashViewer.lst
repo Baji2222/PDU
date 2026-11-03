@@ -1,0 +1,247 @@
+C51 COMPILER V9.60.0.0   SPIFLASHVIEWER                                                    08/20/2025 22:07:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SPIFLASHVIEWER
+OBJECT MODULE PLACED IN .\objects\SPIFlashViewer.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\src\drivers\SPIFlashViewer.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDI
+                    -R(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\s
+                    -al;.\include\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUA
+                    -L,DW8051_CLK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\SPIFlashViewer.lst) TABS(2) OBJECT(.\objec
+                    -ts\SPIFlashViewer.obj)
+
+line level    source
+
+   1          #include <stdio.h>
+   2          #include <stdlib.h>
+   3          #include <lwps\lwps.h>
+   4          #include "SPIFlashDrv.h"
+   5          extern void check_boot(uint8 to_bootup) large;
+   6          extern void print_runtime_header(void *p);
+   7          extern void *get_runtime_header(void);
+   8          //void upgrade_image_tftp(void) large;
+   9          
+  10          #define CMDLINE_SIZE 100
+  11          #ifdef CONFIG_USE_FLASH_VIEWER
+  12          void dump_xdata_buf(uint8 *buf, uint16 l) large {
+  13   1          uint16 i;
+  14   1          OSAL_PRINTF("       00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n");
+  15   1          for (i=0;i<l;i+=16, buf+=16) {
+  16   2              OSAL_PRINTF("[%04x] "
+  17   2                  "%02bx %02bx %02bx %02bx %02bx %02bx %02bx %02bx "
+  18   2                  "%02bx %02bx %02bx %02bx %02bx %02bx %02bx %02bx\n",
+  19   2                  (uint16)i,
+  20   2                  buf[ 0], buf[ 1], buf[ 2], buf[ 3], buf[ 4], buf[ 5], buf[ 6], buf[ 7],
+  21   2                  buf[ 8], buf[ 9], buf[10], buf[11], buf[12], buf[13], buf[14], buf[15]);
+  22   2          }
+  23   1          //OSAL_PRINTF("length=%d.\n", l);
+  24   1      }
+  25          
+  26          static void sfv_print_menu() large {
+  27   1          OSAL_PRINTF(
+  28   1          "=========================SPI FLASH VIEWER=============================\n"
+  29   1          "    b: reboot\n"
+  30   1          "    e <addr>: Erase flash with the address of <addr>\n"
+  31   1          "    ev <addr>: Erase flash with the address of <addr> and then Verify\n"
+  32   1          "    r <addr> <len>: read flash from the address of <addr> and then dump\n"
+  33   1          "    c: check runtime kernel without boot\n"
+  34   1          "    cb: check runtime kernel and boot if checksum is pass\n"
+  35   1          "    h: print header\n"
+  36   1          "    l: load runtime kernel\n"
+  37   1          "    v: show verobose information\n"
+  38   1          "    m: print this menu\n"
+  39   1          "    q: quit from spi flash view\n");
+  40   1      
+  41   1      }
+  42          static char *sfv_find_word(char *inp) {
+  43   1          while (((*inp)==' ')||((*inp)=='\t')) ++inp;
+  44   1          return inp;
+  45   1      }
+  46          static char *sfv_find_delimiter(char *inp) {
+  47   1          while (1) {
+  48   2              if (((*inp)==' ')||((*inp)=='\t')||((*inp)==0)) return inp;
+  49   2              ++inp;
+  50   2          }
+  51   1      }
+C51 COMPILER V9.60.0.0   SPIFLASHVIEWER                                                    08/20/2025 22:07:53 PAGE 2   
+
+  52          static char sfv_cook_char(char c) {
+  53   1          if (c<32) return '.';
+  54   1          return c;
+  55   1      }
+  56          static void sfv_dump_spi_flash(uint32 addr, uint16 l) large {
+  57   1          uint16 i;
+  58   1          uint8 buf[64], *p, j;
+  59   1          
+  60   1          OSAL_PRINTF("         00 01 02 03 04 05 06 07 08 09 0A 0B 0C 0D 0E 0F\n");
+  61   1          for (i=0;i<l;i+=64) {
+  62   2              spi_flash_read(addr, buf, 64);
+  63   2              for (j=0, p=buf;j<4;++j, p+=16) {
+  64   3                  OSAL_PRINTF("[%06lx] ", addr);
+  65   3                  OSAL_PRINTF(
+  66   3                      "%02bx %02bx %02bx %02bx %02bx %02bx %02bx %02bx "
+  67   3                      "%02bx %02bx %02bx %02bx %02bx %02bx %02bx %02bx  ",
+  68   3                      p[ 0], p[ 1], p[ 2], p[ 3], p[ 4], p[ 5], p[ 6], p[ 7],
+  69   3                      p[ 8], p[ 9], p[10], p[11], p[12], p[13], p[14], p[15]
+  70   3                      );
+  71   3                  OSAL_PRINTF("%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c%c\n",
+  72   3                      sfv_cook_char(p[ 0]), sfv_cook_char(p[ 1]), sfv_cook_char(p[ 2]), sfv_cook_char(p[ 3]), 
+  73   3                      sfv_cook_char(p[ 4]), sfv_cook_char(p[ 5]), sfv_cook_char(p[ 6]), sfv_cook_char(p[ 7]),
+  74   3                      sfv_cook_char(p[ 8]), sfv_cook_char(p[ 9]), sfv_cook_char(p[10]), sfv_cook_char(p[11]), 
+  75   3                      sfv_cook_char(p[12]), sfv_cook_char(p[13]), sfv_cook_char(p[14]), sfv_cook_char(p[15])
+  76   3                      );
+  77   3                  addr+=16;
+  78   3              }
+  79   2          }
+  80   1          OSAL_PRINTF("length=0x%x(%d).\n", l, l);
+  81   1      }
+  82          static void sfv_erase_spi_flash(uint32 addr, uint8 to_verify) large {
+  83   1          uint8 buf[64];
+  84   1          uint8 l=(uint8)(CONFIG_SPI_SECTOR_SIZE/64);
+  85   1          uint8 *p, *q=buf+64;
+  86   1          
+  87   1          if (spi_flash_erase(addr, SPI_ERASE_BLOCK)==FALSE) {
+  88   2              OSAL_PRINTF("Erase 0x%06lx: FAIL (may due to protected regions)\n", addr);
+  89   2              return;
+  90   2          }
+  91   1      
+  92   1          OSAL_PRINTF("Erase 0x%06lx: done\n", addr);
+  93   1          if (!to_verify) return;
+  94   1          for (;l>0;--l, addr+=64) {
+  95   2              spi_flash_read(addr, buf, 64);
+  96   2              for (p=buf; p!=q; ++p){
+  97   3                  if (0xff!=*p) {
+  98   4                      OSAL_PRINTF("Verify the erase: FAIL at 0x%06lx\n", addr);
+  99   4                      OSAL_PRINTF("data read back:\n"); 
+ 100   4                      dump_xdata_buf(buf, 64);
+ 101   4                      return;
+ 102   4                  }
+ 103   3              }
+ 104   2          }
+ 105   1          OSAL_PRINTF("Erase and verify: SUCCESS\n");
+ 106   1      }
+ 107          static void sfv_show_verobose_infor(void) {
+ 108   1          uint8 i;
+ 109   1          
+ 110   1          // show proected regsion
+ 111   1          OSAL_PRINTF("There %bd protected region(s).\n", num_flash_protected_area>>1);
+ 112   1          for (i=0; i<num_flash_protected_area; i+=2){
+ 113   2              OSAL_PRINTF("    Portected region %bd: 0x%06lx-0x%06lx\n", 
+C51 COMPILER V9.60.0.0   SPIFLASHVIEWER                                                    08/20/2025 22:07:53 PAGE 3   
+
+ 114   2                  i>>1, flash_protect_area[i], flash_protect_area[i+1]);
+ 115   2          }
+ 116   1      }
+ 117          uint8 spi_flash_viewer() large {
+ 118   1          char cmdline[CMDLINE_SIZE], *s, *e;
+ 119   1          uint32 addr;
+ 120   1          uint16 len;
+ 121   1          uint8 flag;
+ 122   1          uint8 last_is_read=0, last_is_erase=0;
+ 123   1          uint8 write_buffer;
+ 124   1          sfv_print_menu();
+ 125   1          while(1) {
+ 126   2              flag=0;
+ 127   2              OSAL_PRINTF(">"); gets(cmdline, CMDLINE_SIZE-1);
+ 128   2              s=sfv_find_word(cmdline);
+ 129   2              if (*s==0) {
+ 130   3                  if (last_is_read) {
+ 131   4                      addr += len;
+ 132   4                      sfv_dump_spi_flash(addr, len);
+ 133   4                  } else if (last_is_erase) {
+ 134   4                      addr += CONFIG_SPI_SECTOR_SIZE;
+ 135   4                      sfv_erase_spi_flash(addr, flag);
+ 136   4                  }
+ 137   3                  continue;
+ 138   3              }
+ 139   2              last_is_read=0;
+ 140   2              last_is_erase=0;
+ 141   2              e=sfv_find_delimiter(s);
+ 142   2              if (s[0]=='e') {
+ 143   3                  if (s[1]=='v') flag=1;
+ 144   3                  s=sfv_find_word(e);
+ 145   3                  if (*s==0) goto unkown_message;
+ 146   3                  addr=strtoul(s, &e, 0);
+ 147   3                  addr &= (0x1000000 - CONFIG_SPI_SECTOR_SIZE);
+ 148   3                  sfv_erase_spi_flash(addr, flag);
+ 149   3                  last_is_erase=1;
+ 150   3                  continue;
+ 151   3              } else if (s[0]=='w'){
+ 152   3                  if (e!=s+1) goto unkown_message;
+ 153   3                  s=sfv_find_word(e);
+ 154   3                  if (*s==0) goto unkown_message;
+ 155   3                  addr=strtoul(s, &e, 0);
+ 156   3                  s=sfv_find_word(e);
+ 157   3                  if (*s==0) goto unkown_message;
+ 158   3                  write_buffer=(uint8)strtoul(s, &e, 0);
+ 159   3                  spi_flash_write(addr, &write_buffer, 1);
+ 160   3                  continue;
+ 161   3              } else if (s[0]=='r'){
+ 162   3                  if (e!=s+1) goto unkown_message;
+ 163   3                  s=sfv_find_word(e);
+ 164   3                  if (*s==0) goto unkown_message;
+ 165   3                  addr=strtoul(s, &e, 0);
+ 166   3                  s=sfv_find_word(e);
+ 167   3                  if (*s==0) goto unkown_message;
+ 168   3                  len=strtoul(s, &e, 0);
+ 169   3                  len=(len+(uint8)(addr&0x0f)+15)&0xfff0;
+ 170   3                  addr &= 0xffff0;
+ 171   3                  sfv_dump_spi_flash(addr, len);
+ 172   3                  last_is_read=1;
+ 173   3                  continue;
+ 174   3              } else if (s[0]=='h'){
+ 175   3                  if (s[1]==0) {
+C51 COMPILER V9.60.0.0   SPIFLASHVIEWER                                                    08/20/2025 22:07:53 PAGE 4   
+
+ 176   4                      get_runtime_header();
+ 177   4                      print_runtime_header(NULL);
+ 178   4                      continue;
+ 179   4                  }
+ 180   3              } else if (s[0]=='c'){
+ 181   3                  if (s[1]=='b') flag=1;
+ 182   3                  check_boot(flag);
+ 183   3                  continue;
+ 184   3      /*            
+ 185   3              } else if (s[0]=='l'){
+ 186   3                  if (s[1]==0) {
+ 187   3                      upgrade_image_tftp();
+ 188   3                      continue;
+ 189   3                  }
+ 190   3      */            
+ 191   3              } else if (s[0]=='v'){
+ 192   3                  if (s[1]==0) {
+ 193   4                      sfv_show_verobose_infor();
+ 194   4                      continue;
+ 195   4                  }
+ 196   3              } else if (s[0]=='m'){
+ 197   3                  if (s[1]==0) {
+ 198   4                      sfv_print_menu();
+ 199   4                      continue;
+ 200   4                  }
+ 201   3              } else if (s[0]=='b'){
+ 202   3                  if (s[1]==0) return 1;
+ 203   3              } else if (s[0]=='q'){
+ 204   3                  if (s[1]==0) return 0;
+ 205   3              } 
+ 206   2      unkown_message:
+ 207   2              OSAL_PRINTF("unknown command: %s\n", cmdline); 
+ 208   2          }
+ 209   1      }
+ 210          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2725    ----
+   CONSTANT SIZE    =   1142    ----
+   XDATA SIZE       =   ----     276
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

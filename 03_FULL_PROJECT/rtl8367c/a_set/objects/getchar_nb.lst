@@ -1,0 +1,59 @@
+C51 COMPILER V9.60.0.0   GETCHAR_NB                                                        11/02/2026 17:56:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE GETCHAR_NB
+OBJECT MODULE PLACED IN .\objects\getchar_nb.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\lib\uart\getchar_nb.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE IN
+                    -TVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;
+                    -..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_A
+                    -PI_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_8
+                    -2l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\getchar_nb.lst) TABS(2) OBJECT(.\objects\getchar_nb.obj)
+
+line level    source
+
+   1          #include <reg_sfr.h>
+   2          
+   3          #include <stdio.h>
+   4          
+   5          // Get Character Non-Blocking: Reads a character from UART without waiting if no data available
+   6          // Returns 0xFF if no character received, otherwise returns the received character
+   7          char getchar_nb(void){
+   8   1        char c; 
+   9   1        while(!RI){
+  10   2          return(0xFF);
+  11   2        }
+  12   1        RI=0; 
+  13   1        c=SBUF0; 
+  14   1        return c; 
+  15   1      }
+  16          
+  17          /* unused
+  18          // Get Character Blocking: Waits indefinitely for a character to be received from UART
+  19          // Returns the received character after clearing the receive interrupt flag
+  20          char getchar(void) 
+  21          { 
+  22              char c; 
+  23            while(!RI);
+  24            RI=0; 
+  25            c=SBUF0; 
+  26            return c; 
+  27          }
+  28          */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     11    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,22 @@
+--- /home/claude/orig/rtl8367c/src/web/web_user.c	2026-11-02 11:29:21.443148103 +0000
++++ rtl8367c/src/web/web_user.c	2026-11-02 11:29:51.589762541 +0000
+@@ -25,7 +25,7 @@
+ #include "web_user.h"
+ #include <syslog/syslogdefs.h>
+ 
+-uint8 Get_Response[75];
++uint8 Get_Response[200];   /* FIX: was [75]; UART line can be up to 180 chars */
+ /*
+  * Symbol Definition
+  */
+@@ -190,7 +190,9 @@
+  */
+ void send_str_web(uint8* tempData)
+ {
+-		strcpy((char*)Get_Response, tempData);
++		/* FIX: bounded copy (was unbounded strcpy into a 75-byte buffer) */
++		strncpy((char*)Get_Response, (char*)tempData, sizeof(Get_Response) - 1);
++		Get_Response[sizeof(Get_Response) - 1] = '\0';
+ }
+ 
+ //void Fetching_Set_Response(char* tempData)

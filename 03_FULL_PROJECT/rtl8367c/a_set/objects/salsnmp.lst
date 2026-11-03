@@ -1,0 +1,231 @@
+C51 COMPILER V9.60.0.0   SALSNMP                                                           11/02/2026 17:57:09 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALSNMP
+OBJECT MODULE PLACED IN .\objects\salsnmp.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salsnmp.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salsnmp.lst) TABS(2) OBJECT(.\objects\salsnmp.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          #include <saltype.h>
+   3          #include <salflash.h>
+   4          #include <salerror.h>
+   5          
+   6          #include <snmp/snmp_msg.h>
+   7          
+   8          #if SAL_SNMP
+   9          
+  10          /* Function Name:
+  11           *      sal_snmp_trapIp_set
+  12           * Description:
+  13           *      Set IP address of destination of trap packet.
+  14           * Input:
+  15           *      trapIp - Destination IP Address.
+  16           * Output:
+  17           *      None
+  18           * Return:
+  19           *      SAL_ERR_SUCCESS
+  20           * Note:
+  21           *      None
+  22           */
+  23          int32 sal_snmp_trapIp_set(sal_ipaddr_t trapIp)
+  24          {
+  25   1          uint8 iparr[4];
+  26   1      
+  27   1          iparr[0] = (uint8)((trapIp & 0xFF000000) >> 24);
+  28   1          iparr[1] = (uint8)((trapIp & 0xFF0000) >> 16);    
+  29   1          iparr[2] = (uint8)((trapIp & 0xFF00) >> 8);    
+  30   1          iparr[3] = (uint8)( trapIp & 0xFF);    
+  31   1          
+  32   1          snmp_trap_dst_ip_set(0, iparr);
+  33   1      
+  34   1          return sal_flash_snmp_trapIp_set(trapIp);
+  35   1      }
+  36          
+  37          
+  38          /* Function Name:   
+  39           *      sal_snmp_trapIp_get
+  40           * Description:
+  41           *      Get IP address of destination of trap packet.
+  42           * Input:
+  43           *      None
+  44           * Output:
+  45           *      pTrapIp - Pointer to Destination IP Address.
+  46           * Return:
+  47           *      SAL_ERR_SUCCESS
+  48           *      SAL_ERR_NULL_POINTER
+  49           * Note:
+  50           *      None
+  51           */
+C51 COMPILER V9.60.0.0   SALSNMP                                                           11/02/2026 17:57:09 PAGE 2   
+
+  52          int32 sal_snmp_trapIp_get(sal_ipaddr_t *pTrapIp)
+  53          {
+  54   1          u8_t trap_ip[4] = {0};
+  55   1          //Dont read flash every timeout.
+  56   1          return sal_flash_snmp_trapIp_get(pTrapIp);
+  57   1          //snmp_trap_dst_ip_get(0, &trap_ip[0]);
+  58   1          //memcpy((void *)pTrapIp, trap_ip, 4);
+  59   1          //turn SUCCESS;
+  60   1      }
+  61          
+  62          
+  63          
+  64          /* Function Name:
+  65           *      sal_snmp_community_set
+  66           * Description:
+  67           *      Set read community and read-write community string.
+  68           * Input:
+  69           *      pReadComm   - Pointer to read community string.
+  70           *      pWriteComm  - Pointer to write community string.
+  71           * Output:
+  72           *      None
+  73           * Return:
+  74           *      SAL_ERR_SUCCESS
+  75           *      SAL_ERR_NULL_POINTER
+  76           *      SAL_ERR_PARAMETER 
+  77           * Note:
+  78           *      None
+  79           */
+  80          int32 sal_snmp_community_set(char *pReadComm, char *pWriteComm)
+  81          {
+  82   1          if(NULL == pReadComm || NULL == pWriteComm)
+  83   1              return SAL_ERR_NULL_POINTER;
+  84   1      
+  85   1          if(strlen(pReadComm) > SAL_SNMP_COMMUNITY_STR_LEN || strlen(pWriteComm) > SAL_SNMP_COMMUNITY_STR_LEN)
+  86   1              return SAL_ERR_PARAMETER;
+  87   1      
+  88   1          snmp_read_community_set(pReadComm);
+  89   1          snmp_write_community_set(pWriteComm);
+  90   1      
+  91   1          return sal_flash_snmp_community_set(pReadComm, pWriteComm);
+  92   1      }
+  93          
+  94          
+  95          /* Function Name:
+  96           *      sal_snmp_community_set
+  97           * Description:
+  98           *      Get read community and read-write community string.
+  99           * Input:
+ 100           *      None 
+ 101           * Output:
+ 102           *      pReadComm   - Pointer to read community string.
+ 103           *      pWriteComm  - Pointer to write community string.
+ 104           * Return:
+ 105           *      SAL_ERR_SUCCESS
+ 106           *      SAL_ERR_NULL_POINTER
+ 107           * Note:
+ 108           *      None
+ 109           */
+ 110          int32 sal_snmp_community_get(char *pReadComm, char *pWriteComm)
+ 111          {
+ 112   1          if(NULL == pReadComm || NULL == pWriteComm)
+ 113   1              return SAL_ERR_NULL_POINTER;
+C51 COMPILER V9.60.0.0   SALSNMP                                                           11/02/2026 17:57:09 PAGE 3   
+
+ 114   1      
+ 115   1          return sal_flash_snmp_community_get(pReadComm, pWriteComm);
+ 116   1      }
+ 117          
+ 118          sal_enable_t snmp_enable = SAL_ENABLED;
+ 119          
+ 120          /* Function Name:
+ 121           *      sal_snmp_state_set
+ 122           * Description:
+ 123           *      Set snmp Enable state.
+ 124           * Input:
+ 125           *      enable - Snmp enable state.
+ 126           * Output:
+ 127           *      None
+ 128           * Return:
+ 129           *      SAL_ERR_SUCCESS
+ 130           * Note:
+ 131           *      None
+ 132           */
+ 133          int32 sal_snmp_state_set(sal_enable_t enable)
+ 134          {
+ 135   1      
+ 136   1          snmp_enable = enable;
+ 137   1          snmp_trap_set_enable();
+ 138   1          return sal_flash_snmp_state_set(enable);
+ 139   1      }
+ 140          
+ 141          
+ 142          /* Function Name:
+ 143           *      sal_snmp_state_get
+ 144           * Description:
+ 145           *      Get IP address of destination of trap packet.
+ 146           * Input:
+ 147           *      None
+ 148           * Output:
+ 149           *      pTrapIp - Pointer to Destination IP Address.
+ 150           * Return:
+ 151           *      SAL_ERR_SUCCESS
+ 152           *      SAL_ERR_NULL_POINTER
+ 153           * Note:
+ 154           *      None
+ 155           */
+ 156          int32 sal_snmp_state_get(sal_enable_t *enable)
+ 157          {
+ 158   1          return sal_flash_snmp_state_get(enable);
+ 159   1      }
+ 160          
+ 161          /* Function Name:
+ 162           *      sal_snmp_config_restore
+ 163           * Description:
+ 164           *      Restore SNMP configuration from flash to system
+ 165           * Input:
+ 166           *      None
+ 167           * Output:
+ 168           *      None
+ 169           * Return:
+ 170           *      SAL_ERR_SUCCESS
+ 171           * Note:
+ 172           *      None
+ 173           */
+ 174          int32 sal_snmp_config_restore(void)
+ 175          {
+C51 COMPILER V9.60.0.0   SALSNMP                                                           11/02/2026 17:57:09 PAGE 4   
+
+ 176   1          sal_flash_snmp_t snmp;
+ 177   1          sal_enable_t enable;
+ 178   1      
+ 179   1          sal_flash_snmp_state_get(&enable);
+ 180   1          sal_snmp_state_set(enable);
+ 181   1      
+ 182   1          sal_flash_snmp_community_get(snmp.read_community, snmp.write_community);
+ 183   1          sal_snmp_community_set(snmp.read_community, snmp.write_community);
+ 184   1      
+ 185   1          sal_flash_snmp_trapIp_get(&snmp.trapIp);
+ 186   1          sal_snmp_trapIp_set(snmp.trapIp);
+ 187   1      
+ 188   1          snmp_inc_system_info();
+*** WARNING C206 IN LINE 188 OF ..\src\sal\salsnmp.c: 'snmp_inc_system_info': missing function-prototype
+ 189   1          return SAL_ERR_SUCCESS;
+ 190   1      }
+ 191          
+ 192          #endif
+ 193          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    414    ----
+   CONSTANT SIZE    =      4    ----
+   XDATA SIZE       =      1     164
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

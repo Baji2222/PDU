@@ -1,0 +1,614 @@
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ASN1_ENC
+OBJECT MODULE PLACED IN .\objects\asn1_enc.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\snmp\asn1_enc.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE 
+                    -INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sa
+                    -l;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK
+                    -_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE
+                    -_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\asn1_enc.lst) TABS(2) OBJECT(.\objects\asn1_enc.obj)
+
+line level    source
+
+   1          /**
+   2           * @file
+   3           * Abstract Syntax Notation One (ISO 8824, 8825) encoding
+   4           *
+   5           * @todo not optimised (yet), favor correctness over speed, favor speed over size
+   6           */
+   7          
+   8          /*
+   9           * Copyright (c) 2006 Axon Digital Design B.V., The Netherlands.
+  10           * All rights reserved.
+  11           *
+  12           * Redistribution and use in source and binary forms, with or without modification,
+  13           * are permitted provided that the following conditions are met:
+  14           *
+  15           * 1. Redistributions of source code must retain the above copyright notice,
+  16           *    this list of conditions and the following disclaimer.
+  17           * 2. Redistributions in binary form must reproduce the above copyright notice,
+  18           *    this list of conditions and the following disclaimer in the documentation
+  19           *    and/or other materials provided with the distribution.
+  20           * 3. The name of the author may not be used to endorse or promote products
+  21           *    derived from this software without specific prior written permission.
+  22           *
+  23           * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
+  24           * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+  25           * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
+  26           * SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+  27           * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
+  28           * OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+  29           * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+  30           * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+  31           * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
+  32           * OF SUCH DAMAGE.
+  33           *
+  34           * Author: Christiaan Simons <christiaan.simons@axon.tv>
+  35           */
+  36          
+  37          #include "local/config.h"
+  38          #include "snmp/opt.h"
+  39          #include "common_types.h"
+  40          
+  41          #if LWIP_SNMP /* don't build if not configured for use in lwipopts.h */
+  42          
+  43          #include "snmp/snmp_asn1.h"
+  44          
+  45          /**
+  46           * Returns octet count for length.
+  47           *
+  48           * @param length
+  49           * @param octets_needed points to the return value
+  50           */
+  51          void
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 2   
+
+  52          snmp_asn1_enc_length_cnt(u16_t length, u8_t *octets_needed)
+  53          {
+  54   1        if (length < 0x80U)
+  55   1        {
+  56   2          *octets_needed = 1;
+  57   2        }
+  58   1        else if (length < 0x100U)
+  59   1        {
+  60   2          *octets_needed = 2;
+  61   2        }
+  62   1        else
+  63   1        {
+  64   2          *octets_needed = 3;
+  65   2        }
+  66   1      }
+  67          
+  68          /**
+  69           * Returns octet count for an u64_t.
+  70           *
+  71           * @param value
+  72           * @param octets_needed points to the return value
+  73           *
+  74           * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
+  75           * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
+  76           * of 0xFFFFFFFF is preceded with 0x00 and the length is 5 octets!!
+  77           */
+  78          void
+  79          snmp_asn1_enc_u64t_cnt(u32_t value[2], u16_t *octets_needed) large
+  80          {
+  81   1        if (value[0] >= 1UL)
+  82   1        {
+  83   2        *octets_needed = 8;
+  84   2        }
+  85   1        else if (value[1] < 0x80UL)
+  86   1        {
+  87   2          *octets_needed = 1;
+  88   2        }
+  89   1        else if (value[1] < 0x8000UL)
+  90   1        {
+  91   2          *octets_needed = 2;
+  92   2        }
+  93   1        else if (value[1] < 0x800000UL)
+  94   1        {
+  95   2          *octets_needed = 3;
+  96   2        }
+  97   1        else
+  98   1        {
+  99   2          *octets_needed = 4;
+ 100   2        }
+ 101   1      }
+ 102          
+ 103          #if 0 /* function:snmp_asn1_enc_s64t_cnt */
+              /**
+               * Returns octet count for an s64_t.
+               *
+               * @param value
+               * @param octets_needed points to the return value
+               *
+               * @note ASN coded integers are _always_ signed.
+               */
+              void
+              snmp_asn1_enc_s64t_cnt(s32_t value[2], u16_t *octets_needed)
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 3   
+
+              {
+                if (value[0] < 0)
+                {
+                  value[0] = ~value[0];
+                value[1] = ~value[1];
+                }
+                if (value[0] >= 1UL)
+                {
+                  *octets_needed = 8;
+                }
+                if (value < 0x80L)
+                {
+                  *octets_needed = 1;
+                }
+                else if (value < 0x8000L)
+                {
+                  *octets_needed = 2;
+                }
+                else if (value < 0x800000L)
+                {
+                  *octets_needed = 3;
+                }
+                else
+                {
+                  *octets_needed = 4;
+                }
+              }
+              #endif
+ 142          
+ 143          /**
+ 144           * Returns octet count for an u32_t.
+ 145           *
+ 146           * @param value
+ 147           * @param octets_needed points to the return value
+ 148           *
+ 149           * @note ASN coded integers are _always_ signed. E.g. +0xFFFF is coded
+ 150           * as 0x00,0xFF,0xFF. Note the leading sign octet. A positive value
+ 151           * of 0xFFFFFFFF is preceded with 0x00 and the length is 5 octets!!
+ 152           */
+ 153          void
+ 154          snmp_asn1_enc_u32t_cnt(u32_t value, u16_t *octets_needed)
+ 155          {
+ 156   1        if (value < 0x80UL)
+ 157   1        {
+ 158   2          *octets_needed = 1;
+ 159   2        }
+ 160   1        else if (value < 0x8000UL)
+ 161   1        {
+ 162   2          *octets_needed = 2;
+ 163   2        }
+ 164   1        else if (value < 0x800000UL)
+ 165   1        {
+ 166   2          *octets_needed = 3;
+ 167   2        }
+ 168   1        else if (value < 0x80000000UL)
+ 169   1        {
+ 170   2          *octets_needed = 4;
+ 171   2        }
+ 172   1        else
+ 173   1        {
+ 174   2          *octets_needed = 5;
+ 175   2        }
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 4   
+
+ 176   1      }
+ 177          
+ 178          /**
+ 179           * Returns octet count for an s32_t.
+ 180           *
+ 181           * @param value
+ 182           * @param octets_needed points to the return value
+ 183           *
+ 184           * @note ASN coded integers are _always_ signed.
+ 185           */
+ 186          void
+ 187          snmp_asn1_enc_s32t_cnt(s32_t value, u16_t *octets_needed)
+ 188          {
+ 189   1        if (value < 0)
+ 190   1        {
+ 191   2          value = ~value;
+ 192   2        }
+ 193   1        if (value < 0x80L)
+ 194   1        {
+ 195   2          *octets_needed = 1;
+ 196   2        }
+ 197   1        else if (value < 0x8000L)
+ 198   1        {
+ 199   2          *octets_needed = 2;
+ 200   2        }
+ 201   1        else if (value < 0x800000L)
+ 202   1        {
+ 203   2          *octets_needed = 3;
+ 204   2        }
+ 205   1        else
+ 206   1        {
+ 207   2          *octets_needed = 4;
+ 208   2        }
+ 209   1      }
+ 210          
+ 211          /**
+ 212           * Returns octet count for an object identifier.
+ 213           *
+ 214           * @param ident_len object identifier array length
+ 215           * @param ident points to object identifier array
+ 216           * @param octets_needed points to the return value
+ 217           */
+ 218          void
+ 219          snmp_asn1_enc_oid_cnt(u8_t ident_len, s32_t *ident, u16_t *octets_needed)
+ 220          {
+ 221   1        s32_t sub_id;
+ 222   1        u8_t cnt;
+ 223   1      
+ 224   1        cnt = 0;
+ 225   1        if (ident_len > 1)
+ 226   1        {
+ 227   2          /* compressed prefix in one octet */
+ 228   2          cnt++;
+ 229   2          ident_len -= 2;
+ 230   2          ident += 2;
+ 231   2        }
+ 232   1        while(ident_len > 0)
+ 233   1        {
+ 234   2          ident_len--;
+ 235   2          sub_id = *ident;
+ 236   2      
+ 237   2          sub_id >>= 7;
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 5   
+
+ 238   2          cnt++;
+ 239   2          while(sub_id > 0)
+ 240   2          {
+ 241   3            sub_id >>= 7;
+ 242   3            cnt++;
+ 243   3          }
+ 244   2          ident++;
+ 245   2        }
+ 246   1        *octets_needed = cnt;
+ 247   1      }
+ 248          
+ 249          /**
+ 250           * Encodes ASN type field into a pbuf chained ASN1 msg.
+ 251           *
+ 252           * @param p points to output pbuf to encode value into
+ 253           * @param ofs points to the offset within the pbuf chain
+ 254           * @param type input ASN1 type
+ 255           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 256           */
+ 257          err_t
+ 258          snmp_asn1_enc_type(u8_t *p, u16_t ofs, u8_t type)
+ 259          {
+ 260   1        u8_t *msg_ptr;
+ 261   1      
+ 262   1        if (p != NULL)
+ 263   1        {
+ 264   2          msg_ptr = p + ofs;
+ 265   2          *msg_ptr = type;
+ 266   2          return ERR_OK;
+ 267   2        }
+ 268   1        /* p == NULL, ofs >= plen */
+ 269   1        return ERR_ARG;
+ 270   1      }
+ 271          
+ 272          /**
+ 273           * Encodes host order length field into a pbuf chained ASN1 msg.
+ 274           *
+ 275           * @param p points to output pbuf to encode length into
+ 276           * @param ofs points to the offset within the pbuf chain
+ 277           * @param length is the host order length to be encoded
+ 278           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 279           */
+ 280          err_t
+ 281          snmp_asn1_enc_length(u8_t *p, u16_t ofs, u16_t length)
+ 282          {
+ 283   1        u8_t *msg_ptr;
+ 284   1      
+ 285   1        if (p != NULL)
+ 286   1        {
+ 287   2          msg_ptr = p + ofs;
+ 288   2      
+ 289   2          if (length < 0x80)
+ 290   2          {
+ 291   3            *msg_ptr = length;
+ 292   3            return ERR_OK;
+ 293   3          }
+ 294   2          else if (length < 0x100)
+ 295   2          {
+ 296   3            *msg_ptr = 0x81;
+ 297   3            ofs += 1;
+ 298   3            msg_ptr++;
+ 299   3            *msg_ptr = length;
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 6   
+
+ 300   3            return ERR_OK;
+ 301   3          }
+ 302   2          else
+ 303   2          {
+ 304   3            u8_t i;
+ 305   3      
+ 306   3            /* length >= 0x100 && length <= 0xFFFF */
+ 307   3            *msg_ptr = 0x82;
+ 308   3            i = 2;
+ 309   3            while (i > 0)
+ 310   3            {
+ 311   4              i--;
+ 312   4              ofs += 1;
+ 313   4              msg_ptr++;
+ 314   4              if (i == 0)
+ 315   4              {
+ 316   5                /* least significant length octet */
+ 317   5                *msg_ptr = length;
+ 318   5              }
+ 319   4              else
+ 320   4              {
+ 321   5                /* most significant length octet */
+ 322   5                *msg_ptr = length >> 8;
+ 323   5              }
+ 324   4            }
+ 325   3            return ERR_OK;
+ 326   3          }
+ 327   2        }
+ 328   1        return ERR_ARG;
+ 329   1      }
+ 330          
+ 331          /**
+ 332           * Encodes u64_t into a pbuf chained ASN1 msg.
+ 333           *
+ 334           * @param p points to output pbuf to encode value into
+ 335           * @param ofs points to the offset within the pbuf chain
+ 336           * @param octets_needed encoding length (from snmp_asn1_enc_u32t_cnt())
+ 337           * @param value is the host order u64_t value to be encoded
+ 338           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 339           *
+ 340           * @see snmp_asn1_enc_u64t_cnt()
+ 341           */
+ 342          err_t
+ 343          snmp_asn1_enc_u64t(u8_t *p, u16_t ofs, u8_t octets_needed, u32_t value[2])
+ 344          {
+ 345   1        u8_t *msg_ptr;
+ 346   1        u8_t *value_ptr = (u8_t *)value;
+ 347   1        value_ptr += (8-octets_needed);
+ 348   1      
+ 349   1        if (p != NULL)
+ 350   1        {
+ 351   2          msg_ptr = p + ofs;
+ 352   2      
+ 353   2          while (octets_needed > 1)
+ 354   2          {
+ 355   3            octets_needed--;
+ 356   3            *msg_ptr = *value_ptr;
+ 357   3            ofs += 1;
+ 358   3            msg_ptr++;
+ 359   3          value_ptr++;
+ 360   3          }
+ 361   2          /* (only) one least significant octet */
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 7   
+
+ 362   2          *msg_ptr = *value_ptr;
+ 363   2          return ERR_OK;
+ 364   2        }
+ 365   1        /* p == NULL, ofs >= plen */
+ 366   1        return ERR_ARG;
+ 367   1      }
+ 368          
+ 369          /**
+ 370           * Encodes u32_t (counter, gauge, timeticks) into a pbuf chained ASN1 msg.
+ 371           *
+ 372           * @param p points to output pbuf to encode value into
+ 373           * @param ofs points to the offset within the pbuf chain
+ 374           * @param octets_needed encoding length (from snmp_asn1_enc_u32t_cnt())
+ 375           * @param value is the host order u32_t value to be encoded
+ 376           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 377           *
+ 378           * @see snmp_asn1_enc_u32t_cnt()
+ 379           */
+ 380          err_t
+ 381          snmp_asn1_enc_u32t(u8_t *p, u16_t ofs, u8_t octets_needed, u32_t value)
+ 382          {
+ 383   1        u8_t *msg_ptr;
+ 384   1      
+ 385   1        if (p != NULL)
+ 386   1        {
+ 387   2          msg_ptr = p + ofs;
+ 388   2      
+ 389   2          if (octets_needed == 5)
+ 390   2          {
+ 391   3            /* not enough bits in 'value' add leading 0x00 */
+ 392   3            octets_needed--;
+ 393   3            *msg_ptr = 0x00;
+ 394   3            ofs += 1;
+ 395   3            msg_ptr++;
+ 396   3          }
+ 397   2          while (octets_needed > 1)
+ 398   2          {
+ 399   3            octets_needed--;
+ 400   3            *msg_ptr = value >> (octets_needed << 3);
+ 401   3            ofs += 1;
+ 402   3            msg_ptr++;
+ 403   3          }
+ 404   2          /* (only) one least significant octet */
+ 405   2          *msg_ptr = value;
+ 406   2          return ERR_OK;
+ 407   2        }
+ 408   1        /* p == NULL, ofs >= plen */
+ 409   1        return ERR_ARG;
+ 410   1      }
+ 411          
+ 412          /**
+ 413           * Encodes s32_t integer into a pbuf chained ASN1 msg.
+ 414           *
+ 415           * @param p points to output pbuf to encode value into
+ 416           * @param ofs points to the offset within the pbuf chain
+ 417           * @param octets_needed encoding length (from snmp_asn1_enc_s32t_cnt())
+ 418           * @param value is the host order s32_t value to be encoded
+ 419           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 420           *
+ 421           * @see snmp_asn1_enc_s32t_cnt()
+ 422           */
+ 423          err_t
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 8   
+
+ 424          snmp_asn1_enc_s32t(u8_t *p, u16_t ofs, u8_t octets_needed, s32_t value)
+ 425          {
+ 426   1        u8_t *msg_ptr;
+ 427   1      
+ 428   1        if (p != NULL)
+ 429   1        {
+ 430   2          msg_ptr = p + ofs;
+ 431   2      
+ 432   2          while (octets_needed > 1)
+ 433   2          {
+ 434   3            octets_needed--;
+ 435   3            *msg_ptr = value >> (octets_needed << 3);
+ 436   3            ofs += 1;
+ 437   3            msg_ptr++;
+ 438   3          }
+ 439   2          /* (only) one least significant octet */
+ 440   2          *msg_ptr = value;
+ 441   2          return ERR_OK;
+ 442   2        }
+ 443   1        /* p == NULL, ofs >= plen */
+ 444   1        return ERR_ARG;
+ 445   1      }
+ 446          
+ 447          /**
+ 448           * Encodes object identifier into a pbuf chained ASN1 msg.
+ 449           *
+ 450           * @param p points to output pbuf to encode oid into
+ 451           * @param ofs points to the offset within the pbuf chain
+ 452           * @param ident_len object identifier array length
+ 453           * @param ident points to object identifier array
+ 454           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 455           */
+ 456          err_t
+ 457          snmp_asn1_enc_oid(u8_t *p, u16_t ofs, u8_t ident_len, s32_t *ident)
+ 458          {
+ 459   1        u8_t *msg_ptr;
+ 460   1      
+ 461   1        if (p != NULL)
+ 462   1        {
+ 463   2          msg_ptr = p + ofs;
+ 464   2      
+ 465   2          if (ident_len > 1)
+ 466   2          {
+ 467   3            if ((ident[0] == 1) && (ident[1] == 3))
+ 468   3            {
+ 469   4              /* compressed (most common) prefix .iso.org */
+ 470   4              *msg_ptr = 0x2b;
+ 471   4            }
+ 472   3            else
+ 473   3            {
+ 474   4              /* calculate prefix */
+ 475   4              *msg_ptr = (ident[0] * 40) + ident[1];
+ 476   4            }
+ 477   3            ofs += 1;
+ 478   3            msg_ptr++;
+ 479   3            ident_len -= 2;
+ 480   3            ident += 2;
+ 481   3          }
+ 482   2          else
+ 483   2          {
+ 484   3      /* @g:  allow empty varbinds for symmetry (we must decode them for getnext), allow partial compression??  
+             -*/
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 9   
+
+ 485   3            /* ident_len <= 1, at least we need zeroDotZero (0.0) (ident_len == 2) */
+ 486   3            return ERR_ARG;
+ 487   3          }
+ 488   2          while (ident_len > 0)
+ 489   2          {
+ 490   3            s32_t sub_id;
+ 491   3            u8_t shift, tail;
+ 492   3      
+ 493   3            ident_len--;
+ 494   3            sub_id = *ident;
+ 495   3            tail = 0;
+ 496   3            shift = 28;
+ 497   3            while(shift > 0)
+ 498   3            {
+ 499   4              u8_t _code_;
+ 500   4      
+ 501   4              _code_ = sub_id >> shift;
+ 502   4              if ((_code_ != 0) || (tail != 0))
+ 503   4              {
+ 504   5                tail = 1;
+ 505   5                *msg_ptr = _code_ | 0x80;
+ 506   5                ofs += 1;
+ 507   5                msg_ptr++;
+ 508   5              }
+ 509   4              shift -= 7;
+ 510   4            }
+ 511   3            *msg_ptr = (u8_t)sub_id & 0x7F;
+ 512   3            if (ident_len > 0)
+ 513   3            {
+ 514   4              ofs += 1;
+ 515   4              msg_ptr++;
+ 516   4            }
+ 517   3            /* proceed to next sub-identifier */
+ 518   3            ident++;
+ 519   3          }
+ 520   2          return ERR_OK;
+ 521   2        }
+ 522   1        /* p == NULL, ofs >= plen */
+ 523   1        return ERR_ARG;
+ 524   1      }
+ 525          
+ 526          /**
+ 527           * Encodes raw data (octet string, opaque) into a pbuf chained ASN1 msg.
+ 528           *
+ 529           * @param p points to output pbuf to encode raw data into
+ 530           * @param ofs points to the offset within the pbuf chain
+ 531           * @param raw_len raw data length
+ 532           * @param raw points raw data
+ 533           * @return ERR_OK if successfull, ERR_ARG if we can't (or won't) encode
+ 534           */
+ 535          err_t
+ 536          snmp_asn1_enc_raw(u8_t *p, u16_t ofs, u8_t raw_len, u8_t *raw)
+ 537          {
+ 538   1        u8_t *msg_ptr;
+ 539   1      
+ 540   1        if (p != NULL)
+ 541   1        {
+ 542   2          msg_ptr = p + ofs;
+ 543   2      
+ 544   2          while (raw_len > 1)
+ 545   2          {
+ 546   3            /* copy raw_len - 1 octets */
+C51 COMPILER V9.60.0.0   ASN1_ENC                                                          11/02/2026 17:57:40 PAGE 10  
+
+ 547   3            raw_len--;
+ 548   3            *msg_ptr = *raw;
+ 549   3            raw++;
+ 550   3            ofs += 1;
+ 551   3            msg_ptr++;
+ 552   3          }
+ 553   2          if (raw_len > 0)
+ 554   2          {
+ 555   3            /* copy last or single octet */
+ 556   3            *msg_ptr = *raw;
+ 557   3          }
+ 558   2          return ERR_OK;
+ 559   2        }
+ 560   1        /* p == NULL, ofs >= plen */
+ 561   1        return ERR_ARG;
+ 562   1      }
+ 563          
+ 564          #endif /* LWIP_SNMP */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1833    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----     118
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

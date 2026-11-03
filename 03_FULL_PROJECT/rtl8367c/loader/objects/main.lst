@@ -1,0 +1,281 @@
+C51 COMPILER V9.60.0.0   MAIN                                                              08/20/2025 22:07:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\main.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..\includ
+                    -e;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\local;..
+                    -\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_625,FLAS
+                    -H_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\main.lst) TABS(2) OBJECT(.\objects\main.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <stdio.h>
+   4          #include <common.h>
+   5          #include <reg_sfr.h>
+   6          #include <SPIFlashDrv.h>
+   7          #include <upgrade_tftp.h>
+   8          #include <local/lwps_config.h>
+   9          #include <runtime_loader_msg.h>
+  10          #include <rtl8367c_base.h>
+  11          
+  12          #define LOADER_ENTRY_ADDR   0xFD0;
+  13          extern uint16 phyAllPortMask;
+  14          
+  15          #ifdef OLD_TFTP_FWUG
+              void upgrade_image_tftp(void) large {
+                uint32       addr;
+                uint8        i;
+                
+                OSAL_PRINTF("    Get RunTime From Server : %bu.%bu.%bu.%bu\n", SERVER_IP);
+                /* Send ARP, get TFTP Server Mac */
+                getServerMAC();
+                OSAL_PRINTF("    [ServerMac = ");
+                for(i=0;i<6;i++){
+                  OSAL_PRINTF("0x%02x ", (uint16)target_mac[i]);
+                }
+                OSAL_PRINTF("]\n");
+              
+                
+                /* Erase Flash */
+                /* Erase Run Time IROM Area, 4KB~16KB area */
+                addr = CONFIG_FLASH_SECTOR_SIZE;
+                for (i=1; i<=3; i++, addr+=CONFIG_FLASH_SECTOR_SIZE){
+                        //OSAL_PRINTF("      Erasing 0x%08lx\n", addr);
+                  flash_erase(addr, FLASH_ERASE_BLOCK);
+                }
+              
+                  
+                /* Erase Run Time Bank Area, 112KB~???KB area */
+                addr = 112*1024UL;
+                //for (i=27;i<=171;i++, addr+=CONFIG_FLASH_SECTOR_SIZE){
+                for (addr = 112*1024UL;addr<(spi_chip0_chip_size);addr+=CONFIG_FLASH_SECTOR_SIZE){
+                        //OSAL_PRINTF("      Erasing 0x%08lx\n", addr);
+                  flash_erase(addr, FLASH_ERASE_BLOCK);
+                }
+                OSAL_PRINTF("    [Flash Erase Done]\n");
+                  
+              
+                /* Update Run Time Image */
+                while(1){
+                  if ( 0!=tftp_transfer() ){
+                    OSAL_PRINTF("Update Fail!!!\n");
+C51 COMPILER V9.60.0.0   MAIN                                                              08/20/2025 22:07:53 PAGE 2   
+
+                  }else{
+                    break;
+                  }
+                  for(i=0;i<255;i++);
+                }
+              }
+              #endif
+  60          
+  61          static char _getchar_nb(void){
+  62   1        char c; 
+  63   1        while(!RI){
+  64   2          return(0xFF);
+  65   2        }
+  66   1        RI=0; 
+  67   1        c=SBUF0; 
+  68   1        return c; 
+  69   1      }
+  70          
+  71          extern int32 sal_sys_runtime_crc_set(uint8 error);
+  72          
+  73          void main()
+  74          {
+  75   1          uint8 cmd_downcount, cmd, start_mode;
+  76   1          uint32 wait_cmd_delay;
+  77   1          uint16 tmp;
+  78   1      #if defined(PARALLEL_MODE)
+                      uint16 tmpreg, ledValue;
+              #endif
+  81   1      
+  82   1          setReg(0x1d32, 0x0004); //Enable 67C UART
+  83   1          setReg(0x1d3f, 0x0100); //Force deglitch enable
+  84   1      
+  85   1          /*  LED setting
+  86   1          0x1b03 [3:0]  Group 0
+  87   1          0x1b03 [7:4]  Group 1
+  88   1          0x1b03 [11:8] Group 2
+  89   1          
+  90   1          0000 LED_Off
+  91   1          0001 Dup/Col
+  92   1          0010 Link/Act
+  93   1          0011 Spd1000
+  94   1          0100 Spd100
+  95   1          0101 Spd10
+  96   1          0110 Spd1000/Act 6
+  97   1          0111 Spd100/Act
+  98   1          1000 Spd10/Act
+  99   1          1001 Spd100 (10)/Act 9
+ 100   1          1010 xx
+ 101   1          1011 xx
+ 102   1          1100 Link/Rx
+ 103   1          1101 Link/Tx
+ 104   1          1110 xx
+ 105   1          1111 Act
+ 106   1          */
+ 107   1              
+ 108   1      /* LED setting */
+ 109   1      #if 1             // put 1 for 10 port and 0 for 8 port (change 1 of 3)
+ 110   1      setReg(0x1b00, 0x14a1);//LED1 Power on light
+ 111   1      //setReg(0x1b03, 0x690); // for change yellow to green...
+ 112   1      setReg(0x1b03, 0x0069);
+ 113   1      setReg(0x1b3a, 0x3fff);   
+ 114   1      #endif
+C51 COMPILER V9.60.0.0   MAIN                                                              08/20/2025 22:07:53 PAGE 3   
+
+ 115   1      #if 0           // put 0 for 10 port and 1 for 8 port (change 2 of 3)
+              /* LED setting */
+              #if defined(SERIAL_MODE_LED)
+                  /* LED setting */ /*serial mode, group 0:Spd1000/Act, group 1:Spd100 (10)/Act, group 2:off */
+                  setReg(0x1b26, 3);
+                  setReg(0x1b24, 0);
+                  setReg(0x1b25, 0);
+                  setReg(0x1B00, 0x14F1);
+                  setReg(0x1B03, 0x0096);
+                  setReg(0x1B3A, 0x3fff);    
+              #else    
+              #if defined(PARALLEL_MODE)
+                  /* set LED to Parallel mode */
+                  setReg(0x1b00, 0x1410);
+                  /* enable group 0 ~ 1 */
+                  //setReg(0x1b24, 0x1f1f);
+                  /* enable group 2 */
+                  //setReg(0x1b25, 0x001f);
+                  /* group 0*/
+                  tmpreg = getReg(0x1b03);
+                  tmpreg &= ~(0xF << 0);
+                  ledValue = 6;//Spd1000/Act
+                  tmpreg |= (ledValue << 0);
+                  setReg(0x1b03, tmpreg);
+              
+                  /* group 1*/
+                  tmpreg= getReg(0x1b03);
+                  tmpreg &= ~(0xF << 4);
+                  ledValue = 9;//Spd100 (10)/Act
+                  tmpreg |= (ledValue << 4);
+                  setReg(0x1b03, tmpreg);
+              
+                  tmpreg = getReg(0x1b03);
+                  tmpreg &= ~(0xF << 8);
+                  ledValue = 0;//off
+                  tmpreg |= (ledValue << 8);
+                  setReg(0x1b03, tmpreg);
+                  
+              #else //SCAN mode
+                  setReg(0x1B00, 0x54F2);
+                  setReg(0x1B03, 0x0069);   // put 0096 for 10 port and 0960 for 8 port  (change 3 of 3)
+                  setReg(0x1B24, 0);
+                  setReg(0x1B25, 0);
+              
+              #endif  
+              #endif
+              
+              
+                  /* power on blinking */
+                  tmp = getReg(0x130c);
+                  tmp |= 0x0040;
+                  setReg(0x130c, tmp);
+                  /*
+                  0x1b00 [6]  Group 2 blinking
+                  0x1b00 [5]  Group 1 blinking
+                  0x1b00 [4]  Group 0 blinking
+                  */
+                  /* blink LED 0 */
+                  tmp = getReg(0x1B00);
+                  tmp &= ~(0x0070);
+                  tmp |= 0x0020;        // blinking group 0 = 0010, group 1 = 0020, group 2 = 0040, 8 port =0020
+                  setReg(0x1B00, tmp);
+C51 COMPILER V9.60.0.0   MAIN                                                              08/20/2025 22:07:53 PAGE 4   
+
+              #endif
+ 178   1          loader_start_mode_get(&start_mode);
+ 179   1          setReg(0x130c, 0x1470);
+ 180   1      
+ 181   1        all_init();
+ 182   1              
+ 183   1          
+ 184   1        
+ 185   1          if(START_MODE_WARM == start_mode)
+ 186   1          {
+ 187   2              OSAL_PRINTF("Loader warm start\n");
+ 188   2              loader_main();
+ 189   2          }   
+ 190   1        
+ 191   1          while(1) 
+ 192   1          {
+ 193   2              OSAL_PRINTF("\n\n==========Loader start===========\n"
+ 194   2                  "Press any key to start the normal procedure.\n"
+ 195   2      #ifdef CONFIG_USE_FLASH_VIEWER
+ 196   2                  "To run SPI flash viewer, press [v]\n"
+ 197   2      #endif
+ 198   2                  "To enforce the download of the runtime kernel, press [ESC] ");
+ 199   2                  
+ 200   2                  
+ 201   2              for (cmd_downcount=5;cmd_downcount>0;--cmd_downcount) {
+ 202   3                  OSAL_PRINTF(".");
+ 203   3                  for (wait_cmd_delay=0;wait_cmd_delay<15000UL;wait_cmd_delay++) ;
+ 204   3                  cmd=_getchar_nb();
+ 205   3                  if (cmd!=0xff) break;
+ 206   3               }
+ 207   2               OSAL_PRINTF("\n");
+ 208   2      
+ 209   2                  
+ 210   2      #ifdef CONFIG_USE_FLASH_VIEWER
+ 211   2               if ((cmd=='v')||(cmd=='V')) {
+ 212   3                   if (spi_flash_viewer()==0) continue;
+ 213   3                   setReg(0x1322, 1);
+ 214   3                   while(1);
+ 215   3               }
+ 216   2      #endif
+ 217   2      
+ 218   2              break;
+ 219   2          }
+ 220   1      
+ 221   1          if (cmd!=27) {
+ 222   2              OSAL_PRINTF("    Check Runtime Image.....\n");
+ 223   2              /* switch isr to runtime isr */
+ 224   2              loader_isr_set(FALSE);
+ 225   2              check_boot(1);
+ 226   2          }
+ 227   1      
+ 228   1          sal_sys_runtime_crc_set(1); //runtime checksum error
+ 229   1          
+ 230   1      #ifdef LOADER_FWUG_OLD
+                  OSAL_PRINTF("    Download Runtime Image.....\n");
+                  upgrade_image_tftp(); 
+                setReg(0x1322, 1);
+              #else
+ 235   1      
+ 236   1          loader_main();
+ 237   1          
+ 238   1      #endif    
+C51 COMPILER V9.60.0.0   MAIN                                                              08/20/2025 22:07:53 PAGE 5   
+
+ 239   1          
+ 240   1        while(1);
+ 241   1      }
+*** WARNING C280 IN LINE 77 OF src\main.c: 'tmp': unreferenced local variable
+ 242          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    296    ----
+   CONSTANT SIZE    =    229    ----
+   XDATA SIZE       =   ----       9
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    229    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

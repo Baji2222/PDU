@@ -1,0 +1,3055 @@
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE L2
+OBJECT MODULE PLACED IN .\objects\l2.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\l2.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) INC
+                    -DIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\includ
+                    -e\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLACE
+                    -,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LED_
+                    -MODE) VARBANKING DEBUG PRINT(.\objects\l2.lst) TABS(2) OBJECT(.\objects\l2.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in L2 module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <l2.h>
+  23          #include <string.h>
+  24          
+  25          #include <rtl8367c_asicdrv.h>
+  26          #include <rtl8367c_asicdrv_lut.h>
+  27          #include <rtl8367c_asicdrv_port.h>
+  28          
+  29          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_l2_init
+               * Description:
+               *      Initialize l2 module of the specified device.
+               * Input:
+               *      None
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               * Note:
+               *      Initialize l2 module before calling any l2 APIs.
+               */
+              rtk_api_ret_t rtk_l2_init(void)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 port;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 2   
+
+              
+                  if ((retVal = rtl8367c_setAsicLutIpMulticastLookup(DISABLED)) != RT_ERR_OK)
+                      return retVal;
+              
+                  /*Enable CAM Usage*/
+                  if ((retVal = rtl8367c_setAsicLutCamTbUsage(ENABLED)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_setAsicLutAgeTimerSpeed(6,2)) != RT_ERR_OK)
+                      return retVal;
+              
+                  RTK_SCAN_ALL_LOG_PORT(port)
+                  {
+                      if ((retVal = rtl8367c_setAsicLutLearnLimitNo(rtk_switch_port_L2P_get(port), rtk_switch_maxLutAddr
+             -Number_get())) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+  72          
+  73          /* Function Name:
+  74           *      rtk_l2_addr_add
+  75           * Description:
+  76           *      Add LUT unicast entry.
+  77           * Input:
+  78           *      pMac - 6 bytes unicast(I/G bit is 0) mac address to be written into LUT.
+  79           *      pL2_data - Unicast entry parameter
+  80           * Output:
+  81           *      None
+  82           * Return:
+  83           *      RT_ERR_OK               - OK
+  84           *      RT_ERR_FAILED           - Failed
+  85           *      RT_ERR_SMI              - SMI access error
+  86           *      RT_ERR_PORT_ID          - Invalid port number.
+  87           *      RT_ERR_MAC              - Invalid MAC address.
+  88           *      RT_ERR_L2_FID           - Invalid FID .
+  89           *      RT_ERR_L2_INDEXTBL_FULL - hashed index is full of entries.
+  90           *      RT_ERR_INPUT            - Invalid input parameters.
+  91           * Note:
+  92           *      If the unicast mac address already existed in LUT, it will udpate the status of the entry.
+  93           *      Otherwise, it will find an empty or asic auto learned entry to write. If all the entries
+  94           *      with the same hash value can't be replaced, ASIC will return a RT_ERR_L2_INDEXTBL_FULL error.
+  95           */
+  96          rtk_api_ret_t rtk_l2_addr_add(rtk_mac_t *pMac, rtk_l2_ucastAddr_t *pL2_data)
+  97          {
+  98   1          rtk_api_ret_t retVal;
+  99   1          uint32 method;
+ 100   1          rtl8367c_luttb l2Table;
+ 101   1      
+ 102   1          /* Check initialization state */
+ 103   1          RTK_CHK_INIT_STATE();
+ 104   1      
+ 105   1          /* must be unicast address */
+ 106   1          if ((pMac == NULL) || (pMac->octet[0] & 0x1))
+ 107   1              return RT_ERR_MAC;
+ 108   1      
+ 109   1          if(pL2_data == NULL)
+ 110   1              return RT_ERR_MAC;
+ 111   1      
+ 112   1          RTK_CHK_PORT_VALID(pL2_data->port);
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 3   
+
+ 113   1      
+ 114   1          if (pL2_data->ivl >= RTK_ENABLE_END)
+ 115   1              return RT_ERR_INPUT;
+ 116   1      
+ 117   1          if (pL2_data->cvid > RTL8367C_VIDMAX)
+ 118   1              return RT_ERR_L2_VID;
+ 119   1      
+ 120   1          if (pL2_data->fid > RTL8367C_FIDMAX)
+ 121   1              return RT_ERR_L2_FID;
+ 122   1      
+ 123   1          if (pL2_data->is_static>= RTK_ENABLE_END)
+ 124   1              return RT_ERR_INPUT;
+ 125   1      
+ 126   1          if (pL2_data->sa_block>= RTK_ENABLE_END)
+ 127   1              return RT_ERR_INPUT;
+ 128   1      
+ 129   1          if (pL2_data->da_block>= RTK_ENABLE_END)
+ 130   1              return RT_ERR_INPUT;
+ 131   1      
+ 132   1          if (pL2_data->auth>= RTK_ENABLE_END)
+ 133   1              return RT_ERR_INPUT;
+ 134   1      
+ 135   1          if (pL2_data->efid> RTL8367C_EFIDMAX)
+ 136   1              return RT_ERR_INPUT;
+ 137   1      
+ 138   1          if (pL2_data->priority > RTL8367C_PRIMAX)
+ 139   1              return RT_ERR_INPUT;
+ 140   1      
+ 141   1          if (pL2_data->sa_pri_en >= RTK_ENABLE_END)
+ 142   1              return RT_ERR_INPUT;
+ 143   1      
+ 144   1          if (pL2_data->fwd_pri_en >= RTK_ENABLE_END)
+ 145   1              return RT_ERR_INPUT;
+ 146   1      
+ 147   1          memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 148   1      
+ 149   1          /* fill key (MAC,FID) to get L2 entry */
+ 150   1          memcpy(l2Table.mac.octet, pMac->octet, ETHER_ADDR_LEN);
+ 151   1          l2Table.ivl_svl     = pL2_data->ivl;
+ 152   1          l2Table.fid         = pL2_data->fid;
+ 153   1          l2Table.cvid_fid    = pL2_data->cvid;
+ 154   1          l2Table.efid        = pL2_data->efid;
+ 155   1          method = LUTREADMETHOD_MAC;
+ 156   1          retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+ 157   1          if (RT_ERR_OK == retVal )
+ 158   1          {
+ 159   2              memcpy(l2Table.mac.octet, pMac->octet, ETHER_ADDR_LEN);
+ 160   2              l2Table.ivl_svl     = pL2_data->ivl;
+ 161   2              l2Table.cvid_fid    = pL2_data->cvid;
+ 162   2              l2Table.fid         = pL2_data->fid;
+ 163   2              l2Table.efid        = pL2_data->efid;
+ 164   2              l2Table.spa         = rtk_switch_port_L2P_get(pL2_data->port);
+ 165   2              l2Table.nosalearn   = pL2_data->is_static;
+ 166   2              l2Table.sa_block    = pL2_data->sa_block;
+ 167   2              l2Table.da_block    = pL2_data->da_block;
+ 168   2              l2Table.l3lookup    = 0;
+ 169   2              l2Table.auth        = pL2_data->auth;
+ 170   2              l2Table.age         = 6;
+ 171   2              l2Table.lut_pri     = pL2_data->priority;
+ 172   2              l2Table.sa_en       = pL2_data->sa_pri_en;
+ 173   2              l2Table.fwd_en      = pL2_data->fwd_pri_en;
+ 174   2              if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 4   
+
+ 175   2                  return retVal;
+ 176   2      
+ 177   2              pL2_data->address = l2Table.address;
+ 178   2              return RT_ERR_OK;
+ 179   2          }
+ 180   1          else if (RT_ERR_L2_ENTRY_NOTFOUND == retVal )
+ 181   1          {
+ 182   2              memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 183   2              memcpy(l2Table.mac.octet, pMac->octet, ETHER_ADDR_LEN);
+ 184   2              l2Table.ivl_svl     = pL2_data->ivl;
+ 185   2              l2Table.cvid_fid    = pL2_data->cvid;
+ 186   2              l2Table.fid         = pL2_data->fid;
+ 187   2              l2Table.efid        = pL2_data->efid;
+ 188   2              l2Table.spa         = rtk_switch_port_L2P_get(pL2_data->port);
+ 189   2              l2Table.nosalearn   = pL2_data->is_static;
+ 190   2              l2Table.sa_block    = pL2_data->sa_block;
+ 191   2              l2Table.da_block    = pL2_data->da_block;
+ 192   2              l2Table.l3lookup    = 0;
+ 193   2              l2Table.auth        = pL2_data->auth;
+ 194   2              l2Table.age         = 6;
+ 195   2              l2Table.lut_pri     = pL2_data->priority;
+ 196   2              l2Table.sa_en       = pL2_data->sa_pri_en;
+ 197   2              l2Table.fwd_en      = pL2_data->fwd_pri_en;
+ 198   2      
+ 199   2              if ((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+ 200   2                  return retVal;
+ 201   2      
+ 202   2              pL2_data->address = l2Table.address;
+ 203   2      
+ 204   2              method = LUTREADMETHOD_MAC;
+ 205   2              retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+ 206   2              if (RT_ERR_L2_ENTRY_NOTFOUND == retVal )
+ 207   2                  return RT_ERR_L2_INDEXTBL_FULL;
+ 208   2              else
+ 209   2                  return retVal;
+ 210   2          }
+ 211   1          else
+ 212   1              return retVal;
+ 213   1      
+ 214   1      }
+ 215          
+ 216          /* Function Name:
+ 217           *      rtk_l2_addr_get
+ 218           * Description:
+ 219           *      Get LUT unicast entry.
+ 220           * Input:
+ 221           *      pMac    - 6 bytes unicast(I/G bit is 0) mac address to be written into LUT.
+ 222           * Output:
+ 223           *      pL2_data - Unicast entry parameter
+ 224           * Return:
+ 225           *      RT_ERR_OK                   - OK
+ 226           *      RT_ERR_FAILED               - Failed
+ 227           *      RT_ERR_SMI                  - SMI access error
+ 228           *      RT_ERR_PORT_ID              - Invalid port number.
+ 229           *      RT_ERR_MAC                  - Invalid MAC address.
+ 230           *      RT_ERR_L2_FID               - Invalid FID .
+ 231           *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+ 232           *      RT_ERR_INPUT                - Invalid input parameters.
+ 233           * Note:
+ 234           *      If the unicast mac address existed in LUT, it will return the port and fid where
+ 235           *      the mac is learned. Otherwise, it will return a RT_ERR_L2_ENTRY_NOTFOUND error.
+ 236           */
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 5   
+
+ 237          rtk_api_ret_t rtk_l2_addr_get(rtk_mac_t *pMac, rtk_l2_ucastAddr_t *pL2_data)
+ 238          {
+ 239   1          rtk_api_ret_t retVal;
+ 240   1          uint32 method;
+ 241   1          rtl8367c_luttb l2Table;
+ 242   1      
+ 243   1          /* Check initialization state */
+ 244   1          RTK_CHK_INIT_STATE();
+ 245   1      
+ 246   1          /* must be unicast address */
+ 247   1          if ((pMac == NULL) || (pMac->octet[0] & 0x1))
+ 248   1              return RT_ERR_MAC;
+ 249   1      
+ 250   1          if (pL2_data->fid > RTL8367C_FIDMAX || pL2_data->efid > RTL8367C_EFIDMAX)
+ 251   1              return RT_ERR_L2_FID;
+ 252   1      
+ 253   1          memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 254   1      
+ 255   1          memcpy(l2Table.mac.octet, pMac->octet, ETHER_ADDR_LEN);
+ 256   1          l2Table.ivl_svl     = pL2_data->ivl;
+ 257   1          l2Table.cvid_fid    = pL2_data->cvid;
+ 258   1          l2Table.fid         = pL2_data->fid;
+ 259   1          l2Table.efid        = pL2_data->efid;
+ 260   1          method = LUTREADMETHOD_MAC;
+ 261   1      
+ 262   1          if ((retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table)) != RT_ERR_OK)
+ 263   1              return retVal;
+ 264   1      
+ 265   1          memcpy(pL2_data->mac.octet, pMac->octet,ETHER_ADDR_LEN);
+ 266   1          pL2_data->port      = rtk_switch_port_P2L_get(l2Table.spa);
+ 267   1          pL2_data->fid       = l2Table.fid;
+ 268   1          pL2_data->efid      = l2Table.efid;
+ 269   1          pL2_data->ivl       = l2Table.ivl_svl;
+ 270   1          pL2_data->cvid      = l2Table.cvid_fid;
+ 271   1          pL2_data->is_static = l2Table.nosalearn;
+ 272   1          pL2_data->auth      = l2Table.auth;
+ 273   1          pL2_data->sa_block  = l2Table.sa_block;
+ 274   1          pL2_data->da_block  = l2Table.da_block;
+ 275   1          pL2_data->priority  = l2Table.lut_pri;
+ 276   1          pL2_data->sa_pri_en = l2Table.sa_en;
+ 277   1          pL2_data->fwd_pri_en= l2Table.fwd_en;
+ 278   1          pL2_data->address   = l2Table.address;
+ 279   1      
+ 280   1          return RT_ERR_OK;
+ 281   1      }
+ 282          
+ 283          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_l2_addr_next_get
+               * Description:
+               *      Get Next LUT unicast entry.
+               * Input:
+               *      read_method     - The reading method.
+               *      port            - The port number if the read_metohd is READMETHOD_NEXT_L2UCSPA
+               *      pAddress        - The Address ID
+               * Output:
+               *      pL2_data - Unicast entry parameter
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_PORT_ID              - Invalid port number.
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 6   
+
+               *      RT_ERR_MAC                  - Invalid MAC address.
+               *      RT_ERR_L2_FID               - Invalid FID .
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      Get the next unicast entry after the current entry pointed by pAddress.
+               *      The address of next entry is returned by pAddress. User can use (address + 1)
+               *      as pAddress to call this API again for dumping all entries is LUT.
+               */
+              rtk_api_ret_t rtk_l2_addr_next_get(rtk_l2_read_method_t read_method, rtk_port_t port, uint32 *pAddress, rt
+             -k_l2_ucastAddr_t *pL2_data)
+              {
+                  rtk_api_ret_t   retVal;
+                  uint32      method;
+                  rtl8367c_luttb  l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error Checking */
+                  if ((pL2_data == NULL) || (pAddress == NULL))
+                      return RT_ERR_MAC;
+              
+                  if(read_method == READMETHOD_NEXT_L2UC)
+                      method = LUTREADMETHOD_NEXT_L2UC;
+                  else if(read_method == READMETHOD_NEXT_L2UCSPA)
+                      method = LUTREADMETHOD_NEXT_L2UCSPA;
+                  else
+                      return RT_ERR_INPUT;
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(*pAddress > RTK_MAX_LUT_ADDR_ID )
+                      return RT_ERR_L2_L2UNI_PARAM;
+              
+                  memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                  l2Table.address = *pAddress;
+              
+                  if(read_method == READMETHOD_NEXT_L2UCSPA)
+                      l2Table.spa = rtk_switch_port_L2P_get(port);
+              
+                  if ((retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if(l2Table.address < *pAddress)
+                      return RT_ERR_L2_ENTRY_NOTFOUND;
+              
+                  memcpy(pL2_data->mac.octet, l2Table.mac.octet, ETHER_ADDR_LEN);
+                  pL2_data->port      = rtk_switch_port_P2L_get(l2Table.spa);
+                  pL2_data->fid       = l2Table.fid;
+                  pL2_data->efid      = l2Table.efid;
+                  pL2_data->ivl       = l2Table.ivl_svl;
+                  pL2_data->cvid      = l2Table.cvid_fid;
+                  pL2_data->is_static = l2Table.nosalearn;
+                  pL2_data->auth      = l2Table.auth;
+                  pL2_data->sa_block  = l2Table.sa_block;
+                  pL2_data->da_block  = l2Table.da_block;
+                  pL2_data->priority  = l2Table.lut_pri;
+                  pL2_data->sa_pri_en = l2Table.sa_en;
+                  pL2_data->fwd_pri_en= l2Table.fwd_en;
+                  pL2_data->address   = l2Table.address;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 7   
+
+              
+                  *pAddress = l2Table.address;
+              
+                  return RT_ERR_OK;
+              
+              }
+              #endif
+ 367          /* Function Name:
+ 368           *      rtk_l2_addr_del
+ 369           * Description:
+ 370           *      Delete LUT unicast entry.
+ 371           * Input:
+ 372           *      pMac - 6 bytes unicast(I/G bit is 0) mac address to be written into LUT.
+ 373           *      fid - Filtering database
+ 374           * Output:
+ 375           *      None
+ 376           * Return:
+ 377           *      RT_ERR_OK                   - OK
+ 378           *      RT_ERR_FAILED               - Failed
+ 379           *      RT_ERR_SMI                  - SMI access error
+ 380           *      RT_ERR_PORT_ID              - Invalid port number.
+ 381           *      RT_ERR_MAC                  - Invalid MAC address.
+ 382           *      RT_ERR_L2_FID               - Invalid FID .
+ 383           *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+ 384           *      RT_ERR_INPUT                - Invalid input parameters.
+ 385           * Note:
+ 386           *      If the mac has existed in the LUT, it will be deleted. Otherwise, it will return RT_ERR_L2_ENTRY_N
+             -OTFOUND.
+ 387           */
+ 388          rtk_api_ret_t rtk_l2_addr_del(rtk_mac_t *pMac, rtk_l2_ucastAddr_t *pL2_data)
+ 389          {
+ 390   1          rtk_api_ret_t retVal;
+ 391   1          uint32 method;
+ 392   1          rtl8367c_luttb l2Table;
+ 393   1      
+ 394   1          /* Check initialization state */
+ 395   1          RTK_CHK_INIT_STATE();
+ 396   1      
+ 397   1          /* must be unicast address */
+ 398   1          if ((pMac == NULL) || (pMac->octet[0] & 0x1))
+ 399   1              return RT_ERR_MAC;
+ 400   1      
+ 401   1          if (pL2_data->fid > RTL8367C_FIDMAX || pL2_data->efid > RTL8367C_EFIDMAX)
+ 402   1              return RT_ERR_L2_FID;
+ 403   1      
+ 404   1          memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 405   1      
+ 406   1          /* fill key (MAC,FID) to get L2 entry */
+ 407   1          memcpy(l2Table.mac.octet, pMac->octet, ETHER_ADDR_LEN);
+ 408   1          l2Table.ivl_svl     = pL2_data->ivl;
+ 409   1          l2Table.cvid_fid    = pL2_data->cvid;
+ 410   1          l2Table.fid         = pL2_data->fid;
+ 411   1          l2Table.efid        = pL2_data->efid;
+ 412   1          method = LUTREADMETHOD_MAC;
+ 413   1          retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+ 414   1          if (RT_ERR_OK ==  retVal)
+ 415   1          {
+ 416   2              memcpy(l2Table.mac.octet, pMac->octet, ETHER_ADDR_LEN);
+ 417   2              l2Table.ivl_svl     = pL2_data->ivl;
+ 418   2              l2Table.cvid_fid    = pL2_data->cvid;
+ 419   2              l2Table.fid = pL2_data->fid;
+ 420   2              l2Table.efid = pL2_data->efid;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 8   
+
+ 421   2              l2Table.spa = 0;
+ 422   2              l2Table.nosalearn = 0;
+ 423   2              l2Table.sa_block = 0;
+ 424   2              l2Table.da_block = 0;
+ 425   2              l2Table.auth = 0;
+ 426   2              l2Table.age = 0;
+ 427   2              l2Table.lut_pri = 0;
+ 428   2              l2Table.sa_en = 0;
+ 429   2              l2Table.fwd_en = 0;
+ 430   2              if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+ 431   2                  return retVal;
+ 432   2      
+ 433   2              pL2_data->address = l2Table.address;
+ 434   2              return RT_ERR_OK;
+ 435   2          }
+ 436   1          else
+ 437   1              return retVal;
+ 438   1      }
+ 439          
+ 440          /* Function Name:
+ 441           *      rtk_l2_mcastAddr_add
+ 442           * Description:
+ 443           *      Add LUT multicast entry.
+ 444           * Input:
+ 445           *      pMcastAddr  - L2 multicast entry structure
+ 446           * Output:
+ 447           *      None
+ 448           * Return:
+ 449           *      RT_ERR_OK               - OK
+ 450           *      RT_ERR_FAILED           - Failed
+ 451           *      RT_ERR_SMI              - SMI access error
+ 452           *      RT_ERR_PORT_ID          - Invalid port number.
+ 453           *      RT_ERR_MAC              - Invalid MAC address.
+ 454           *      RT_ERR_L2_FID           - Invalid FID .
+ 455           *      RT_ERR_L2_VID           - Invalid VID .
+ 456           *      RT_ERR_L2_INDEXTBL_FULL - hashed index is full of entries.
+ 457           *      RT_ERR_PORT_MASK        - Invalid portmask.
+ 458           *      RT_ERR_INPUT            - Invalid input parameters.
+ 459           * Note:
+ 460           *      If the multicast mac address already existed in the LUT, it will udpate the
+ 461           *      port mask of the entry. Otherwise, it will find an empty or asic auto learned
+ 462           *      entry to write. If all the entries with the same hash value can't be replaced,
+ 463           *      ASIC will return a RT_ERR_L2_INDEXTBL_FULL error.
+ 464           */
+ 465          rtk_api_ret_t rtk_l2_mcastAddr_add(rtk_l2_mcastAddr_t *pMcastAddr)
+ 466          {
+ 467   1          rtk_api_ret_t   retVal;
+ 468   1          uint32      method;
+ 469   1          rtl8367c_luttb  l2Table;
+ 470   1          uint32      pmask;
+ 471   1      
+ 472   1          /* Check initialization state */
+ 473   1          RTK_CHK_INIT_STATE();
+ 474   1      
+ 475   1          if(NULL == pMcastAddr)
+ 476   1              return RT_ERR_NULL_POINTER;
+ 477   1      
+ 478   1          /* must be L2 multicast address */
+ 479   1          if( (pMcastAddr->mac.octet[0] & 0x01) != 0x01)
+ 480   1              return RT_ERR_MAC;
+ 481   1      
+ 482   1          RTK_CHK_PORTMASK_VALID(&pMcastAddr->portmask);
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 9   
+
+ 483   1      
+ 484   1          if(pMcastAddr->ivl == 1)
+ 485   1          {
+ 486   2              if (pMcastAddr->vid > RTL8367C_VIDMAX)
+ 487   2                  return RT_ERR_L2_VID;
+ 488   2          }
+ 489   1          else if(pMcastAddr->ivl == 0)
+ 490   1          {
+ 491   2              if (pMcastAddr->fid > RTL8367C_FIDMAX)
+ 492   2                  return RT_ERR_L2_FID;
+ 493   2          }
+ 494   1          else
+ 495   1              return RT_ERR_INPUT;
+ 496   1      
+ 497   1          if(pMcastAddr->fwd_pri_en >= RTK_ENABLE_END)
+ 498   1              return RT_ERR_INPUT;
+ 499   1      
+ 500   1          if(pMcastAddr->priority > RTL8367C_PRIMAX)
+ 501   1              return RT_ERR_INPUT;
+ 502   1      
+ 503   1          /* Get physical port mask */
+ 504   1          if ((retVal = rtk_switch_portmask_L2P_get(&pMcastAddr->portmask, &pmask)) != RT_ERR_OK)
+ 505   1              return retVal;
+ 506   1      
+ 507   1          memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 508   1      
+ 509   1          /* fill key (MAC,FID) to get L2 entry */
+ 510   1          memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
+ 511   1          l2Table.ivl_svl     = pMcastAddr->ivl;
+ 512   1      
+ 513   1          if(pMcastAddr->ivl)
+ 514   1              l2Table.cvid_fid    = pMcastAddr->vid;
+ 515   1          else
+ 516   1              l2Table.cvid_fid    = pMcastAddr->fid;
+ 517   1      
+ 518   1          method = LUTREADMETHOD_MAC;
+ 519   1          retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+ 520   1          if (RT_ERR_OK == retVal)
+ 521   1          {
+ 522   2              memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
+ 523   2              l2Table.ivl_svl     = pMcastAddr->ivl;
+ 524   2      
+ 525   2              if(pMcastAddr->ivl)
+ 526   2                  l2Table.cvid_fid    = pMcastAddr->vid;
+ 527   2              else
+ 528   2                  l2Table.cvid_fid    = pMcastAddr->fid;
+ 529   2      
+ 530   2              l2Table.mbr         = pmask;
+ 531   2              l2Table.nosalearn   = 1;
+ 532   2              l2Table.l3lookup    = 0;
+ 533   2              l2Table.lut_pri     = pMcastAddr->priority;
+ 534   2              l2Table.fwd_en      = pMcastAddr->fwd_pri_en;
+ 535   2              if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+ 536   2                  return retVal;
+ 537   2      
+ 538   2              pMcastAddr->address = l2Table.address;
+ 539   2              return RT_ERR_OK;
+ 540   2          }
+ 541   1          else if (RT_ERR_L2_ENTRY_NOTFOUND == retVal)
+ 542   1          {
+ 543   2              memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 544   2              memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 10  
+
+ 545   2              l2Table.ivl_svl     = pMcastAddr->ivl;
+ 546   2              if(pMcastAddr->ivl)
+ 547   2                  l2Table.cvid_fid    = pMcastAddr->vid;
+ 548   2              else
+ 549   2                  l2Table.cvid_fid    = pMcastAddr->fid;
+ 550   2      
+ 551   2              l2Table.mbr         = pmask;
+ 552   2              l2Table.nosalearn   = 1;
+ 553   2              l2Table.l3lookup    = 0;
+ 554   2              l2Table.lut_pri     = pMcastAddr->priority;
+ 555   2              l2Table.fwd_en      = pMcastAddr->fwd_pri_en;
+ 556   2              if ((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+ 557   2                  return retVal;
+ 558   2      
+ 559   2              pMcastAddr->address = l2Table.address;
+ 560   2      
+ 561   2              method = LUTREADMETHOD_MAC;
+ 562   2              retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+ 563   2              if (RT_ERR_L2_ENTRY_NOTFOUND == retVal)
+ 564   2                  return     RT_ERR_L2_INDEXTBL_FULL;
+ 565   2              else
+ 566   2                  return retVal;
+ 567   2          }
+ 568   1          else
+ 569   1              return retVal;
+ 570   1      
+ 571   1      }
+ 572          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_l2_mcastAddr_get
+               * Description:
+               *      Get LUT multicast entry.
+               * Input:
+               *      pMcastAddr  - L2 multicast entry structure
+               * Output:
+               *      pMcastAddr  - L2 multicast entry structure
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_MAC                  - Invalid MAC address.
+               *      RT_ERR_L2_FID               - Invalid FID .
+               *      RT_ERR_L2_VID               - Invalid VID .
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      If the multicast mac address existed in the LUT, it will return the port where
+               *      the mac is learned. Otherwise, it will return a RT_ERR_L2_ENTRY_NOTFOUND error.
+               */
+              rtk_api_ret_t rtk_l2_mcastAddr_get(rtk_l2_mcastAddr_t *pMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pMcastAddr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* must be L2 multicast address */
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 11  
+
+                  if( (pMcastAddr->mac.octet[0] & 0x01) != 0x01)
+                      return RT_ERR_MAC;
+              
+                  if(pMcastAddr->ivl == 1)
+                  {
+                      if (pMcastAddr->vid > RTL8367C_VIDMAX)
+                          return RT_ERR_L2_VID;
+                  }
+                  else if(pMcastAddr->ivl == 0)
+                  {
+                      if (pMcastAddr->fid > RTL8367C_FIDMAX)
+                          return RT_ERR_L2_FID;
+                  }
+                  else
+                      return RT_ERR_INPUT;
+              
+                  memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                  memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
+                  l2Table.ivl_svl     = pMcastAddr->ivl;
+              
+                  if(pMcastAddr->ivl)
+                      l2Table.cvid_fid    = pMcastAddr->vid;
+                  else
+                      l2Table.cvid_fid    = pMcastAddr->fid;
+              
+                  method = LUTREADMETHOD_MAC;
+              
+                  if ((retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pMcastAddr->priority    = l2Table.lut_pri;
+                  pMcastAddr->fwd_pri_en  = l2Table.fwd_en;
+                  pMcastAddr->igmp_asic   = l2Table.igmp_asic;
+                  pMcastAddr->igmp_index  = l2Table.igmpidx;
+                  pMcastAddr->address     = l2Table.address;
+              
+                  /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pMcastAddr->portmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_mcastAddr_next_get
+               * Description:
+               *      Get Next L2 Multicast entry.
+               * Input:
+               *      pAddress        - The Address ID
+               * Output:
+               *      pMcastAddr  - L2 multicast entry structure
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      Get the next L2 multicast entry after the current entry pointed by pAddress.
+               *      The address of next entry is returned by pAddress. User can use (address + 1)
+               *      as pAddress to call this API again for dumping all multicast entries is LUT.
+               */
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 12  
+
+              rtk_api_ret_t rtk_l2_mcastAddr_next_get(uint32 *pAddress, rtk_l2_mcastAddr_t *pMcastAddr)
+              {
+                  rtk_api_ret_t   retVal;
+                  rtl8367c_luttb  l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error Checking */
+                  if ((pAddress == NULL) || (pMcastAddr == NULL))
+                      return RT_ERR_INPUT;
+              
+                  if(*pAddress > RTK_MAX_LUT_ADDR_ID )
+                      return RT_ERR_L2_L2UNI_PARAM;
+              
+                  memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                  l2Table.address = *pAddress;
+              
+                  if ((retVal = rtl8367c_getAsicL2LookupTb(LUTREADMETHOD_NEXT_L2MC, &l2Table)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if(l2Table.address < *pAddress)
+                      return RT_ERR_L2_ENTRY_NOTFOUND;
+              
+                  memcpy(pMcastAddr->mac.octet, l2Table.mac.octet, ETHER_ADDR_LEN);
+                  pMcastAddr->ivl     = l2Table.ivl_svl;
+              
+                  if(pMcastAddr->ivl)
+                      pMcastAddr->vid = l2Table.cvid_fid;
+                  else
+                      pMcastAddr->fid = l2Table.cvid_fid;
+              
+                  pMcastAddr->priority    = l2Table.lut_pri;
+                  pMcastAddr->fwd_pri_en  = l2Table.fwd_en;
+                  pMcastAddr->igmp_asic   = l2Table.igmp_asic;
+                  pMcastAddr->igmp_index  = l2Table.igmpidx;
+                  pMcastAddr->address     = l2Table.address;
+              
+                  /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pMcastAddr->portmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pAddress = l2Table.address;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 716          /* Function Name:
+ 717           *      rtk_l2_mcastAddr_del
+ 718           * Description:
+ 719           *      Delete LUT multicast entry.
+ 720           * Input:
+ 721           *      pMcastAddr  - L2 multicast entry structure
+ 722           * Output:
+ 723           *      None
+ 724           * Return:
+ 725           *      RT_ERR_OK                   - OK
+ 726           *      RT_ERR_FAILED               - Failed
+ 727           *      RT_ERR_SMI                  - SMI access error
+ 728           *      RT_ERR_MAC                  - Invalid MAC address.
+ 729           *      RT_ERR_L2_FID               - Invalid FID .
+ 730           *      RT_ERR_L2_VID               - Invalid VID .
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 13  
+
+ 731           *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+ 732           *      RT_ERR_INPUT                - Invalid input parameters.
+ 733           * Note:
+ 734           *      If the mac has existed in the LUT, it will be deleted. Otherwise, it will return RT_ERR_L2_ENTRY_N
+             -OTFOUND.
+ 735           */
+ 736          rtk_api_ret_t rtk_l2_mcastAddr_del(rtk_l2_mcastAddr_t *pMcastAddr)
+ 737          {
+ 738   1          rtk_api_ret_t retVal;
+ 739   1          uint32 method;
+ 740   1          rtl8367c_luttb l2Table;
+ 741   1      
+ 742   1          /* Check initialization state */
+ 743   1          RTK_CHK_INIT_STATE();
+ 744   1      
+ 745   1          if(NULL == pMcastAddr)
+ 746   1              return RT_ERR_NULL_POINTER;
+ 747   1      
+ 748   1          /* must be L2 multicast address */
+ 749   1          if( (pMcastAddr->mac.octet[0] & 0x01) != 0x01)
+ 750   1              return RT_ERR_MAC;
+ 751   1      
+ 752   1          if(pMcastAddr->ivl == 1)
+ 753   1          {
+ 754   2              if (pMcastAddr->vid > RTL8367C_VIDMAX)
+ 755   2                  return RT_ERR_L2_VID;
+ 756   2          }
+ 757   1          else if(pMcastAddr->ivl == 0)
+ 758   1          {
+ 759   2              if (pMcastAddr->fid > RTL8367C_FIDMAX)
+ 760   2                  return RT_ERR_L2_FID;
+ 761   2          }
+ 762   1          else
+ 763   1              return RT_ERR_INPUT;
+ 764   1      
+ 765   1          memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+ 766   1      
+ 767   1          /* fill key (MAC,FID) to get L2 entry */
+ 768   1          memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
+ 769   1          l2Table.ivl_svl     = pMcastAddr->ivl;
+ 770   1      
+ 771   1          if(pMcastAddr->ivl)
+ 772   1              l2Table.cvid_fid    = pMcastAddr->vid;
+ 773   1          else
+ 774   1              l2Table.cvid_fid    = pMcastAddr->fid;
+ 775   1      
+ 776   1          method = LUTREADMETHOD_MAC;
+ 777   1          retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+ 778   1          if (RT_ERR_OK == retVal)
+ 779   1          {
+ 780   2              memcpy(l2Table.mac.octet, pMcastAddr->mac.octet, ETHER_ADDR_LEN);
+ 781   2              l2Table.ivl_svl     = pMcastAddr->ivl;
+ 782   2      
+ 783   2              if(pMcastAddr->ivl)
+ 784   2                  l2Table.cvid_fid    = pMcastAddr->vid;
+ 785   2              else
+ 786   2                  l2Table.cvid_fid    = pMcastAddr->fid;
+ 787   2      
+ 788   2              l2Table.mbr         = 0;
+ 789   2              l2Table.nosalearn   = 0;
+ 790   2              l2Table.sa_block    = 0;
+ 791   2              l2Table.l3lookup    = 0;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 14  
+
+ 792   2              l2Table.lut_pri     = 0;
+ 793   2              l2Table.fwd_en      = 0;
+ 794   2              if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+ 795   2                  return retVal;
+ 796   2      
+ 797   2              pMcastAddr->address = l2Table.address;
+ 798   2              return RT_ERR_OK;
+ 799   2          }
+ 800   1          else
+ 801   1              return retVal;
+ 802   1      }
+ 803          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_l2_ipMcastAddr_add
+               * Description:
+               *      Add Lut IP multicast entry
+               * Input:
+               *      pIpMcastAddr    - IP Multicast entry
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_L2_INDEXTBL_FULL - hashed index is full of entries.
+               *      RT_ERR_PORT_MASK        - Invalid portmask.
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               * Note:
+               *      System supports L2 entry with IP multicast DIP/SIP to forward IP multicasting frame as user
+               *      desired. If this function is enabled, then system will be looked up L2 IP multicast entry to
+               *      forward IP multicast frame directly without flooding.
+               */
+              rtk_api_ret_t rtk_l2_ipMcastAddr_add(rtk_l2_ipMcastAddr_t *pIpMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pIpMcastAddr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* check port mask */
+                  RTK_CHK_PORTMASK_VALID(&pIpMcastAddr->portmask);
+              
+                  if( (pIpMcastAddr->dip & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  if(pIpMcastAddr->fwd_pri_en >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if(pIpMcastAddr->priority > RTL8367C_PRIMAX)
+                      return RT_ERR_INPUT;
+              
+                  /* Get Physical port mask */
+                  if ((retVal = rtk_switch_portmask_L2P_get(&pIpMcastAddr->portmask, &pmask)) != RT_ERR_OK)
+                      return retVal;
+              
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 15  
+
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.sip = pIpMcastAddr->sip;
+                  l2Table.dip = pIpMcastAddr->dip;
+                  l2Table.l3lookup = 1;
+                  l2Table.l3vidlookup = 0;
+                  method = LUTREADMETHOD_MAC;
+                  retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+                  if (RT_ERR_OK == retVal)
+                  {
+                      l2Table.sip = pIpMcastAddr->sip;
+                      l2Table.dip = pIpMcastAddr->dip;
+                      l2Table.mbr = pmask;
+                      l2Table.nosalearn = 1;
+                      l2Table.l3lookup = 1;
+                      l2Table.l3vidlookup = 0;
+                      l2Table.lut_pri = pIpMcastAddr->priority;
+                      l2Table.fwd_en  = pIpMcastAddr->fwd_pri_en;
+                      if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      pIpMcastAddr->address = l2Table.address;
+                      return RT_ERR_OK;
+                  }
+                  else if (RT_ERR_L2_ENTRY_NOTFOUND == retVal)
+                  {
+                      memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                      l2Table.sip = pIpMcastAddr->sip;
+                      l2Table.dip = pIpMcastAddr->dip;
+                      l2Table.mbr = pmask;
+                      l2Table.nosalearn = 1;
+                      l2Table.l3lookup = 1;
+                      l2Table.l3vidlookup = 0;
+                      l2Table.lut_pri = pIpMcastAddr->priority;
+                      l2Table.fwd_en  = pIpMcastAddr->fwd_pri_en;
+                      if ((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      pIpMcastAddr->address = l2Table.address;
+              
+                      method = LUTREADMETHOD_MAC;
+                      retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+                      if (RT_ERR_L2_ENTRY_NOTFOUND == retVal)
+                          return     RT_ERR_L2_INDEXTBL_FULL;
+                      else
+                          return retVal;
+              
+                  }
+                  else
+                      return retVal;
+              
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastAddr_get
+               * Description:
+               *      Get LUT IP multicast entry.
+               * Input:
+               *      pIpMcastAddr    - IP Multicast entry
+               * Output:
+               *      pIpMcastAddr    - IP Multicast entry
+               * Return:
+               *      RT_ERR_OK                   - OK
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 16  
+
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      The API can get Lut table of IP multicast entry.
+               */
+              rtk_api_ret_t rtk_l2_ipMcastAddr_get(rtk_l2_ipMcastAddr_t *pIpMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pIpMcastAddr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if( (pIpMcastAddr->dip & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.sip = pIpMcastAddr->sip;
+                  l2Table.dip = pIpMcastAddr->dip;
+                  l2Table.l3lookup = 1;
+                  l2Table.l3vidlookup = 0;
+                  method = LUTREADMETHOD_MAC;
+                  if ((retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table)) != RT_ERR_OK)
+                      return retVal;
+              
+                  /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pIpMcastAddr->portmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pIpMcastAddr->priority      = l2Table.lut_pri;
+                  pIpMcastAddr->fwd_pri_en    = l2Table.fwd_en;
+                  pIpMcastAddr->igmp_asic     = l2Table.igmp_asic;
+                  pIpMcastAddr->igmp_index    = l2Table.igmpidx;
+                  pIpMcastAddr->address       = l2Table.address;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastAddr_next_get
+               * Description:
+               *      Get Next IP Multicast entry.
+               * Input:
+               *      pAddress        - The Address ID
+               * Output:
+               *      pIpMcastAddr    - IP Multicast entry
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      Get the next IP multicast entry after the current entry pointed by pAddress.
+               *      The address of next entry is returned by pAddress. User can use (address + 1)
+               *      as pAddress to call this API again for dumping all IP multicast entries is LUT.
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 17  
+
+               */
+              rtk_api_ret_t rtk_l2_ipMcastAddr_next_get(uint32 *pAddress, rtk_l2_ipMcastAddr_t *pIpMcastAddr)
+              {
+                  rtk_api_ret_t   retVal;
+                  rtl8367c_luttb  l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error Checking */
+                  if ((pAddress == NULL) || (pIpMcastAddr == NULL) )
+                      return RT_ERR_INPUT;
+              
+                  if(*pAddress > RTK_MAX_LUT_ADDR_ID )
+                      return RT_ERR_L2_L2UNI_PARAM;
+              
+                  memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                  l2Table.address = *pAddress;
+              
+                  do
+                  {
+                      if ((retVal = rtl8367c_getAsicL2LookupTb(LUTREADMETHOD_NEXT_L3MC, &l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if(l2Table.address < *pAddress)
+                          return RT_ERR_L2_ENTRY_NOTFOUND;
+              
+                  }while(l2Table.l3vidlookup == 1);
+              
+                  pIpMcastAddr->sip = l2Table.sip;
+                  pIpMcastAddr->dip = l2Table.dip;
+              
+                  /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pIpMcastAddr->portmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pIpMcastAddr->priority      = l2Table.lut_pri;
+                  pIpMcastAddr->fwd_pri_en    = l2Table.fwd_en;
+                  pIpMcastAddr->igmp_asic     = l2Table.igmp_asic;
+                  pIpMcastAddr->igmp_index    = l2Table.igmpidx;
+                  pIpMcastAddr->address       = l2Table.address;
+                  *pAddress = l2Table.address;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastAddr_del
+               * Description:
+               *      Delete a ip multicast address entry from the specified device.
+               * Input:
+               *      pIpMcastAddr    - IP Multicast entry
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      The API can delete a IP multicast address entry from the specified device.
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 18  
+
+               */
+              rtk_api_ret_t rtk_l2_ipMcastAddr_del(rtk_l2_ipMcastAddr_t *pIpMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error Checking */
+                  if (pIpMcastAddr == NULL)
+                      return RT_ERR_INPUT;
+              
+                  if( (pIpMcastAddr->dip & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.sip = pIpMcastAddr->sip;
+                  l2Table.dip = pIpMcastAddr->dip;
+                  l2Table.l3lookup = 1;
+                  l2Table.l3vidlookup = 0;
+                  method = LUTREADMETHOD_MAC;
+                  retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+                  if (RT_ERR_OK == retVal)
+                  {
+                      l2Table.sip = pIpMcastAddr->sip;
+                      l2Table.dip = pIpMcastAddr->dip;
+                      l2Table.mbr = 0;
+                      l2Table.nosalearn = 0;
+                      l2Table.l3lookup = 1;
+                      l2Table.l3vidlookup = 0;
+                      l2Table.lut_pri = 0;
+                      l2Table.fwd_en  = 0;
+                      if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      pIpMcastAddr->address = l2Table.address;
+                      return RT_ERR_OK;
+                  }
+                  else
+                      return retVal;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipVidMcastAddr_add
+               * Description:
+               *      Add Lut IP multicast+VID entry
+               * Input:
+               *      pIpVidMcastAddr - IP & VID multicast Entry
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_L2_INDEXTBL_FULL - hashed index is full of entries.
+               *      RT_ERR_PORT_MASK        - Invalid portmask.
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               * Note:
+               *
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 19  
+
+               */
+              rtk_api_ret_t rtk_l2_ipVidMcastAddr_add(rtk_l2_ipVidMcastAddr_t *pIpVidMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pIpVidMcastAddr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* check port mask */
+                  RTK_CHK_PORTMASK_VALID(&pIpVidMcastAddr->portmask);
+              
+                  if (pIpVidMcastAddr->vid > RTL8367C_VIDMAX)
+                      return RT_ERR_L2_VID;
+              
+                  if( (pIpVidMcastAddr->dip & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  /* Get Physical port mask */
+                  if ((retVal = rtk_switch_portmask_L2P_get(&pIpVidMcastAddr->portmask, &pmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.sip = pIpVidMcastAddr->sip;
+                  l2Table.dip = pIpVidMcastAddr->dip;
+                  l2Table.l3lookup = 1;
+                  l2Table.l3vidlookup = 1;
+                  l2Table.l3_vid = pIpVidMcastAddr->vid;
+                  method = LUTREADMETHOD_MAC;
+                  retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+                  if (RT_ERR_OK == retVal)
+                  {
+                      l2Table.sip = pIpVidMcastAddr->sip;
+                      l2Table.dip = pIpVidMcastAddr->dip;
+                      l2Table.mbr = pmask;
+                      l2Table.nosalearn = 1;
+                      l2Table.l3lookup = 1;
+                      l2Table.l3vidlookup = 1;
+                      l2Table.l3_vid = pIpVidMcastAddr->vid;
+                      if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      pIpVidMcastAddr->address = l2Table.address;
+                      return RT_ERR_OK;
+                  }
+                  else if (RT_ERR_L2_ENTRY_NOTFOUND == retVal)
+                  {
+                      memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                      l2Table.sip = pIpVidMcastAddr->sip;
+                      l2Table.dip = pIpVidMcastAddr->dip;
+                      l2Table.mbr = pmask;
+                      l2Table.nosalearn = 1;
+                      l2Table.l3lookup = 1;
+                      l2Table.l3vidlookup = 1;
+                      l2Table.l3_vid = pIpVidMcastAddr->vid;
+                      if ((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+                          return retVal;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 20  
+
+              
+                      pIpVidMcastAddr->address = l2Table.address;
+              
+                      method = LUTREADMETHOD_MAC;
+                      retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+                      if (RT_ERR_L2_ENTRY_NOTFOUND == retVal)
+                          return     RT_ERR_L2_INDEXTBL_FULL;
+                      else
+                          return retVal;
+              
+                  }
+                  else
+                      return retVal;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipVidMcastAddr_get
+               * Description:
+               *      Get LUT IP multicast+VID entry.
+               * Input:
+               *      pIpVidMcastAddr - IP & VID multicast Entry
+               * Output:
+               *      pIpVidMcastAddr - IP & VID multicast Entry
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_ipVidMcastAddr_get(rtk_l2_ipVidMcastAddr_t *pIpVidMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pIpVidMcastAddr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (pIpVidMcastAddr->vid > RTL8367C_VIDMAX)
+                      return RT_ERR_L2_VID;
+              
+                  if( (pIpVidMcastAddr->dip & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.sip = pIpVidMcastAddr->sip;
+                  l2Table.dip = pIpVidMcastAddr->dip;
+                  l2Table.l3lookup = 1;
+                  l2Table.l3vidlookup = 1;
+                  l2Table.l3_vid = pIpVidMcastAddr->vid;
+                  method = LUTREADMETHOD_MAC;
+                  if ((retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pIpVidMcastAddr->address = l2Table.address;
+              
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 21  
+
+                   /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pIpVidMcastAddr->portmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipVidMcastAddr_next_get
+               * Description:
+               *      Get Next IP Multicast+VID entry.
+               * Input:
+               *      pAddress        - The Address ID
+               * Output:
+               *      pIpVidMcastAddr - IP & VID multicast Entry
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *      Get the next IP multicast entry after the current entry pointed by pAddress.
+               *      The address of next entry is returned by pAddress. User can use (address + 1)
+               *      as pAddress to call this API again for dumping all IP multicast entries is LUT.
+               */
+              rtk_api_ret_t rtk_l2_ipVidMcastAddr_next_get(uint32 *pAddress, rtk_l2_ipVidMcastAddr_t *pIpVidMcastAddr)
+              {
+                  rtk_api_ret_t   retVal;
+                  rtl8367c_luttb  l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error Checking */
+                  if ((pAddress == NULL) || (pIpVidMcastAddr == NULL))
+                      return RT_ERR_INPUT;
+              
+                  if(*pAddress > RTK_MAX_LUT_ADDR_ID )
+                      return RT_ERR_L2_L2UNI_PARAM;
+              
+                  memset(&l2Table, 0, sizeof(rtl8367c_luttb));
+                  l2Table.address = *pAddress;
+              
+                  do
+                  {
+                      if ((retVal = rtl8367c_getAsicL2LookupTb(LUTREADMETHOD_NEXT_L3MC, &l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if(l2Table.address < *pAddress)
+                          return RT_ERR_L2_ENTRY_NOTFOUND;
+              
+                  }while(l2Table.l3vidlookup == 0);
+              
+                  pIpVidMcastAddr->sip        = l2Table.sip;
+                  pIpVidMcastAddr->dip        = l2Table.dip;
+                  pIpVidMcastAddr->vid        = l2Table.l3_vid;
+                  pIpVidMcastAddr->address    = l2Table.address;
+              
+                  /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &pIpVidMcastAddr->portmask)) != RT_ERR_OK)
+                      return retVal;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 22  
+
+              
+                  *pAddress = l2Table.address;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipVidMcastAddr_del
+               * Description:
+               *      Delete a ip multicast+VID address entry from the specified device.
+               * Input:
+               *      pIpVidMcastAddr - IP & VID multicast Entry
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_L2_ENTRY_NOTFOUND    - No such LUT entry.
+               *      RT_ERR_INPUT                - Invalid input parameters.
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_ipVidMcastAddr_del(rtk_l2_ipVidMcastAddr_t *pIpVidMcastAddr)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pIpVidMcastAddr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (pIpVidMcastAddr->vid > RTL8367C_VIDMAX)
+                      return RT_ERR_L2_VID;
+              
+                  if( (pIpVidMcastAddr->dip & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.sip = pIpVidMcastAddr->sip;
+                  l2Table.dip = pIpVidMcastAddr->dip;
+                  l2Table.l3lookup = 1;
+                  l2Table.l3vidlookup = 1;
+                  l2Table.l3_vid = pIpVidMcastAddr->vid;
+                  method = LUTREADMETHOD_MAC;
+                  retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table);
+                  if (RT_ERR_OK == retVal)
+                  {
+                      l2Table.sip = pIpVidMcastAddr->sip;
+                      l2Table.dip = pIpVidMcastAddr->dip;
+                      l2Table.mbr= 0;
+                      l2Table.nosalearn = 0;
+                      l2Table.l3lookup = 1;
+                      l2Table.l3vidlookup = 1;
+                      l2Table.l3_vid = pIpVidMcastAddr->vid;
+                      if((retVal = rtl8367c_setAsicL2LookupTb(&l2Table)) != RT_ERR_OK)
+                          return retVal;
+              
+                      pIpVidMcastAddr->address = l2Table.address;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 23  
+
+                      return RT_ERR_OK;
+                  }
+                  else
+                      return retVal;
+              }
+              #endif
+1356          /* Function Name:
+1357           *      rtk_l2_ucastAddr_flush
+1358           * Description:
+1359           *      Flush L2 mac address by type in the specified device (both dynamic and static).
+1360           * Input:
+1361           *      pConfig - flush configuration
+1362           * Output:
+1363           *      None
+1364           * Return:
+1365           *      RT_ERR_OK           - OK
+1366           *      RT_ERR_FAILED       - Failed
+1367           *      RT_ERR_SMI          - SMI access error
+1368           *      RT_ERR_PORT_ID      - Invalid port number.
+1369           *      RT_ERR_VLAN_VID     - Invalid VID parameter.
+1370           *      RT_ERR_INPUT        - Invalid input parameters.
+1371           * Note:
+1372           *      flushByVid          - 1: Flush by VID, 0: Don't flush by VID
+1373           *      vid                 - VID (0 ~ 4095)
+1374           *      flushByFid          - 1: Flush by FID, 0: Don't flush by FID
+1375           *      fid                 - FID (0 ~ 15)
+1376           *      flushByPort         - 1: Flush by Port, 0: Don't flush by Port
+1377           *      port                - Port ID
+1378           *      flushByMac          - Not Supported
+1379           *      ucastAddr           - Not Supported
+1380           *      flushStaticAddr     - 1: Flush both Static and Dynamic entries, 0: Flush only Dynamic entries
+1381           *      flushAddrOnAllPorts - 1: Flush VID-matched entries at all ports, 0: Flush VID-matched entries per 
+             -port.
+1382           */
+1383          rtk_api_ret_t rtk_l2_ucastAddr_flush(rtk_l2_flushCfg_t *pConfig)
+1384          {
+1385   1          rtk_api_ret_t   retVal;
+1386   1      
+1387   1          /* Check initialization state */
+1388   1          RTK_CHK_INIT_STATE();
+1389   1      
+1390   1          if(pConfig == NULL)
+1391   1              return RT_ERR_NULL_POINTER;
+1392   1      
+1393   1          if(pConfig->flushByVid >= RTK_ENABLE_END)
+1394   1              return RT_ERR_ENABLE;
+1395   1      
+1396   1          if(pConfig->flushByFid >= RTK_ENABLE_END)
+1397   1              return RT_ERR_ENABLE;
+1398   1      
+1399   1          if(pConfig->flushByPort >= RTK_ENABLE_END)
+1400   1              return RT_ERR_ENABLE;
+1401   1      
+1402   1          if(pConfig->flushByMac >= RTK_ENABLE_END)
+1403   1              return RT_ERR_ENABLE;
+1404   1      
+1405   1          if(pConfig->flushStaticAddr >= RTK_ENABLE_END)
+1406   1              return RT_ERR_ENABLE;
+1407   1      
+1408   1          if(pConfig->flushAddrOnAllPorts >= RTK_ENABLE_END)
+1409   1              return RT_ERR_ENABLE;
+1410   1      
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 24  
+
+1411   1          if(pConfig->vid > RTL8367C_VIDMAX)
+1412   1              return RT_ERR_VLAN_VID;
+1413   1      
+1414   1          if(pConfig->fid > RTL8367C_FIDMAX)
+1415   1              return RT_ERR_INPUT;
+1416   1      
+1417   1          /* check port valid */
+1418   1          RTK_CHK_PORT_VALID(pConfig->port);
+1419   1      
+1420   1          if(pConfig->flushByVid == ENABLED)
+1421   1          {
+1422   2              if ((retVal = rtl8367c_setAsicLutFlushMode(FLUSHMDOE_VID)) != RT_ERR_OK)
+1423   2                  return retVal;
+1424   2      
+1425   2              if ((retVal = rtl8367c_setAsicLutFlushVid(pConfig->vid)) != RT_ERR_OK)
+1426   2                      return retVal;
+1427   2      
+1428   2              if ((retVal = rtl8367c_setAsicLutFlushType((pConfig->flushStaticAddr == ENABLED) ? FLUSHTYPE_BOTH 
+             -: FLUSHTYPE_DYNAMIC)) != RT_ERR_OK)
+1429   2                  return retVal;
+1430   2      
+1431   2              if(pConfig->flushAddrOnAllPorts == ENABLED)
+1432   2              {
+1433   3                  if ((retVal = rtl8367c_setAsicLutForceFlush(RTL8367C_PORTMASK)) != RT_ERR_OK)
+1434   3                      return retVal;
+1435   3              }
+1436   2              else if(pConfig->flushByPort == ENABLED)
+1437   2              {
+1438   3                  if ((retVal = rtl8367c_setAsicLutForceFlush(1 << rtk_switch_port_L2P_get(pConfig->port))) != R
+             -T_ERR_OK)
+1439   3                      return retVal;
+1440   3              }
+1441   2              else
+1442   2                  return RT_ERR_INPUT;
+1443   2          }
+1444   1          else if(pConfig->flushByFid == ENABLED)
+1445   1          {
+1446   2              if ((retVal = rtl8367c_setAsicLutFlushMode(FLUSHMDOE_FID)) != RT_ERR_OK)
+1447   2                  return retVal;
+1448   2      
+1449   2              if ((retVal = rtl8367c_setAsicLutFlushFid(pConfig->fid)) != RT_ERR_OK)
+1450   2                      return retVal;
+1451   2      
+1452   2              if ((retVal = rtl8367c_setAsicLutFlushType((pConfig->flushStaticAddr == ENABLED) ? FLUSHTYPE_BOTH 
+             -: FLUSHTYPE_DYNAMIC)) != RT_ERR_OK)
+1453   2                  return retVal;
+1454   2      
+1455   2              if(pConfig->flushAddrOnAllPorts == ENABLED)
+1456   2              {
+1457   3                  if ((retVal = rtl8367c_setAsicLutForceFlush(RTL8367C_PORTMASK)) != RT_ERR_OK)
+1458   3                      return retVal;
+1459   3              }
+1460   2              else if(pConfig->flushByPort == ENABLED)
+1461   2              {
+1462   3                  if ((retVal = rtl8367c_setAsicLutForceFlush(1 << rtk_switch_port_L2P_get(pConfig->port))) != R
+             -T_ERR_OK)
+1463   3                      return retVal;
+1464   3              }
+1465   2              else
+1466   2                  return RT_ERR_INPUT;
+1467   2          }
+1468   1          else if(pConfig->flushByPort == ENABLED)
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 25  
+
+1469   1          {
+1470   2              if ((retVal = rtl8367c_setAsicLutFlushType((pConfig->flushStaticAddr == ENABLED) ? FLUSHTYPE_BOTH 
+             -: FLUSHTYPE_DYNAMIC)) != RT_ERR_OK)
+1471   2                  return retVal;
+1472   2      
+1473   2              if ((retVal = rtl8367c_setAsicLutFlushMode(FLUSHMDOE_PORT)) != RT_ERR_OK)
+1474   2                  return retVal;
+1475   2      
+1476   2              if ((retVal = rtl8367c_setAsicLutForceFlush(1 << rtk_switch_port_L2P_get(pConfig->port))) != RT_ER
+             -R_OK)
+1477   2                  return retVal;
+1478   2          }
+1479   1          else if(pConfig->flushByMac == ENABLED)
+1480   1          {
+1481   2              /* Should use API "rtk_l2_addr_del" to remove a specified entry*/
+1482   2              return RT_ERR_CHIP_NOT_SUPPORTED;
+1483   2          }
+1484   1          else
+1485   1              return RT_ERR_INPUT;
+1486   1      
+1487   1          return RT_ERR_OK;
+1488   1      }
+1489          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_l2_table_clear
+               * Description:
+               *      Flush all static & dynamic entries in LUT.
+               * Input:
+               *      None
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_table_clear(void)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((retVal = rtl8367c_setAsicLutFlushAll()) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_table_clearStatus_get
+               * Description:
+               *      Get table clear status
+               * Input:
+               *      None
+               * Output:
+               *      pStatus - Clear status, 1:Busy, 0:finish
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 26  
+
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_table_clearStatus_get(rtk_l2_clearStatus_t *pStatus)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pStatus)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicLutFlushAllStatus((uint32 *)pStatus)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_flushLinkDownPortAddrEnable_set
+               * Description:
+               *      Set HW flush linkdown port mac configuration of the specified device.
+               * Input:
+               *      port - Port id.
+               *      enable - link down flush status
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_ENABLE       - Invalid enable input.
+               * Note:
+               *      The status of flush linkdown port address is as following:
+               *      - DISABLED
+               *      - ENABLED
+               */
+              rtk_api_ret_t rtk_l2_flushLinkDownPortAddrEnable_set(rtk_port_t port, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (port != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_PORT_ID;
+              
+                  if (enable >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if ((retVal = rtl8367c_setAsicLutLinkDownForceAging(enable)) != RT_ERR_OK)
+                      return retVal;
+              
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_flushLinkDownPortAddrEnable_get
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 27  
+
+               * Description:
+               *      Get HW flush linkdown port mac configuration of the specified device.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - link down flush status
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The status of flush linkdown port address is as following:
+               *      - DISABLED
+               *      - ENABLED
+               */
+              rtk_api_ret_t rtk_l2_flushLinkDownPortAddrEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (port != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_PORT_ID;
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicLutLinkDownForceAging(pEnable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_agingEnable_set
+               * Description:
+               *      Set L2 LUT aging status per port setting.
+               * Input:
+               *      port    - Port id.
+               *      enable  - Aging status
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_ENABLE       - Invalid enable input.
+               * Note:
+               *      This API can be used to set L2 LUT aging status per port.
+               */
+              rtk_api_ret_t rtk_l2_agingEnable_set(rtk_port_t port, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* check port valid */
+                  RTK_CHK_PORT_VALID(port);
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 28  
+
+              
+                  if (enable >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if(enable == 1)
+                      enable = 0;
+                  else
+                      enable = 1;
+              
+                  if ((retVal = rtl8367c_setAsicLutDisableAging(rtk_switch_port_L2P_get(port), enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_agingEnable_get
+               * Description:
+               *      Get L2 LUT aging status per port setting.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - Aging status
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      This API can be used to get L2 LUT aging function per port.
+               */
+              rtk_api_ret_t rtk_l2_agingEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicLutDisableAging(rtk_switch_port_L2P_get(port), pEnable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if(*pEnable == 1)
+                      *pEnable = 0;
+                  else
+                      *pEnable = 1;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1708          /* Function Name:
+1709           *      rtk_l2_limitLearningCnt_set
+1710           * Description:
+1711           *      Set per-Port auto learning limit number
+1712           * Input:
+1713           *      port    - Port id.
+1714           *      mac_cnt - Auto learning entries limit number
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 29  
+
+1715           * Output:
+1716           *      None
+1717           * Return:
+1718           *      RT_ERR_OK                   - OK
+1719           *      RT_ERR_FAILED               - Failed
+1720           *      RT_ERR_SMI                  - SMI access error
+1721           *      RT_ERR_PORT_ID              - Invalid port number.
+1722           *      RT_ERR_LIMITED_L2ENTRY_NUM  - Invalid auto learning limit number
+1723           * Note:
+1724           *      The API can set per-port ASIC auto learning limit number from 0(disable learning)
+1725           *      to 2112.
+1726           */
+1727          rtk_api_ret_t rtk_l2_limitLearningCnt_set(rtk_port_t port, rtk_mac_cnt_t mac_cnt)
+1728          {
+1729   1          rtk_api_ret_t retVal;
+1730   1      
+1731   1          /* Check initialization state */
+1732   1          RTK_CHK_INIT_STATE();
+1733   1      
+1734   1          /* check port valid */
+1735   1          RTK_CHK_PORT_VALID(port);
+1736   1      
+1737   1          if (mac_cnt > rtk_switch_maxLutAddrNumber_get())
+1738   1              return RT_ERR_LIMITED_L2ENTRY_NUM;
+1739   1      
+1740   1          if ((retVal = rtl8367c_setAsicLutLearnLimitNo(rtk_switch_port_L2P_get(port), mac_cnt)) != RT_ERR_OK)
+1741   1              return retVal;
+1742   1      
+1743   1          return RT_ERR_OK;
+1744   1      }
+1745          
+1746          /* Function Name:
+1747           *      rtk_l2_limitLearningCnt_get
+1748           * Description:
+1749           *      Get per-Port auto learning limit number
+1750           * Input:
+1751           *      port - Port id.
+1752           * Output:
+1753           *      pMac_cnt - Auto learning entries limit number
+1754           * Return:
+1755           *      RT_ERR_OK           - OK
+1756           *      RT_ERR_FAILED       - Failed
+1757           *      RT_ERR_SMI          - SMI access error
+1758           *      RT_ERR_PORT_ID      - Invalid port number.
+1759           * Note:
+1760           *      The API can get per-port ASIC auto learning limit number.
+1761           */
+1762          rtk_api_ret_t rtk_l2_limitLearningCnt_get(rtk_port_t port, rtk_mac_cnt_t *pMac_cnt)
+1763          {
+1764   1          rtk_api_ret_t retVal;
+1765   1      
+1766   1          /* Check initialization state */
+1767   1          RTK_CHK_INIT_STATE();
+1768   1      
+1769   1          /* check port valid */
+1770   1          RTK_CHK_PORT_VALID(port);
+1771   1      
+1772   1          if(NULL == pMac_cnt)
+1773   1              return RT_ERR_NULL_POINTER;
+1774   1      
+1775   1          if ((retVal = rtl8367c_getAsicLutLearnLimitNo(rtk_switch_port_L2P_get(port), pMac_cnt)) != RT_ERR_OK)
+1776   1              return retVal;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 30  
+
+1777   1      
+1778   1          return RT_ERR_OK;
+1779   1      }
+1780          #if 0//NOT used
+              /* Function Name:
+               *      rtk_l2_limitSystemLearningCnt_set
+               * Description:
+               *      Set System auto learning limit number
+               * Input:
+               *      mac_cnt - Auto learning entries limit number
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_LIMITED_L2ENTRY_NUM  - Invalid auto learning limit number
+               * Note:
+               *      The API can set system ASIC auto learning limit number from 0(disable learning)
+               *      to 2112.
+               */
+              rtk_api_ret_t rtk_l2_limitSystemLearningCnt_set(rtk_mac_cnt_t mac_cnt)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (mac_cnt > rtk_switch_maxLutAddrNumber_get())
+                      return RT_ERR_LIMITED_L2ENTRY_NUM;
+              
+                  if ((retVal = rtl8367c_setAsicSystemLutLearnLimitNo(mac_cnt)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_limitSystemLearningCnt_get
+               * Description:
+               *      Get System auto learning limit number
+               * Input:
+               *      None
+               * Output:
+               *      pMac_cnt - Auto learning entries limit number
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get system ASIC auto learning limit number.
+               */
+              rtk_api_ret_t rtk_l2_limitSystemLearningCnt_get(rtk_mac_cnt_t *pMac_cnt)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pMac_cnt)
+                      return RT_ERR_NULL_POINTER;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 31  
+
+              
+                  if ((retVal = rtl8367c_getAsicSystemLutLearnLimitNo(pMac_cnt)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1846          /* Function Name:
+1847           *      rtk_l2_limitLearningCntAction_set
+1848           * Description:
+1849           *      Configure auto learn over limit number action.
+1850           * Input:
+1851           *      port - Port id.
+1852           *      action - Auto learning entries limit number
+1853           * Output:
+1854           *      None
+1855           * Return:
+1856           *      RT_ERR_OK           - OK
+1857           *      RT_ERR_FAILED       - Failed
+1858           *      RT_ERR_SMI          - SMI access error
+1859           *      RT_ERR_PORT_ID      - Invalid port number.
+1860           *      RT_ERR_NOT_ALLOWED  - Invalid learn over action
+1861           * Note:
+1862           *      The API can set SA unknown packet action while auto learn limit number is over
+1863           *      The action symbol as following:
+1864           *      - LIMIT_LEARN_CNT_ACTION_DROP,
+1865           *      - LIMIT_LEARN_CNT_ACTION_FORWARD,
+1866           *      - LIMIT_LEARN_CNT_ACTION_TO_CPU,
+1867           */
+1868          rtk_api_ret_t rtk_l2_limitLearningCntAction_set(rtk_port_t port, rtk_l2_limitLearnCntAction_t action)
+1869          {
+1870   1          rtk_api_ret_t retVal;
+1871   1          uint32 data1;
+1872   1      
+1873   1          /* Check initialization state */
+1874   1          RTK_CHK_INIT_STATE();
+1875   1      
+1876   1          if (port != RTK_WHOLE_SYSTEM)
+1877   1              return RT_ERR_PORT_ID;
+1878   1      
+1879   1          if ( LIMIT_LEARN_CNT_ACTION_DROP == action )
+1880   1              data1 = 1;
+1881   1          else if ( LIMIT_LEARN_CNT_ACTION_FORWARD == action )
+1882   1              data1 = 0;
+1883   1          else if ( LIMIT_LEARN_CNT_ACTION_TO_CPU == action )
+1884   1              data1 = 2;
+1885   1          else
+1886   1              return RT_ERR_NOT_ALLOWED;
+1887   1      
+1888   1          if ((retVal = rtl8367c_setAsicLutLearnOverAct(data1)) != RT_ERR_OK)
+1889   1              return retVal;
+1890   1      
+1891   1          return RT_ERR_OK;
+1892   1      }
+1893          
+1894          /* Function Name:
+1895           *      rtk_l2_limitLearningCntAction_get
+1896           * Description:
+1897           *      Get auto learn over limit number action.
+1898           * Input:
+1899           *      port - Port id.
+1900           * Output:
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 32  
+
+1901           *      pAction - Learn over action
+1902           * Return:
+1903           *      RT_ERR_OK           - OK
+1904           *      RT_ERR_FAILED       - Failed
+1905           *      RT_ERR_SMI          - SMI access error
+1906           *      RT_ERR_PORT_ID      - Invalid port number.
+1907           * Note:
+1908           *      The API can get SA unknown packet action while auto learn limit number is over
+1909           *      The action symbol as following:
+1910           *      - LIMIT_LEARN_CNT_ACTION_DROP,
+1911           *      - LIMIT_LEARN_CNT_ACTION_FORWARD,
+1912           *      - LIMIT_LEARN_CNT_ACTION_TO_CPU,
+1913           */
+1914          rtk_api_ret_t rtk_l2_limitLearningCntAction_get(rtk_port_t port, rtk_l2_limitLearnCntAction_t *pAction)
+1915          {
+1916   1          rtk_api_ret_t retVal;
+1917   1          uint32 action;
+1918   1      
+1919   1          /* Check initialization state */
+1920   1          RTK_CHK_INIT_STATE();
+1921   1      
+1922   1          if (port != RTK_WHOLE_SYSTEM)
+1923   1              return RT_ERR_PORT_ID;
+1924   1      
+1925   1          if(NULL == pAction)
+1926   1              return RT_ERR_NULL_POINTER;
+1927   1      
+1928   1          if ((retVal = rtl8367c_getAsicLutLearnOverAct(&action)) != RT_ERR_OK)
+1929   1              return retVal;
+1930   1      
+1931   1          if ( 1 == action )
+1932   1              *pAction = LIMIT_LEARN_CNT_ACTION_DROP;
+1933   1          else if ( 0 == action )
+1934   1              *pAction = LIMIT_LEARN_CNT_ACTION_FORWARD;
+1935   1          else if ( 2 == action )
+1936   1              *pAction = LIMIT_LEARN_CNT_ACTION_TO_CPU;
+1937   1          else
+1938   1          *pAction = action;
+1939   1      
+1940   1          return RT_ERR_OK;
+1941   1      }
+1942          #if 0//NOT used
+              /* Function Name:
+               *      rtk_l2_limitSystemLearningCntAction_set
+               * Description:
+               *      Configure system auto learn over limit number action.
+               * Input:
+               *      port - Port id.
+               *      action - Auto learning entries limit number
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_NOT_ALLOWED  - Invalid learn over action
+               * Note:
+               *      The API can set SA unknown packet action while auto learn limit number is over
+               *      The action symbol as following:
+               *      - LIMIT_LEARN_CNT_ACTION_DROP,
+               *      - LIMIT_LEARN_CNT_ACTION_FORWARD,
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 33  
+
+               *      - LIMIT_LEARN_CNT_ACTION_TO_CPU,
+               */
+              rtk_api_ret_t rtk_l2_limitSystemLearningCntAction_set(rtk_l2_limitLearnCntAction_t action)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 data1;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ( LIMIT_LEARN_CNT_ACTION_DROP == action )
+                      data1 = 1;
+                  else if ( LIMIT_LEARN_CNT_ACTION_FORWARD == action )
+                      data1 = 0;
+                  else if ( LIMIT_LEARN_CNT_ACTION_TO_CPU == action )
+                      data1 = 2;
+                  else
+                      return RT_ERR_NOT_ALLOWED;
+              
+                  if ((retVal = rtl8367c_setAsicSystemLutLearnOverAct(data1)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_limitSystemLearningCntAction_get
+               * Description:
+               *      Get system auto learn over limit number action.
+               * Input:
+               *      None.
+               * Output:
+               *      pAction - Learn over action
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get SA unknown packet action while auto learn limit number is over
+               *      The action symbol as following:
+               *      - LIMIT_LEARN_CNT_ACTION_DROP,
+               *      - LIMIT_LEARN_CNT_ACTION_FORWARD,
+               *      - LIMIT_LEARN_CNT_ACTION_TO_CPU,
+               */
+              rtk_api_ret_t rtk_l2_limitSystemLearningCntAction_get(rtk_l2_limitLearnCntAction_t *pAction)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 action;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pAction)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicSystemLutLearnOverAct(&action)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ( 1 == action )
+                      *pAction = LIMIT_LEARN_CNT_ACTION_DROP;
+                  else if ( 0 == action )
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 34  
+
+                      *pAction = LIMIT_LEARN_CNT_ACTION_FORWARD;
+                  else if ( 2 == action )
+                      *pAction = LIMIT_LEARN_CNT_ACTION_TO_CPU;
+                  else
+                  *pAction = action;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_limitSystemLearningCntPortMask_set
+               * Description:
+               *      Configure system auto learn portmask
+               * Input:
+               *      pPortmask - Port Mask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_MASK    - Invalid port mask.
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_limitSystemLearningCntPortMask_set(rtk_portmask_t *pPortmask)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pPortmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* Check port mask */
+                  RTK_CHK_PORTMASK_VALID(pPortmask);
+              
+                  if ((retVal = rtk_switch_portmask_L2P_get(pPortmask, &pmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_setAsicSystemLutLearnPortMask(pmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_limitSystemLearningCntPortMask_get
+               * Description:
+               *      get system auto learn portmask
+               * Input:
+               *      None
+               * Output:
+               *      pPortmask - Port Mask
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_NULL_POINTER - Null pointer.
+               * Note:
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 35  
+
+               *
+               */
+              rtk_api_ret_t rtk_l2_limitSystemLearningCntPortMask_get(rtk_portmask_t *pPortmask)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pPortmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicSystemLutLearnPortMask(&pmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtk_switch_portmask_P2L_get(pmask, pPortmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_learningCnt_get
+               * Description:
+               *      Get per-Port current auto learning number
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pMac_cnt - ASIC auto learning entries number
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get per-port ASIC auto learning number
+               */
+              rtk_api_ret_t rtk_l2_learningCnt_get(rtk_port_t port, rtk_mac_cnt_t *pMac_cnt)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pMac_cnt)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicLutLearnNo(rtk_switch_port_L2P_get(port), pMac_cnt)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_floodPortMask_set
+               * Description:
+               *      Set flooding portmask
+               * Input:
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 36  
+
+               *      type - flooding type.
+               *      pFlood_portmask - flooding porkmask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_MASK    - Invalid portmask.
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API can set the flooding mask.
+               *      The flooding type is as following:
+               *      - FLOOD_UNKNOWNDA
+               *      - FLOOD_UNKNOWNMC
+               *      - FLOOD_BC
+               */
+              rtk_api_ret_t rtk_l2_floodPortMask_set(rtk_l2_flood_type_t floood_type, rtk_portmask_t *pFlood_portmask)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (floood_type >= FLOOD_END)
+                      return RT_ERR_INPUT;
+              
+                  /* check port valid */
+                  RTK_CHK_PORTMASK_VALID(pFlood_portmask);
+              
+                  /* Get Physical port mask */
+                  if ((retVal = rtk_switch_portmask_L2P_get(pFlood_portmask, &pmask))!=RT_ERR_OK)
+                      return retVal;
+              
+                  switch (floood_type)
+                  {
+                      case FLOOD_UNKNOWNDA:
+                          if ((retVal = rtl8367c_setAsicPortUnknownDaFloodingPortmask(pmask)) != RT_ERR_OK)
+                              return retVal;
+                          break;
+                      case FLOOD_UNKNOWNMC:
+                          if ((retVal = rtl8367c_setAsicPortUnknownMulticastFloodingPortmask(pmask)) != RT_ERR_OK)
+                              return retVal;
+                          break;
+                      case FLOOD_BC:
+                          if ((retVal = rtl8367c_setAsicPortBcastFloodingPortmask(pmask)) != RT_ERR_OK)
+                              return retVal;
+                          break;
+                      default:
+                          break;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtk_l2_floodPortMask_get
+               * Description:
+               *      Get flooding portmask
+               * Input:
+               *      type - flooding type.
+               * Output:
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 37  
+
+               *      pFlood_portmask - flooding porkmask
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      This API can get the flooding mask.
+               *      The flooding type is as following:
+               *      - FLOOD_UNKNOWNDA
+               *      - FLOOD_UNKNOWNMC
+               *      - FLOOD_BC
+               */
+              rtk_api_ret_t rtk_l2_floodPortMask_get(rtk_l2_flood_type_t floood_type, rtk_portmask_t *pFlood_portmask)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (floood_type >= FLOOD_END)
+                      return RT_ERR_INPUT;
+              
+                  if(NULL == pFlood_portmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  switch (floood_type)
+                  {
+                      case FLOOD_UNKNOWNDA:
+                          if ((retVal = rtl8367c_getAsicPortUnknownDaFloodingPortmask(&pmask)) != RT_ERR_OK)
+                              return retVal;
+                          break;
+                      case FLOOD_UNKNOWNMC:
+                          if ((retVal = rtl8367c_getAsicPortUnknownMulticastFloodingPortmask(&pmask)) != RT_ERR_OK)
+                              return retVal;
+                          break;
+                      case FLOOD_BC:
+                          if ((retVal = rtl8367c_getAsicPortBcastFloodingPortmask(&pmask)) != RT_ERR_OK)
+                              return retVal;
+                          break;
+                      default:
+                          break;
+                  }
+              
+                  /* Get Logical port mask */
+                  if ((retVal = rtk_switch_portmask_P2L_get(pmask, pFlood_portmask))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_localPktPermit_set
+               * Description:
+               *      Set permittion of frames if source port and destination port are the same.
+               * Input:
+               *      port - Port id.
+               *      permit - permittion status
+               * Output:
+               *      None
+               * Return:
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 38  
+
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_ENABLE       - Invalid permit value.
+               * Note:
+               *      This API is setted to permit frame if its source port is equal to destination port.
+               */
+              rtk_api_ret_t rtk_l2_localPktPermit_set(rtk_port_t port, rtk_enable_t permit)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (permit >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if ((retVal = rtl8367c_setAsicPortBlockSpa(rtk_switch_port_L2P_get(port), permit)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_localPktPermit_get
+               * Description:
+               *      Get permittion of frames if source port and destination port are the same.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pPermit - permittion status
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      This API is to get permittion status for frames if its source port is equal to destination port.
+               */
+              rtk_api_ret_t rtk_l2_localPktPermit_get(rtk_port_t port, rtk_enable_t *pPermit)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pPermit)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortBlockSpa(rtk_switch_port_L2P_get(port), pPermit)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 39  
+
+              /* Function Name:
+               *      rtk_l2_aging_set
+               * Description:
+               *      Set LUT agging out speed
+               * Input:
+               *      aging_time - Agging out time.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_OUT_OF_RANGE     - input out of range.
+               * Note:
+               *      The API can set LUT agging out period for each entry and the range is from 45s to 458s.
+               */
+              rtk_api_ret_t rtk_l2_aging_set(rtk_l2_age_time_t aging_time)
+              {
+                  uint32 i;
+                  CONST_T uint32 agePara[10][3] = {
+                      {45, 0, 1}, {88, 0, 2}, {133, 0, 3}, {177, 0, 4}, {221, 0, 5}, {266, 0, 6}, {310, 0, 7},
+                      {354, 2, 6}, {413, 2, 7}, {458, 3, 7}};
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (aging_time>agePara[9][0])
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  for (i = 0; i<10; i++)
+                  {
+                      if (aging_time<=agePara[i][0])
+                      {
+                          return rtl8367c_setAsicLutAgeTimerSpeed(agePara[i][2], agePara[i][1]);
+                      }
+                  }
+              
+                  return RT_ERR_FAILED;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_aging_get
+               * Description:
+               *      Get LUT agging out time
+               * Input:
+               *      None
+               * Output:
+               *      pEnable - Aging status
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get LUT agging out period for each entry.
+               */
+              rtk_api_ret_t rtk_l2_aging_get(rtk_l2_age_time_t *pAging_time)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 i,time, speed;
+                  CONST_T uint32 agePara[10][3] = {
+                      {45, 0, 1}, {88, 0, 2}, {133, 0, 3}, {177, 0, 4}, {221, 0, 5}, {266, 0, 6}, {310, 0, 7},
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 40  
+
+                      {354, 2, 6}, {413, 2, 7}, {458, 3, 7}};
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pAging_time)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicLutAgeTimerSpeed(&time, &speed)) != RT_ERR_OK)
+                      return retVal;
+              
+                  for (i = 0; i<10; i++)
+                  {
+                      if (time==agePara[i][2]&&speed==agePara[i][1])
+                      {
+                          *pAging_time = agePara[i][0];
+                          return RT_ERR_OK;
+                      }
+                  }
+              
+                  return RT_ERR_FAILED;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastAddrLookup_set
+               * Description:
+               *      Set Lut IP multicast lookup function
+               * Input:
+               *      type - Lookup type for IPMC packet.
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               * Note:
+               *      LOOKUP_MAC      - Lookup by MAC address
+               *      LOOKUP_IP       - Lookup by IP address
+               *      LOOKUP_IP_VID   - Lookup by IP address & VLAN ID
+               */
+              rtk_api_ret_t rtk_l2_ipMcastAddrLookup_set(rtk_l2_ipmc_lookup_type_t type)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(type == LOOKUP_MAC)
+                  {
+                      if((retVal = rtl8367c_setAsicLutIpMulticastLookup(DISABLED)) != RT_ERR_OK)
+                          return retVal;
+                  }
+                  else if(type == LOOKUP_IP)
+                  {
+                      if((retVal = rtl8367c_setAsicLutIpMulticastLookup(ENABLED)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicLutIpMulticastVidLookup(DISABLED))!=RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicLutIpLookupMethod(1))!=RT_ERR_OK)
+                          return retVal;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 41  
+
+                  }
+                  else if(type == LOOKUP_IP_VID)
+                  {
+                      if((retVal = rtl8367c_setAsicLutIpMulticastLookup(ENABLED)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicLutIpMulticastVidLookup(ENABLED))!=RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicLutIpLookupMethod(1))!=RT_ERR_OK)
+                          return retVal;
+                  }
+                  else
+                      return RT_ERR_INPUT;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastAddrLookup_get
+               * Description:
+               *      Get Lut IP multicast lookup function
+               * Input:
+               *      None.
+               * Output:
+               *      pType - Lookup type for IPMC packet.
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_l2_ipMcastAddrLookup_get(rtk_l2_ipmc_lookup_type_t *pType)
+              {
+                  rtk_api_ret_t       retVal;
+                  uint32          enabled, vid_lookup;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pType)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if((retVal = rtl8367c_getAsicLutIpMulticastLookup(&enabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_getAsicLutIpMulticastVidLookup(&vid_lookup))!=RT_ERR_OK)
+                      return retVal;
+              
+                  if(enabled == ENABLED)
+                  {
+                      if(vid_lookup == ENABLED)
+                          *pType = LOOKUP_IP_VID;
+                      else
+                          *pType = LOOKUP_IP;
+                  }
+                  else
+                      *pType = LOOKUP_MAC;
+              
+                  return RT_ERR_OK;
+              }
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 42  
+
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastForwardRouterPort_set
+               * Description:
+               *      Set IPMC packet forward to rounter port also or not
+               * Input:
+               *      enabled - 1: Inlcude router port, 0, exclude router port
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_ipMcastForwardRouterPort_set(rtk_enable_t enabled)
+              {
+                  rtk_api_ret_t       retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (enabled >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if((retVal = rtl8367c_setAsicLutIpmcFwdRouterPort(enabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastForwardRouterPort_get
+               * Description:
+               *      Get IPMC packet forward to rounter port also or not
+               * Input:
+               *      None.
+               * Output:
+               *      pEnabled    - 1: Inlcude router port, 0, exclude router port
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_NULL_POINTER - Null pointer
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_l2_ipMcastForwardRouterPort_get(rtk_enable_t *pEnabled)
+              {
+                  rtk_api_ret_t       retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (NULL == pEnabled)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if((retVal = rtl8367c_getAsicLutIpmcFwdRouterPort(pEnabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 43  
+
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastGroupEntry_add
+               * Description:
+               *      Add an IP Multicast entry to group table
+               * Input:
+               *      ip_addr     - IP address
+               *      vid         - VLAN ID
+               *      pPortmask   - portmask
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               *      RT_ERR_TBL_FULL    - Table Full
+               * Note:
+               *      Add an entry to IP Multicast Group table.
+               */
+              rtk_api_ret_t rtk_l2_ipMcastGroupEntry_add(ipaddr_t ip_addr, uint32 vid, rtk_portmask_t *pPortmask)
+              {
+                  uint32      empty_idx = 0xFFFF;
+                  uint32       index;
+                  ipaddr_t        group_addr;
+                  uint32      group_vid;
+                  uint32      pmask;
+                  uint32      valid;
+                  uint32      physicalPortmask;
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (vid > RTL8367C_VIDMAX)
+                      return RT_ERR_L2_VID;
+              
+                  if(NULL == pPortmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if((ip_addr & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  /* Get Physical port mask */
+                  if ((retVal = rtk_switch_portmask_L2P_get(pPortmask, &physicalPortmask))!=RT_ERR_OK)
+                      return retVal;
+              
+                  for(index = 0; index <= RTL8367C_LUT_IPMCGRP_TABLE_MAX; index++)
+                  {
+                      if ((retVal = rtl8367c_getAsicLutIPMCGroup((uint32)index, &group_addr, &group_vid, &pmask, &valid)
+             -)!=RT_ERR_OK)
+                          return retVal;
+              
+                      if( (valid == ENABLED) && (group_addr == ip_addr) && (group_vid == vid) )
+                      {
+                          if(pmask != physicalPortmask)
+                          {
+                              pmask = physicalPortmask;
+                              if ((retVal = rtl8367c_setAsicLutIPMCGroup(index, ip_addr, vid, pmask, valid))!=RT_ERR_OK)
+                                  return retVal;
+                          }
+              
+                          return RT_ERR_OK;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 44  
+
+                      }
+              
+                      if( (valid == DISABLED) && (empty_idx == 0xFFFF) ) /* Unused */
+                          empty_idx = (uint32)index;
+                  }
+              
+                  if(empty_idx == 0xFFFF)
+                      return RT_ERR_TBL_FULL;
+              
+                  pmask = physicalPortmask;
+                  if ((retVal = rtl8367c_setAsicLutIPMCGroup(empty_idx, ip_addr, vid, pmask, ENABLED))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastGroupEntry_del
+               * Description:
+               *      Delete an entry from IP Multicast group table
+               * Input:
+               *      ip_addr     - IP address
+               *      vid         - VLAN ID
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               *      RT_ERR_TBL_FULL    - Table Full
+               * Note:
+               *      Delete an entry from IP Multicast group table.
+               */
+              rtk_api_ret_t rtk_l2_ipMcastGroupEntry_del(ipaddr_t ip_addr, uint32 vid)
+              {
+                  uint32       index;
+                  ipaddr_t        group_addr;
+                  uint32      group_vid;
+                  uint32      pmask;
+                  uint32      valid;
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (vid > RTL8367C_VIDMAX)
+                      return RT_ERR_L2_VID;
+              
+                  if((ip_addr & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  for(index = 0; index <= RTL8367C_LUT_IPMCGRP_TABLE_MAX; index++)
+                  {
+                      if ((retVal = rtl8367c_getAsicLutIPMCGroup((uint32)index, &group_addr, &group_vid, &pmask, &valid)
+             -)!=RT_ERR_OK)
+                          return retVal;
+              
+                      if( (valid == ENABLED) && (group_addr == ip_addr) && (group_vid == vid) )
+                      {
+                          group_addr = 0xE0000000;
+                          group_vid = 0;
+                          pmask = 0;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 45  
+
+                          if ((retVal = rtl8367c_setAsicLutIPMCGroup(index, group_addr, group_vid, pmask, DISABLED))!=RT
+             -_ERR_OK)
+                              return retVal;
+              
+                          return RT_ERR_OK;
+                      }
+                  }
+              
+                  return RT_ERR_FAILED;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_ipMcastGroupEntry_get
+               * Description:
+               *      get an entry from IP Multicast group table
+               * Input:
+               *      ip_addr     - IP address
+               *      vid         - VLAN ID
+               * Output:
+               *      pPortmask   - member port mask
+               * Return:
+               *      RT_ERR_OK          - OK
+               *      RT_ERR_FAILED      - Failed
+               *      RT_ERR_SMI         - SMI access error
+               *      RT_ERR_TBL_FULL    - Table Full
+               * Note:
+               *      Delete an entry from IP Multicast group table.
+               */
+              rtk_api_ret_t rtk_l2_ipMcastGroupEntry_get(ipaddr_t ip_addr, uint32 vid, rtk_portmask_t *pPortmask)
+              {
+                  uint32       index;
+                  ipaddr_t        group_addr;
+                  uint32      group_vid;
+                  uint32      valid;
+                  uint32      pmask;
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if((ip_addr & 0xF0000000) != 0xE0000000)
+                      return RT_ERR_INPUT;
+              
+                  if (vid > RTL8367C_VIDMAX)
+                      return RT_ERR_L2_VID;
+              
+                  if(NULL == pPortmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  for(index = 0; index <= RTL8367C_LUT_IPMCGRP_TABLE_MAX; index++)
+                  {
+                      if ((retVal = rtl8367c_getAsicLutIPMCGroup((uint32)index, &group_addr, &group_vid, &pmask, &valid)
+             -)!=RT_ERR_OK)
+                          return retVal;
+              
+                      if( (valid == ENABLED) && (group_addr == ip_addr) && (group_vid == vid) )
+                      {
+                          if ((retVal = rtk_switch_portmask_P2L_get(pmask, pPortmask))!=RT_ERR_OK)
+                              return retVal;
+              
+                          return RT_ERR_OK;
+                      }
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 46  
+
+                  }
+              
+                  return RT_ERR_FAILED;
+              }
+              
+              /* Function Name:
+               *      rtk_l2_entry_get
+               * Description:
+               *      Get LUT unicast entry.
+               * Input:
+               *      pL2_entry - Index field in the structure.
+               * Output:
+               *      pL2_entry - other fields such as MAC, port, age...
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_L2_EMPTY_ENTRY   - Empty LUT entry.
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               * Note:
+               *      This API is used to get address by index from 0~2111.
+               */
+              rtk_api_ret_t rtk_l2_entry_get(rtk_l2_addr_table_t *pL2_entry)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 method;
+                  rtl8367c_luttb l2Table;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (pL2_entry->index >= rtk_switch_maxLutAddrNumber_get())
+                      return RT_ERR_INPUT;
+              
+                  memset(&l2Table, 0x00, sizeof(rtl8367c_luttb));
+                  l2Table.address= pL2_entry->index;
+                  method = LUTREADMETHOD_ADDRESS;
+                  if ((retVal = rtl8367c_getAsicL2LookupTb(method, &l2Table)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((pL2_entry->index>0x800)&&(l2Table.lookup_hit==0))
+                       return RT_ERR_L2_EMPTY_ENTRY;
+              
+                  if(l2Table.l3lookup)
+                  {
+                      if(l2Table.l3vidlookup)
+                      {
+                          memset(&pL2_entry->mac, 0, sizeof(rtk_mac_t));
+                          pL2_entry->is_ipmul  = l2Table.l3lookup;
+                          pL2_entry->sip       = l2Table.sip;
+                          pL2_entry->dip       = l2Table.dip;
+                          pL2_entry->is_static = l2Table.nosalearn;
+              
+                          /* Get Logical port mask */
+                          if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &(pL2_entry->portmask)))!=RT_ERR_OK)
+                              return retVal;
+              
+                          pL2_entry->fid       = 0;
+                          pL2_entry->age       = 0;
+                          pL2_entry->auth      = 0;
+                          pL2_entry->sa_block  = 0;
+                          pL2_entry->is_ipvidmul = 1;
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 47  
+
+                          pL2_entry->l3_vid      = l2Table.l3_vid;
+                      }
+                      else
+                      {
+                          memset(&pL2_entry->mac, 0, sizeof(rtk_mac_t));
+                          pL2_entry->is_ipmul  = l2Table.l3lookup;
+                          pL2_entry->sip       = l2Table.sip;
+                          pL2_entry->dip       = l2Table.dip;
+                          pL2_entry->is_static = l2Table.nosalearn;
+              
+                          /* Get Logical port mask */
+                          if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &(pL2_entry->portmask)))!=RT_ERR_OK)
+                              return retVal;
+              
+                          pL2_entry->fid       = 0;
+                          pL2_entry->age       = 0;
+                          pL2_entry->auth      = 0;
+                          pL2_entry->sa_block  = 0;
+                          pL2_entry->is_ipvidmul = 0;
+                          pL2_entry->l3_vid      = 0;
+                      }
+                  }
+                  else if(l2Table.mac.octet[0]&0x01)
+                  {
+                      memset(&pL2_entry->sip, 0, sizeof(ipaddr_t));
+                      memset(&pL2_entry->dip, 0, sizeof(ipaddr_t));
+                      pL2_entry->mac.octet[0] = l2Table.mac.octet[0];
+                      pL2_entry->mac.octet[1] = l2Table.mac.octet[1];
+                      pL2_entry->mac.octet[2] = l2Table.mac.octet[2];
+                      pL2_entry->mac.octet[3] = l2Table.mac.octet[3];
+                      pL2_entry->mac.octet[4] = l2Table.mac.octet[4];
+                      pL2_entry->mac.octet[5] = l2Table.mac.octet[5];
+                      pL2_entry->is_ipmul  = l2Table.l3lookup;
+                      pL2_entry->is_static = l2Table.nosalearn;
+              
+                      /* Get Logical port mask */
+                      if ((retVal = rtk_switch_portmask_P2L_get(l2Table.mbr, &(pL2_entry->portmask)))!=RT_ERR_OK)
+                          return retVal;
+              
+                      pL2_entry->ivl       = l2Table.ivl_svl;
+                      if(l2Table.ivl_svl == 1) /* IVL */
+                      {
+                          pL2_entry->cvid      = l2Table.cvid_fid;
+                          pL2_entry->fid       = 0;
+                      }
+                      else /* SVL*/
+                      {
+                          pL2_entry->cvid      = 0;
+                          pL2_entry->fid       = l2Table.cvid_fid;
+                      }
+                      pL2_entry->auth      = l2Table.auth;
+                      pL2_entry->sa_block  = l2Table.sa_block;
+                      pL2_entry->age       = 0;
+                      pL2_entry->is_ipvidmul = 0;
+                      pL2_entry->l3_vid      = 0;
+                  }
+                  else if((l2Table.age != 0)||(l2Table.nosalearn == 1))
+                  {
+                      memset(&pL2_entry->sip, 0, sizeof(ipaddr_t));
+                      memset(&pL2_entry->dip, 0, sizeof(ipaddr_t));
+                      pL2_entry->mac.octet[0] = l2Table.mac.octet[0];
+                      pL2_entry->mac.octet[1] = l2Table.mac.octet[1];
+C51 COMPILER V9.60.0.0   L2                                                                11/02/2026 17:57:10 PAGE 48  
+
+                      pL2_entry->mac.octet[2] = l2Table.mac.octet[2];
+                      pL2_entry->mac.octet[3] = l2Table.mac.octet[3];
+                      pL2_entry->mac.octet[4] = l2Table.mac.octet[4];
+                      pL2_entry->mac.octet[5] = l2Table.mac.octet[5];
+                      pL2_entry->is_ipmul  = l2Table.l3lookup;
+                      pL2_entry->is_static = l2Table.nosalearn;
+              
+                      /* Get Logical port mask */
+                      if ((retVal = rtk_switch_portmask_P2L_get(1<<(l2Table.spa), &(pL2_entry->portmask)))!=RT_ERR_OK)
+                          return retVal;
+              
+                      pL2_entry->ivl       = l2Table.ivl_svl;
+                      pL2_entry->cvid      = l2Table.cvid_fid;
+                      pL2_entry->fid       = l2Table.fid;
+                      pL2_entry->auth      = l2Table.auth;
+                      pL2_entry->sa_block  = l2Table.sa_block;
+                      pL2_entry->age       = l2Table.age;
+                      pL2_entry->is_ipvidmul = 0;
+                      pL2_entry->l3_vid      = 0;
+                  }
+                  else
+                     return RT_ERR_L2_EMPTY_ENTRY;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+2915          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   6931    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----     212
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

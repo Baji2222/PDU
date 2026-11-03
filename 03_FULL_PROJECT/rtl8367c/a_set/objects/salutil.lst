@@ -1,0 +1,597 @@
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALUTIL
+OBJECT MODULE PLACED IN .\objects\salutil.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salutil.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salutil.lst) TABS(2) OBJECT(.\objects\salutil.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <local/config.h>
+   4          
+   5          #include <salportmask.h>
+   6          #include <salutil.h>
+   7          #include <string.h>
+   8          #include <ctype.h>   
+   9          #include <stdio.h>  
+  10          
+  11          #if SAL_ENABLE
+  12          
+  13          #define CUTOFF 8
+  14          
+  15          static void
+  16          shortsort(
+  17              int8 *lo,
+  18              int8 *hi,
+  19              uint32 width,
+  20              int32 (*comp)(const void *, const void *));
+  21          
+  22          static void swap(int8 *p, int8 *q, uint32 width);
+  23          #if 0
+              static void
+              shortsort(
+                  int8 *lo,
+                  int8 *hi,
+                  uint32 width,
+                  int32 (*comp)(const void *, const void *))
+              {
+                  int8 *p, *max;
+              
+                  while (hi > lo)
+                  {
+                      max = lo;
+              
+                      for (p = lo+width; p <= hi; p += width)
+                      if (comp(p, max) > 0)
+                          max = p;
+              
+                      swap(max, hi, width);
+                      hi -= width;
+                  }
+              }
+              
+              static void
+              swap(int8 *a, int8 *b, uint32 width)
+              {
+                  int8 tmp;
+              
+                  if (a != b)
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 2   
+
+                  {
+                      while (width--)
+                      {
+                          tmp = *a;
+                          *a++ = *b;
+                          *b++ = tmp;
+                      }
+                  }
+              }
+              
+              void
+              qsort(
+                  void *base,
+                  uint32 num,
+                  uint32 width,
+                  int32 (*comp)(const void *, const void *))
+              {
+                  int8 *lo, *hi;
+                  int8 *mid;
+                  int8 *loptr, *hiptr;
+                  uint32 size;
+                  int8 *lostk[30], *histk[30];
+                  int32 stkptr;
+              
+                  if (num < 2 || width == 0)
+                      return;
+              
+                  stkptr = 0;
+              
+                  lo = base;
+                  hi = (int8 *) base + width * (num - 1);
+              
+                  recurse:
+                  size = (hi - lo) / width + 1;
+              
+                  if (size <= CUTOFF)
+                  {
+                      shortsort(lo, hi, width, comp);
+                  }
+                  else
+                  {
+                      mid = lo + (size / 2) * width;
+                      swap(mid, lo, width);
+              
+                      loptr = lo;
+                      hiptr = hi + width;
+              
+                      for (;;)
+                      {
+                          do { loptr += width; }
+                              while (loptr <= hi && comp(loptr, lo) <= 0);
+              
+                          do { hiptr -= width; }
+                              while (hiptr > lo && comp(hiptr, lo) >= 0);
+              
+                          if (hiptr < loptr)
+                              break;
+              
+                          swap(loptr, hiptr, width);
+                      }
+              
+                      swap(lo, hiptr, width);
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 3   
+
+              
+                      if (hiptr - 1 - lo >= hi - loptr)
+                      {
+                          if (lo + width < hiptr)
+                          {
+                              lostk[stkptr] = lo;
+                              histk[stkptr] = hiptr - width;
+                              ++stkptr;
+                          }
+              
+                          if (loptr < hi)
+                          {
+                              lo = loptr;
+                              goto recurse;
+                          }
+                      }
+                      else
+                      {
+                          if (loptr < hi)
+                          {
+                              lostk[stkptr] = loptr;
+                              histk[stkptr] = hi;
+                              ++stkptr;
+                          }
+              
+                          if (lo + width < hiptr)
+                          {
+                              hi = hiptr - width;
+                              goto recurse;
+                          }
+                      }
+                  }
+              
+                  --stkptr;
+              
+                  if (stkptr >= 0)
+                  {
+                      lo = lostk[stkptr];
+                      hi = histk[stkptr];
+                      goto recurse;
+                  }
+                  else
+                      return;
+              }
+              
+              int32
+              bsearch(
+                  void *arr,
+                  uint32 arr_len,
+                  uint32 size,
+                  void *x,
+                  void *y,
+                  int32 (*cmp)(const void *, const void*, const void*))
+              {
+                  int32 lo, high, mid, ret;
+              
+                  if (arr_len <= 0)
+                  {
+                      return -1;
+                  }
+              
+                  lo = 0;
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 4   
+
+                  high = arr_len - 1;
+              
+              
+                  while (lo <= high)
+                  {
+                      mid = (lo + high) / 2;
+              
+                      ret = cmp((arr + (size * mid)), x, y);
+              
+                      if (ret > 0)
+                      {
+                          high = mid - 1;
+                      }
+                      else
+                      if (ret < 0)
+                      {
+                          lo = mid + 1;
+                      }
+                      else
+                      {
+                          return mid;
+                      }
+                  }
+                  return -1;
+              }
+              #endif
+ 202          /*
+ 203           * getnext -- get the next token
+ 204           *
+ 205           * Parameters:
+ 206           *   src: pointer to the start of the source string
+ 207           *   separater: the symbol used to separate the token
+ 208           *   dest: destination of the next token to be placed
+ 209           *
+ 210           * Returns:
+ 211           *   length of token (-1 when failed)
+ 212           */
+ 213          int
+ 214          getnext (
+ 215            char *  src,
+ 216            int separator,
+ 217            char *  dest
+ 218            )
+ 219          {
+ 220   1        char *  c;
+ 221   1        int len = 0;
+ 222   1      
+ 223   1        if ( (src == NULL) || (dest == NULL) ) {
+ 224   2          return -1;
+ 225   2        }
+ 226   1      
+ 227   1        c = strchr(src, separator);
+ 228   1        if (c == NULL) {
+ 229   2          strcpy(dest, src);
+ 230   2          return -1;
+ 231   2        }
+ 232   1        len = c - src;
+ 233   1        strncpy(dest, src, len);
+ 234   1        dest[len] = '\0';
+ 235   1        return len + 1;
+ 236   1      }
+ 237          
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 5   
+
+ 238          /* Convert MAC address from string to unsigned char array */
+ 239          unsigned long simple_strtoul(const char *cp,char **endp, unsigned int base)
+ 240          {
+ 241   1        unsigned long result = 0,value;
+ 242   1      
+ 243   1        if (*cp == '0') {
+ 244   2          cp++;
+ 245   2          if ((*cp == 'x') && isxdigit(cp[1])) {
+ 246   3            base = 16;
+ 247   3            cp++;
+ 248   3          }
+ 249   2          if (!base) {
+ 250   3            base = 8;
+ 251   3          }
+ 252   2        }
+ 253   1        if (!base) {
+ 254   2          base = 10;
+ 255   2        }
+ 256   1        while (isxdigit(*cp) && (value = isdigit(*cp) ? *cp-'0' : (islower(*cp)
+ 257   1            ? toupper(*cp) : *cp)-'A'+10) < base) {
+ 258   2          result = result*base + value;
+ 259   2          cp++;
+ 260   2        }
+ 261   1        if (endp)
+ 262   1          *endp = (char *)cp;
+ 263   1        return result;
+ 264   1      }
+ 265          
+ 266          int
+ 267          str_to_mac (
+ 268            unsigned char * mac,
+ 269            char *    str,
+ 270            bool padding //for MAC validation
+ 271            )
+ 272          {
+ 273   1        int   len;
+ 274   1        char *    ptr = str;
+ 275   1        char    buf[128], tmp[128];
+ 276   1        int   i;
+ 277   1        char *sec = str; //added for security
+ 278   1        for (i = 0; i < 5; ++i)
+ 279   1        {
+ 280   2          if ((len = getnext(ptr, ':', buf)) == -1 &&
+ 281   2                  (len = getnext(ptr, '-', buf)) == -1)
+ 282   2              {
+ 283   3            return -1; /* parse error */
+ 284   3          }
+ 285   2      
+ 286   2              if (len != 3) return -1;
+ 287   2      
+ 288   2              strcpy(tmp, "");
+ 289   2              strcpy(tmp, buf);
+ 290   2      
+ 291   2              if (NULL != strtok(tmp, "0123456789ABCDEFabcdef")) return -1;
+ 292   2      
+ 293   2          mac[i] = simple_strtoul(buf, NULL, 16);
+ 294   2          ptr += len;
+ 295   2        }
+ 296   1      
+ 297   1        if(padding)
+ 298   1        {
+ 299   2          if (strlen(ptr) != 4) return -1;
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 6   
+
+ 300   2        }
+ 301   1        else
+ 302   1        {
+ 303   2          if (strlen(ptr) != 2) return -1;
+ 304   2        }
+ 305   1        
+ 306   1        strcpy(tmp, "");
+ 307   1          strncpy(tmp, ptr, 2);
+ 308   1      
+ 309   1          if (NULL != strtok(tmp, "0123456789ABCDEFabcdef")) return -1;
+ 310   1      
+ 311   1        mac[5] = simple_strtoul(ptr, NULL, 16);
+ 312   1      
+ 313   1        return 0;
+ 314   1      }
+ 315          
+ 316          /* Convert MAC address from unsigned char array to string */
+ 317          void
+ 318          mac_to_str (
+ 319            char *    str,
+ 320            unsigned char * mac
+ 321            )
+ 322          {
+ 323   1              unsigned char c[6];
+ 324   1      
+ 325   1        c[0] = *(mac);
+ 326   1        c[1] = *(mac+1);
+ 327   1        c[2] = *(mac+2);
+ 328   1        c[3] = *(mac+3);
+ 329   1        c[4] = *(mac+4);
+ 330   1        c[5] = *(mac+5);
+ 331   1              sprintf(str, "%02bX:%02bX:%02bX:%02bX:%02bX:%02bX",
+ 332   1          c[0], c[1], c[2], c[3], c[4], c[5]
+ 333   1        );
+ 334   1      }
+ 335          
+ 336          void
+ 337          lmask_to_comma (
+ 338            char *    comma,
+ 339            sal_lPortmask_t * pstLPortMask
+ 340            )
+ 341          {
+ 342   1        int   first, begin,end;
+ 343   1        int   i;
+ 344   1        char    buf[16];
+ 345   1      
+ 346   1        if (comma == NULL) {
+ 347   2          return;
+ 348   2        }
+ 349   1      
+ 350   1        first = 1;
+ 351   1        comma[0] = '\0';
+ 352   1      
+ 353   1      
+ 354   1        first = 1;
+ 355   1        begin = -1;
+ 356   1        end = -1;
+ 357   1      
+ 358   1      #if defined(LWS_8G_2F)
+                  if(pstLPortMask->bits[0] & 1UL << EXT_PORT0){
+                      pstLPortMask->bits[0] &= ~(1UL << EXT_PORT0);
+                      pstLPortMask->bits[0] |= 1UL << 8;
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 7   
+
+                  }
+                  
+                  if(pstLPortMask->bits[0] & 1UL << EXT_PORT1){
+                      pstLPortMask->bits[0] &= ~(1UL << EXT_PORT1);
+                      pstLPortMask->bits[0] |= 1UL << 9;
+                  }        
+              #elif defined(LWS_5G_1F)
+                  if(pstLPortMask->bits[0] & 1UL << EXT_PORT0){
+                      pstLPortMask->bits[0] &= ~(1UL << EXT_PORT0);
+                      pstLPortMask->bits[0] |= 1UL << 6;
+                  }
+              #else
+ 374   1      #endif
+ 375   1      
+ 376   1      #if defined(LWS_5G_1F)
+                  for (i = 0; i <= SAL_MAX_PHY_PORT; ++i) {
+              #else
+ 379   1        for (i = 0; i < SAL_MAX_PHY_PORT; ++i) {
+ 380   2      #endif  
+ 381   2      //    if (i>=SAL_PORT_SKIP_START && i<=PORT_SKIP_END)
+ 382   2      //            continue;
+ 383   2          if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(pstLPortMask, i)) {
+ 384   3      
+ 385   3            if (first == 1) {
+ 386   4              //printf("%6d    | ", ucMstId); //Instance ID
+ 387   4              first = 0;
+ 388   4            }
+ 389   3      #if defined(LWS_5G_1F)
+                          if(i == 6)
+                          {
+                        if (begin == -1) {
+                          begin = end = 5;
+                        }
+                        else {
+                          end = 5;
+                        }
+                        }
+                    else
+                    {
+                        if (begin == -1) {
+                          begin = end = i;
+                        }
+                        else {
+                          end = i;
+                        }     
+                    }
+              #else
+ 409   3                  if (begin == -1) {
+ 410   4                      begin = end = i;
+ 411   4                  }
+ 412   3                  else {
+ 413   4                      end = i;
+ 414   4                  }
+ 415   3      #endif
+ 416   3          }
+ 417   2          else
+ 418   2          {
+ 419   3            if (first == 0 && (begin != -1) ) {
+ 420   4              first = -1;
+ 421   4            }
+ 422   3            else if (first == -1 && (begin != -1) ) {
+ 423   4              sprintf(buf, ",");
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 8   
+
+ 424   4              strcat(comma, buf);
+ 425   4            }
+ 426   3      
+ 427   3            if ( (begin != -1) && begin == end) {
+ 428   4              sprintf(buf, "%d", begin+1);
+ 429   4              strcat(comma, buf);
+ 430   4            }
+ 431   3            else if ( begin !=-1 ) {
+ 432   4              sprintf(buf, "%d-%d", begin+1, end+1);
+ 433   4              strcat(comma, buf);
+ 434   4            }
+ 435   3      
+ 436   3            begin = -1;
+ 437   3            end = -1;
+ 438   3          }
+ 439   2        }
+ 440   1      
+ 441   1        if ( (begin != -1) || (end != -1) ) {
+ 442   2          if (first == -1) {
+ 443   3            sprintf(buf, ",");
+ 444   3            strcat(comma, buf);
+ 445   3          }
+ 446   2          if(begin == end) {
+ 447   3            sprintf(buf, "%d", begin + 1);
+ 448   3            strcat(comma, buf);
+ 449   3          }
+ 450   2          else {
+ 451   3            sprintf(buf, "%d-%d", begin+1, end+1);
+ 452   3            strcat(comma, buf);
+ 453   3          }
+ 454   2        }
+ 455   1      
+ 456   1        for (i = SAL_MAX_PHY_N_CPU_PORT; i < SAL_MAX_PHY_N_CPU_PORT + SAL_MAX_TRK_PORT; ++i) {
+ 457   2      
+ 458   2          if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(pstLPortMask, i)) {
+ 459   3      
+ 460   3            if (first == 1) {
+ 461   4              first = 0;
+ 462   4              sprintf(buf, "Trunk%d", i - SAL_MAX_PHY_PORT - 1 + 1);
+ 463   4      
+ 464   4            }
+ 465   3            else {
+ 466   4              sprintf(buf, ",Trunk%d", i - SAL_MAX_PHY_PORT - 1 + 1);
+ 467   4            }
+ 468   3            strcat(comma, buf);
+ 469   3          }
+ 470   2      
+ 471   2        }
+ 472   1      }
+ 473          
+ 474          int str_to_ip(uint32 *ip, char *str)
+ 475          {
+ 476   1        int   len;
+ 477   1        char *    ptr = str;
+ 478   1        char    buf[128];
+ 479   1        int   c[4]; /* do not use unsigned char because we need it
+ 480   1                 to do the range checking */
+ 481   1        int   i;
+ 482   1      
+ 483   1        for (i = 0; i < 3; ++i) {
+ 484   2          if ((len = getnext(ptr, '.', buf)) == -1) {
+ 485   3            return 1; /* parse error */
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 9   
+
+ 486   3          }
+ 487   2      
+ 488   2          c[i] = atoi(buf);
+ 489   2          //c[i] = (int)simple_strtoul(buf, NULL, 10);
+ 490   2          if ((c[i] < 0) || (c[i] > 255)) {
+ 491   3            return 1; /* parse error */
+ 492   3          }
+ 493   2      
+ 494   2          ptr += len;
+ 495   2        }
+ 496   1        c[3] = atoi(ptr);
+ 497   1        //c[3] = (int)simple_strtoul(ptr, NULL, 10);
+ 498   1        if ((c[3] < 0) || (c[3] > 255)) {
+ 499   2          return 1; /* parse error */
+ 500   2        }
+ 501   1      
+ 502   1        *ip = ((uint32)c[0]<<24) + ((uint32)c[1]<<16) + ((uint32)c[2]<<8) + c[3];
+ 503   1      
+ 504   1        return 0;
+ 505   1      }
+ 506          
+ 507          void ip_to_str (
+ 508            unsigned char * str,
+ 509            unsigned char* ip
+ 510            )
+ 511          {
+ 512   1        sprintf(str, "%d.%d.%d.%d", (uint16)ip[0], (uint16)ip[1], (uint16)ip[2], (uint16)ip[3]);
+ 513   1      }
+ 514          
+ 515          sal_port_t u32_mask_to_num(uint32 pm)
+ 516          {
+ 517   1          uint32 i;
+ 518   1          uint8  hit = FALSE;
+ 519   1          sal_port_t  pn;
+ 520   1          
+ 521   1      
+ 522   1          if( 0==pm )
+ 523   1          {
+ 524   2              return (-1);
+ 525   2          }
+ 526   1          
+ 527   1          for (i=0; i<SAL_PORT_ID_CPU; i++)
+ 528   1          {
+ 529   2              if( FALSE==hit )
+ 530   2              {
+ 531   3                  if( pm&0x01 )
+ 532   3                  {
+ 533   4                      hit = TRUE;
+ 534   4                      pn = i;
+ 535   4                  }
+ 536   3              }
+ 537   2              else if( (TRUE==hit) && (pm&0x01) )
+ 538   2              {
+ 539   3                  return (-1);
+ 540   3              }
+ 541   2              pm = pm>>1;
+ 542   2          }
+ 543   1      
+ 544   1          return pn;
+ 545   1      }
+ 546          
+ 547          #endif
+C51 COMPILER V9.60.0.0   SALUTIL                                                           11/02/2026 17:57:05 PAGE 10  
+
+ 548          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2630    ----
+   CONSTANT SIZE    =    100    ----
+   XDATA SIZE       =   ----     509
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    100    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

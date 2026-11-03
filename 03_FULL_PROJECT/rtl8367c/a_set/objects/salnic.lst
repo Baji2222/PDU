@@ -1,0 +1,368 @@
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALNIC
+OBJECT MODULE PLACED IN .\objects\salnic.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salnic.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\salnic.lst) TABS(2) OBJECT(.\objects\salnic.obj)
+
+line level    source
+
+   1          /* 
+   2           * Copyright (C) 2009 Realtek Semiconductor Corp.  
+   3           * All Rights Reserved. 
+   4           * 
+   5           * This program is the proprietary software of Realtek Semiconductor 
+   6           * Corporation and/or its licensors, and only be used, duplicated,  
+   7           * modified or distributed under the authorized license from Realtek.  
+   8           * 
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER  
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.  
+  11           * 
+  12           * $Revision: 6401 $ 
+  13           * $Date: 2009-10-14 16:03:12 +0800 (Wed, 14 Oct 2009) $ 
+  14           * 
+  15           * Purpose : System abstraction layer API for wrapping chip driver
+  16           * Feature : System related
+  17           * 
+  18           */
+  19          
+  20          /* 
+  21           * Include Files 
+  22           */
+  23          #include <lwps/pktbuf.h>
+  24          #include <saltype.h>
+  25          #include <salerror.h>
+  26          #include <saltrunk.h>
+  27          #include <salnic.h>
+  28          #include <salvlan.h>
+  29          #include <nic.h>
+  30          #include <vlan.h>
+  31          
+  32          #include <stdio.h>
+  33          
+  34          /* 
+  35           * Symbol and Data Type Definition 
+  36           */
+  37           
+  38          /* 
+  39           * Data Declaration 
+  40           */
+  41          static uint16     current_vid;
+  42          static sal_port_t current_spa;
+  43          
+  44          /* 
+  45           * Macro Declaration 
+  46           */
+  47          
+  48          /* 
+  49           * Function Declaration 
+  50           */
+  51          
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 2   
+
+  52          /* Function Name:
+  53           *      sal_nic_rxPort_get
+  54           * Description:
+  55           *      Get source port number of last received packet
+  56           * Input:
+  57           *      None
+  58           * Output:
+  59           *      *pSrcPort - pointer to the received port number.
+  60           * Return:
+  61           *      SAL_ERR_SUCCESS
+  62           *      SAL_ERR_FAILED - Cannot get source port number from last packet.
+  63           * Note:
+  64           *      None
+  65           */
+  66          int32 sal_nic_rxPort_get(void *pktStrPtr, sal_port_t *pSrcPort)
+  67          {
+  68   1          if(SAL_NIC_NULL_SPA == current_spa)
+  69   1              return SAL_ERR_FAILED;
+  70   1      
+  71   1          /* kill warning message */
+  72   1          if(pktStrPtr){}
+  73   1      
+  74   1          *pSrcPort = current_spa;
+  75   1      
+  76   1          return SAL_ERR_SUCCESS;
+  77   1      }
+  78          
+  79          
+  80          /* Function Name:
+  81           *      sal_nic_rxPort_set
+  82           * Description:
+  83           *      Set source port number of last received packet. This function is only called by eth.c.
+  84           * Input:
+  85           *      pBuf - poionter to packet structure
+  86           * Output:
+  87           *      None
+  88           * Return:
+  89           *      SAL_ERR_SUCCESS
+  90           *      SAL_ERR_FAILED - Cannot get source port number from last packet.
+  91           * Note:
+  92           *      None
+  93           */
+  94          int32 sal_nic_rxPort_set(void *pBuf)
+  95          {
+  96   1          pktBuf_t *p;
+  97   1      
+  98   1          p = (pktBuf_t*)pBuf;
+  99   1      
+ 100   1          if(p->pkt_cputag)
+ 101   1              current_spa = *(p->pkt_cputag + 7);
+ 102   1          else
+ 103   1              current_spa = SAL_NIC_NULL_SPA;
+ 104   1      
+ 105   1      #if defined(LWS_8G_2F)
+                  if (current_spa == 8)
+                      current_spa = EXT_PORT0;
+                  if (current_spa == 9)
+                      current_spa = EXT_PORT1;            
+              #elif defined(LWS_5G_1F)
+                  if (current_spa == 6)
+                      current_spa = EXT_PORT0;
+              #else
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 3   
+
+ 114   1      #endif
+ 115   1          return SAL_ERR_SUCCESS;
+ 116   1      }
+ 117          
+ 118          
+ 119          /* Function Name:
+ 120           *      sal_nic_tx_init
+ 121           * Description:
+ 122           *      Initialize tx related structure. TX buffer are also allocated in this function.
+ 123           * Input:
+ 124           *      pktStrPtr - pointer to the packet structure.
+ 125           * Output:
+ 126           *      None
+ 127           * Return:
+ 128           *      SAL_ERR_SUCCESS
+ 129           *      SAL_ERR_NULL_POINTER
+ 130           * Note:
+ 131           *      None
+ 132           */
+ 133          int32 sal_nic_tx_init(void *pktStrPtr)
+ 134          {
+ 135   1          pktBuf_t *pBuf;
+ 136   1      
+ 137   1          if(NULL == pktStrPtr)
+ 138   1              return SAL_ERR_NULL_POINTER;
+ 139   1      
+ 140   1          pBuf = pktStrPtr;
+ 141   1          pBuf->pkt_head = p_tx_buffer;
+ 142   1          pBuf->pkt_head += TAG_SIZE+FRAME_INFO_SIZE;
+ 143   1          pBuf->l2 = pBuf->pkt_head;
+ 144   1      
+ 145   1          return SAL_ERR_SUCCESS;
+ 146   1      }
+ 147          
+ 148          /* Function Name:
+ 149           *      sal_nic_tx
+ 150           * Description:
+ 151           *      Send packet
+ 152           * Input:
+ 153           *      pktStrPtr - pointer to the packet structure.
+ 154           * Output:
+ 155           *      None
+ 156           * Return:
+ 157           *      SAL_ERR_SUCCESS
+ 158           *      SAL_ERR_FAILED
+ 159           * Note:
+ 160           *      None
+ 161           */
+ 162          int32 sal_nic_tx(void *pktStrPtr)
+ 163          {
+ 164   1          uint8           i, tmpPort;
+ 165   1          sal_port_t      rPort;
+ 166   1          sal_pPortmask_t txPort;
+ 167   1          pktBuf_t        *pBuf;
+ 168   1      
+ 169   1          pBuf = (pktBuf_t*)pktStrPtr;
+ 170   1          txPort.bits[0] = 0;
+ 171   1      
+ 172   1          if(pBuf->tx_dst_pmsk == 0)
+ 173   1          {
+ 174   2              /* TX buf initial */
+ 175   2              pBuf->tx_dport_mode    = TX_DPORT_DEFAULT;
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 4   
+
+ 176   2              pBuf->tx_trunk_support = TX_TRUNK_IGNORE;
+ 177   2              pBuf->pkt_cputag       = NULL;
+ 178   2              
+ 179   2              return  SAL_ERR_SUCCESS;
+ 180   2          }
+ 181   1          if(TX_DPORT_ASSIGN_PMSK == pBuf->tx_dport_mode && TX_TRUNK_REPRESENT_PORT == pBuf->tx_trunk_support)
+ 182   1          {
+ 183   2              for(i = 0; i < SAL_PORT_ID_CPU;i++)
+ 184   2              {
+ 185   3                  if((1UL << i) & pBuf->tx_dst_pmsk)
+ 186   3                  {
+ 187   4      #if defined(LWS_8G_2F)
+                          if (i == EXT_PORT0){
+                                  tmpPort = 8;
+                          }
+                          else if (i == EXT_PORT1){
+                                  tmpPort = 9;          
+                          }
+                          else{
+                                  tmpPort = i;
+                          }
+              #elif defined(LWS_5G_1F) 
+                          if (i == EXT_PORT0){
+                                  tmpPort = 6;
+                          }
+                          else{
+                                  tmpPort = i;
+                          }           
+              #else
+ 205   4                  tmpPort = i;
+ 206   4      #endif
+ 207   4                      sal_trunk_representPort_get((sal_port_t)tmpPort, &rPort);            
+ 208   4                      txPort.bits[0] |= (1UL << rPort);
+ 209   4                  }
+ 210   3              }
+ 211   2          }
+ 212   1      
+ 213   1          pBuf->tx_dst_pmsk = txPort.bits[0];
+ 214   1      
+ 215   1          /* Add inner VLAN tag,
+ 216   1           *  - Assume the pBuf->pkt_vlantag pointer to inner vlan start 
+ 217   1           *  - or pBuf->pkt_vlantag == NULL if there is no vlan tag in pBuf 
+ 218   1           */
+ 219   1          if(((pBuf->inner_tag_mode & TX_VLAN_ASSIGN_VID) == TX_VLAN_ASSIGN_VID) &&
+ 220   1              (pBuf->inner_tag != SAL_NIC_NULL_VID))
+ 221   1          {
+ 222   2              if(NULL == pBuf->pkt_vlantag)
+ 223   2              {
+ 224   3                  for( i = 0; i < MAC_ADDR_LEN * 2; i++)
+ 225   3                  {
+ 226   4                      *(pBuf->l2 + i - VLAN_TAG_SIZE) = *(pBuf->l2 + i);
+ 227   4                  }
+ 228   3                  pBuf->l2 -= VLAN_TAG_SIZE;
+ 229   3                  pBuf->size += VLAN_TAG_SIZE;
+ 230   3                  pBuf->pkt_vlantag = pBuf->l2 + MAC_ADDR_LEN * 2;
+ 231   3                  pBuf->pkt_head = pBuf->l2;
+ 232   3              }
+ 233   2      
+ 234   2              /* insert VLAN tag */
+ 235   2              *(pBuf->pkt_vlantag + 0) = 0x81;
+ 236   2              *(pBuf->pkt_vlantag + 1) = 0x00;
+ 237   2              *(pBuf->pkt_vlantag + 2) = ((pBuf->inner_tag & 0x0f00) >> 8);
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 5   
+
+ 238   2              *(pBuf->pkt_vlantag + 3) = pBuf->inner_tag & 0xff;
+ 239   2          }
+ 240   1      
+ 241   1          txPkt(pBuf);
+ 242   1      
+ 243   1          return  SAL_ERR_SUCCESS;
+ 244   1      }
+ 245          
+ 246          /* Function Name:
+ 247           *      sal_nic_rxVid_get
+ 248           * Description:
+ 249           *      Get VID of currently received packet
+ 250           * Input:
+ 251           *      pVid - Pointer to VID
+ 252           * Output:
+ 253           *      None
+ 254           * Return:
+ 255           *      SAL_ERR_SUCCESS
+ 256           *      SAL_ERR_FAILED
+ 257           * Note:
+ 258           *      None
+ 259           */
+ 260          int32 sal_nic_rxVid_get(uint16 *pVid)
+ 261          {
+ 262   1          if(SAL_NIC_NULL_VID == current_vid)
+ 263   1          {
+ 264   2              *pVid = SAL_NIC_NULL_VID;
+ 265   2              return SAL_ERR_FAILED;
+ 266   2          }    
+ 267   1      
+ 268   1          *pVid = current_vid;
+ 269   1      
+ 270   1          return SAL_ERR_SUCCESS;
+ 271   1      }
+ 272          
+ 273          /* Function Name:
+ 274           *      sal_nic_rxVid_set
+ 275           * Description:
+ 276           *      Set VID of currently received packet to memory.
+ 277           * Input:
+ 278           *      pBuf - pointer to packet structure
+ 279           * Output:
+ 280           *      None
+ 281           * Return:
+ 282           *      SAL_ERR_SUCCESS
+ 283           *      SAL_ERR_FAILED
+ 284           * Note:
+ 285           *      None
+ 286           */
+ 287          int32 sal_nic_rxVid_set(void *pBuf)
+ 288          {
+ 289   1          pktBuf_t *p;
+ 290   1          sal_vlan_t  pvid = 0;
+ 291   1          //sal_lPortmask_t LPortMask;
+ 292   1          //sal_lPortmask_t LTagMask;
+ 293   1          //sal_fid_t FId;
+ 294   1          //sal_stg_t Msti;
+ 295   1      
+ 296   1          //rtk_vlan_t vid;
+ 297   1      //    rtk_portmask_t  member_mask;
+ 298   1      //    rtk_portmask_t  untag_mask;
+ 299   1      //    rtk_fid_t       fid;
+C51 COMPILER V9.60.0.0   SALNIC                                                            11/02/2026 17:57:01 PAGE 6   
+
+ 300   1          rtk_vlan_cfg_t vlanCfg;
+ 301   1      
+ 302   1          p = (pktBuf_t*)pBuf;
+ 303   1      
+ 304   1          if(p->pkt_vlantag)
+ 305   1              current_vid = *(p->pkt_vlantag + 3) | ((*(p->pkt_vlantag + 2) & 0xF) << 8);
+ 306   1          else
+ 307   1          {
+ 308   2              sal_vlan_portPvid_get(current_spa, &pvid);
+ 309   2              //sal_vlan_entry_get(pvid, &LPortMask, &LTagMask, &FId, &Msti);
+ 310   2              rtk_vlan_get(pvid, &vlanCfg);
+ 311   2              //if(LPortMask.bits[0] & (1 << current_spa))
+ 312   2              if(vlanCfg.mbr.bits[0]& (1UL << current_spa))
+ 313   2              {
+ 314   3                  current_vid = pvid;
+ 315   3              }
+ 316   2              else
+ 317   2              {
+ 318   3              current_vid = SAL_NIC_NULL_VID;
+ 319   3              }
+ 320   2          }
+ 321   1      //printf("sal_nic_rxVid_set current_vid=%u pvid=%u current_spa=%u member_mask.bits[0]=%lu \n",current_vid,
+             -pvid, (uint16)current_spa,vlanCfg.mbr.bits[0]);        
+ 322   1          
+ 323   1          return SAL_ERR_SUCCESS;
+ 324   1      }
+ 325          
+ 326          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1211    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      3      49
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,166 @@
+C51 COMPILER V9.60.0.0   MEM_LIB                                                           11/02/2026 17:56:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MEM_LIB
+OBJECT MODULE PLACED IN .\objects\mem_lib.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\lib\mem\mem_lib.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVEC
+                    -TOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\.
+                    -.\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_L
+                    -WPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,L
+                    -WS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\mem_lib.lst) TABS(2) OBJECT(.\objects\mem_lib.obj)
+
+line level    source
+
+   1          /*
+   2          * Copyright c                  Realtek Semiconductor Corporation, 2008  
+   3          * All rights reserved.
+   4          * 
+   5          */
+   6          
+   7          
+   8          #include <local/config.h>
+   9          #include <mem/mem_lib.h>
+  10          #include <common.h>
+  11          
+  12          #include <stdio.h>
+  13          
+  14          extern uint8     xdata p_tx_buffer[];
+  15          
+  16          #if defined(STANDARD_MEM_LIB)
+  17          #define MEMLIB_MEMCPY  memcpy
+  18          #define MEMLIB_MEMSET  memset
+  19          #define MEMLIB_MEMCMP  memcmp
+  20          #define MEMLIB_STRCMP  strcmp
+  21          #else
+              #define MEMLIB_MEMCPY  nostarnard_memcpy
+              #define MEMLIB_MEMSET  nostarnard_memset
+              #define MEMLIB_MEMCMP  nostarnard_memcmp
+              #define MEMLIB_STRCMP  nostarnard_strcmp
+              #if 0
+              // Memory Copy: Copies n bytes from source to destination using byte-by-byte loop
+              // Provides custom implementation when standard memory library is not available
+              void* nostarnard_memcpy(void *dest, const void *src, u16_t n)
+              {
+                  u16_t i;
+                  u8_t  *d, *s;
+                  d = (u8_t*)dest;
+                  s = (u8_t*)src;
+              
+                  for(i=0;i<n;i++)
+                  {
+                      d[i] = s[i];
+                  }
+                  
+                  return dest;
+              }
+              #endif
+              #if !defined(LWS_LOADER)
+              // Memory Compare: Compares n bytes of two memory regions and returns difference
+              // Returns 1 if s1>s2, -1 if s1<s2, 0 if equal (custom implementation)
+              int nostarnard_memcmp(const void *s1, const void *s2, u16_t n)
+              {
+                  u16_t i;
+                  u8_t  *d, *s;
+                  d = (u8_t*)s1;
+C51 COMPILER V9.60.0.0   MEM_LIB                                                           11/02/2026 17:56:53 PAGE 2   
+
+                  s = (u8_t*)s2;
+              
+                  for(i=0;i<n;i++)
+                  {
+                      if( d[i]>s[i] )
+                      {
+                          return 1;
+                      }
+                      else if( d[i]<s[i] )
+                      {
+                          return -1;
+                      }
+                  }
+                  
+                  return 0;
+              }
+              #endif
+              // Memory Set: Fills n bytes of memory with a constant byte value using loop
+              // Returns pointer to memory area after filling with specified byte
+              int nostarnard_memset(void *s, u8_t c, u16_t n)
+              {
+                  u16_t i;
+                  u8_t  *d;
+                  d = (u8_t*)s;
+              
+                  for(i=0;i<n;i++)
+                  {
+                      d[i] = c;
+                  }
+                  
+                  return s;
+              }
+              
+              // String Compare: Compares two null-terminated strings character by character
+              // Returns difference at first non-matching character, 0 if strings are equal
+              int nostarnard_strcmp(const char *str1, const char *str2)
+              {
+                  while(1)
+                {
+                    if(*str1 == 0 && *str2 == 0)
+                      return 0;
+                      else if(*str1 != *str2)
+                      return *str1 - *str2;
+                  else
+                  {
+                      str1++;
+                    str2++;
+                  }
+                }
+              }
+              
+              #endif /* end of defined(STANDARD_MEM_LIB) */
+ 104          
+ 105          u8_t xdata ram_heap[MEM_SIZE];
+ 106          
+ 107          // Memory Initialization: Initializes heap memory and sets up memory pool for dynamic allocation
+ 108          // Allocates and frees test block to include malloc segment in binary
+ 109          void mem_init(void)
+ 110          {
+ 111   1          uint8 *ptr;
+ 112   1      
+ 113   1          MEMLIB_MEMSET(ram_heap,0x0,MEM_SIZE);
+C51 COMPILER V9.60.0.0   MEM_LIB                                                           11/02/2026 17:56:53 PAGE 3   
+
+ 114   1          init_mempool((void xdata *) &ram_heap[0], MEM_SIZE);
+ 115   1      
+ 116   1          /* trigger malloc call to add malloc segment into binary */
+ 117   1          ptr = malloc (32);
+ 118   1          free(ptr);
+ 119   1      }
+ 120          #if !defined(LWS_LOADER)
+ 121          // Allocate TX Buffer: Returns pointer to transmit buffer if requested length is within limits
+ 122          // Returns NULL if requested length exceeds maximum buffer size
+ 123          u8_t* malloc_tx_buf(u32_t len){
+ 124   1        
+ 125   1        if( len>P_BUFFER_SIZE ){
+ 126   2          return NULL;
+ 127   2        }else{
+ 128   2          return p_tx_buffer;
+ 129   2        }
+ 130   1      }
+ 131          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     81    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   9472       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

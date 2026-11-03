@@ -1,0 +1,2029 @@
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALSYS
+OBJECT MODULE PLACED IN .\objects\salsys.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salsys.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\salsys.lst) TABS(2) OBJECT(.\objects\salsys.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <local/config.h>
+   4          #include <salsys.h>
+   5          #include <salflash.h>
+   6          #include <salmirror.h>
+   7          #include <salrate.h>
+   8          #include <sall2.h>
+   9          #include <salqos.h>
+  10          #include <salvlan.h>
+  11          #include <salsvlan.h>
+  12          #include <saltrunk.h>
+  13          #include <salloop.h>
+  14          #include <saleee.h>
+  15          #include <salgreeneth.h>
+  16          #include <salsnmp.h>
+  17          #include <salsyslog.h>
+  18          #if SAL_RSTP
+              #include <salstp.h>
+              #endif
+  21          #include <stdio.h>
+  22          #include <string.h>
+  23          #include <salerror.h>
+  24          #include <dhcpc/dhcpc.h>
+  25          #include <rtl8367c_asicdrv.h>
+  26          #include <image.h>
+  27          #include <SPIFlashDrv.h>
+  28          #include <runtime_loader_msg.h>
+  29          #include <salflash.h>
+  30          
+  31          #include <snmp/mib/mib.h>
+*** WARNING C322 IN LINE 9 OF ..\..\common\include\snmp/mib/mib.h: unknown identifier
+*** WARNING C322 IN LINE 16 OF ..\..\common\include\snmp/mib/mib.h: unknown identifier
+*** WARNING C322 IN LINE 23 OF ..\..\common\include\snmp/mib/mib.h: unknown identifier
+*** WARNING C322 IN LINE 30 OF ..\..\common\include\snmp/mib/mib.h: unknown identifier
+*** WARNING C322 IN LINE 37 OF ..\..\common\include\snmp/mib/mib.h: unknown identifier
+  32          
+  33          #if SAL_IGMP
+  34          #include <saligmp.h>
+  35          #endif
+  36          #include <flash_api.h>
+  37          #if SAL_ENABLE
+  38          
+  39          extern uint8     xdata this_mac[];
+  40          extern uint8     xdata this_ip[];   
+  41          extern uint8     xdata netmask[];
+  42          extern ip_addr_t xdata default_gateway;
+  43          extern uint8     xdata dhcp_enable;
+  44          extern uint8     xdata firmVer[];
+  45          extern uint8     xdata firmDate[];
+  46          extern uint8     xdata chipVer[];
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 2   
+
+  47          extern uint8     xdata chipId[];
+  48          
+  49          extern uint16 getReg(uint16 addr);
+  50          extern void setReg(uint16 addr, uint16 value);
+  51          
+  52          static uint8 updateFlag;
+  53          #define SNMP_COMMUNITY_STR_LEN 16 //temp charan TBD
+  54          
+  55          static char rdonlycomm[SNMP_COMMUNITY_STR_LEN];
+  56          static char rdwrcomm[SNMP_COMMUNITY_STR_LEN];
+  57          static char sysDescr[SAL_SYS_STRING_LEN];
+  58          static char sysDescription[SAL_SNMP_SYS_INFO_STR_LEN];
+  59          static char sysLocation[SAL_SNMP_SYS_INFO_STR_LEN];
+  60          static char sysContact[SAL_SNMP_SYS_INFO_STR_LEN];
+  61          static char fwVer[SAL_SYS_STRING_LEN];
+  62          static char hwVer[SAL_SYS_STRING_LEN];
+  63          static char fwDate[SAL_SYS_STRING_LEN];
+  64          static uint16 syslogHostUdpPort;
+  65          static sal_ipaddr_t syslogHostIp;
+  66          static sal_enable_t syslogState;
+  67          static uint16 syslogHeadIdx;
+  68          static uint16 syslogTailIdx;
+  69          
+  70          #define DBG_PRINT printf
+  71          //#define FLASH_WRITE(start_addr, buf, len)   spi_flash_write(start_addr, buf, len)
+  72          #define FLASH_MAGICNUMBER_ADDR              ((RUNTIME_HEADER_BANK - 1) * BANK_SIZE + IROM_SIZE + (RUNTIME_
+             -HEADER_ADDRESS & 0xFFFF) - IROM_SIZE)
+  73          #define LOADR_START_ADDR                    0
+  74          
+  75          typedef void (*loader_entry_t)(void); 
+  76          
+  77          extern uint16 r_mdc_mdio(uint8 PHY_ADDR,uint8 REG_ADDR);
+  78          extern void w_mdc_mdio(uint8 PHY_ADDR,uint8 REG_ADDR,uint16 Odata) ;
+  79          
+  80          // Sal Flash Config Init: Initializes flash configuration by checking initialization marker
+  81          // Restores all configuration from flash if valid, or initializes default config if not
+  82          int32 sal_flash_config_init(void)
+  83          {
+  84   1          int32  ret;
+  85   1          uint32 ulMark;
+  86   1      
+  87   1          ulMark = FLSH_MARK_INIT_NO;
+  88   1      
+  89   1          SalFlshAccessCache(FALSE); /*access flash*/
+  90   1          
+  91   1          SalFlshGetInitOKMark(&ulMark);
+  92   1      
+  93   1          SalFlshAccessCache(TRUE); /*change back to access cache*/
+  94   1            
+  95   1          if (ulMark != FLSH_MARK_INIT_OK) 
+  96   1          {
+  97   2              /* No config data(first bootup) or incorrect config data, 
+  98   2                 initial flash with a default configuration*/
+  99   2              DBG_PRINT("SalFlshInit()\n");
+ 100   2              if ((ret = SalFlshInit()) != SAL_ERR_SUCCESS)
+ 101   2              {
+ 102   3                  DBG_PRINT("SalFlshInit() failed!!!");
+ 103   3                  return ret;
+ 104   3              }
+ 105   2          }
+ 106   1          else
+ 107   1          {
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 3   
+
+ 108   2              /*copy flash's config to cache for later restore*/
+ 109   2              DBG_PRINT("SalFlshCopyFlshToCache()\n");        
+ 110   2              SalFlshCopyFlshToCache();
+ 111   2          }   
+ 112   1          
+ 113   1          sal_flash_config_restoreAll();
+ 114   1      
+ 115   1          return SAL_ERR_SUCCESS;
+ 116   1      }
+ 117          
+ 118          // Sal Flash Config Restore All: Restores all system configurations from flash
+ 119          // Calls individual restore functions for each subsystem (green, sys, trunk, mirror, etc.)
+ 120          void
+ 121          sal_flash_config_restoreAll(void)
+ 122          {
+ 123   1      //    sal_enable_t state;
+ 124   1      #if 0
+                  {
+                  uint32 rate;
+                  sal_rate_stormControl_get(0, SAL_STORM_TYPE_BCAST, &rate);
+                  printf("ker  -  %lu\n", rate);
+                  }
+              #endif
+ 131   1      #if SAL_GREENETH
+ 132   1              DBG_PRINT("sal_green_restore()");
+ 133   1              sal_greenEth_config_restore();
+ 134   1              DBG_PRINT("...OK\n");
+ 135   1      #endif
+ 136   1      
+ 137   1          DBG_PRINT("sal_sys_config_restore()");
+ 138   1          sal_sys_config_restore();
+ 139   1          DBG_PRINT("...OK\n");
+ 140   1      
+ 141   1          DBG_PRINT("sal_trunk_config_restore()");
+ 142   1          sal_trunk_config_restore();
+ 143   1          DBG_PRINT("...OK\n");       
+ 144   1      
+ 145   1          DBG_PRINT("sal_mirror_config_restore()");
+ 146   1          sal_mirror_config_restore();
+ 147   1          DBG_PRINT("...OK\n");
+ 148   1       
+ 149   1          DBG_PRINT("sal_qos_config_restore()");
+ 150   1          sal_qos_config_restore();
+ 151   1          DBG_PRINT("...OK\n");   
+ 152   1      
+ 153   1          DBG_PRINT("sal_vlan_config_restore()");
+ 154   1          sal_vlan_config_restore();
+ 155   1          DBG_PRINT("...OK\n");
+ 156   1      
+ 157   1      #if SAL_SERVICE_VLAN
+                  DBG_PRINT("sal_svlan_config_restore()");
+                  sal_svlan_config_restore();
+                  DBG_PRINT("...OK\n");
+              #endif
+ 162   1      
+ 163   1      #if 0
+              {
+              uint32 rate;
+              sal_rate_stormControl_get(0, SAL_STORM_TYPE_BCAST, &rate);
+              printf("ker  -  %lu\n", rate);
+              }
+              #endif
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 4   
+
+ 170   1       
+ 171   1          DBG_PRINT("sal_rate_config_restore()");
+ 172   1          sal_rate_config_restore();
+ 173   1          DBG_PRINT("...OK\n");
+ 174   1       
+ 175   1          DBG_PRINT("sal_port_config_restore()");
+ 176   1          sal_port_config_restore();
+ 177   1          DBG_PRINT("...OK\n"); 
+ 178   1      
+ 179   1          DBG_PRINT("sal_trunk_config_restore()");
+ 180   1          sal_trunk_config_restore();
+ 181   1          DBG_PRINT("...OK\n");    
+ 182   1      
+ 183   1          DBG_PRINT("sal_l2_config_restore()");
+ 184   1          sal_l2_config_restore();
+ 185   1          DBG_PRINT("...OK\n");
+ 186   1        
+ 187   1      #if SAL_LOOP
+ 188   1          DBG_PRINT("sal_loop_config_restore()");
+ 189   1          sal_loop_config_restore();
+ 190   1          DBG_PRINT("...OK\n");
+ 191   1      #endif
+ 192   1      
+ 193   1      #if SAL_EEE
+ 194   1          DBG_PRINT("sal_eee_restore()");
+ 195   1          sal_eee_config_restore();
+ 196   1          DBG_PRINT("...OK\n");
+ 197   1      #endif
+ 198   1      
+ 199   1      
+ 200   1      #if SAL_RSTP
+                  DBG_PRINT("sal_stp_config_restore()");
+                  sal_stp_config_restore();
+                  DBG_PRINT("...OK\n");
+              #endif
+ 205   1      
+ 206   1      #if SAL_SNMP
+ 207   1          DBG_PRINT("sal_snmp_restore()");
+ 208   1          sal_snmp_config_restore();
+ 209   1          DBG_PRINT("...OK\n");
+ 210   1      #endif
+ 211   1      
+ 212   1      #if SAL_SYSLOG
+ 213   1        DBG_PRINT("sal_syslog_restore()");
+ 214   1        sal_syslog_config_restore();
+ 215   1        DBG_PRINT("...OK\n");
+ 216   1      #endif
+ 217   1      #if SAL_IGMP
+ 218   1          DBG_PRINT("sal_igmp_restore()");
+ 219   1          sal_igmp_config_restore();
+ 220   1          DBG_PRINT("...OK\n");
+ 221   1      #endif
+ 222   1      
+ 223   1      }
+ 224          
+ 225          extern int run_command (const char *cmd, int flag);
+ 226          
+ 227          // Sal Sys Config Restore: Restores system configuration from flash
+ 228          // Sets MAC, IP, gateway, DHCP, SNMP, syslog, and version information
+ 229          void
+ 230          sal_sys_config_restore ()
+ 231          {
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 5   
+
+ 232   1          sal_ipaddr_t ip;
+ 233   1          sal_ipaddr_t netmask;
+ 234   1          sal_ipaddr_t gateway;
+ 235   1          sal_enable_t bEbl;
+ 236   1          sal_mac_t sysMac;
+ 237   1      #ifdef __BOOT_COMMAND__
+                  int8 bootCmd[FLSH_SYS_BOOTCMD_LEN]="";
+              #endif
+ 240   1          uint8 firmware_version[SAL_SYS_STRING_LEN];
+ 241   1          uint8 hardware_version[SAL_SYS_STRING_LEN];
+ 242   1          uint8 device_type[SAL_SYS_STRING_LEN];
+ 243   1          int32 ret;
+ 244   1      
+ 245   1          /* [TODO] - Change the firmware version and date for new releases  */ 
+ 246   1        uint8 firmVer[] = "V2.5";
+ 247   1        uint8 hdrVer[] = "20180924";
+ 248   1        uint8 devDesc[32] = "OPL SMART PDU RACK";
+ 249   1        uint8 devLocation[32] = "Default Location";
+ 250   1        uint8 devContact[32] = "Default Contact";
+ 251   1        uint8 snmprdcomm[16] = "public";  
+ 252   1        uint8 snmprdwrcomm[16] = "private";
+ 253   1        uint16 syslogHostPort;
+ 254   1        sal_ipaddr_t syslogHostIpAddr;
+ 255   1        uint16 syslogHdIdx;
+ 256   1        uint16 syslogTlIdx;
+ 257   1        sal_enable_t syslogstate;
+ 258   1        
+ 259   1          sal_flash_sysMac_get(&sysMac);
+ 260   1          #if 1
+ 261   1          if(((sysMac.octet[0] == 0xff) && (sysMac.octet[1] == 0xff) && (sysMac.octet[2] == 0xff) && 
+ 262   1          (sysMac.octet[3] == 0xff) && (sysMac.octet[4] == 0xff) && (sysMac.octet[5] == 0xff)) ||
+ 263   1          ((sysMac.octet[0] == 0) && (sysMac.octet[1] == 0) && (sysMac.octet[2] == 0) && 
+ 264   1          (sysMac.octet[3] == 0) && (sysMac.octet[4] == 0) && (sysMac.octet[5] == 0)) ||
+ 265   1          ((sysMac.octet[0] == 0) && (sysMac.octet[1] == 0x23) && (sysMac.octet[2] == 0x79) && 
+ 266   1          (sysMac.octet[3] == 0) && (sysMac.octet[4] == 0x23) && (sysMac.octet[5] == 0x79))
+ 267   1          )
+ 268   1      #endif 
+ 269   1          {
+ 270   2        
+ 271   2            #if 0
+                      sysMac.octet[5] = 0xA4;
+                      sysMac.octet[4] = 0xDA;
+                      sysMac.octet[3] = 0x22;
+                      sysMac.octet[2] = 0x50;
+                      sysMac.octet[1] = 0x20;
+                      sysMac.octet[0] = 0x01;
+                    #endif 
+ 279   2      
+ 280   2              sysMac.octet[0] = 0xA4;
+ 281   2              sysMac.octet[1] = 0xDA;
+ 282   2              sysMac.octet[2] = 0x22;
+ 283   2              sysMac.octet[3] = 0x50;
+ 284   2              sysMac.octet[4] = 0x22;
+ 285   2              sysMac.octet[5] = 0xE3;
+ 286   2      
+ 287   2          }    
+ 288   1          sal_sys_mac_set_cache(&sysMac);
+ 289   1          sal_flash_sysMac_set(&sysMac);
+ 290   1          sal_flash_sysIp_get(&ip, &netmask);
+ 291   1          if((ip == 0) || (ip == 0xffffffff))
+ 292   1          {
+ 293   2              ip = 0xC0A80101; /* 192.168.1.1 */
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 6   
+
+ 294   2              netmask = 0xFFFFFF00; /*255.255.255.0*/
+ 295   2          }    
+ 296   1          sal_sys_ip_set(ip, netmask);
+ 297   1          sal_flash_sysGateway_get(&gateway);
+ 298   1          sal_sys_gateway_set(gateway);
+ 299   1          sal_flash_sysDhcp_get(&bEbl);
+ 300   1          ret = sal_sys_dhcp_set(bEbl);
+ 301   1          if(ret != SAL_ERR_SUCCESS)
+ 302   1          {
+ 303   2              sal_sys_dhcp_set(SAL_DISABLED);
+ 304   2          }
+ 305   1      #ifdef __BOOT_COMMAND__
+                  SalFlshSysGetBootCmd(bootCmd);
+                  DBG_PRINT("Run bootcmd '%s'\n", bootCmd);
+                  setenv("bootcmd", bootCmd);
+                  run_command (bootCmd, 0);
+              #endif
+ 311   1      
+ 312   1          sal_flash_device_type_get(device_type);
+ 313   1          printf("\nDevice type: %s\n",device_type);
+ 314   1          sal_sys_dev_type_set_cache(device_type);
+ 315   1          
+ 316   1          sal_sys_firmDate_set(firmDate);
+ 317   1          
+ 318   1        sal_sys_firmVersion_set(firmVer);
+ 319   1          //sal_sys_firmDate_set(firmDate);
+ 320   1          sal_sys_hardwareVersion_set(hdrVer);
+ 321   1      
+ 322   1      
+ 323   1        /* set snmp params */
+ 324   1          sal_flash_sys_description_get(devDesc);
+ 325   1      
+ 326   1          /** Dont set the cache during restore  */ 
+ 327   1          sal_sys_description_set(devDesc, 0);
+ 328   1            
+ 329   1          sal_flash_sys_contact_get(devContact);
+ 330   1          /** Dont set the cache during restore  */ 
+ 331   1          sal_sys_contact_set(devContact, 0);
+ 332   1      
+ 333   1          sal_flash_sys_location_get(devLocation);
+ 334   1          /** Dont set the cache during restore  */ 
+ 335   1          sal_sys_location_set(devLocation, 0);
+ 336   1          
+ 337   1          sal_flash_snmp_community_get(snmprdcomm, snmprdwrcomm);
+ 338   1          /** Dont set the cache during restore  */ 
+ 339   1          sal_sys_rdonly_community_set(snmprdcomm, 0);
+ 340   1          sal_sys_rdwr_community_set(snmprdwrcomm, 0);
+ 341   1      
+ 342   1      /* set syslog params */
+ 343   1      #if 1
+ 344   1        sal_flash_syslog_buf_head_index_get(&syslogHdIdx);
+ 345   1        sal_sys_syslog_headIdx_set(&syslogHdIdx, 0);
+ 346   1        
+ 347   1        sal_flash_syslog_buf_tail_index_get(&syslogTlIdx);
+ 348   1        sal_sys_syslog_tailIdx_set(&syslogTlIdx, 0);
+ 349   1      
+ 350   1        sal_flash_syslog_state_get(&syslogstate);
+ 351   1        sal_sys_syslog_state_set(&syslogstate, 0);
+ 352   1        
+ 353   1        sal_flash_syslog_serverIp_get(&syslogHostIpAddr);
+ 354   1        sal_sys_syslog_hostIp_set(&syslogHostIpAddr, 0);
+ 355   1        
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 7   
+
+ 356   1        sal_flash_syslog_serverPort_get(&syslogHostPort);
+ 357   1        sal_sys_syslog_hostUdpPort_set(&syslogHostPort, 0);
+ 358   1      #endif
+ 359   1      
+ 360   1          sal_flash_fw_version_get(firmware_version);
+ 361   1          sal_sys_firmVersion_set_cache(firmware_version);
+ 362   1      
+ 363   1          sal_flash_hw_version_get(hardware_version);
+ 364   1          sal_sys_hardwareVersion_set_cache(hardware_version);
+ 365   1      }
+ 366          
+ 367          /* Function Name:
+ 368           *      sal_sys_mac_set
+ 369           * Description:
+ 370           *      Set MAC Address of the NIC.
+ 371           * Input:
+ 372           *      pMac - pointer buffer of the MAC address
+ 373           * Output:
+ 374           *      None
+ 375           * Return:
+ 376           *      None
+ 377           * Note:
+ 378           *      None
+ 379           */
+ 380          // Sal Sys MAC Set: Sets MAC address and writes to flash
+ 381          // Updates system MAC and persists to flash configuration
+ 382          int32 sal_sys_mac_set (
+ 383              sal_mac_t *pSysMac
+ 384              )
+ 385          {
+ 386   1          if(pSysMac == NULL)
+ 387   1              return SAL_ERR_PARAMETER;
+ 388   1      
+ 389   1          memcpy(this_mac, pSysMac->octet, SAL_ETHER_ADDR_LEN);
+ 390   1      
+ 391   1          sal_flash_sysMac_set(pSysMac);
+ 392   1          
+ 393   1          return SAL_ERR_SUCCESS;
+ 394   1      }
+ 395          
+ 396          /* Function Name:
+ 397           *      sal_sys_mac_set_cache
+ 398           * Description:
+ 399           *      Set MAC Address of the NIC(not write to flash).
+ 400           * Input:
+ 401           *      pMac - pointer buffer of the MAC address
+ 402           * Output:
+ 403           *      None
+ 404           * Return:
+ 405           *      None
+ 406           * Note:
+ 407           *      None
+ 408           */
+ 409          // Sal Sys MAC Set Cache: Sets MAC address in cache without writing to flash
+ 410          // Updates system MAC in memory only (for temporary changes)
+ 411          int32 sal_sys_mac_set_cache (
+ 412              sal_mac_t *pSysMac
+ 413              )
+ 414          {
+ 415   1          if(pSysMac == NULL)
+ 416   1              return SAL_ERR_PARAMETER;
+ 417   1      
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 8   
+
+ 418   1          memcpy(this_mac, pSysMac->octet, SAL_ETHER_ADDR_LEN);
+ 419   1      
+ 420   1          return SAL_ERR_SUCCESS;
+ 421   1      }
+ 422          
+ 423          // Sal Sys MAC Get: Retrieves current MAC address
+ 424          // Copies system MAC address to output buffer
+ 425          int32
+ 426          sal_sys_mac_get (
+ 427              sal_mac_t *pSysMac
+ 428              )
+ 429          {
+ 430   1          if(pSysMac == NULL)
+ 431   1              return SAL_ERR_NULL_POINTER;
+ 432   1      
+ 433   1          memcpy(pSysMac->octet, this_mac, SAL_ETHER_ADDR_LEN);
+ 434   1          
+ 435   1          return SAL_ERR_SUCCESS;
+ 436   1      }
+ 437          
+ 438          // Sal Sys IP Set: Sets IP address and netmask, writes to flash
+ 439          // Converts IP to byte array and persists to flash configuration
+ 440          int32
+ 441          sal_sys_ip_set (
+ 442              sal_ipaddr_t ip,
+ 443              sal_ipaddr_t net_mask
+ 444              )
+ 445          {
+ 446   1          this_ip[0] = (ip & 0xFF000000) >> 24;
+ 447   1          this_ip[1] = (ip & 0x00FF0000) >> 16;
+ 448   1          this_ip[2] = (ip & 0x0000FF00) >> 8;
+ 449   1          this_ip[3] = (ip & 0x000000FF) >> 0;
+ 450   1          netmask[0] = (net_mask & 0xFF000000) >> 24;
+ 451   1          netmask[1] = (net_mask & 0x00FF0000) >> 16;
+ 452   1          netmask[2] = (net_mask & 0x0000FF00) >> 8;
+ 453   1          netmask[3] = (net_mask & 0x000000FF) >> 0;
+ 454   1      
+ 455   1          sal_flash_sysIp_set(ip, net_mask);
+ 456   1          return SAL_ERR_SUCCESS;
+ 457   1      }
+ 458          
+ 459          // Sal Sys IP Get: Retrieves current IP address and netmask
+ 460          // Converts byte arrays to 32-bit IP and netmask values
+ 461          int32 sal_sys_ip_get(sal_ipaddr_t *pIp, sal_ipaddr_t *pNetmask)
+ 462          {
+ 463   1          if(NULL == pIp || NULL == pNetmask)
+ 464   1              return SAL_ERR_NULL_POINTER;
+ 465   1      
+ 466   1          *pIp = ((uint32)this_ip[0] << 24) | ((uint32)this_ip[1] << 16) | ((uint32)this_ip[2] << 8) \
+ 467   1              | (uint32)this_ip[3];
+ 468   1          *pNetmask = ((uint32)netmask[0] << 24) | ((uint32)netmask[1] << 16) | ((uint32)netmask[2] << 8) \
+ 469   1              | (uint32)netmask[3];
+ 470   1      
+ 471   1          return SAL_ERR_SUCCESS;    
+ 472   1      }
+ 473          
+ 474          // Sal Sys Gateway Set: Sets default gateway address and writes to flash
+ 475          // Converts gateway IP to byte array and persists to flash
+ 476          int32
+ 477          sal_sys_gateway_set (
+ 478              sal_ipaddr_t gateway
+ 479              )
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 9   
+
+ 480          {
+ 481   1      
+ 482   1          default_gateway.addr[0] = (gateway & 0xFF000000) >> 24;
+ 483   1          default_gateway.addr[1] = (gateway & 0x00FF0000) >> 16;
+ 484   1          default_gateway.addr[2] = (gateway & 0x0000FF00) >> 8;
+ 485   1          default_gateway.addr[3] = (gateway & 0x000000FF) >> 0;
+ 486   1      
+ 487   1          sal_flash_sysGateway_set(gateway);
+ 488   1          return SAL_ERR_SUCCESS;
+ 489   1      }
+ 490          
+ 491          // Sal Sys Gateway Get: Retrieves current default gateway address
+ 492          // Converts byte array to 32-bit gateway IP
+ 493          int32 sal_sys_gateway_get(sal_ipaddr_t *pGateway)
+ 494          {
+ 495   1          if(NULL == pGateway)
+ 496   1              return SAL_ERR_NULL_POINTER;
+ 497   1      
+ 498   1          *pGateway = ((uint32)default_gateway.addr[0] << 24) | ((uint32)default_gateway.addr[1] << 16) | \
+ 499   1              ((uint32)default_gateway.addr[2] << 8) | (uint32)default_gateway.addr[3];
+ 500   1      
+ 501   1          return SAL_ERR_SUCCESS;
+ 502   1      }
+ 503          
+ 504          /* Function Name:
+ 505           *      sal_sys_dhcp_set
+ 506           * Description:
+ 507           *      Set the DHCP enable status.
+ 508           * Input:
+ 509           *      enable - enable status
+ 510           * Output:
+ 511           *      None
+ 512           * Return:
+ 513           *      None
+ 514           * Note:
+ 515           *      None
+ 516           */
+ 517          // Sal Sys DHCP Set: Enables or disables DHCP client
+ 518          // Updates DHCP status and writes to flash configuration
+ 519          int32 sal_sys_dhcp_set(sal_enable_t enable)
+ 520          {
+ 521   1          dhcp_enable = enable;
+ 522   1      
+ 523   1          if(enable >= SAL_ENABLE_END)
+ 524   1              return SAL_ERR_FAILED;
+ 525   1      
+ 526   1      #if LWPS_DHCPC
+ 527   1          if(enable == SAL_ENABLED)
+ 528   1              dhcpc_setEnable(TRUE);
+ 529   1          else
+ 530   1              dhcpc_setEnable(FALSE);
+ 531   1      #endif
+ 532   1      
+ 533   1          sal_flash_sysDhcp_set(enable);
+ 534   1      
+ 535   1          return SAL_ERR_SUCCESS;
+ 536   1      }
+ 537          
+ 538          /* Function Name:
+ 539           *      sal_sys_dhcp_get
+ 540           * Description:
+ 541           *      Get the DHCP enable status.
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 10  
+
+ 542           * Input:
+ 543           *      None
+ 544           * Output:
+ 545           *      pEnable - pointer to the enable status
+ 546           * Return:
+ 547           *      None
+ 548           * Note:
+ 549           *      None
+ 550           */
+ 551          // Sal Sys DHCP Get: Retrieves DHCP enable status
+ 552          // Returns current DHCP client state
+ 553          int32 sal_sys_dhcp_get(sal_enable_t *pEnable)
+ 554          {
+ 555   1          if(NULL == pEnable)
+ 556   1              return SAL_ERR_NULL_POINTER;
+ 557   1      
+ 558   1          *pEnable = dhcp_enable;
+ 559   1      
+ 560   1          return SAL_ERR_SUCCESS;    
+ 561   1      }
+ 562          
+ 563          /* Function Name:
+ 564           *      sal_sysdev_type_get
+ 565           * Description:
+ 566           *      Get description of this switch
+ 567           * Input:
+ 568           *      None
+ 569           * Output:
+ 570           *      pDesc - Pointer to the description
+ 571           * Return:
+ 572           *      None
+ 573           * Note:
+ 574           *      None
+ 575           */
+ 576          // Sal Sys Dev Type Get: Retrieves device type/description string
+ 577          // Copies device description from system descriptor
+ 578          int32 sal_sys_dev_type_get(uint8 *pDesc)
+ 579          {
+ 580   1          if(NULL == pDesc)
+ 581   1              return SAL_ERR_NULL_POINTER;
+ 582   1      
+ 583   1          memcpy(pDesc, sysDescr, SAL_SYS_STRING_LEN);
+ 584   1      
+ 585   1          return SAL_ERR_SUCCESS;
+ 586   1      }
+ 587          
+ 588          /* Function Name:
+ 589           *      sal_sysdev_type_set
+ 590           * Description:
+ 591           *      Set description of this switch
+ 592           * Input:
+ 593           *      None
+ 594           * Output:
+ 595           *      pDesc - Pointer to the description
+ 596           * Return:
+ 597           *      SAL_ERR_SUCCESS
+ 598           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 599           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 600           * Note:
+ 601           *      None
+ 602           */
+ 603          // Sal Sys Dev Type Set: Sets device type/description and writes to flash
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 11  
+
+ 604          // Updates device description and persists to flash configuration
+ 605          int32 sal_sys_dev_type_set(uint8 *pDesc)
+ 606          {
+ 607   1          uint16 len;
+ 608   1      
+ 609   1          if(NULL == pDesc)
+ 610   1              return SAL_ERR_NULL_POINTER;
+ 611   1      
+ 612   1          len = strlen(pDesc);
+ 613   1          if(len > SAL_SYS_STRING_LEN)
+ 614   1              return SAL_ERR_FAILED;
+ 615   1      
+ 616   1          memset(sysDescr,0,SAL_SYS_STRING_LEN);
+ 617   1          memcpy(sysDescr, pDesc, len);
+ 618   1          sal_flash_device_type_set(pDesc);
+ 619   1      
+ 620   1          return SAL_ERR_SUCCESS;
+ 621   1      }
+ 622          
+ 623          /* Function Name:
+ 624           *      sal_sysdev_type_set_cache
+ 625           * Description:
+ 626           *      Set description of this switch to cache
+ 627           * Input:
+ 628           *      None
+ 629           * Output:
+ 630           *      pDesc - Pointer to the description
+ 631           * Return:
+ 632           *      SAL_ERR_SUCCESS
+ 633           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 634           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 635           * Note:
+ 636           *      None
+ 637           */
+ 638          // Sal Sys Dev Type Set Cache: Sets device type in cache without writing to flash
+ 639          // Updates device description in memory only
+ 640          int32 sal_sys_dev_type_set_cache(uint8 *pDesc)
+ 641          {
+ 642   1          uint16 len;
+ 643   1      
+ 644   1          if(NULL == pDesc)
+ 645   1              return SAL_ERR_NULL_POINTER;
+ 646   1      
+ 647   1          len = strlen(pDesc);
+ 648   1          if(len > SAL_SYS_STRING_LEN)
+ 649   1              return SAL_ERR_FAILED;
+ 650   1      
+ 651   1          memset(sysDescr,0,SAL_SYS_STRING_LEN);
+ 652   1          memcpy(sysDescr, pDesc, len);
+ 653   1      
+ 654   1          return SAL_ERR_SUCCESS;
+ 655   1      }
+ 656          
+ 657          
+ 658          /* Function Name:
+ 659           *      sal_sys_rdonly_community_get
+ 660           * Description:
+ 661           *      Get read only community of this switch
+ 662           * Input:
+ 663           *      None
+ 664           * Output:
+ 665           *      pDesc - Pointer to the description
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 12  
+
+ 666           * Return:
+ 667           *      None
+ 668           * Note:
+ 669           *      None
+ 670           */
+ 671          // Sal Sys RDONLY Community Get: Retrieves SNMP read-only community string
+ 672          // Copies read-only community from system variable
+ 673          int32 sal_sys_rdonly_community_get(uint8 *pDesc)
+ 674          {
+ 675   1          if(NULL == pDesc)
+ 676   1              return SAL_ERR_NULL_POINTER;
+ 677   1      
+ 678   1          memcpy(pDesc, rdonlycomm, SNMP_COMMUNITY_STR_LEN);
+ 679   1      
+ 680   1          return SAL_ERR_SUCCESS;
+ 681   1      }
+ 682          
+ 683          /* Function Name:
+ 684           *      sal_sys_rdonly_community_set
+ 685           * Description:
+ 686           *      Set read only community of this switch
+ 687           * Input:
+ 688           *      None
+ 689           * Output:
+ 690           *      pDesc - Pointer to the description
+ 691           *      setcache - Flag to set the cache for saving the data to flash
+ 692           * Return:
+ 693           *      SAL_ERR_SUCCESS
+ 694           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 695           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 696           * Note:
+ 697           *      None
+ 698           */
+ 699          // Sal Sys RDONLY Community Set: Sets SNMP read-only community string
+ 700          // Updates community and optionally writes to flash cache
+ 701          int32 sal_sys_rdonly_community_set(uint8 *pDesc, bool setCache)
+ 702          {
+ 703   1          uint16 len;
+ 704   1      
+ 705   1          if(NULL == pDesc)
+ 706   1              return SAL_ERR_NULL_POINTER;
+ 707   1      
+ 708   1          len = strlen(pDesc);
+ 709   1          if(len > SNMP_COMMUNITY_STR_LEN)
+ 710   1              return SAL_ERR_FAILED;
+ 711   1      
+ 712   1          memset(rdonlycomm,0,SNMP_COMMUNITY_STR_LEN);
+ 713   1          memcpy(rdonlycomm, pDesc, len);
+ 714   1          
+ 715   1          if(setCache)
+ 716   1          {
+ 717   2              sal_sys_rdonly_community_set_cache(pDesc);
+ 718   2          }
+ 719   1      
+ 720   1          return SAL_ERR_SUCCESS;
+ 721   1      }
+ 722          
+ 723          /* Function Name:
+ 724           *      sal_sys_rdonly_community_set_cache
+ 725           * Description:
+ 726           *      Set read only community of this switch to cache
+ 727           * Input:
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 13  
+
+ 728           *      None
+ 729           * Output:
+ 730           *      pDesc - Pointer to the description
+ 731           * Return:
+ 732           *      SAL_ERR_SUCCESS
+ 733           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 734           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 735           * Note:
+ 736           *      None
+ 737           */
+ 738          // Sal Sys RDONLY Community Set Cache: Sets SNMP read-only community in cache
+ 739          // Updates community in config cache without writing to flash
+ 740          int32 sal_sys_rdonly_community_set_cache(uint8 *pDesc)
+ 741          {
+ 742   1          uint16 len;
+ 743   1      
+ 744   1          if(NULL == pDesc)
+ 745   1              return SAL_ERR_NULL_POINTER;
+ 746   1      
+ 747   1          len = strlen(pDesc);
+ 748   1          if(len > SNMP_COMMUNITY_STR_LEN)
+ 749   1              return SAL_ERR_FAILED;
+ 750   1              
+ 751   1          memset(configCache.snmp.read_community,0,SNMP_COMMUNITY_STR_LEN);
+ 752   1          memcpy(configCache.snmp.read_community, pDesc, len);
+ 753   1      //    snmp_inc_system_info(); //:: TBD CHARAN??
+ 754   1      
+ 755   1          return SAL_ERR_SUCCESS;
+ 756   1      }
+ 757          
+ 758          
+ 759          /* Function Name:
+ 760           *      sal_sys_rdwr_community_get
+ 761           * Description:
+ 762           *      Get read write community of this switch
+ 763           * Input:
+ 764           *      None
+ 765           * Output:
+ 766           *      pDesc - Pointer to the description
+ 767           * Return:
+ 768           *      None
+ 769           * Note:
+ 770           *      None
+ 771           */
+ 772          // Sal Sys RDWR Community Get: Retrieves SNMP read-write community string
+ 773          // Copies read-write community from system variable
+ 774          int32 sal_sys_rdwr_community_get(uint8 *pDesc)
+ 775          {
+ 776   1          if(NULL == pDesc)
+ 777   1              return SAL_ERR_NULL_POINTER;
+ 778   1      
+ 779   1          memcpy(pDesc, rdwrcomm, SNMP_COMMUNITY_STR_LEN);
+ 780   1      
+ 781   1          return SAL_ERR_SUCCESS;
+ 782   1      }
+ 783          
+ 784          /* Function Name:
+ 785           *      sal_sys_rdwr_community_set
+ 786           * Description:
+ 787           *      Set read write community of this switch
+ 788           * Input:
+ 789           *      None
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 14  
+
+ 790           * Output:
+ 791           *      pDesc - Pointer to the description
+ 792           *      setcache - Flag to set the cache for saving the data to flash
+ 793           * Return:
+ 794           *      SAL_ERR_SUCCESS
+ 795           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 796           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 797           * Note:
+ 798           *      None
+ 799           */
+ 800          // Sal Sys RDWR Community Set: Sets SNMP read-write community string
+ 801          // Updates community and optionally writes to flash cache
+ 802          int32 sal_sys_rdwr_community_set(uint8 *pDesc, bool setCache)
+ 803          {
+ 804   1          uint16 len;
+ 805   1      
+ 806   1          if(NULL == pDesc)
+ 807   1              return SAL_ERR_NULL_POINTER;
+ 808   1      
+ 809   1          len = strlen(pDesc);
+ 810   1          if(len > SNMP_COMMUNITY_STR_LEN)
+ 811   1              return SAL_ERR_FAILED;
+ 812   1      
+ 813   1          memset(rdwrcomm,0,SNMP_COMMUNITY_STR_LEN);
+ 814   1          memcpy(rdwrcomm, pDesc, len);
+ 815   1          
+ 816   1          if(setCache)
+ 817   1          {
+ 818   2              sal_sys_rdwr_community_set_cache(pDesc);
+ 819   2          }
+ 820   1      
+ 821   1          return SAL_ERR_SUCCESS;
+ 822   1      }
+ 823          
+ 824          /* Function Name:
+ 825           *      sal_sys_rdwr_community_set_cache
+ 826           * Description:
+ 827           *      Set read write community of this switch to cache
+ 828           * Input:
+ 829           *      None
+ 830           * Output:
+ 831           *      pDesc - Pointer to the description
+ 832           * Return:
+ 833           *      SAL_ERR_SUCCESS
+ 834           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 835           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 836           * Note:
+ 837           *      None
+ 838           */
+ 839          // Sal Sys RDWR Community Set Cache: Sets SNMP read-write community in cache
+ 840          // Updates community in config cache without writing to flash
+ 841          int32 sal_sys_rdwr_community_set_cache(uint8 *pDesc)
+ 842          {
+ 843   1          uint16 len;
+ 844   1      
+ 845   1          if(NULL == pDesc)
+ 846   1              return SAL_ERR_NULL_POINTER;
+ 847   1      
+ 848   1          len = strlen(pDesc);
+ 849   1          if(len > SNMP_COMMUNITY_STR_LEN)
+ 850   1              return SAL_ERR_FAILED;
+ 851   1              
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 15  
+
+ 852   1          memset(configCache.snmp.write_community,0,SNMP_COMMUNITY_STR_LEN);
+ 853   1          memcpy(configCache.snmp.write_community, pDesc, len);
+ 854   1      //    snmp_inc_system_info(); // TBD
+ 855   1      
+ 856   1          return SAL_ERR_SUCCESS;
+ 857   1      }
+ 858          
+ 859          
+ 860          
+ 861          /* Function Name:
+ 862           *      sal_sys_description_get
+ 863           * Description:
+ 864           *      Get description of this switch
+ 865           * Input:
+ 866           *      None
+ 867           * Output:
+ 868           *      pDesc - Pointer to the description
+ 869           * Return:
+ 870           *      None
+ 871           * Note:
+ 872           *      None
+ 873           */
+ 874          // Sal Sys Description Get: Retrieves system description string (SNMP sysDescr)
+ 875          // Copies system description from variable
+ 876          int32 sal_sys_description_get(uint8 *pDesc)
+ 877          {
+ 878   1          if(NULL == pDesc)
+ 879   1              return SAL_ERR_NULL_POINTER;
+ 880   1      
+ 881   1          memcpy(pDesc, sysDescription, SAL_SNMP_SYS_INFO_STR_LEN);
+ 882   1      
+ 883   1          return SAL_ERR_SUCCESS;
+ 884   1      }
+ 885          
+ 886          /* Function Name:
+ 887           *      sal_sys_description_set
+ 888           * Description:
+ 889           *      Set description of this switch
+ 890           * Input:
+ 891           *      None
+ 892           * Output:
+ 893           *      pDesc - Pointer to the description
+ 894           *      setcache - Flag to set the cache for saving the data to flash
+ 895           * Return:
+ 896           *      SAL_ERR_SUCCESS
+ 897           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 898           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 899           * Note:
+ 900           *      None
+ 901           */
+ 902          // Sal Sys Description Set: Sets system description and optionally writes to cache
+ 903          // Updates SNMP sysDescr field
+ 904          int32 sal_sys_description_set(uint8 *pDesc, bool setCache)
+ 905          {
+ 906   1          uint16 len;
+ 907   1      
+ 908   1          if(NULL == pDesc)
+ 909   1              return SAL_ERR_NULL_POINTER;
+ 910   1      
+ 911   1          len = strlen(pDesc);
+ 912   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
+ 913   1              return SAL_ERR_FAILED;
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 16  
+
+ 914   1      
+ 915   1          memset(sysDescription,0,SAL_SNMP_SYS_INFO_STR_LEN);
+ 916   1          memcpy(sysDescription, pDesc, len);
+ 917   1          
+ 918   1          if(setCache)
+ 919   1          {
+ 920   2              sal_sys_description_set_cache(pDesc);
+ 921   2          }
+ 922   1      
+ 923   1          return SAL_ERR_SUCCESS;
+ 924   1      }
+ 925          
+ 926          /* Function Name:
+ 927           *      sal_sys_description_set_cache
+ 928           * Description:
+ 929           *      Set description of this switch to cache
+ 930           * Input:
+ 931           *      None
+ 932           * Output:
+ 933           *      pDesc - Pointer to the description
+ 934           * Return:
+ 935           *      SAL_ERR_SUCCESS
+ 936           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 937           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+ 938           * Note:
+ 939           *      None
+ 940           */
+ 941          // Sal Sys Description Set Cache: Sets system description in config cache
+ 942          // Updates SNMP sysDescr in cache without writing to flash
+ 943          int32 sal_sys_description_set_cache(uint8 *pDesc)
+ 944          {
+ 945   1          uint16 len;
+ 946   1      
+ 947   1          if(NULL == pDesc)
+ 948   1              return SAL_ERR_NULL_POINTER;
+ 949   1      
+ 950   1          len = strlen(pDesc);
+ 951   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
+ 952   1              return SAL_ERR_FAILED;
+ 953   1              
+ 954   1          memset(configCache.snmp.extSysinfo.description,0,SAL_SNMP_SYS_INFO_STR_LEN);
+ 955   1          memcpy(configCache.snmp.extSysinfo.description, pDesc, len);
+ 956   1          snmp_inc_system_info();
+ 957   1      
+ 958   1          return SAL_ERR_SUCCESS;
+ 959   1      }
+ 960          
+ 961          
+ 962          /* Function Name:
+ 963           *      sal_sys_contact_get
+ 964           * Description:
+ 965           *      Get contact of this switch
+ 966           * Input:
+ 967           *      None
+ 968           * Output:
+ 969           *      pDesc - Pointer to the contact
+ 970           * Return:
+ 971           *      None
+ 972           * Note:
+ 973           *      None
+ 974           */
+ 975          // Sal Sys Contact Get: Retrieves system contact string (SNMP sysContact)
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 17  
+
+ 976          // Copies system contact from variable
+ 977          int32 sal_sys_contact_get(uint8 *pDesc)
+ 978          {
+ 979   1          if(NULL == pDesc)
+ 980   1              return SAL_ERR_NULL_POINTER;
+ 981   1      
+ 982   1          memcpy(pDesc, sysContact, SAL_SNMP_SYS_INFO_STR_LEN);
+ 983   1          
+ 984   1          return SAL_ERR_SUCCESS;
+ 985   1      }
+ 986          
+ 987          /* Function Name:
+ 988           *      sal_sys_contact_set
+ 989           * Description:
+ 990           *      Set contact of this switch
+ 991           * Input:
+ 992           *      pDesc - Pointer to the contact
+ 993           *      setcache - Flag to set the cache for saving the data to flash
+ 994           * Output:
+ 995           *      None
+ 996           * Return:
+ 997           *      SAL_ERR_SUCCESS
+ 998           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+ 999           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1000           * Note:
+1001           *      None
+1002           */
+1003          // Sal Sys Contact Set: Sets system contact and optionally writes to cache
+1004          // Updates SNMP sysContact field
+1005          int32 sal_sys_contact_set(uint8 *pDesc, bool setCache)
+1006          {
+1007   1          uint16 len;
+1008   1      
+1009   1          if(NULL == pDesc)
+1010   1              return SAL_ERR_NULL_POINTER;
+1011   1      
+1012   1          len = strlen(pDesc);
+1013   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
+1014   1              return SAL_ERR_FAILED;
+1015   1      
+1016   1          memset(sysContact,0,SAL_SNMP_SYS_INFO_STR_LEN);
+1017   1          memcpy(sysContact, pDesc, len);
+1018   1         
+1019   1          if(setCache)
+1020   1          {
+1021   2              sal_sys_contact_set_cache(pDesc);
+1022   2          }
+1023   1      
+1024   1          return SAL_ERR_SUCCESS;
+1025   1      }
+1026          
+1027          /* Function Name:
+1028           *      sal_sys_contact_set_cache
+1029           * Description:
+1030           *      Set contact of this switch to cache
+1031           * Input:
+1032           *      pDesc - Pointer to the contact
+1033           * Output:
+1034           *      None
+1035           * Return:
+1036           *      SAL_ERR_SUCCESS
+1037           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 18  
+
+1038           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1039           * Note:
+1040           *      None
+1041           */
+1042          // Sal Sys Contact Set Cache: Sets system contact in config cache
+1043          // Updates SNMP sysContact in cache without writing to flash
+1044          int32 sal_sys_contact_set_cache(uint8 *pDesc)
+1045          {
+1046   1          uint16 len;
+1047   1      
+1048   1          if(NULL == pDesc)
+1049   1              return SAL_ERR_NULL_POINTER;
+1050   1      
+1051   1          len = strlen(pDesc);
+1052   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
+1053   1              return SAL_ERR_FAILED;
+1054   1              
+1055   1          memset(configCache.snmp.extSysinfo.contact,0,SAL_SNMP_SYS_INFO_STR_LEN);
+1056   1          memcpy(configCache.snmp.extSysinfo.contact, pDesc, len);
+1057   1          snmp_inc_system_info();
+1058   1      
+1059   1          return SAL_ERR_SUCCESS;
+1060   1      }
+1061          
+1062          
+1063          /* Function Name:
+1064           *      sal_sys_location_get
+1065           * Description:
+1066           *      Get location of this switch
+1067           * Input:
+1068           *      None
+1069           * Output:
+1070           *      pDesc - Pointer to the location
+1071           * Return:
+1072           *      None
+1073           * Note:
+1074           *      None
+1075           */
+1076          // Sal Sys Location Get: Retrieves system location string (SNMP sysLocation)
+1077          // Copies system location from variable
+1078          int32 sal_sys_location_get(uint8 *pDesc)
+1079          {
+1080   1          if(NULL == pDesc)
+1081   1              return SAL_ERR_NULL_POINTER;
+1082   1      
+1083   1          memcpy(pDesc, sysLocation, SAL_SNMP_SYS_INFO_STR_LEN);
+1084   1      
+1085   1          return SAL_ERR_SUCCESS;
+1086   1      }
+1087          
+1088          /* Function Name:
+1089           *      sal_sys_location_set
+1090           * Description:
+1091           *      Set location of this switch
+1092           * Input:
+1093           *      pDesc - Pointer to the location
+1094           *      setcache - Flag to set the cache for saving the data to flash
+1095           * Output:
+1096           *      None
+1097           * Return:
+1098           *      SAL_ERR_SUCCESS
+1099           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 19  
+
+1100           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1101           * Note:
+1102           *      None
+1103           */
+1104          // Sal Sys Location Set: Sets system location and optionally writes to cache
+1105          // Updates SNMP sysLocation field
+1106          int32 sal_sys_location_set(uint8 *pDesc, bool setCache)
+1107          {
+1108   1          uint16 len;
+1109   1      
+1110   1          if(NULL == pDesc)
+1111   1              return SAL_ERR_NULL_POINTER;
+1112   1      
+1113   1          len = strlen(pDesc);
+1114   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
+1115   1              return SAL_ERR_FAILED;
+1116   1      
+1117   1          memset(sysLocation,0,SAL_SNMP_SYS_INFO_STR_LEN);
+1118   1          memcpy(sysLocation, pDesc, len);
+1119   1          
+1120   1          if(setCache)
+1121   1          {
+1122   2              sal_sys_location_set_cache(pDesc);
+1123   2          }
+1124   1      
+1125   1          return SAL_ERR_SUCCESS;
+1126   1      }
+1127          
+1128          /* Function Name:
+1129           *      sal_sys_location_set_cache
+1130           * Description:
+1131           *      Set location of this switch to cache
+1132           * Input:
+1133           *      pDesc - Pointer to the location
+1134           * Output:
+1135           *      None
+1136           * Return:
+1137           *      SAL_ERR_SUCCESS
+1138           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1139           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1140           * Note:
+1141           *      None
+1142           */
+1143          // Sal Sys Location Set Cache: Sets system location in config cache
+1144          // Updates SNMP sysLocation in cache without writing to flash
+1145          int32 sal_sys_location_set_cache(uint8 *pDesc)
+1146          {
+1147   1          uint16 len;
+1148   1      
+1149   1          if(NULL == pDesc)
+1150   1              return SAL_ERR_NULL_POINTER;
+1151   1      
+1152   1          len = strlen(pDesc);
+1153   1          if(len > SAL_SNMP_SYS_INFO_STR_LEN)
+1154   1              return SAL_ERR_FAILED;
+1155   1              
+1156   1          memset(configCache.snmp.extSysinfo.location,0,SAL_SNMP_SYS_INFO_STR_LEN);
+1157   1          memcpy(configCache.snmp.extSysinfo.location, pDesc, len);
+1158   1          snmp_inc_system_info();
+1159   1      
+1160   1          return SAL_ERR_SUCCESS;
+1161   1      }
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 20  
+
+1162          
+1163          // Sal Sys Syslog State Get: Retrieves syslog enable/disable state
+1164          // Copies syslog state from variable
+1165          int32 sal_sys_syslog_state_get(sal_enable_t *pState)
+1166          {
+1167   1          if(NULL == pState)
+1168   1              return SAL_ERR_NULL_POINTER;
+1169   1      
+1170   1          memcpy(pState, &syslogState, sizeof(sal_enable_t));
+1171   1      
+1172   1          return SAL_ERR_SUCCESS;
+1173   1      }
+1174          
+1175          // Sal Sys Syslog State Set: Sets syslog state and optionally writes to cache
+1176          // Updates syslog enable/disable status
+1177          int32 sal_sys_syslog_state_set(sal_enable_t *pState, bool setCache)
+1178          {
+1179   1          if(NULL == pState)
+1180   1              return SAL_ERR_NULL_POINTER;
+1181   1      
+1182   1          memset(&syslogState,0,sizeof(sal_enable_t));
+1183   1          memcpy(&syslogState, pState, sizeof(sal_enable_t));
+1184   1          
+1185   1          if(setCache)
+1186   1          {
+1187   2              sal_sys_syslog_state_set_cache(pState);
+1188   2          }
+1189   1      
+1190   1          return SAL_ERR_SUCCESS;
+1191   1      }
+1192          
+1193          // Sal Sys Syslog State Set Cache: Sets syslog state in config cache
+1194          // Updates syslog enable/disable in cache without writing to flash
+1195          int32 sal_sys_syslog_state_set_cache(sal_enable_t *pState)
+1196          {
+1197   1          if(NULL == pState)
+1198   1              return SAL_ERR_NULL_POINTER;
+1199   1              
+1200   1          memset(&(configCache.syslog.enable),0,sizeof(sal_enable_t));
+1201   1          memcpy(&(configCache.syslog.enable), pState, sizeof(sal_enable_t));
+1202   1      
+1203   1          return SAL_ERR_SUCCESS;
+1204   1      }
+1205          
+1206          
+1207          /* Function Name:
+1208           *      sal_sys_syslog_hostIp_get
+1209           * Description:
+1210           *      Get host IP of syslog server
+1211           * Input:
+1212           *      None
+1213           * Output:
+1214           *      pDesc - Pointer to the location
+1215           * Return:
+1216           *      None
+1217           * Note:
+1218           *      None
+1219           */
+1220          // Sal Sys Syslog Host IP Get: Retrieves syslog server IP address
+1221          // Copies syslog server IP from variable
+1222          int32 sal_sys_syslog_hostIp_get(sal_ipaddr_t *pIp)
+1223          {
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 21  
+
+1224   1          if(NULL == pIp)
+1225   1              return SAL_ERR_NULL_POINTER;
+1226   1      
+1227   1          memcpy(pIp, &syslogHostIp, sizeof(syslogHostIp));
+1228   1      
+1229   1          return SAL_ERR_SUCCESS;
+1230   1      }
+1231          
+1232          /* Function Name:
+1233           *      sal_sys_syslog_hostIp_set
+1234           * Description:
+1235           *      Set syslog Host IP of this switch
+1236           * Input:
+1237           *      pDesc - Pointer to the location
+1238           *      setcache - Flag to set the cache for saving the data to flash
+1239           * Output:
+1240           *      None
+1241           * Return:
+1242           *      SAL_ERR_SUCCESS
+1243           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1244           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1245           * Note:
+1246           *      None
+1247           */
+1248          // Sal Sys Syslog Host IP Set: Sets syslog server IP and optionally writes to cache
+1249          // Updates syslog server IP address
+1250          int32 sal_sys_syslog_hostIp_set(sal_ipaddr_t *pIp, bool setCache)
+1251          {
+1252   1          if(NULL == pIp)
+1253   1              return SAL_ERR_NULL_POINTER;
+1254   1      
+1255   1          memset(&syslogHostIp,0,sizeof(syslogHostIp));
+1256   1          memcpy(&syslogHostIp, pIp, sizeof(syslogHostIp));
+1257   1          
+1258   1          if(setCache)
+1259   1          {
+1260   2              sal_sys_syslog_hostIp_set_cache(pIp);
+1261   2          }
+1262   1      
+1263   1          return SAL_ERR_SUCCESS;
+1264   1      }
+1265          
+1266          /* Function Name:
+1267           *      sal_sys_syslog_hostIp_set_cache
+1268           * Description:
+1269           *      Set ip add of host server to cache
+1270           * Input:
+1271           *      pDesc - Pointer to the location
+1272           * Output:
+1273           *      None
+1274           * Return:
+1275           *      SAL_ERR_SUCCESS
+1276           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1277           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1278           * Note:
+1279           *      None
+1280           */
+1281          // Sal Sys Syslog Host IP Set Cache: Sets syslog server IP in config cache
+1282          // Updates syslog server IP in cache without writing to flash
+1283          int32 sal_sys_syslog_hostIp_set_cache(sal_ipaddr_t *pIp)
+1284          {
+1285   1          if(NULL == pIp)
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 22  
+
+1286   1              return SAL_ERR_NULL_POINTER;
+1287   1              
+1288   1          memset(&(configCache.syslog.sysLogServerIp),0,sizeof(sal_ipaddr_t));
+1289   1          memcpy(&(configCache.syslog.sysLogServerIp), pIp, sizeof(sal_ipaddr_t));
+1290   1      
+1291   1          return SAL_ERR_SUCCESS;
+1292   1      }
+1293          
+1294          /* Function Name:
+1295           *      sal_sys_syslog_hostIp_get
+1296           * Description:
+1297           *      Get host IP of syslog server
+1298           * Input:
+1299           *      None
+1300           * Output:
+1301           *      pDesc - Pointer to the location
+1302           * Return:
+1303           *      None
+1304           * Note:
+1305           *      None
+1306           */
+1307          // Sal Sys Syslog Host UDP Port Get: Retrieves syslog server UDP port
+1308          // Copies syslog server port from variable
+1309          int32 sal_sys_syslog_hostUdpPort_get(uint16 *pPort)
+1310          {
+1311   1          if(NULL == pPort)
+1312   1              return SAL_ERR_NULL_POINTER;
+1313   1      
+1314   1          memcpy(pPort, &syslogHostUdpPort, sizeof(uint16));
+1315   1      
+1316   1          return SAL_ERR_SUCCESS;
+1317   1      }
+1318          
+1319          /* Function Name:
+1320           *      sal_sys_syslog_hostIp_set
+1321           * Description:
+1322           *      Set syslog Host IP of this switch
+1323           * Input:
+1324           *      pDesc - Pointer to the location
+1325           *      setcache - Flag to set the cache for saving the data to flash
+1326           * Output:
+1327           *      None
+1328           * Return:
+1329           *      SAL_ERR_SUCCESS
+1330           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1331           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1332           * Note:
+1333           *      None
+1334           */
+1335          // Sal Sys Syslog Host UDP Port Set: Sets syslog server UDP port and optionally writes to cache
+1336          // Updates syslog server port number
+1337          int32 sal_sys_syslog_hostUdpPort_set(uint16 *pPort, bool setCache)
+1338          {
+1339   1          if(NULL == pPort)
+1340   1              return SAL_ERR_NULL_POINTER;
+1341   1      
+1342   1          memset(&syslogHostUdpPort,0,sizeof(uint16));
+1343   1          memcpy(&syslogHostUdpPort, pPort, sizeof(uint16));
+1344   1          
+1345   1          if(setCache)
+1346   1          {
+1347   2              sal_sys_syslog_hostUdpPort_set_cache(pPort);
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 23  
+
+1348   2          }
+1349   1      
+1350   1          return SAL_ERR_SUCCESS;
+1351   1      }
+1352          
+1353          /* Function Name:
+1354           *      sal_sys_syslog_hostIp_set_cache
+1355           * Description:
+1356           *      Set ip add of host server to cache
+1357           * Input:
+1358           *      pDesc - Pointer to the location
+1359           * Output:
+1360           *      None
+1361           * Return:
+1362           *      SAL_ERR_SUCCESS
+1363           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1364           *      SAL_ERR_FAILED       - Length of pDesc is too long. 
+1365           * Note:
+1366           *      None
+1367           */
+1368          // Sal Sys Syslog Host UDP Port Set Cache: Sets syslog server port in config cache
+1369          // Updates syslog server port in cache without writing to flash
+1370          int32 sal_sys_syslog_hostUdpPort_set_cache(uint16 *pPort)
+1371          {
+1372   1          if(NULL == pPort)
+1373   1              return SAL_ERR_NULL_POINTER;
+1374   1              
+1375   1          memset(&(configCache.syslog.sysLogServerPort),0,sizeof(uint16));
+1376   1          memcpy(&(configCache.syslog.sysLogServerPort), pPort, sizeof(uint16));
+1377   1      
+1378   1          return SAL_ERR_SUCCESS;
+1379   1      }
+1380          
+1381          // Sal Sys Syslog Head Index Get: Retrieves syslog buffer head index
+1382          // Copies syslog buffer head position from variable
+1383          int32 sal_sys_syslog_headIdx_get(uint16 *pIdx)
+1384          {
+1385   1          if(NULL == pIdx)
+1386   1              return SAL_ERR_NULL_POINTER;
+1387   1      
+1388   1          memcpy(pIdx, &syslogHeadIdx, sizeof(uint16));
+1389   1      
+1390   1          return SAL_ERR_SUCCESS;
+1391   1      }
+1392          
+1393          // Sal Sys Syslog Head Index Set: Sets syslog buffer head index and optionally writes to cache
+1394          // Updates syslog buffer head position
+1395          int32 sal_sys_syslog_headIdx_set(uint16 *pIdx, bool setCache)
+1396          {
+1397   1          if(NULL == pIdx)
+1398   1              return SAL_ERR_NULL_POINTER;
+1399   1      
+1400   1          memset(&syslogHeadIdx,0,sizeof(uint16));
+1401   1          memcpy(&syslogHeadIdx, pIdx, sizeof(uint16));
+1402   1          
+1403   1          if(setCache)
+1404   1          {
+1405   2              sal_sys_syslog_headIdx_set_cache(pIdx);
+1406   2          }
+1407   1      
+1408   1          return SAL_ERR_SUCCESS;
+1409   1      }
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 24  
+
+1410          
+1411          // Sal Sys Syslog Head Index Set Cache: Sets syslog buffer head index in config cache
+1412          // Updates syslog buffer head position in cache without writing to flash
+1413          int32 sal_sys_syslog_headIdx_set_cache(uint16 *pIdx)
+1414          {
+1415   1          if(NULL == pIdx)
+1416   1              return SAL_ERR_NULL_POINTER;
+1417   1              
+1418   1          memset(&(configCache.syslogBuf.headIdx),0,sizeof(uint16));
+1419   1          memcpy(&(configCache.syslogBuf.headIdx), pIdx, sizeof(uint16));
+1420   1      
+1421   1          return SAL_ERR_SUCCESS;
+1422   1      }
+1423          
+1424          // Sal Sys Syslog Tail Index Get: Retrieves syslog buffer tail index
+1425          // Copies syslog buffer tail position from variable
+1426          int32 sal_sys_syslog_tailIdx_get(uint16 *pIdx)
+1427          {
+1428   1          if(NULL == pIdx)
+1429   1              return SAL_ERR_NULL_POINTER;
+1430   1      
+1431   1          memcpy(pIdx, &syslogTailIdx, sizeof(uint16));
+1432   1      
+1433   1          return SAL_ERR_SUCCESS;
+1434   1      }
+1435          
+1436          // Sal Sys Syslog Tail Index Set: Sets syslog buffer tail index and optionally writes to cache
+1437          // Updates syslog buffer tail position
+1438          int32 sal_sys_syslog_tailIdx_set(uint16 *pIdx, bool setCache)
+1439          {
+1440   1          if(NULL == pIdx)
+1441   1              return SAL_ERR_NULL_POINTER;
+1442   1      
+1443   1          memset(&syslogTailIdx,0,sizeof(uint16));
+1444   1          memcpy(&syslogTailIdx, pIdx, sizeof(uint16));
+1445   1          
+1446   1          if(setCache)
+1447   1          {
+1448   2              sal_sys_syslog_tailIdx_set_cache(pIdx);
+1449   2          }
+1450   1      
+1451   1          return SAL_ERR_SUCCESS;
+1452   1      }
+1453          
+1454          // Sal Sys Syslog Tail Index Set Cache: Sets syslog buffer tail index in config cache
+1455          // Updates syslog buffer tail position in cache without writing to flash
+1456          int32 sal_sys_syslog_tailIdx_set_cache(uint16 *pIdx)
+1457          {
+1458   1          if(NULL == pIdx)
+1459   1              return SAL_ERR_NULL_POINTER;
+1460   1              
+1461   1          memset(&(configCache.syslogBuf.tailIdx),0,sizeof(uint16));
+1462   1          memcpy(&(configCache.syslogBuf.tailIdx), pIdx, sizeof(uint16));
+1463   1      
+1464   1          return SAL_ERR_SUCCESS;
+1465   1      }
+1466          
+1467          /* Function Name:
+1468           *      sal_sys_firmVersion_get
+1469           * Description:
+1470           *      Get the version information of the firmware.
+1471           * Input:
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 25  
+
+1472           *      None
+1473           * Output:
+1474           *      pVersion - pointer buffer of the firmware version
+1475           * Return:
+1476           *      SAL_ERR_SUCCESS
+1477           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1478           * Note:
+1479           *      None
+1480           */
+1481          // Sal Sys Firm Version Get: Retrieves firmware version string
+1482          // Copies firmware version from system variable
+1483          int32 sal_sys_firmVersion_get(uint8 *pVersion)
+1484          {
+1485   1          if(NULL == pVersion)
+1486   1              return SAL_ERR_NULL_POINTER;
+1487   1          
+1488   1          memcpy(pVersion, fwVer, SAL_SYS_STRING_LEN);
+1489   1          
+1490   1          return SAL_ERR_SUCCESS;
+1491   1      }
+1492          
+1493          /* Function Name:
+1494           *      sal_sys_firmVersion_set
+1495           * Description:
+1496           *      Set the version information of the firmware.
+1497           * Input:
+1498           *      pVersion - pointer buffer of the firmware version
+1499           * Output:
+1500           *      None
+1501           * Return:
+1502           *      SAL_ERR_SUCCESS
+1503           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1504           *      SAL_ERR_FAILED       - Length of pVersion is too long. 
+1505           * Note:
+1506           *      None
+1507           */
+1508          // Sal Sys Firm Version Set: Sets firmware version and writes to flash
+1509          // Updates firmware version string and persists to flash
+1510          int32 sal_sys_firmVersion_set(uint8 *pVersion)
+1511          {
+1512   1          uint16 len;
+1513   1      
+1514   1          if(NULL == pVersion)
+1515   1              return SAL_ERR_NULL_POINTER;
+1516   1      
+1517   1          len = strlen(pVersion);
+1518   1      
+1519   1          if(len > SAL_SYS_STRING_LEN)
+1520   1              return SAL_ERR_FAILED;
+1521   1      
+1522   1          memset(fwVer,0,SAL_SYS_STRING_LEN);
+1523   1          memcpy(fwVer, pVersion, len);
+1524   1      
+1525   1          sal_flash_fw_version_set(pVersion);
+1526   1      
+1527   1          return SAL_ERR_SUCCESS;
+1528   1      }
+1529          
+1530          /* Function Name:
+1531           *      sal_sys_firmVersion_set_cache
+1532           * Description:
+1533           *      Set the version information of the firmware to cache.
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 26  
+
+1534           * Input:
+1535           *      pVersion - pointer buffer of the firmware version
+1536           * Output:
+1537           *      None
+1538           * Return:
+1539           *      SAL_ERR_SUCCESS
+1540           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1541           *      SAL_ERR_FAILED       - Length of pVersion is too long. 
+1542           * Note:
+1543           *      None
+1544           */
+1545          // Sal Sys Firm Version Set Cache: Sets firmware version in cache without writing to flash
+1546          // Updates firmware version in memory only
+1547          int32 sal_sys_firmVersion_set_cache(uint8 *pVersion)
+1548          {
+1549   1          uint16 len;
+1550   1      
+1551   1          if(NULL == pVersion)
+1552   1              return SAL_ERR_NULL_POINTER;
+1553   1      
+1554   1          len = strlen(pVersion);
+1555   1      
+1556   1          if(len > SAL_SYS_STRING_LEN)
+1557   1              return SAL_ERR_FAILED;
+1558   1              
+1559   1          memset(fwVer,0,SAL_SYS_STRING_LEN);
+1560   1          memcpy(fwVer, pVersion, len);
+1561   1      
+1562   1          return SAL_ERR_SUCCESS;
+1563   1      }
+1564          
+1565          
+1566          /* Function Name:
+1567           *      sal_sys_hardwareVersion_get
+1568           * Description:
+1569           *      Get the version information of the hardware.
+1570           * Input:
+1571           *      None
+1572           * Output:
+1573           *      pVersion - pointer buffer of the firmware version
+1574           * Return:
+1575           *      SAL_ERR_SUCCESS
+1576           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1577           * Note:
+1578           *      None
+1579           */
+1580          // Sal Sys Hardware Version Get: Retrieves hardware version string
+1581          // Copies hardware version from system variable
+1582          int32 sal_sys_hardwareVersion_get(uint8 *pVersion)
+1583          {
+1584   1          if(NULL == pVersion)
+1585   1              return SAL_ERR_NULL_POINTER;
+1586   1      
+1587   1          memcpy(pVersion, hwVer, SAL_SYS_STRING_LEN);
+1588   1          
+1589   1          return SAL_ERR_SUCCESS;
+1590   1      }
+1591          
+1592          
+1593          /* Function Name:
+1594           *      sal_sys_hardwareVersion_set
+1595           * Description:
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 27  
+
+1596           *      Set the version information of the hardware.
+1597           * Input:
+1598           *      pVersion - pointer buffer of the firmware version 
+1599           * Output:
+1600           *      None 
+1601           * Return:
+1602           *      SAL_ERR_SUCCESS
+1603           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1604           *      SAL_ERR_FAILED       - Length of pVersion is too long.  
+1605           * Note:
+1606           *      None
+1607           */
+1608          // Sal Sys Hardware Version Set: Sets hardware version and writes to flash
+1609          // Updates hardware version string and persists to flash
+1610          int32 sal_sys_hardwareVersion_set(uint8 *pVersion)
+1611          {
+1612   1          uint16 len;
+1613   1          
+1614   1          if(NULL == pVersion)
+1615   1              return SAL_ERR_NULL_POINTER;
+1616   1          
+1617   1          len = strlen(pVersion);
+1618   1          
+1619   1          if(len > SAL_SYS_STRING_LEN)
+1620   1              return SAL_ERR_FAILED;
+1621   1      
+1622   1          memset(hwVer,0,SAL_SYS_STRING_LEN);
+1623   1          memcpy(hwVer, pVersion, len);
+1624   1      
+1625   1          sal_flash_hw_version_set(pVersion);
+1626   1          
+1627   1          return SAL_ERR_SUCCESS;
+1628   1      }
+1629          
+1630          /* Function Name:
+1631           *      sal_sys_hardwareVersion_set_cache
+1632           * Description:
+1633           *      Set the version information of the hardware to cache.
+1634           * Input:
+1635           *      pVersion - pointer buffer of the firmware version 
+1636           * Output:
+1637           *      None 
+1638           * Return:
+1639           *      SAL_ERR_SUCCESS
+1640           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1641           *      SAL_ERR_FAILED       - Length of pVersion is too long.  
+1642           * Note:
+1643           *      None
+1644           */
+1645          // Sal Sys Hardware Version Set Cache: Sets hardware version in cache without writing to flash
+1646          // Updates hardware version in memory only
+1647          int32 sal_sys_hardwareVersion_set_cache(uint8 *pVersion)
+1648          {
+1649   1          uint16 len;
+1650   1          
+1651   1          if(NULL == pVersion)
+1652   1              return SAL_ERR_NULL_POINTER;
+1653   1          
+1654   1          len = strlen(pVersion);
+1655   1          
+1656   1          if(len > SAL_SYS_STRING_LEN)
+1657   1              return SAL_ERR_FAILED;
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 28  
+
+1658   1              
+1659   1          memset(hwVer,0,SAL_SYS_STRING_LEN);
+1660   1          memcpy(hwVer, pVersion, len);
+1661   1      
+1662   1          return SAL_ERR_SUCCESS;
+1663   1      }
+1664          
+1665          
+1666          
+1667          /* Function Name:
+1668           *      sal_sys_firmDate_get
+1669           * Description:
+1670           *      Get the date information of the firmware.
+1671           * Input:
+1672           *      None
+1673           * Output:
+1674           *      pDate - pointer buffer of the firmware version
+1675           * Return:
+1676           *      SAL_ERR_SUCCESS
+1677           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1678           * Note:
+1679           *      None
+1680           */
+1681          // Sal Sys Firm Date Get: Retrieves firmware date string
+1682          // Copies firmware build date from system variable
+1683          int32 sal_sys_firmDate_get(uint8 *pDate)
+1684          {
+1685   1          if(NULL == pDate)
+1686   1              return SAL_ERR_NULL_POINTER;
+1687   1      
+1688   1          memcpy(pDate, fwDate, SAL_SYS_STRING_LEN);
+1689   1          
+1690   1          return SAL_ERR_SUCCESS;
+1691   1      }
+1692          
+1693          
+1694          /* Function Name:
+1695           *      sal_sys_firmDate_set
+1696           * Description:
+1697           *      Get the date information of the firmware.
+1698           * Input:
+1699           *      pDate - pointer buffer of the firmware version 
+1700           * Output:
+1701           *      None 
+1702           * Return:
+1703           *      SAL_ERR_SUCCESS
+1704           *      SAL_ERR_NULL_POINTER - input parameter may be null pointer
+1705           *      SAL_ERR_FAILED       - Length of pVersion is too long.   
+1706           * Note:
+1707           *      None
+1708           */
+1709          // Sal Sys Firm Date Set: Sets firmware date string
+1710          // Updates firmware build date in memory only
+1711          int32 sal_sys_firmDate_set(uint8 *pDate)
+1712          {
+1713   1          uint16 len;
+1714   1          
+1715   1          if(NULL == pDate)
+1716   1              return SAL_ERR_NULL_POINTER;
+1717   1          
+1718   1          len = strlen(pDate);
+1719   1          
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 29  
+
+1720   1          if(len > SAL_SYS_STRING_LEN)
+1721   1              return SAL_ERR_FAILED;
+1722   1      
+1723   1          memset(fwDate,0,SAL_SYS_STRING_LEN);
+1724   1          memcpy(fwDate, pDate, len);
+1725   1          
+1726   1          return SAL_ERR_SUCCESS;
+1727   1      }
+1728          
+1729          
+1730          /* Function Name: 
+1731           *      sal_sys_chipVersion_get 
+1732           * Description: 
+1733           *      Get the version information of the chip. 
+1734           * Input: 
+1735           *      None * Output: 
+1736           *      pChipId  - pointer buffer of the chip id 
+1737           *      pVersion - pointer buffer of the chip version 
+1738           * Return: 
+1739           *      None 
+1740           * Note: 
+1741           *      None 
+1742           */
+1743          // Sal Sys Chip Version Get: Retrieves chip ID and version information
+1744          // Copies chip ID and version from system variables
+1745          int32 sal_sys_chipVersion_get(uint8 *pChipId, uint8 *pVersion)
+1746          {    
+1747   1          if ((NULL == pChipId) || (NULL == pVersion))
+1748   1              return SAL_ERR_NULL_POINTER;
+1749   1      
+1750   1          memcpy(pChipId, chipId, strlen(chipId) + 1);
+1751   1          memcpy(pVersion, chipVer, strlen(chipVer) + 1);
+1752   1      
+1753   1          return SAL_ERR_SUCCESS;
+1754   1      }
+1755          #if 0
+              /* Function Name: 
+               *      sal_sys_regBits_set 
+               * Description: 
+               *      Set register value by bitmask. 
+               * Input: 
+               *      addr  - register address 
+               *      bits  - bitmask 
+               *      value - register value 
+               * Output: 
+               *      None 
+               * Return: 
+               *      SAL_ERR_SUCCESS
+               *      SAL_ERR_PARAMETER
+               * Note: 
+               *      None 
+               */
+              int32 sal_sys_regBits_set(uint32 addr, uint32 bits, uint32 value)
+              {
+                  rtk_api_ret_t ret;
+              
+                  if(addr >= 0x10000 || bits >= 0x10000 || value >= 0x10000)
+                      return SAL_ERR_PARAMETER;
+                  
+                  if((ret = rtl8367c_setAsicRegBits(addr, bits, value)) != RT_ERR_OK)
+                      return ret;
+              
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 30  
+
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name: 
+               *      sal_sys_regBit_set 
+               * Description: 
+               *      Set register value by bit. 
+               * Input: 
+               *      addr    - register address 
+               *      bit_idx - bit number 
+               *      value   - register value 
+               * Output: 
+               *      None 
+               * Return: 
+               *      SAL_ERR_SUCCESS
+               *      SAL_ERR_PARAMETER
+               * Note: 
+               *      None 
+               */
+              int32 sal_sys_regBit_set(uint32 addr, uint32 bit_idx, uint32 value)
+              {
+                  rtk_api_ret_t ret;    
+              
+                  if(addr >= 0x10000 || bit_idx >= 16 || value >= 2)
+                      return SAL_ERR_PARAMETER;
+                  
+                  if((ret = rtl8367c_setAsicRegBit(addr, bit_idx, value)) != RT_ERR_OK)
+                      return ret;    
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name: 
+               *      sal_sys_reg_set 
+               * Description: 
+               *      Set register of the chip. 
+               * Input: 
+               *      addr  - register address 
+               *      value - register value 
+               * Output: 
+               *      None
+               * Return: 
+               *      SAL_ERR_SUCCESS
+               *      SAL_ERR_PARAMETER
+               * Note: 
+               *      None 
+               */
+              int32 sal_sys_reg_set(uint32 addr, uint32 value)
+              {
+                  if(addr >= 0x10000 || value >= 0x10000)
+                      return SAL_ERR_FAILED;
+              
+                  setReg(addr, value);
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name: 
+               *      sal_sys_reg_get 
+               * Description: 
+               *      Get register of the chip. 
+               * Input: 
+               *      addr   - register address
+               * Output: 
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 31  
+
+               *      pValue - pointer buffer of the register value 
+               * Return: 
+               *      SAL_ERR_SUCCESS
+               *      SAL_ERR_PARAMETER
+               *      SAL_ERR_NULL_POINTER
+               * Note: 
+               *      None 
+               */
+              
+              int32 sal_sys_reg_get(uint32 addr, uint32 *pValue)
+              {
+                  if(addr >= 0x10000)
+                      return SAL_ERR_PARAMETER;
+              
+                  if(NULL == pValue)
+                      return SAL_ERR_NULL_POINTER;
+              
+                  *pValue = getReg(addr);
+              
+                  return SAL_ERR_SUCCESS;
+              
+              }
+              #endif
+1867          
+1868          /* Function Name: 
+1869           *      sal_sys_system_reboot 
+1870           * Description: 
+1871           *      Reboot the system. 
+1872           * Input: 
+1873           *      None 
+1874           * Output:
+1875           *      None 
+1876           * Return: 
+1877           *      SAL_ERR_SUCCESS
+1878           * Note: 
+1879           *      None 
+1880           */
+1881          // Sal Sys System Reboot: Reboots the entire system
+1882          // Sets reboot register to trigger system reset
+1883          int32 sal_sys_system_reboot(void)
+1884          {
+1885   1          setReg(0x1322, 1);
+1886   1      
+1887   1          return SAL_ERR_SUCCESS;
+1888   1      }
+1889          
+1890          /* Function Name:
+1891           *      sal_sys_loaderMode_set
+1892           * Description:
+1893           *      Enter loader mode. Note that after this function is called,
+1894           *      the system will switched from runtime mode to loader mode and
+1895           *      cannot be switched to runtime mode again.
+1896           * Input:
+1897           *      None
+1898           * Output:
+1899           *      None
+1900           * Return:
+1901           *      SAL_ERR_SUCCESS
+1902           * Note:
+1903           *      None
+1904           */
+1905          // Sal Sys Loader Mode Set: Jumps to loader (bootloader) mode
+C51 COMPILER V9.60.0.0   SALSYS                                                            11/02/2026 17:57:03 PAGE 32  
+
+1906          // Saves config, sets warm start flag, and jumps to loader entry point
+1907          int32 sal_sys_loaderMode_set()
+1908          {
+1909   1          loader_entry_t loader_fp;
+1910   1          uint16 i;
+1911   1        
+1912   1          /* store configuration */
+1913   1          sal_flash_cfg_save();
+1914   1      
+1915   1          /* set loader start mode as warm start */
+1916   1          loader_start_mode_set(START_MODE_WARM);
+1917   1      
+1918   1          /* set loader ip */
+1919   1          runtime_ip_set(this_ip, netmask, default_gateway.addr);
+1920   1          
+1921   1          setReg(0x1336, 0x41);
+1922   1          for(i=0;i<65535;i++); //delay after set clock
+1923   1      
+1924   1          /* jump to initial code of irom */
+1925   1          loader_fp = (loader_entry_t)LOADR_START_ADDR;
+1926   1          loader_fp();
+1927   1      
+1928   1          return SAL_ERR_SUCCESS;
+1929   1      }
+1930          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5618    ----
+   CONSTANT SIZE    =    420    ----
+   XDATA SIZE       =    260     479
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    420    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  5 WARNING(S),  0 ERROR(S)

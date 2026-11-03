@@ -1,0 +1,229 @@
+C51 COMPILER V9.60.0.0   WEB_EEE                                                           11/02/2026 17:57:31 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_EEE
+OBJECT MODULE PLACED IN .\objects\web_eee.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_eee.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_eee.lst) TABS(2) OBJECT(.\objects\web_eee.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * $Revision$
+   6           * $Date$
+   7           *
+   8           * Purpose : The handler of HTTP request to EEE function
+   9           *
+  10           * Feature : Response the related request of EEE function
+  11           *
+  12           */
+  13          #pragma STRING (far)
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          #include <string.h>
+  20          #include <stdlib.h>
+  21          #include <salerror.h>
+  22          #include <saleee.h>
+  23          #include <salsys.h>
+  24          
+  25          #include <web/web_api.h>
+  26          #include "web_util.h"
+  27          
+  28          #if __WEB_EEE_ENABLE__
+  29          
+  30          /*
+  31           * Function Declaration
+  32           */
+  33          
+  34          /*
+  35           * Function: get_eee
+  36           * -----------------
+  37           * Displays EEE (Energy Efficient Ethernet) configuration page.
+  38           * Reads current EEE state and renders HTML with select dropdown.
+  39           * Highlights the currently selected state (Enable/Disable).
+  40           */
+  41          int32 get_eee(struct http_request_s *pReq)
+  42          {
+  43   1          //sal_enable_t eee_enable;
+  44   1          
+  45   1      //    WEB_BEGIN(pReq);
+  46   1      
+  47   1      //    WEB_STATUS(pReq, HTTP_STATUS_OK);
+  48   1      //    WEB_HEADER(pReq, "Content-Type: text/html");
+  49   1      
+  50   1      //    WEB_PRINTF(pReq, "<html>\n");
+  51   1      //    WEB_PRINTF(pReq, "<head>\n");
+C51 COMPILER V9.60.0.0   WEB_EEE                                                           11/02/2026 17:57:31 PAGE 2   
+
+  52   1      //    WEB_PRINTF(pReq, "<title>EEE Setting</title>\n");
+  53   1      //    WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  54   1      //    WEB_PRINTF(pReq, "</head>\n");
+  55   1      //    WEB_PRINTF(pReq, "\n");
+  56   1      //    WEB_PRINTF(pReq, "<body>\n");
+  57   1      //    WEB_PRINTF(pReq, "<center>\n");
+  58   1      //    WEB_PRINTF(pReq, "\n");
+  59   1      //    WEB_PRINTF(pReq, "<fieldset>\n");
+  60   1      //    WEB_PRINTF(pReq, "<legend>EEE Setting</legend>\n");
+  61   1      //    WEB_PRINTF(pReq, "<form method=\"post\" name=\"eee\" action=\"/eee.cgi\">\n");
+  62   1      
+  63   1      //    WEB_PRINTF(pReq, "<br>\n");
+  64   1      //    WEB_PRINTF(pReq, "<table border=\"1\">\n");
+  65   1      //    WEB_PRINTF(pReq, "  <tr>\n");
+  66   1      //    WEB_PRINTF(pReq, "    <th width=\"200\">EEE function</th>\n");
+  67   1      
+  68   1      //    WEB_PRINTF(pReq, "      <td width=\"150\">\n");
+  69   1      //    WEB_PRINTF(pReq, "        <select name=\"func_type\" style=\"width:150\">\n");
+  70   1      
+  71   1      //    sal_eee_get(&eee_enable);
+  72   1      
+  73   1      //    if(SAL_ENABLED == eee_enable)
+  74   1      //    {
+  75   1      //        WEB_PRINTF(pReq, "      <option value=\"0\" >Disable \n");                
+  76   1      //        WEB_PRINTF(pReq, "      <option value=\"1\" selected >Enable \n");
+  77   1      //    }
+  78   1      //    else
+  79   1      //    {
+  80   1      //        WEB_PRINTF(pReq, "      <option value=\"0\" selected >Disable \n");                
+  81   1      //        WEB_PRINTF(pReq, "      <option value=\"1\" >Enable \n");    
+  82   1      //    }
+  83   1          
+  84   1      //    WEB_PRINTF(pReq, "        </select>\n");
+  85   1      //    WEB_PRINTF(pReq, "      </td>\n");
+  86   1      
+  87   1      //    WEB_PRINTF(pReq, "  </tr>\n");
+  88   1      //    WEB_PRINTF(pReq, "</table>\n");
+  89   1      //    WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+  90   1      //    WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+  91   1      //    WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"loop\">\n");
+  92   1      //    WEB_PRINTF(pReq, "</form>\n");
+  93   1      //    WEB_PRINTF(pReq, "</fieldset>\n");
+  94   1      //    WEB_PRINTF(pReq, "</center>\n");
+  95   1      //    WEB_PRINTF(pReq, "</body>\n");
+  96   1      //    WEB_PRINTF(pReq, "</html>\n");
+  97   1      
+  98   1          WEB_END(pReq);
+  99   1      
+ 100   1          return SUCCESS;
+ 101   1      }
+ 102          
+ 103          /*
+ 104           * Function: post_eee
+ 105           * ------------------
+ 106           * Processes EEE configuration form submission.
+ 107           * Extracts 'func_type' value from POST data, converts to integer.
+ 108           * Calls sal_eee_set() to enable/disable EEE feature.
+ 109           * Redirects back to GET handler to refresh the page.
+ 110           */
+ 111          int32 post_eee(struct http_request_s *pReq)
+ 112          {
+ 113   1          uint8           *pValue;
+C51 COMPILER V9.60.0.0   WEB_EEE                                                           11/02/2026 17:57:31 PAGE 3   
+
+ 114   1          uint8           enable;
+ 115   1      
+ 116   1          WEB_VAR(pReq, "func_type", &pValue);
+ 117   1          if (pValue) {
+ 118   2              enable = atoi(pValue);
+ 119   2          }
+ 120   1      
+ 121   1          if(enable)
+ 122   1              sal_eee_set(SAL_ENABLED);
+ 123   1          else
+ 124   1              sal_eee_set(SAL_DISABLED);
+ 125   1      
+ 126   1          
+ 127   1          get_eee(pReq);
+ 128   1      
+ 129   1          return SUCCESS;
+ 130   1      }
+ 131          
+ 132          #endif
+ 133          
+ 134          /*
+ 135           * Function: get_mac_setup
+ 136           * -----------------------
+ 137           * Serves MAC address setup page with HTML/JavaScript.
+ 138           * Allows user to enter last 2 bytes of MAC (XX:XX format).
+ 139           * Validates input format, sends AJAX POST to /set_mac.
+ 140           * Displays success/error messages based on server response.
+ 141           */
+ 142          int32 get_mac_setup(struct http_request_s *pReq)
+ 143          {
+ 144   1          WEB_BEGIN(pReq);
+ 145   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 146   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 147   1          WEB_HEADER(pReq, "Access-Control-Allow-Origin: *");
+ 148   1          WEB_HEADER(pReq, "Access-Control-Allow-Methods: GET, POST, OPTIONS");
+ 149   1          WEB_HEADER(pReq, "Access-Control-Allow-Headers: Content-Type");
+ 150   1      
+ 151   1          /* Ultra-minimized HTML content for MAC setup page */
+ 152   1          WEB_PRINTF(pReq, "<html><head><title>MAC Setup</title>");
+ 153   1          WEB_PRINTF(pReq, "<style>body{font:13px Arial;background:#f4f4f4;margin:0;padding-top:50px;text-align:
+             -center}");
+ 154   1          WEB_PRINTF(pReq, ".c{background:#fff;padding:20px;border-radius:5px;box-shadow:0 1px 3px rgba(0,0,0,.1
+             -);width:300px;margin:0 auto}");
+ 155   1          WEB_PRINTF(pReq, "h1{font-size:20px;margin:0 0 15px}");
+ 156   1          WEB_PRINTF(pReq, "input{width:100%%;padding:8px;margin:10px 0;border:1px solid #ddd;border-radius:3px}
+             -");
+ 157   1          WEB_PRINTF(pReq, "button{background:#1e88e5;color:#fff;border:0;padding:8px 15px;border-radius:3px;cur
+             -sor:pointer}");
+ 158   1          WEB_PRINTF(pReq, "#s{margin-top:15px;font-size:13px}.e{color:red}.g{color:green}</style></head>");
+ 159   1          WEB_PRINTF(pReq, "<body><div class=\"c\"><h1>Set MAC Address</h1>");
+ 160   1          WEB_PRINTF(pReq, "<p>Fixed prefix: A4:DA:22:52:</p>");
+ 161   1          WEB_PRINTF(pReq, "<input type=\"text\" id=\"m\" placeholder=\"Enter XX:XX\" maxlength=\"5\">");
+ 162   1          WEB_PRINTF(pReq, "<br><button id=\"b\">Set MAC</button><div id=\"s\"></div></div>");
+ 163   1          WEB_PRINTF(pReq, "<script>");
+ 164   1          WEB_PRINTF(pReq, "const p=\"A4:DA:22:52:\";");
+ 165   1          WEB_PRINTF(pReq, "document.getElementById(\"b\").onclick=function(){");
+ 166   1          WEB_PRINTF(pReq, "const i=document.getElementById(\"m\"),v=i.value.trim().toUpperCase(),s=document.get
+             -ElementById(\"s\");");
+ 167   1          WEB_PRINTF(pReq, "if(!/^[0-9A-F]{2}:[0-9A-F]{2}$/.test(v)){s.textContent=\"Invalid format\";s.classNam
+             -e=\"e\";return}");
+ 168   1          WEB_PRINTF(pReq, "s.textContent=\"Sending...\";s.className=\"\";");
+ 169   1          WEB_PRINTF(pReq, "var x=new XMLHttpRequest();");
+C51 COMPILER V9.60.0.0   WEB_EEE                                                           11/02/2026 17:57:31 PAGE 4   
+
+ 170   1          WEB_PRINTF(pReq, "x.open(\"POST\",\"/set_mac\");");
+ 171   1          WEB_PRINTF(pReq, "x.setRequestHeader(\"Content-Type\",\"application/x-www-form-urlencoded\");");
+ 172   1          WEB_PRINTF(pReq, "x.onload=function(){");
+ 173   1          WEB_PRINTF(pReq, "if(x.status==200){");
+ 174   1          WEB_PRINTF(pReq, "if(x.responseText==\"MAC_SET_SUCCESS\"){s.textContent=\"Success!\";s.className=\"g\"
+             -;i.value=\"\"}");
+ 175   1          WEB_PRINTF(pReq, "else if(x.responseText==\"MAC_SET_NOT_ALLOWED\"){s.textContent=\"Not allowed\";s.cla
+             -ssName=\"e\"}");
+ 176   1          WEB_PRINTF(pReq, "else{s.textContent=\"Error\";s.className=\"e\"}}");
+ 177   1          WEB_PRINTF(pReq, "else{s.textContent=\"Error\";s.className=\"e\"}};");
+ 178   1          WEB_PRINTF(pReq, "x.onerror=function(){s.textContent=\"Failed\";s.className=\"e\"};");
+ 179   1          WEB_PRINTF(pReq, "x.send(\"mac=\"+p+v);};");
+ 180   1          WEB_PRINTF(pReq, "</script></body></html>");
+ 181   1      
+ 182   1          WEB_END(pReq);
+ 183   1          return SUCCESS;
+ 184   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    847    ----
+   CONSTANT SIZE    =   1771    ----
+   XDATA SIZE       =   ----      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1771    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

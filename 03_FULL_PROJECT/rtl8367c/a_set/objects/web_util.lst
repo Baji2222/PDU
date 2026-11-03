@@ -1,0 +1,178 @@
+C51 COMPILER V9.60.0.0   WEB_UTIL                                                          11/02/2026 17:57:38 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_UTIL
+OBJECT MODULE PLACED IN .\objects\web_util.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_util.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_util.lst) TABS(2) OBJECT(.\objects\web_util.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <string.h> 
+   4          
+   5          #include <salerror.h>
+   6          
+   7          #include <web/web_api.h>
+   8          #include "web_util.h"
+   9          
+  10          /*
+  11           * Function: errMsg_get
+  12           * --------------------
+  13           * Retrieves error message string from error code.
+  14           * Wrapper around sal_err_msg_get() function.
+  15           * Returns human-readable error description.
+  16           * Used by printerr to display error messages.
+  17           */
+  18          const char *
+  19          errMsg_get(int32 errCode)
+  20          {
+  21   1          const char* errStr;
+  22   1      
+  23   1          errStr = sal_err_msg_get(errCode);
+  24   1      
+  25   1          return errStr;
+  26   1          /*
+  27   1          if (memcmp(errStr, "Unknown error", sizeof("Unknown error")) != 0)
+  28   1              return errStr;
+  29   1              */
+  30   1      }
+  31          
+  32          /*
+  33           * Function: printerr
+  34           * ------------------
+  35           * Displays error message page and redirects back.
+  36           * Shows error alert in popup window via JavaScript.
+  37           * Redirects to /goback.cgi to return to previous page.
+  38           * Used to display API/function errors to user.
+  39           */
+  40          void
+  41          printerr (
+  42              struct http_request_s *pReq,
+  43              unsigned short  errno
+  44              )
+  45          {
+  46   1          WEB_BEGIN(pReq);
+  47   1      
+  48   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  49   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  50   1          
+  51   1          WEB_PRINTF(pReq, "<html>\n");
+C51 COMPILER V9.60.0.0   WEB_UTIL                                                          11/02/2026 17:57:38 PAGE 2   
+
+  52   1          WEB_PRINTF(pReq, "\n");
+  53   1          WEB_PRINTF(pReq, "<head>\n");
+  54   1          WEB_PRINTF(pReq, "<title>Message</title>\n");
+  55   1          WEB_PRINTF(pReq, "</head>\n");
+  56   1          WEB_PRINTF(pReq, "\n");
+  57   1          WEB_PRINTF(pReq, "<body>\n");
+  58   1          WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+  59   1          WEB_PRINTF(pReq, "window.location.replace(\"/goback.cgi\");\n");
+  60   1          WEB_PRINTF(pReq, "window.open(\'/alert.cgi?alertmsg=Error: %s\',\'hidden_frame\',\'\');\n", 
+  61   1                  errMsg_get(errno));
+  62   1          WEB_PRINTF(pReq, "</script>\n");
+  63   1          WEB_PRINTF(pReq, "</body>\n");
+  64   1          WEB_PRINTF(pReq, "</html>\n");
+  65   1          WEB_END(pReq);
+  66   1      
+  67   1      }
+  68          
+  69          /*
+  70           * Function: printmsg
+  71           * ------------------
+  72           * Displays custom message page and redirects back.
+  73           * Removes newline characters from message for safe display.
+  74           * Shows message alert in popup window via JavaScript.
+  75           * Redirects to /goback.cgi after showing message.
+  76           */
+  77          void
+  78          printmsg (
+  79              struct http_request_s *pReq,
+  80              char *  msg
+  81              )
+  82          {
+  83   1          int i;
+  84   1          char msg_temp[128];
+  85   1      
+  86   1          WEB_BEGIN(pReq);
+  87   1      
+  88   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  89   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  90   1          
+  91   1          WEB_PRINTF(pReq, "<html>\n");
+  92   1          WEB_PRINTF(pReq, "\n");
+  93   1          WEB_PRINTF(pReq, "<head>\n");
+  94   1          WEB_PRINTF(pReq, "<title>Message</title>\n");
+  95   1          WEB_PRINTF(pReq, "</head>\n");
+  96   1          WEB_PRINTF(pReq, "\n");
+  97   1          WEB_PRINTF(pReq, "<body>\n");
+  98   1          WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+  99   1          i = 0;
+ 100   1          strncpy(msg_temp, msg, 128);
+ 101   1          while(msg_temp[i] != '\0')
+ 102   1          {
+ 103   2                  if(msg_temp[i] == '\n')
+ 104   2                  {
+ 105   3                  msg_temp[i] = ' ';
+ 106   3                  }
+ 107   2                  i ++;
+ 108   2          }
+ 109   1          WEB_PRINTF(pReq, "window.location.replace(\"/goback.cgi\");\n");
+ 110   1          WEB_PRINTF(pReq, "window.open(\'/alert.cgi?alertmsg=%s\',\'hidden_frame\',\'\');\n", msg_temp);
+ 111   1          WEB_PRINTF(pReq, "</script>\n");
+ 112   1          WEB_PRINTF(pReq, "</body>\n");
+ 113   1          WEB_PRINTF(pReq, "</html>\n");
+C51 COMPILER V9.60.0.0   WEB_UTIL                                                          11/02/2026 17:57:38 PAGE 3   
+
+ 114   1          WEB_END(pReq);
+ 115   1      }
+ 116          
+ 117          /*
+ 118           * Function: strnstr
+ 119           * -----------------
+ 120           * Finds first occurrence of substring needle in haystack.
+ 121           * Searches within first 'hlen' characters of haystack.
+ 122           * Returns pointer to beginning of match or NULL if not found.
+ 123           * Safe version of strstr with length limit.
+ 124           */
+ 125          char *
+ 126          strnstr (const char *haystack, const char *needle, uint16 hlen)
+ 127          {
+ 128   1          uint16 nlen;
+ 129   1                                                                                      
+ 130   1          if (!needle || !*needle)
+ 131   1              return (char *)haystack;
+ 132   1          else
+ 133   1              nlen = strlen (needle);
+ 134   1                                                                                      
+ 135   1          while (hlen >= nlen) {
+ 136   2              if (*needle == *haystack && !strncmp (haystack + 1, needle + 1,
+ 137   2                                                    nlen - 1))
+ 138   2                  return (char *) haystack;
+ 139   2              haystack++; hlen--;
+ 140   2          }
+ 141   1                                                                                      
+ 142   1          return NULL;
+ 143   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    982    ----
+   CONSTANT SIZE    =    309    ----
+   XDATA SIZE       =   ----     151
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    309    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

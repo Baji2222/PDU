@@ -1,0 +1,569 @@
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALPORT
+OBJECT MODULE PLACED IN .\objects\salport.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salport.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salport.lst) TABS(2) OBJECT(.\objects\salport.obj)
+
+line level    source
+
+   1          #include <string.h>
+   2          #include <common.h>
+   3          #include <salflash.h>
+   4          #include <saltrunk.h>
+   5          #include <salerror.h>
+   6          #include <salportmask.h>
+   7          #include <salport.h>
+   8          #include <rtl8367c_asicdrv_phy.h>
+   9          #include <port.h>
+  10          
+  11          /* macro for RTCT */
+  12          #define PHY_REG_ADDR_BASE        0x2000
+  13          
+  14          #define PHY_PAGE_REG(port)       (PHY_REG_ADDR_BASE + 0x1F + (port) * 0x20)
+  15          #define RTCT_PHY_PAGE            11
+  16          
+  17          #define RTCT_ACT_REG             0x1B21
+  18          #define RTCT_ACT_GLOBAL_OFF      5
+  19          #define RTCT_ACT_REG_OFF         15
+  20          
+  21          #define RTCT_ACT_PMSK_REG        0x1B22
+  22          
+  23          #define RTCT_TIMEOUT_CNT         0x20000UL
+  24          
+  25          typedef enum rtct_channel
+  26          {
+  27              RTCT_CHANNEL_A = 0,
+  28              RTCT_CHANNEL_B,
+  29              RTCT_CHANNEL_C,
+  30              RTCT_CHANNEL_D,
+  31              RTCT_CHANNEL_END
+  32          } rtct_channel_t;
+  33          
+  34          #define RTCT_STS_PHY_REG(port)             (PHY_REG_ADDR_BASE + 26 + (port) * 0x20)
+  35          #define RTCT_STS_SHORT_STS_OFF(channel)    (12 + channel - RTCT_CHANNEL_A)
+  36          #define RTCT_STS_OPEN_STS_OFF(channel)     (8  + channel - RTCT_CHANNEL_A) 
+  37          #define RTCT_STS_MISM_STS_OFF(channel)     (4  + channel - RTCT_CHANNEL_A) 
+  38          #define RTCT_STS_LDRV_STS_OFF(channel)     (0  + channel - RTCT_CHANNEL_A) 
+  39          
+  40          
+  41          
+  42          #define RTCT_RDY_PHY_REG(port)             (PHY_REG_ADDR_BASE + 27 + (port) * 0x20)
+  43          #define RTCT_RDY_PHY_REG_OFF               14
+  44          
+  45          #define RTCT_RST_PHY_REG(port)             (PHY_REG_ADDR_BASE + 26 + (port) * 0x20)
+  46          
+  47          #define RTCT_LEN_PHY_REG(port, channel)    (PHY_REG_ADDR_BASE + 27 + (port) * 0x20 + (channel))
+  48          
+  49          #define RTCT_ACT_PHY_REG(port)             (PHY_REG_ADDR_BASE + 25 + (port) * 0x20)
+  50          #define RTCT_ACT_PHY_CMD_OFF               15
+  51          
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 2   
+
+  52          #if SAL_ENABLE
+  53          int32
+  54          sal_port_config_restore(void)
+  55          {
+  56   1          uint8                   port;
+  57   1          sal_lPortmask_t         allPortMask, isolationMask;
+  58   1          sal_enable_t          bPortEbl;
+  59   1        Tbool                 bFlowEbl;
+  60   1          sal_phyAbility_t        phyAbility;        
+  61   1          //rtk_port_phy_ability_t  phyAbility;
+  62   1      
+  63   1          sal_trunk_logicPort_setAll(&allPortMask);
+  64   1      
+  65   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port)
+  66   1          {
+  67   2            if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&allPortMask, port))
+  68   2            {
+  69   3              continue;
+  70   3            }
+  71   2      
+  72   2              //memset(&ability, 0, sizeof(sal_phyAbility_t));
+  73   2              memset(&phyAbility, 0, sizeof(sal_phyAbility_t));
+  74   2            sal_flash_port_adminEnable_get(port, &bPortEbl);
+  75   2              sal_flash_port_phyAbility_get(port, &phyAbility);
+  76   2              sal_flash_port_flowCtrl_get(port, &bFlowEbl);
+  77   2              sal_flash_port_isolation_get(port, &isolationMask);
+  78   2      
+  79   2              phyAbility.FC = bFlowEbl;
+  80   2              sal_port_adminEnable_set(port, bPortEbl);
+  81   2              sal_port_phyAbility_set(port, &phyAbility);
+  82   2              //sal_port_linkAbility_set(port, &phyAbility);
+  83   2              sal_port_isolation_set(port, isolationMask);
+  84   2          }
+  85   1          
+  86   1          return SAL_ERR_SUCCESS;
+  87   1      }
+  88          
+  89          int32 
+  90          sal_port_adminEnable_set(
+  91              sal_port_t port, 
+  92              sal_enable_t enable
+  93               )
+  94          {
+  95   1        int32          ret;
+  96   1        uint8          portId;
+  97   1        sal_pPortmask_t p_portMask;
+  98   1      
+  99   1        sal_trunk_logicId_toPhysicMask(&p_portMask, port);
+ 100   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 101   1          {
+ 102   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&p_portMask, portId))
+ 103   2              {
+ 104   3                  if ((ret = rtk_port_adminEnable_set(portId, enable)) != RT_ERR_OK)
+ 105   3                      return ret;
+ 106   3              }
+ 107   2          }
+ 108   1      
+ 109   1          return sal_flash_port_adminEnable_set(port, enable);
+ 110   1      }
+ 111          
+ 112          int32 
+ 113          sal_port_adminEnable_get(
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 3   
+
+ 114              sal_port_t port, 
+ 115              sal_enable_t *pEnable
+ 116              )
+ 117          {      
+ 118   1          int32 ret;
+ 119   1          rtk_enable_t en;
+ 120   1          sal_port_t  p_portId;
+ 121   1      
+ 122   1          sal_trunk_logicId_toPhysicId(&p_portId, port);
+ 123   1          if ((ret = rtk_port_adminEnable_get(p_portId, &en)) != RT_ERR_OK)
+ 124   1              return ret;
+ 125   1      
+ 126   1          if (en == DISABLED)
+ 127   1              *pEnable = SAL_DISABLED;
+ 128   1          else
+ 129   1              *pEnable = SAL_ENABLED;
+ 130   1      
+ 131   1          return SAL_ERR_SUCCESS;
+ 132   1      }
+ 133          
+ 134          /* Function Name:
+ 135           *      sal_port_link_get
+ 136           * Description:
+ 137           *      Get link status of the specific port
+ 138           * Input:
+ 139           *      port    - port ID
+ 140           * Output:
+ 141           *      pEnable - pointer to link status of port
+ 142           * Return:
+ 143           *      SAL_ERR_SUCCESS
+ 144           *      SAL_ERR_PARAMETER
+ 145           * Note:
+ 146           *      None
+ 147           */
+ 148          int32 sal_port_link_get(sal_port_t port, sal_enable_t *pEnable)
+ 149          {
+ 150   1          static rtk_port_mac_ability_t macAbt;
+ 151   1          memset(&macAbt, 0x00, sizeof(macAbt));
+ 152   1          rtk_port_macStatus_get(port, &macAbt);
+ 153   1      
+ 154   1          *pEnable = (uint8)(macAbt.link & 0xFF);
+ 155   1      
+ 156   1        return SAL_ERR_SUCCESS;
+ 157   1      }
+ 158          
+ 159          #if 0
+              int32 
+              sal_port_speedDuplex_get(
+                  sal_port_t port, 
+                  uint32 *pSpeed, 
+                  uint32 *pDuplex
+                  )
+              {
+                int32  ret;
+                uint8  ucPPortId;
+                  rtk_port_linkStatus_t LinkStatus;
+                  rtk_port_speed_t spd;
+                  rtk_port_duplex_t duplex;
+              
+                  
+                SalTrkLId2PId(&ucPPortId, port);
+                  if ((ret = rtk_port_phyStatus_get(ucPPortId, &LinkStatus, &spd, &duplex)) !=SUCCESS)
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 4   
+
+                  return ret;
+              
+                *pSpeed = spd;
+                *pDuplex = duplex;
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 184          
+ 185          int32 
+ 186          sal_port_isolation_set(
+ 187              sal_port_t port, 
+ 188              sal_lPortmask_t portMask
+ 189              )
+ 190          {
+ 191   1        int32          ret;
+ 192   1        uint8          portId;
+ 193   1        sal_pPortmask_t stPPortMask1, stPPortMask2;
+ 194   1          rtk_portmask_t  portmask2;
+ 195   1      
+ 196   1          sal_trunk_logicMask_toPhysicMask(&stPPortMask1, &portMask);
+ 197   1          sal_trunk_logicId_toPhysicMask(&stPPortMask2, port);
+ 198   1      
+ 199   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 200   1          {
+ 201   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&stPPortMask2, portId))
+ 202   2              {
+ 203   3                  memset(&portmask2, 0, sizeof(rtk_portmask_t));
+ 204   3                  portmask2.bits[0] = stPPortMask1.bits[0] | ((uint32)1 << SAL_PORT_ID_CPU);
+ 205   3                  if ((ret = rtk_port_isolation_set(portId, &portmask2)) != RT_ERR_OK)
+ 206   3                      return ret;
+ 207   3              }
+ 208   2          }
+ 209   1          
+ 210   1      #if defined(LWS_8G_2F)
+                if (port == 8)
+                      port = EXT_PORT0;
+                if (port == 9)
+                      port = EXT_PORT1;
+              #elif defined(LWS_5G_1F)
+                if (port == 6)
+                      port = EXT_PORT0;
+              #endif
+ 219   1      
+ 220   1        return sal_flash_port_isolation_set(port, portMask);
+ 221   1      }
+ 222          
+ 223          int32 
+ 224          sal_port_isolation_get(
+ 225              sal_port_t port, 
+ 226              sal_lPortmask_t *pPortMask
+ 227              )
+ 228          {
+ 229   1        int32          ret;
+ 230   1        uint8          ucPPortId;
+ 231   1          sal_pPortmask_t    stPPortMask;
+ 232   1          rtk_portmask_t  portmask;
+ 233   1      
+ 234   1          SAL_ERR_CHK_EXPR(NULL == pPortMask, SAL_ERR_NULL_POINTER);
+ 235   1      
+ 236   1          memset(&portmask, 0, sizeof(rtk_portmask_t));
+ 237   1          memset(&stPPortMask, 0, sizeof(sal_pPortmask_t));
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 5   
+
+ 238   1          
+ 239   1        sal_trunk_logicId_toPhysicId(&ucPPortId, port);
+ 240   1          ret = rtk_port_isolation_get(ucPPortId, &portmask);
+ 241   1          SAL_ERR_CODE(ret, SAL_ERR_PORT_ISOLATION_GET);
+ 242   1      
+ 243   1          stPPortMask.bits[0] = portmask.bits[0];
+ 244   1      
+ 245   1          sal_trunk_physicMask_toLogicMask(pPortMask, &stPPortMask);
+ 246   1      
+ 247   1        return SAL_ERR_SUCCESS;
+ 248   1      }
+ 249          
+ 250          /* Function Name:
+ 251           *      sal_port_phyAbility_set
+ 252           * Description:
+ 253           *      Set the port ability of the specific port
+ 254           * Input:
+ 255           *      port        - port ID
+ 256           *      pPhyAbility - pointer to the port ability
+ 257           * Output:
+ 258           *      None
+ 259           * Return:
+ 260           *      SAL_ERR_SUCCESS
+ 261           *      SAL_ERR_PARAMETER
+ 262           * Note:
+ 263           *      None
+ 264           */
+ 265          int32 sal_port_phyAbility_set(sal_port_t port, sal_phyAbility_t *pPhyAbility)
+ 266          {        
+ 267   1          int32          ret;
+ 268   1        uint8          portId;
+ 269   1          sal_pPortmask_t  portmask;
+ 270   1          rtk_port_phy_ability_t ability;
+ 271   1      
+ 272   1          if (pPhyAbility == NULL)
+ 273   1              return SAL_ERR_NULL_POINTER;
+ 274   1              
+ 275   1          ability.AutoNegotiation = pPhyAbility->AutoNegotiation & 0x0001;
+ 276   1        ability.Half_10         = pPhyAbility->Half_10 & 0x0001;
+ 277   1        ability.Full_10         = pPhyAbility->Full_10 & 0x0001;
+ 278   1        ability.Half_100        = pPhyAbility->Half_100 & 0x0001;
+ 279   1        ability.Full_100        = pPhyAbility->Full_100 & 0x0001;
+ 280   1        ability.Full_1000       = pPhyAbility->Full_1000 & 0x0001;
+ 281   1        ability.FC              = pPhyAbility->FC & 0x0001;
+ 282   1        ability.AsyFC           = pPhyAbility->AsyFC & 0x0001;
+ 283   1        sal_trunk_logicId_toPhysicMask(&portmask, port);
+ 284   1        
+ 285   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 286   1          {
+ 287   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&portmask, portId))
+ 288   2              {
+ 289   3                  if(ability.AutoNegotiation == 1)
+ 290   3                  {
+ 291   4                      if ((ret = rtk_port_phyAutoNegoAbility_set(portId, &ability)) != RT_ERR_OK)
+ 292   4                          return ret;
+ 293   4                  }
+ 294   3                  else
+ 295   3                  {
+ 296   4                      if ((ret = rtk_port_phyForceModeAbility_set(portId, &ability)) != RT_ERR_OK)
+ 297   4                          return ret;            
+ 298   4                  }
+ 299   3              }
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 6   
+
+ 300   2          }
+ 301   1          
+ 302   1          return sal_flash_port_phyAbility_set(port, pPhyAbility);
+ 303   1      }
+ 304          
+ 305          
+ 306          /* Function Name:
+ 307           *      sal_port_phyAutoNegoAbility_get
+ 308           * Description:
+ 309           *      Get the port ability of the specific port
+ 310           * Input:
+ 311           *      port        - port ID
+ 312           * Output:
+ 313           *      pPhyAbility - Pointer to the port ability
+ 314           * Return:
+ 315           *      SAL_ERR_SUCCESS
+ 316           *      SAL_ERR_PARAMETER
+ 317           * Note:
+ 318           *      None
+ 319           */
+ 320          int32 sal_port_phyAbility_get(sal_port_t port, sal_phyAbility_t *pPhyAbility)
+ 321          {
+ 322   1      //    rtk_api_ret_t ret;
+ 323   1          sal_phyAbility_t ability;
+ 324   1          sal_port_t  portId;
+ 325   1      
+ 326   1          if (pPhyAbility == NULL)
+ 327   1              return SAL_ERR_NULL_POINTER;
+ 328   1      
+ 329   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 330   1          
+ 331   1      #if 1
+ 332   1              sal_flash_port_phyAbility_get(port, &ability);
+ 333   1              memcpy(pPhyAbility, &ability, sizeof(sal_phyAbility_t));
+ 334   1      #else
+                      if(ability.AutoNegotiation == 1)
+                      if ((ret = rtk_port_phyAutoNegoAbility_get(portId, &ability)) != RT_ERR_OK)
+                          return ret;
+                   
+                      pPhyAbility->AutoNegotiation = (uint8)(ability.AutoNegotiation & 0x1);
+                      pPhyAbility->Half_10         = (uint8)(ability.Half_10 & 0x1);
+                      pPhyAbility->Full_10         = (uint8)(ability.Full_10 & 0x1);
+                      pPhyAbility->Half_100        = (uint8)(ability.Half_100 & 0x1);
+                      pPhyAbility->Full_100        = (uint8)(ability.Full_100 & 0x1);
+                      pPhyAbility->Full_1000       = (uint8)(ability.Full_1000 & 0x1);
+                      pPhyAbility->FC              = (uint8)(ability.FC & 0x1);
+                      pPhyAbility->AsyFC           = (uint8)(ability.AsyFC & 0x1);
+              #endif  
+ 348   1        
+ 349   1          return SAL_ERR_SUCCESS;
+ 350   1      }
+ 351          
+ 352          
+ 353          /* Function Name:
+ 354           *      sal_port_macStatus_get
+ 355           * Description:
+ 356           *      Get MAC status.
+ 357           * Input:
+ 358           *      port    - port ID
+ 359           * Output:
+ 360           *      pStatus - pointer to the mac status
+ 361           * Return:
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 7   
+
+ 362           *      SAL_ERR_SUCCESS
+ 363           * Note:
+ 364           *      None
+ 365           */
+ 366          int32 sal_port_macStatus_get(sal_port_t port, sal_port_macStatus_t *pStatus)
+ 367          {
+ 368   1          int32 ret;
+ 369   1          sal_port_t  portId;
+ 370   1          rtk_port_mac_ability_t status;
+ 371   1          if (pStatus == NULL)
+ 372   1              return SAL_ERR_NULL_POINTER;
+ 373   1      
+ 374   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 375   1      
+ 376   1          if((ret = rtk_port_macStatus_get(portId, &status)) != SUCCESS)
+ 377   1              return ret;
+ 378   1      
+ 379   1      
+ 380   1          pStatus->duplex = (sal_port_duplex_t)status.duplex;
+ 381   1          pStatus->fc     = (sal_port_fc_t)status.rxpause & (sal_port_fc_t)status.txpause;
+ 382   1          pStatus->linkup = status.link;
+ 383   1          pStatus->speed  = (sal_port_speed_t)status.speed;
+ 384   1      
+ 385   1          return SAL_ERR_SUCCESS;
+ 386   1      }
+ 387          
+ 388          /* Function Name:
+ 389           *      sal_port_flush_set
+ 390           * Description:
+ 391           *      Flush packets of a port
+ 392           * Input:
+ 393           *      port    - port ID
+ 394           * Output:
+ 395           *      None
+ 396           * Return:
+ 397           *      SAL_ERR_SUCCESS
+ 398           *      SAL_ERR_PORT_RANGE
+ 399           * Note:
+ 400           *      None
+ 401           */
+ 402          int32 sal_port_flush_set(sal_port_t port)
+ 403          {
+ 404   1          port = 0;
+ 405   1      
+ 406   1          return SAL_ERR_SUCCESS;
+ 407   1      }
+ 408          
+ 409          #if SAL_RTCT
+ 410          
+ 411          /* Function Name:
+ 412           *      sal_port_rtctResult_get
+ 413           * Description:
+ 414           *      Get test result of RTCT.
+ 415           * Input:
+ 416           *      port        - the port for retriving RTCT test result
+ 417           * Output:
+ 418           *      pRtctResult - RTCT result 
+ 419           * Return:
+ 420           *      SAL_ERR_SUCCESS
+ 421           *      SAL_ERR_FAILED
+ 422           *      SAL_ERR_NOT_SUPPORT
+ 423           *      SAL_ERR_PARAMETER
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 8   
+
+ 424           *      SAL_ERR_NULL_POINTER 
+ 425           * Note:
+ 426           *      (1) If linkType is PORT_SPEED_1000M, test result will be stored in sal_ge_result. 
+ 427           *      (2) If linkType is PORT_SPEED_10M or PORT_SPEED_100M, test result will be stored in fe_result.
+ 428           */
+ 429          int32 sal_port_rtctResult_get(sal_port_t port, sal_rtctResult_t *pRtctResult)
+ 430          {
+ 431   1          uint32 i;
+ 432   1          uint32 cnt;
+ 433   1          int32 ret;
+ 434   1          rtk_rtctResult_t rtk_rtctResult;
+ 435   1      
+ 436   1          if(port > SAL_MAX_PHY_PORT - SAL_MAX_EXT_PORT)
+ 437   1              return SAL_ERR_PARAMETER;
+ 438   1      
+ 439   1          if(NULL == pRtctResult)
+ 440   1              return SAL_ERR_NULL_POINTER;
+ 441   1      
+ 442   1          pRtctResult->linkType = SAL_PORT_SPEED_1000;
+ 443   1      
+ 444   1          cnt = 0;
+ 445   1          memset(&rtk_rtctResult, 0, sizeof(rtk_rtctResult));
+ 446   1          while(1)
+ 447   1          {
+ 448   2              ret = rtk_port_rtctResult_get(port, &rtk_rtctResult);
+ 449   2              if ( ret == RT_ERR_OK)
+ 450   2                  break;
+ 451   2              for(i=0;i<0x2fff;i++);
+ 452   2              cnt++;
+ 453   2          
+ 454   2              if ( cnt == 30 )
+ 455   2                  return SAL_ERR_FAILED;
+ 456   2          }    
+ 457   1      
+ 458   1          pRtctResult->ge_result.channelALen = rtk_rtctResult.result.rtk_ge_result.channelALen & 0xffff;
+ 459   1          pRtctResult->ge_result.channelBLen = rtk_rtctResult.result.rtk_ge_result.channelBLen & 0xffff;
+ 460   1          pRtctResult->ge_result.channelCLen = rtk_rtctResult.result.rtk_ge_result.channelCLen & 0xffff;
+ 461   1          pRtctResult->ge_result.channelDLen = rtk_rtctResult.result.rtk_ge_result.channelDLen & 0xffff;
+ 462   1      
+ 463   1          pRtctResult->ge_result.channelALinedriver = rtk_rtctResult.result.rtk_ge_result.channelALinedriver & 0
+             -xff;
+ 464   1          pRtctResult->ge_result.channelBLinedriver = rtk_rtctResult.result.rtk_ge_result.channelBLinedriver & 0
+             -xff;
+ 465   1          pRtctResult->ge_result.channelCLinedriver = rtk_rtctResult.result.rtk_ge_result.channelCLinedriver & 0
+             -xff;
+ 466   1          pRtctResult->ge_result.channelDLinedriver = rtk_rtctResult.result.rtk_ge_result.channelDLinedriver & 0
+             -xff;
+ 467   1      
+ 468   1          pRtctResult->ge_result.channelAMismatch = rtk_rtctResult.result.rtk_ge_result.channelAMismatch & 0xff;
+ 469   1          pRtctResult->ge_result.channelBMismatch = rtk_rtctResult.result.rtk_ge_result.channelBMismatch & 0xff;
+ 470   1          pRtctResult->ge_result.channelCMismatch = rtk_rtctResult.result.rtk_ge_result.channelCMismatch & 0xff;
+ 471   1          pRtctResult->ge_result.channelDMismatch = rtk_rtctResult.result.rtk_ge_result.channelDMismatch & 0xff;
+ 472   1      
+ 473   1          pRtctResult->ge_result.channelAOpen = rtk_rtctResult.result.rtk_ge_result.channelAOpen & 0xff;
+ 474   1          pRtctResult->ge_result.channelBOpen = rtk_rtctResult.result.rtk_ge_result.channelBOpen & 0xff;
+ 475   1          pRtctResult->ge_result.channelCOpen = rtk_rtctResult.result.rtk_ge_result.channelCOpen & 0xff;
+ 476   1          pRtctResult->ge_result.channelDOpen = rtk_rtctResult.result.rtk_ge_result.channelDOpen & 0xff;
+ 477   1      
+ 478   1          pRtctResult->ge_result.channelAShort = rtk_rtctResult.result.rtk_ge_result.channelAShort & 0xff;
+ 479   1          pRtctResult->ge_result.channelBShort = rtk_rtctResult.result.rtk_ge_result.channelBShort & 0xff;
+ 480   1          pRtctResult->ge_result.channelCShort = rtk_rtctResult.result.rtk_ge_result.channelCShort & 0xff;
+ 481   1          pRtctResult->ge_result.channelDShort = rtk_rtctResult.result.rtk_ge_result.channelDShort & 0xff;    
+C51 COMPILER V9.60.0.0   SALPORT                                                           11/02/2026 17:57:02 PAGE 9   
+
+ 482   1      
+ 483   1          return SAL_ERR_SUCCESS;
+ 484   1      
+ 485   1      }
+ 486          
+ 487          /* Function Name:
+ 488           *      sal_port_rtct_start
+ 489           * Description:
+ 490           *      Start RTCT for ports. 
+ 491           *      When enable RTCT, the port won't transmit and receive normal traffic.
+ 492           * Input:
+ 493           *      port        - the physical port for retriving RTCT test result
+ 494           * Output:
+ 495           *      None
+ 496           * Return:
+ 497           *      SAL_ERR_SUCCESS
+ 498           *      SAL_ERR_PARAMETER
+ 499           * Note:
+ 500           *      None
+ 501           */
+ 502          int32 sal_port_rtct_start(sal_port_t port)
+ 503          {
+ 504   1          int32 ret;
+ 505   1          rtk_portmask_t portmask;
+ 506   1          
+ 507   1          if(port > SAL_MAX_PHY_PORT - SAL_MAX_EXT_PORT)
+ 508   1              return SAL_ERR_PARAMETER;
+ 509   1          portmask.bits[0] = 1UL << port;
+ 510   1          if ((ret = rtk_port_rtctEnable_set(&portmask)) != RT_ERR_OK)
+ 511   1              return ret;
+ 512   1          
+ 513   1          return SAL_ERR_SUCCESS;
+ 514   1      }
+ 515          
+ 516          #endif
+ 517          #endif
+ 518          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2262    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     28     260
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

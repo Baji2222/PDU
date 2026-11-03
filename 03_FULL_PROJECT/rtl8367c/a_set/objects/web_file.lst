@@ -1,0 +1,424 @@
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_FILE
+OBJECT MODULE PLACED IN .\objects\web_file.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_file.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_file.lst) TABS(2) OBJECT(.\objects\web_file.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <stdio.h>
+   4          
+   5          #include "web_file.h"
+   6          #include <web/web_api.h>
+   7          #include <web/http_debug.h>
+   8          
+   9          /*
+  10           * Array: file_style_css
+  11           * ---------------------
+  12           * CSS stylesheet defining table, cell, and form element styles.
+  13           * Sets colors, fonts, borders, and layout for web interface.
+  14           * Used for consistent styling across all web pages.
+  15           */
+  16          uint8 const far file_style_css[] = "\
+  17          .MidSize {width:100px;}\n\
+  18          \n\
+  19          table {\n\
+  20          border-collapse:collapse;\n\
+  21          border-style:solid;\n\
+  22          border-width:1px;\n\
+  23          font-size:12px;\n\
+  24          font-weight:normal;\n\
+  25          line-height:1.6em;\n\
+  26          font-family: Geneva, Arial, Helvetica, sans-serif;\n\
+  27          letter-spacing:.45pt\n\
+  28          }\n\
+  29          \n\
+  30          td {\n\
+  31          text-align:center;\n\
+  32          }\n\
+  33          \n\
+  34          th {\n\
+  35          background: rgb(32,32,255);\n\
+  36          color: rgb(255,255,255);\n\
+  37          }\n\
+  38          \n\
+  39          select, input, legend {\n\
+  40          font-family: Geneva, Arial, Helvetica, sans-serif;\n\
+  41          letter-spacing:.45pt\n\
+  42          }\n\
+  43          \n\
+  44          select {width:100px;}\n\
+  45          ";
+  46          
+  47          /*
+  48           * Array: file_xp_progress_js
+  49           * --------------------------
+  50           * JavaScript for animated progress bar (XP-style).
+  51           * Creates scrolling block animation with opacity effects.
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 2   
+
+  52           * Provides start, pause, hide/show controls for progress indication.
+  53           */
+  54          uint8 const far file_xp_progress_js[] = "\
+  55          var w3c=(document.getElementById)?true:false;\n\
+  56          var ie=(document.all)?true:false;\n\
+  57          var N=-1;\n\
+  58          \n\
+  59          function createBar(w,h,bgc,brdW,brdC,blkC,speed,blocks,count,action){\n\
+  60          if(ie||w3c){\n\
+  61          var t='<div id=\"_xpbar'+(++N)+'\" style=\"visibility:visible; position:relative; overflow:hidden; width:'
+             -+w+'px; height:'+h+'px; background-color:'+bgc+'; border-color:'+brdC+'; border-width:'+brdW+'px; border-style:solid; fo
+             -nt-size:1px;\">';\n\
+  62          t+='<span id=\"blocks'+N+'\" style=\"left:-'+(h*2+1)+'px; position:absolute; font-size:1px\">';\n\
+  63          t+='<span id=\"blocks'+N+'\" style=\"left:-'+(h*2+1)+'px; position:absolute; font-size:1px\">';\n\
+  64          for(i=0;i<blocks;i++){\n\
+  65          t+='<span style=\"background-color:'+blkC+'; left:-'+((h*i)+i)+'px; font-size:1px; position:absolute; widt
+             -h:'+h+'px; height:'+h+'px; '\n\
+  66          t+=(ie)?'filter:alpha(opacity='+(100-i*(100/blocks))+')':'-Moz-opacity:'+((100-i*(100/blocks))/100);\n\
+  67          t+='\"></span>';\n\
+  68          }\n\
+  69          t+='</span></div>';\n\
+  70          document.write(t);\n\
+  71          var bA=(ie)?document.all['blocks'+N]:document.getElementById('blocks'+N);\n\
+  72          bA.bar=(ie)?document.all['_xpbar'+N]:document.getElementById('_xpbar'+N);\n\
+  73          bA.blocks=blocks;\n\
+  74          bA.N=N;\n\
+  75          bA.w=w;\n\
+  76          bA.h=h;\n\
+  77          bA.speed=speed;\n\
+  78          bA.ctr=0;\n\
+  79          bA.count=count;\n\
+  80          bA.action=action;\n\
+  81          bA.togglePause=togglePause;\n\
+  82          bA.showBar=function(){\n\
+  83          this.bar.style.visibility=\"visible\";\n\
+  84          }\n\
+  85          bA.hideBar=function(){\n\
+  86          this.bar.style.visibility=\"hidden\";\n\
+  87          }\n\
+  88          bA.tid=setInterval('startBar('+N+')',speed);\n\
+  89          return bA;\n\
+  90          }}\n\
+  91          \n\
+  92          function startBar(bn){\n\
+  93          var t=(ie)?document.all['blocks'+bn]:document.getElementById('blocks'+bn);\n\
+  94          if(parseInt(t.style.left)+t.h+1-(t.blocks*t.h+t.blocks)>t.w){\n\
+  95          t.style.left=-(t.h*2+1)+'px';\n\
+  96          t.ctr++;\n\
+  97          if(t.ctr>=t.count){\n\
+  98          eval(t.action);\n\
+  99          t.ctr=0;\n\
+ 100          }}else t.style.left=(parseInt(t.style.left)+t.h+1)+'px';\n\
+ 101          }\n\
+ 102          \n\
+ 103          function togglePause(){\n\
+ 104          if(this.tid==0){\n\
+ 105          this.tid=setInterval('startBar('+this.N+')',this.speed);\n\
+ 106          }else{\n\
+ 107          clearInterval(this.tid);\n\
+ 108          this.tid=0;\n\
+ 109          }}\n\
+ 110          \n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 3   
+
+ 111          function togglePause(){\n\
+ 112          if(this.tid==0){\n\
+ 113          this.tid=setInterval('startBar('+this.N+')',this.speed);\n\
+ 114          }else{\n\
+ 115          clearInterval(this.tid);\n\
+ 116          this.tid=0;\n\
+ 117          }}\n\
+ 118          ";
+ 119          
+ 120          /*
+ 121           * Array: file_tree_js
+ 122           * -------------------
+ 123           * JavaScript for dynamic tree menu with expand/collapse.
+ 124           * Creates hierarchical navigation with folder icons.
+ 125           * Supports adding items, toggling visibility, and unique ID generation.
+ 126           */
+ 127          uint8 const far file_tree_js[] = "\n\
+ 128          var iconMap = new Array();\n\
+ 129          var iconList = new Array( iconMap );\n\
+ 130          function Toggle(item)\n\
+ 131          {\n\
+ 132              var idx = -1;\n\
+ 133              for( i = 0; i < iconList.length; i++ )\n\
+ 134              {\n\
+ 135                  if( iconList[i][0] == item )\n\
+ 136                  {\n\
+ 137                      idx = i;\n\
+ 138                      break;\n\
+ 139                  }\n\
+ 140              }\n\
+ 141              if( idx < 0 )\n\
+ 142                  alert( \"Could not find key in Icon List.\" );\n\
+ 143              var div=document.getElementById(\"D\"+item);\n\
+ 144              var visible=(div.style.display!=\"none\");\n\
+ 145              var key=document.getElementById(\"P\"+item);\n\
+ 146              var removeIcon = div.hasChildNodes() == false;\n\
+ 147              if( key != null )\n\
+ 148              {\n\
+ 149                  if( !removeIcon )\n\
+ 150                  {\n\
+ 151                      if (visible)\n\
+ 152                      {\n\
+ 153                          div.style.display=\"none\";\n\
+ 154                          key.innerHTML=\"<img src='/plus.gif' width='16' height='16' hspace='0' vspace='0' border='
+             -0'>\";\n\
+ 155                      }\n\
+ 156                      else\n\
+ 157                      {\n\
+ 158                          div.style.display=\"block\";\n\
+ 159                          key.innerHTML=\"<img src='/minus.gif' width='16' height='16' hspace='0' vspace='0' border=
+             -'0'>\";\n\
+ 160                      }\n\
+ 161                  }\n\
+ 162                  else\n\
+ 163                      key.innerHTML=\"<img src='/transparent.gif' width='16' height='16' hspace='0' vspace='0' borde
+             -r='0'>\";\n\
+ 164              }\n\
+ 165              key=document.getElementById(\"I\"+item);\n\
+ 166              if( key != null )\n\
+ 167              {\n\
+ 168                  if (visible)\n\
+ 169                  {\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 4   
+
+ 170                      div.style.display=\"none\";\n\
+ 171                      key.innerHTML=\"<img src='\"+iconList[idx][1]+\"' width='16' height='16' hspace='0' vspace='0'
+             - border='0'>\";\n\
+ 172                  }\n\
+ 173                  else\n\
+ 174                  {\n\
+ 175                      div.style.display=\"block\";\n\
+ 176                      key.innerHTML=\"<img src='\"+iconList[idx][2]+\"' width='16' height='16' hspace='0' vspace='0'
+             - border='0'>\";\n\
+ 177                  }\n\
+ 178              }\n\
+ 179          }\n\
+ 180          function Expand() {\n\
+ 181             divs=document.getElementsByTagName(\"DIV\");\n\
+ 182             for (i=0;i<divs.length;i++) {\n\
+ 183               divs[i].style.display=\"block\";\n\
+ 184               key=document.getElementById(\"x\" + divs[i].id);\n\
+ 185               key.innerHTML=\"<img src='/textfolder.gif' width='16' height='16' hspace='0' vspace='0' border='0'>\"
+             -;\n\
+ 186             }\n\
+ 187          }\n\
+ 188          function Collapse() {\n\
+ 189             divs=document.getElementsByTagName(\"DIV\");\n\
+ 190             for (i=0;i<divs.length;i++) {\n\
+ 191               divs[i].style.display=\"none\";\n\
+ 192               key=document.getElementById(\"x\" + divs[i].id);\n\
+ 193               key.innerHTML=\"<img src='/folder.gif' width='16' height='16' hspace='0' vspace='0' border='0'>\";\n\
+ 194             }\n\
+ 195          }\n\
+ 196          function AddImage( parent, imgFileName )\n\
+ 197          {\n\
+ 198              img=document.createElement(\"IMG\");\n\
+ 199              img.setAttribute( \"src\", imgFileName );\n\
+ 200              img.setAttribute( \"width\", 16 );\n\
+ 201              img.setAttribute( \"height\", 16 );\n\
+ 202              img.setAttribute( \"hspace\", 0 );\n\
+ 203              img.setAttribute( \"vspace\", 0 );\n\
+ 204              img.setAttribute( \"border\", 0 );\n\
+ 205              parent.appendChild(img);\n\
+ 206          }\n\
+ 207          function CreateUniqueTagName( seed )\n\
+ 208          {\n\
+ 209              var tagName = seed;\n\
+ 210              var attempt = 0;\n\
+ 211              if( tagName == \"\" || tagName == null )\n\
+ 212                  tagName = \"x\";\n\
+ 213              while( document.getElementById(tagName) != null )\n\
+ 214              {\n\
+ 215                  tagName = \"x\" + tagName;\n\
+ 216                  if( attempt++ > 50 )\n\
+ 217                  {\n\
+ 218                      alert( \"Cannot create unique tag name. Giving up. \\nTag = \" + tagName );\n\
+ 219                      break;\n\
+ 220                  }\n\
+ 221              }\n\
+ 222              return tagName;\n\
+ 223          }\n\
+ 224          function CreateTreeItem( parent, img1FileName, img2FileName, nodeName, url, target )\n\
+ 225          {\n\
+ 226              var uniqueId = CreateUniqueTagName( nodeName );\n\
+ 227              for( i=0; i < iconList.length; i++ )\n\
+ 228                  if( iconList[i][0] == uniqueId )\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 5   
+
+ 229                  {\n\
+ 230                      alert( \"Non unique ID in Element Map. '\" + uniqueId + \"'\" );\n\
+ 231                  }\n\
+ 232              iconList[iconList.length] = new Array( uniqueId, img1FileName, img2FileName );\n\
+ 233              table = document.createElement(\"TABLE\");\n\
+ 234              if( parent != null )\n\
+ 235                  parent.appendChild( table );\n\
+ 236              table.setAttribute( \"border\", 0 );\n\
+ 237              table.setAttribute( \"cellpadding\", 1 );\n\
+ 238              table.setAttribute( \"cellspacing\", 1 );\n\
+ 239              tablebody = document.createElement(\"TBODY\");\n\
+ 240              table.appendChild(tablebody);\n\
+ 241              row=document.createElement(\"TR\");\n\
+ 242              tablebody.appendChild( row );\n\
+ 243              cell=document.createElement(\"TD\");\n\
+ 244              cell.setAttribute( \"width\", 16 );\n\
+ 245              row.appendChild(cell);\n\
+ 246              a=document.createElement(\"A\");\n\
+ 247              cell.appendChild( a );\n\
+ 248              a.setAttribute( \"id\", \"P\"+uniqueId );\n\
+ 249              a.setAttribute( \"href\", \"javascript:Toggle(\\\"\"+uniqueId+\"\\\");\" );\n\
+ 250              if (url != null)\n\
+ 251                  AddImage( a, \"/minus.gif\" );\n\
+ 252              else\n\
+ 253                  AddImage( a, \"/plus.gif\" );\n\
+ 254              cell=document.createElement(\"TD\");\n\
+ 255              cell.setAttribute( \"width\", 16 );\n\
+ 256              row.appendChild(cell);\n\
+ 257              a=document.createElement(\"A\");\n\
+ 258              a.setAttribute( \"id\", \"I\"+uniqueId );\n\
+ 259              a.setAttribute( \"href\", \"javascript:Toggle(\\\"\"+uniqueId+\"\\\");\" );\n\
+ 260              cell.appendChild(a);\n\
+ 261              AddImage( a, img1FileName );\n\
+ 262              cell=document.createElement(\"TD\");\n\
+ 263              cell.noWrap = true;\n\
+ 264              a=document.createElement(\"A\");\n\
+ 265              a.setAttribute( \"id\", uniqueId );\n\
+ 266              cell.appendChild( a );\n\
+ 267              if( url != null )\n\
+ 268              {\n\
+ 269                  a.setAttribute( \"href\", url );\n\
+ 270                  if( target != null )\n\
+ 271                      a.setAttribute( \"target\", target );\n\
+ 272                  else\n\
+ 273                      a.setAttribute( \"target\", \"_blank\" );\n\
+ 274                  text=document.createTextNode( nodeName );\n\
+ 275                  a.appendChild(text);\n\
+ 276              }\n\
+ 277              else\n\
+ 278              {\n\
+ 279                  text=document.createTextNode( nodeName );\n\
+ 280                  cell.appendChild(text);\n\
+ 281              }\n\
+ 282              row.appendChild(cell);\n\
+ 283              return CreateDiv( parent, uniqueId );\n\
+ 284          }\n\
+ 285          function CreateDiv( parent, id )\n\
+ 286          {\n\
+ 287              div=document.createElement(\"DIV\");\n\
+ 288              if( parent != null )\n\
+ 289                  parent.appendChild( div );\n\
+ 290              div.setAttribute( \"id\", \"D\"+id );\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 6   
+
+ 291              div.style.display  = \"none\";\n\
+ 292              div.style.marginLeft = \"1.5em\";\n\
+ 293              return div;\n\
+ 294          }\n\
+ 295          var rootCell = null;\n\
+ 296          function Initialise()\n\
+ 297          {\n\
+ 298              body = document.getElementsByTagName(\"body\").item(0);\n\
+ 299              body.setAttribute( \"leftmargin\", 1.5 );\n\
+ 300              body.setAttribute( \"topmargin\", 0 );\n\
+ 301              body.setAttribute( \"marginwidth\", 0 );\n\
+ 302              body.setAttribute( \"marginheight\", 0 );\n\
+ 303              table = document.createElement(\"TABLE\");\n\
+ 304              body.appendChild( table );\n\
+ 305              table.setAttribute( \"border\", 0 );\n\
+ 306              table.setAttribute( \"cellpadding\", 1 );\n\
+ 307              table.setAttribute( \"cellspacing\", 1 );\n\
+ 308              tablebody = document.createElement(\"TBODY\");\n\
+ 309              table.appendChild(tablebody);\n\
+ 310              row=document.createElement(\"TR\");\n\
+ 311              tablebody.appendChild(row);\n\
+ 312              cell=document.createElement(\"TD\");\n\
+ 313              row.appendChild(cell);\n\
+ 314              rootCell = cell;\n\
+ 315          }\n\
+ 316          ";
+ 317          
+ 318          
+ 319          /*
+ 320           * Function Declaration
+ 321           */
+ 322          
+ 323          /*
+ 324           * Function: get_file
+ 325           * ------------------
+ 326           * Serves static web files (CSS, JavaScript) to HTTP clients.
+ 327           * Determines file type from file_idx and sends appropriate content.
+ 328           * Sets Content-Type and Content-Length headers for each file.
+ 329           */
+ 330          int8 get_file(struct http_request_s *pReq, int32 file_idx)
+ 331          {
+ 332   1          uint8 buf[32];
+ 333   1      
+ 334   1          if ((file_idx <= WEB_FILE_NONE) || (file_idx >= WEB_FILE_MAX))
+ 335   1              return FAILED;
+ 336   1      
+ 337   1          WEB_BEGIN(pReq);
+ 338   1      
+ 339   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 340   1      
+ 341   1          switch (file_idx)
+ 342   1          {
+ 343   2          case WEB_FILE_STYLE_CSS:
+ 344   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 345   2              sprintf(buf, "Content-Length: %u", (uint16)sizeof(file_style_css));
+ 346   2              WEB_HEADER(pReq, buf);
+ 347   2              WEB_DATA(pReq, file_style_css, sizeof(file_style_css) - 1);
+ 348   2              break;
+ 349   2      
+ 350   2          case WEB_FILE_XP_PROGRESS_JS:
+ 351   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 352   2              sprintf(buf, "Content-Length: %u", (uint16)sizeof(file_xp_progress_js));
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          11/02/2026 17:57:31 PAGE 7   
+
+ 353   2              WEB_HEADER(pReq, buf);
+ 354   2              WEB_DATA(pReq, file_xp_progress_js, sizeof(file_xp_progress_js) - 1);
+ 355   2              break;
+ 356   2      
+ 357   2          case WEB_FILE_TREE_JS:
+ 358   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 359   2              sprintf(buf, "Content-Length: %u", (uint16)sizeof(file_tree_js));
+ 360   2              WEB_HEADER(pReq, buf);
+ 361   2              WEB_DATA(pReq, file_tree_js, sizeof(file_tree_js) - 1);
+ 362   2              break;
+ 363   2      
+ 364   2          default:
+ 365   2              printf("%s():%d Error: Web file (%d) is not exist!\n", __FILE__, (uint16)__LINE__);
+ 366   2              break;
+ 367   2          }
+ 368   1      
+ 369   1          WEB_END(pReq);
+ 370   1      
+ 371   1          return SUCCESS;
+ 372   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    442    ----
+   CONSTANT SIZE    =   8564    ----
+   XDATA SIZE       =   ----      39
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   8564    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

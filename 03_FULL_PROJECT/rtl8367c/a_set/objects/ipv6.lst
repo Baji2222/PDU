@@ -1,0 +1,189 @@
+C51 COMPILER V9.60.0.0   IPV6                                                              11/02/2026 17:56:59 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE IPV6
+OBJECT MODULE PLACED IN .\objects\ipv6.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\ipv6.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTO
+                    -R(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\
+                    -common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWP
+                    -S,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS
+                    -_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\ipv6.lst) TABS(2) OBJECT(.\objects\ipv6.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright Realtek Semiconductor Corporation, 2008
+   3           * All rights reserved.
+   4           *
+   5           * Program  : Light-weight Protocol Stack
+   6           * Abstract : 
+   7           * Author   : 
+   8           * $Id: $
+   9           */
+  10          #pragma STRING (far)
+  11          #include <local/lwps_config.h>
+  12          
+  13          #if LWPS_IPV6
+              
+              /*
+               * Include Files
+               */
+              
+              #include <lwps/lwps.h>
+              
+              
+              /*
+               * Symbol Definition
+               */
+              
+              
+              /*
+               * Data Declaration
+               */
+              static far const uint8 next_hdr_list[] = 
+              {
+                  IPV6_PROTO_HBHO,
+                  IPV6_PROTO_ROUTING,
+                  /*IPV6_PROTO_FRAG, */ /* Drop this packet when meet */
+                  /*IPV6_PROTO_AH,   */ /* Drop this packet when meet */
+                  /*IPV6_PROTO_ESP,  */ /* Drop this packet when meet */
+                  IPV6_PROTO_DO
+              };
+              
+              static far const uint8 next_hdr_list_size = sizeof(next_hdr_list)/sizeof(uint8);
+              
+              
+              /*
+               * Macro Definition
+               */
+              
+              
+              /*
+               * Function Declaration
+               */
+              #if DBG_LWPS_IPV6_ENABLE
+C51 COMPILER V9.60.0.0   IPV6                                                              11/02/2026 17:56:59 PAGE 2   
+
+              // IPv6 Header Dump: Prints formatted IPv6 header fields for debugging purposes
+              // Displays version, payload length, traffic class, next header, hop limit, and source/destination address
+             -es
+              void ipv6_hdr_dump(ipv6_hdr_t *pIpv6Hdr)
+              {
+                  u8_t traffic;
+              
+                  traffic = (pIpv6Hdr->trafC_1 << 4) | (pIpv6Hdr->trafC_2);
+                  OSAL_PRINTF("-- [IPV6 HDR dump] ------------------------------\n");
+                  OSAL_PRINTF("  Version: 0x%01X\n", (uint16)pIpv6Hdr->version);
+                  OSAL_PRINTF("   PL_LEN: 0x%04X\n", (uint16)pIpv6Hdr->payload_len);
+                  OSAL_PRINTF("  TRAFFIC: 0x%02bX\n", traffic);
+                  OSAL_PRINTF("  NextHdr: 0x%02bX\n", pIpv6Hdr->next_hdr);
+                  OSAL_PRINTF(" HopLimit: 0x%02bX\n", pIpv6Hdr->hop_limit);
+                  OSAL_PRINTF("   Src-IP: %02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%
+             -02bX%02bX\n", \
+                      pIpv6Hdr->src_ip[0],  pIpv6Hdr->src_ip[1],  \
+                      pIpv6Hdr->src_ip[2],  pIpv6Hdr->src_ip[3],  \
+                      pIpv6Hdr->src_ip[4],  pIpv6Hdr->src_ip[5],  \
+                      pIpv6Hdr->src_ip[6],  pIpv6Hdr->src_ip[7],  \
+                      pIpv6Hdr->src_ip[8],  pIpv6Hdr->src_ip[9],  \
+                      pIpv6Hdr->src_ip[10], pIpv6Hdr->src_ip[11], \
+                      pIpv6Hdr->src_ip[12], pIpv6Hdr->src_ip[13], \
+                      pIpv6Hdr->src_ip[14], pIpv6Hdr->src_ip[15]     );
+                  OSAL_PRINTF("   Dst-IP: %02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%02bX%02bX:%
+             -02bX%02bX\n", \
+                      pIpv6Hdr->dst_ip[0],  pIpv6Hdr->dst_ip[1],  \
+                      pIpv6Hdr->dst_ip[2],  pIpv6Hdr->dst_ip[3],  \
+                      pIpv6Hdr->dst_ip[4],  pIpv6Hdr->dst_ip[5],  \
+                      pIpv6Hdr->dst_ip[6],  pIpv6Hdr->dst_ip[7],  \
+                      pIpv6Hdr->dst_ip[8],  pIpv6Hdr->dst_ip[9],  \
+                      pIpv6Hdr->dst_ip[10], pIpv6Hdr->dst_ip[11], \
+                      pIpv6Hdr->dst_ip[12], pIpv6Hdr->dst_ip[13], \
+                      pIpv6Hdr->dst_ip[14], pIpv6Hdr->dst_ip[15]     );
+                  OSAL_PRINTF("-----------------------------------------------\n");
+              }
+              #endif /*DBG_LWPS_IPV6_ENABLE*/
+              
+              /*
+              uint32 ipv6_init(void)
+              {
+                  DBG_LWPS_IPV6_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+              
+                  return LWPS_OK;
+              }
+              */
+              
+              // IPv6 Up: Processes incoming IPv6 packets and dispatches to appropriate protocol handlers
+              // Handles IPv6 extension headers and routes ICMPv6/MLD packets to mld_up handler
+              uint32 ipv6_up(pktBuf_t *pBuf)
+              {
+                  u8_t i, nxt_hdr;
+                  u8_t *pnxt_hdr;
+                  ipv6_hdr_t xdata *pIpv6Hdr = (ipv6_hdr_t *)pBuf->l3;
+              
+                  DBG_LWPS_IPV6_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+              
+                  /* Layer 4 protocol */
+                  pBuf->l4 = (pBuf->l3 + 40);
+              
+                ipv6_hdr_dump(pIpv6Hdr);
+              
+C51 COMPILER V9.60.0.0   IPV6                                                              11/02/2026 17:56:59 PAGE 3   
+
+                  /* only MLD(ICMPv6) support */
+                  nxt_hdr = pIpv6Hdr->next_hdr;
+                  while( (IPV6_PROTO_ICMPV6!=nxt_hdr) )
+                  {
+                      for(i=0;i<next_hdr_list_size;i++)
+                      {
+                          if( next_hdr_list[i]==nxt_hdr )
+                          {
+                              pnxt_hdr = pBuf->l4;
+                              pBuf->l4 += ((pnxt_hdr[1]+1)*8);
+                              nxt_hdr = *pnxt_hdr;
+                              break;
+                          }
+                      }
+                      if( i==next_hdr_list_size )
+                      {
+                          return LWPS_OK;
+                      }
+                  }
+              
+                  switch (nxt_hdr) {
+              #if CONFIG_IGMP_MLD_ENABLE
+                  case IPV6_PROTO_ICMPV6: /* ICMPv6 */
+                      DBG_LWPS_IPV6_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+                      pBuf->l4fmt = L4FMT_ICMPV6;
+                      if (LWPS_OK != mld_up(pBuf)) {
+                          return LWPS_ERR;
+                      }
+                      break;
+              #endif /* end of CONFIG_IGMP_MLD_ENABLE */
+              
+                  default:
+                      DBG_LWPS_IPV6_PRINTF(("ipv6_up(): IPv6 next hdr (%d) is not supported!\n", pIpv6Hdr->next_hdr));
+                      break;
+                  }
+              
+                //ipv6_hdr_dump(pBuf->l3);
+                  return LWPS_OK;
+              }
+              
+              #endif /* end of LWPS_IPV6 */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

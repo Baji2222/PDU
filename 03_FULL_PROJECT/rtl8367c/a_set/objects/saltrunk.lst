@@ -1,0 +1,881 @@
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALTRUNK
+OBJECT MODULE PLACED IN .\objects\saltrunk.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\saltrunk.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\saltrunk.lst) TABS(2) OBJECT(.\objects\saltrunk.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <salmirror.h>
+   4          #include <salflash.h>
+   5          #include <salportmask.h>
+   6          #include <saltrunk.h>
+   7          #include <salport.h>
+   8          #include <string.h>
+   9          #include <stdio.h>
+  10          #include <trunk.h>
+  11          #include <rtl8367c_asicdrv_trunking.h>
+  12          #include <l2.h>
+  13          #include <port.h>
+  14          
+  15          extern uint16 getReg(uint16);
+  16          extern uint16 phyAllPortMask;
+  17          
+  18          // Sal Trunk Logic Port Overlap: Checks if two logical port masks have any overlapping ports
+  19          // Returns TRUE if any port is present in both masks, FALSE otherwise
+  20          bool
+  21          _sal_trunk_logicPort_overlap(
+  22            sal_pPortmask_t * pstPortMask,
+  23            sal_pPortmask_t * pstPortMask1
+  24            )
+  25          {
+  26   1        int i;
+  27   1      
+  28   1        for (i = 0; i < SAL_PORT_ID_CPU; ++i) {
+  29   2          if ((SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pstPortMask, i)) &&  \
+  30   3              (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pstPortMask1, i))) {
+  31   3            return TRUE;
+  32   3          }
+  33   2        }
+  34   1      
+  35   1        return FALSE;
+  36   1      }
+  37          
+  38          // Sal Trunk Physic Mask Conflict: Checks if two physical port masks have inconsistent overlap pattern
+  39          // Returns TRUE if port membership pattern differs across the mask
+  40          bool
+  41          _sal_trunk_physicMask_conflict (
+  42            sal_pPortmask_t * pstPortMask,
+  43            sal_pPortmask_t * pstPortMask1
+  44            )
+  45          {
+  46   1        int i;
+  47   1        bool bOverlapped = FALSE, bOldOverlapped = FALSE, bFirst = TRUE;
+  48   1      
+  49   1        for (i = 0; i < SAL_MAX_PHY_PORT; ++i) {
+  50   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pstPortMask, i))
+  51   2          {
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 2   
+
+  52   3            if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pstPortMask1, i))
+  53   3              bOverlapped = TRUE;
+  54   3            else
+  55   3              bOverlapped = FALSE;
+  56   3      
+  57   3            if (bFirst == FALSE) {
+  58   4              if (bOldOverlapped != bOverlapped)
+  59   4                return TRUE;
+  60   4              else
+  61   4                bOldOverlapped = bOverlapped;
+  62   4            }
+  63   3            else {
+  64   4              bOldOverlapped = bOverlapped;
+  65   4              bFirst = FALSE;
+  66   4            }
+  67   3          }
+  68   2        }
+  69   1      
+  70   1        return FALSE;
+  71   1      }
+  72          
+  73          // Sal Trunk Port Used By Trunk: Checks if any port in a mask is already used by another trunk
+  74          // Returns TRUE if port conflict exists with existing trunk groups
+  75          static bool
+  76          _sal_trunk_portUsedByTrunk (
+  77            uint8   ucTrkId,
+  78            sal_pPortmask_t * pstPortMask
+  79            )
+  80          {
+  81   1        uint8   ucId;
+  82   1        uint8   bLacp;
+  83   1        sal_pPortmask_t portMask;
+  84   1        sal_pPortmask_t actMask;
+  85   1      
+  86   1        for (ucId = 0; ucId < SAL_MAX_STATIC_TRUNK; ucId++) {
+  87   2          if (ucId == ucTrkId) {
+  88   3            continue; /* skip the current trunk ID */
+  89   3          }
+  90   2      
+  91   2          sal_flash_trunk_port_get(ucId, &bLacp, &portMask, &actMask);
+  92   2          if (SAL_ERR_SUCCESS != sal_pPortMask_isZero(&portMask)) {
+  93   3            if (_sal_trunk_logicPort_overlap(&portMask, pstPortMask)) {
+  94   4              return TRUE;
+  95   4            }
+  96   3          }
+  97   2        }
+  98   1      
+  99   1        return FALSE;
+ 100   1      }
+ 101          
+ 102          // Sal Trunk Port VLAN Conflict: Checks if trunk ports conflict with VLAN configurations
+ 103          // Returns TRUE if any port in mask has inconsistent VLAN membership
+ 104          static bool
+ 105          _sal_trunk_portVlanConflict (
+ 106            sal_pPortmask_t * pstPortMask
+ 107            )
+ 108          {
+ 109   1        sal_flash_vlanEntry_t stEntry;
+ 110   1        uint16      usSlot;
+ 111   1        sal_flash_vlanDb_t  flashVlanDb;
+ 112   1      
+ 113   1        sal_flash_vlan_db_get(&flashVlanDb);
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 3   
+
+ 114   1          
+ 115   1        for (usSlot = 0; ((usSlot < SAL_MAX_STATIC_VLAN) && (flashVlanDb.sortedSlot[usSlot] >= 0)); ++usSlot)
+ 116   1        {
+ 117   2          sal_flash_vlan_sttcEntry_get(flashVlanDb.sortedSlot[usSlot], &stEntry);
+ 118   2          if (_sal_trunk_physicMask_conflict(pstPortMask, &stEntry.p_portMask)) {
+ 119   3            return TRUE;
+ 120   3          }
+ 121   2        }
+ 122   1      
+ 123   1        return FALSE;
+ 124   1      }
+ 125          
+ 126          // Sal Trunk Port In Mirror: Checks if any trunk port is used in mirroring configuration
+ 127          // Returns TRUE if any port in mask is being mirrored
+ 128          static bool
+ 129          _sal_trunk_portInMirror(
+ 130            sal_pPortmask_t * pstPortMask
+ 131            )
+ 132          {
+ 133   1        uint8 ucIndex;
+ 134   1        uint32 mode = 0;
+ 135   1        uint8 ucPortId = 0;
+ 136   1          sal_lPortmask_t lPortMask;
+ 137   1      
+ 138   1        for (ucIndex = 0; ucIndex < SAL_MAX_MIRROR_GROUP; ucIndex++) {
+ 139   2          sal_mirror_portMirror_get(ucIndex, &mode, &ucPortId, &lPortMask);
+ 140   2      
+ 141   2          if ((mode != 0) && (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pstPortMask, ucPortId))) 
+ 142   2              {
+ 143   3                  return TRUE;
+ 144   3              }
+ 145   2        }
+ 146   1      
+ 147   1        return FALSE;
+ 148   1      }
+ 149          
+ 150          // Sal Trunk Port Rate Limited: Checks if ports in trunk have consistent rate limiting settings
+ 151          // Returns TRUE if ingress/egress rates differ between ports in the trunk
+ 152          static bool
+ 153          _sal_trunk_portRateLimited(
+ 154            sal_pPortmask_t * pstPortMask
+ 155            )
+ 156          {
+ 157   1          uint8 ucPortId, isFirst = TRUE;
+ 158   1          uint32 usInRate, usERate, usFirstInRate = 0xffff, usFirstERate = 0xffff;
+ 159   1      
+ 160   1        for (ucPortId = 0 ; ucPortId < SAL_PORT_ID_CPU; ucPortId ++) {
+ 161   2          if(SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pstPortMask, ucPortId))
+ 162   2          {
+ 163   3            sal_rate_igrBandwidthCtrl_get(ucPortId, &usInRate);
+ 164   3            sal_rate_egrBandwidthCtrl_get(ucPortId, &usERate);
+ 165   3                  if(isFirst == TRUE)
+ 166   3                  {
+ 167   4                      isFirst = FALSE;
+ 168   4                      usFirstInRate = usInRate;
+ 169   4                      usFirstERate = usERate;
+ 170   4                  }
+ 171   3                  else
+ 172   3                  {
+ 173   4                  
+ 174   4                      if((usFirstInRate != usInRate) || (usFirstERate != usERate))
+ 175   4              return TRUE;
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 4   
+
+ 176   4          }
+ 177   3        }
+ 178   2          }
+ 179   1      
+ 180   1        return FALSE;
+ 181   1      }
+ 182          
+ 183          // Sal Trunk Config Restore: Restores all trunk configurations from flash memory
+ 184          // Reads trunk settings from flash and applies them to hardware
+ 185          int32
+ 186          sal_trunk_config_restore (void)
+ 187          {
+ 188   1        uint8   trkId;
+ 189   1        bool    is_lacp;
+ 190   1        sal_pPortmask_t portMask;
+ 191   1        sal_pPortmask_t actMask;
+ 192   1        uint32 algo_bitmask;
+ 193   1          algo_bitmask=0x7f;
+ 194   1        for (trkId = 0; trkId < SAL_MAX_STATIC_TRUNK; ++trkId) {
+ 195   2          sal_flash_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 196   2          sal_trunk_port_set(trkId, is_lacp, &portMask, &actMask);
+ 197   2        }
+ 198   1          rtk_trunk_distributionAlgorithm_set((rtk_trunk_group_t)RTK_WHOLE_SYSTEM, algo_bitmask);
+ 199   1          return SAL_ERR_SUCCESS;
+ 200   1      }
+ 201          
+ 202          // Sal Trunk Port Set: Configures a trunk group with specified ports and settings
+ 203          // Validates port speed/duplex consistency and applies trunk configuration
+ 204          int32
+ 205          sal_trunk_port_set(
+ 206              uint8 trkId, 
+ 207              uint8 is_lacp, 
+ 208              sal_pPortmask_t *pPortMask, 
+ 209              sal_pPortmask_t *pActMask
+ 210              )
+ 211          {    
+ 212   1          int32      ret;
+ 213   1        Tbool   bFirst;
+ 214   1        uint8   ucTrkPorts;
+ 215   1        uint8      ucNego;
+ 216   1        uint8   ucSpeed=SAL_PORT_SPEED_1000;
+ 217   1        uint8   ucPorts;
+ 218   1        sal_port_t  ucPortId;
+ 219   1      
+ 220   1        uint8      ucFirstNego=FALSE;
+ 221   1        uint8      ucFirstSpeed=SAL_PORT_SPEED_1000;
+ 222   1        uint8      ucDuplex=SAL_PORT_DUPLEX_FULL;
+ 223   1          sal_phyAbility_t ability;
+ 224   1          rtk_portmask_t portmask;
+ 225   1      
+ 226   1        is_lacp = 0; // kill compiler warning
+ 227   1        pActMask = NULL;  // kill compiler warning
+ 228   1        if (trkId >= SAL_MAX_STATIC_TRUNK) {
+ 229   2          return SAL_ERR_TRUNK_TRK_RANGE;
+ 230   2        }
+ 231   1        ucPorts = 0;
+ 232   1        for (ucPortId = 0; ucPortId < SAL_PORT_ID_CPU; ++ucPortId) {
+ 233   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pPortMask, ucPortId)) {
+ 234   3            ++ucPorts;
+ 235   3          }
+ 236   2        }
+ 237   1          if (ucPorts < 2)
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 5   
+
+ 238   1              return SAL_ERR_TRUNK_PORT_NUM_TOO_LOW;
+ 239   1      
+ 240   1        if (ucPorts > SAL_MAX_PORTS_PER_TRK_DUMB) {
+ 241   2          return SAL_ERR_TRUNK_PORT_NUM_TOO_HIGH;
+ 242   2        }
+ 243   1        if (_sal_trunk_portUsedByTrunk(trkId, pPortMask)) {
+ 244   2          return SAL_ERR_TRUNK_PORT_USED_BY_TRK;
+ 245   2        }
+ 246   1        if (_sal_trunk_portVlanConflict(pPortMask)) {
+ 247   2          return SAL_ERR_TRUNK_PORT_VLAN_CONFLICT;
+ 248   2        }
+ 249   1        if (_sal_trunk_portInMirror(pPortMask)) {
+ 250   2          return SAL_ERR_TRUNK_PORT_IN_MIRROR;
+ 251   2        }
+ 252   1        if (_sal_trunk_portRateLimited(pPortMask)) {
+ 253   2          return SAL_ERR_TRUNK_PORT_RATE_LIMITED;
+ 254   2        }
+ 255   1        ucTrkPorts = 0;
+ 256   1        bFirst = TRUE;
+ 257   1      
+ 258   1        for (ucPortId = 0; ucPortId < SAL_PORT_ID_CPU; ++ucPortId) {
+ 259   2      
+ 260   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(pPortMask, ucPortId)) {
+ 261   3            ++ucTrkPorts;
+ 262   3      
+ 263   3                  /*Change trunk speed/duplex decision */
+ 264   3                  //sal_port_linkAbility_get(ucPortId, &ability);
+ 265   3                  sal_port_phyAbility_get(ucPortId, (sal_phyAbility_t*)&ability);
+ 266   3      
+ 267   3                  /*Parse speed/duplex from phyAbility*/
+ 268   3            ucNego = ability.AutoNegotiation;
+ 269   3      
+ 270   3            if (ucNego == SAL_PORT_NEGO_FORCE) /*force mode*/
+ 271   3            {
+ 272   4              if ( ability.Full_10 | ability.Half_10 )
+ 273   4                ucSpeed = SAL_PORT_SPEED_10;
+ 274   4              if ( ability.Full_100 | ability.Half_100 )
+ 275   4                ucSpeed = SAL_PORT_SPEED_100;
+ 276   4              if ( ability.Half_10 | ability.Half_100)
+ 277   4                ucDuplex = SAL_PORT_DUPLEX_HALF;
+ 278   4              if ( ability.Full_10 | ability.Full_100)
+ 279   4                ucDuplex = SAL_PORT_DUPLEX_FULL;
+ 280   4            }
+ 281   3      
+ 282   3            if (bFirst) {
+ 283   4              bFirst = FALSE;
+ 284   4              ucFirstNego = ucNego;
+ 285   4              if (ucNego == SAL_PORT_NEGO_FORCE)
+ 286   4                ucFirstSpeed = ucSpeed;
+ 287   4            }
+ 288   3            else {
+ 289   4              if (ucFirstNego != ucNego)
+ 290   4              {
+ 291   5                return SAL_ERR_TRUNK_PORT_NEGO;
+ 292   5              }
+ 293   4      
+ 294   4              if ((ucNego == SAL_PORT_NEGO_FORCE) && (ucFirstSpeed != ucSpeed)) {
+ 295   5                return SAL_ERR_TRUNK_PORT_SPEED;
+ 296   5              }
+ 297   4            }
+ 298   3            if ((ucNego == SAL_PORT_NEGO_FORCE) && (ucDuplex != SAL_PORT_DUPLEX_FULL)) {
+ 299   4                      return SAL_ERR_TRUNK_PORT_DUPLEX;
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 6   
+
+ 300   4            }
+ 301   3          }
+ 302   2        }
+ 303   1      
+ 304   1          memset(&portmask, 0, sizeof(rtk_portmask_t));
+ 305   1          portmask.bits[0] = pPortMask->bits[0];
+ 306   1        if ((ret = rtk_trunk_port_set(trkId, &portmask)) != RT_ERR_OK)
+ 307   1          return ret; 
+ 308   1      
+ 309   1          sal_flash_trunk_port_set (trkId, FALSE, pPortMask, pPortMask);
+ 310   1      
+ 311   1        return SAL_ERR_SUCCESS;
+ 312   1      }
+ 313          
+ 314          // Sal Trunk Port Del: Deletes a trunk group and cleans up associated resources
+ 315          // Removes trunk from hardware, flushes MAC entries, and updates flash
+ 316          int32
+ 317          sal_trunk_port_del (
+ 318            uint8 trkId
+ 319            )
+ 320          {
+ 321   1          sal_port_t   portId;
+ 322   1          int32   ret;
+ 323   1        bool    is_lacp;
+ 324   1        sal_pPortmask_t portMask;
+ 325   1        sal_pPortmask_t actMask;
+ 326   1        rtk_portmask_t portmask;
+ 327   1        bool    firstPort=0;
+ 328   1        uint8   logicalId=0;
+ 329   1          rtk_l2_flushCfg_t flushCfg;
+ 330   1      
+ 331   1      
+ 332   1        if (trkId >= SAL_MAX_STATIC_TRUNK) {
+ 333   2          return SAL_ERR_TRUNK_TRK_RANGE;
+ 334   2        }
+ 335   1      
+ 336   1        sal_flash_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 337   1      
+ 338   1        for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId) {
+ 339   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&portMask, portId)) {
+ 340   3            if (! firstPort) {
+ 341   4              logicalId = portId;
+ 342   4              break;
+ 343   4            }
+ 344   3          }
+ 345   2        }
+ 346   1        
+ 347   1        /* delete trunk */
+ 348   1          memset(&portmask, 0, sizeof(rtk_portmask_t));
+ 349   1        if ((ret = rtk_trunk_port_set(trkId, &portmask)) != RT_ERR_OK)
+ 350   1          return ret;
+ 351   1      
+ 352   1        /* clear MAC dynamic entries */
+ 353   1          memset(&flushCfg, 0x00, sizeof(rtk_l2_flushCfg_t));
+ 354   1          flushCfg.flushByPort = ENABLED;
+ 355   1          flushCfg.port = logicalId;
+ 356   1        if (ret = rtk_l2_ucastAddr_flush(&flushCfg) != SAL_ERR_SUCCESS)
+ 357   1              return ret;
+ 358   1      
+ 359   1          /* write to flash */
+ 360   1        sal_flash_trunk_port_del (trkId);
+ 361   1          
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 7   
+
+ 362   1        return SAL_ERR_SUCCESS;
+ 363   1      }
+ 364          
+ 365          // Sal Trunk Port Get: Retrieves trunk configuration for a specific trunk ID
+ 366          // Returns port mask and LACP status from hardware
+ 367          int32
+ 368          sal_trunk_port_get(
+ 369              uint8 trkId, 
+ 370              uint8 *pIs_lacp, 
+ 371              sal_pPortmask_t *pPortMask, 
+ 372              sal_pPortmask_t *pActMask
+ 373              )
+ 374          {
+ 375   1        int32 ret;
+ 376   1          rtk_portmask_t portmask;
+ 377   1      
+ 378   1        pIs_lacp = NULL; // kill compiler warning
+ 379   1        pActMask = NULL; // kill compiler warning
+ 380   1        
+ 381   1          if(trkId >= SAL_MAX_STATIC_TRUNK)
+ 382   1          return SAL_ERR_TRUNK_TRK_RANGE;
+ 383   1         
+ 384   1          if ((ret = rtk_trunk_port_get(trkId, &portmask)) != RT_ERR_OK)
+ 385   1              return ret;
+ 386   1      
+ 387   1          memset(pPortMask, 0, sizeof(sal_pPortmask_t));
+ 388   1          pPortMask->bits[0] = portmask.bits[0];
+ 389   1          
+ 390   1          return SAL_ERR_SUCCESS;
+ 391   1      }
+ 392          
+ 393          // Sal Trunk Logic ID to String: Converts logical port ID to human-readable string
+ 394          // Returns string representation for port, CPU, or trunk ID
+ 395          int32
+ 396          sal_trunk_logicId_toStr (
+ 397            int8 *pLogicIdStr, 
+ 398            sal_port_t logicId
+ 399            )
+ 400          {
+ 401   1          if (logicId > SAL_PORT_ID_CPU - 1) {
+ 402   2          return SAL_ERR_PORT_RANGE;
+ 403   2        }
+ 404   1      
+ 405   1        if (logicId < SAL_MAX_PHY_PORT) {
+ 406   2          sprintf(pLogicIdStr, "Port %bd", (uint8)(logicId + 1));
+ 407   2        }
+ 408   1        else if (logicId < SAL_MAX_PHY_N_CPU_PORT) {
+ 409   2          strcpy(pLogicIdStr, "CPU");
+ 410   2        }
+ 411   1        else if (logicId < SAL_MAX_PHY_N_CPU_PORT+ SAL_MAX_TRK_PORT) {
+ 412   2          sprintf(pLogicIdStr, "Trunk%bd", (uint8)(logicId + 1 - SAL_MAX_PHY_N_CPU_PORT));
+ 413   2          } 
+ 414   1          else if (logicId < SAL_PORT_ID_CPU) {
+ 415   2      #if defined(LWS_8G_2F)    
+                      if(logicId == EXT_PORT0)
+                          sprintf(pLogicIdStr, "Port %bd", 9);
+                      if(logicId == EXT_PORT1)
+                          sprintf(pLogicIdStr, "Port %bd", 10);
+              #elif defined(LWS_5G_1F) 
+                      if(logicId == EXT_PORT0)
+                          sprintf(pLogicIdStr, "Port %bd", 6);
+              #else
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 8   
+
+ 424   2      #endif
+ 425   2        }
+ 426   1        else {
+ 427   2          strcpy(pLogicIdStr, "Port?");
+ 428   2        }
+ 429   1        
+ 430   1          return SAL_ERR_SUCCESS;
+ 431   1      }
+ 432          
+ 433          // Sal Trunk Logic ID to String RLPP: Converts logical ID to string for RLPP display
+ 434          // Similar to logicId_toStr but optimized for RLPP protocol display
+ 435          int32
+ 436          sal_trunk_logicId_toStr_rlpp (
+ 437            int8 *pLogicIdStr, 
+ 438            sal_port_t logicId
+ 439            )
+ 440          {
+ 441   1          if (logicId > SAL_PORT_ID_CPU - 1) {
+ 442   2          return SAL_ERR_PORT_RANGE;
+ 443   2        }
+ 444   1      
+ 445   1        if (logicId < SAL_MAX_PHY_PORT - SAL_MAX_EXT_PORT) {
+ 446   2          sprintf(pLogicIdStr, "Port %bd", (uint8)(logicId + 1));
+ 447   2        }
+ 448   1          else{
+ 449   2      #if defined(LWS_8G_2F)
+                      if(logicId == EXT_PORT0)
+                          sprintf(pLogicIdStr, "Port %bd", 9);
+                      if(logicId == EXT_PORT1)
+                          sprintf(pLogicIdStr, "Port %bd", 10);
+              #elif defined(LWS_5G_1F)  
+                      if(logicId == EXT_PORT0)
+                          sprintf(pLogicIdStr, "Port %bd", 6);
+              #else
+ 458   2      #endif
+ 459   2        }
+ 460   1          
+ 461   1          return SAL_ERR_SUCCESS;
+ 462   1      }
+ 463          
+ 464          // Sal Trunk Logic ID to Physic ID: Converts logical port ID to physical port ID
+ 465          // Returns first linked port in trunk, or first port if none linked
+ 466          int32
+ 467          sal_trunk_logicId_toPhysicId (
+ 468              sal_port_t *pPhysicId, 
+ 469              sal_port_t logicId
+ 470              )
+ 471          {
+ 472   1          //Tuint32         ulLink;
+ 473   1          uint8   is_lacp;
+ 474   1          int32   ret;
+ 475   1        uint8   trkId;
+ 476   1        uint8   portId, min = 0;
+ 477   1          bool    flag = 0;
+ 478   1          sal_pPortmask_t portMask;
+ 479   1          sal_pPortmask_t actMask;
+ 480   1          rtk_port_mac_ability_t stat;
+ 481   1      
+ 482   1      #if defined(LWS_8G_2F)
+                  if (logicId < 8) {
+                      *pPhysicId = logicId;
+                      return SAL_ERR_SUCCESS;
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 9   
+
+                  }
+                  if(logicId == EXT_PORT0){
+                      *pPhysicId = logicId;
+                      return SAL_ERR_SUCCESS;
+                  }
+                  if(logicId == EXT_PORT1){
+                      *pPhysicId = logicId;
+                      return SAL_ERR_SUCCESS;
+                  }
+              #elif defined(LWS_5G_1F)
+                  if (logicId < 5) {
+                      *pPhysicId = logicId;
+                      return SAL_ERR_SUCCESS;
+                  }
+                  if(logicId == EXT_PORT0){
+                      *pPhysicId = logicId;
+                      return SAL_ERR_SUCCESS;
+                  }        
+              #else
+ 505   1        if (logicId < SAL_MAX_PHY_N_CPU_PORT) {
+ 506   2          *pPhysicId = logicId;
+ 507   2          return SAL_ERR_SUCCESS;
+ 508   2        }
+ 509   1      #endif
+ 510   1      
+ 511   1        trkId = logicId - SAL_MAX_PHY_N_CPU_PORT;
+ 512   1        sal_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 513   1          if (SAL_ERR_SUCCESS == sal_pPortMask_isZero(&portMask))
+ 514   1          return SAL_ERR_TRUNK_TRK_NO_EXIST;
+ 515   1      
+ 516   1        for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId) {
+ 517   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&portMask, portId)) 
+ 518   2          {
+ 519   3                  if ((ret = rtk_port_macStatus_get(portId, &stat)) != RT_ERR_OK)
+ 520   3                      return ret;
+ 521   3      
+ 522   3                  if (flag == 0)
+ 523   3                  {
+ 524   4                      min = portId;
+ 525   4                      flag = TRUE;
+ 526   4                  }
+ 527   3      
+ 528   3                  if (stat.link)
+ 529   3                  {
+ 530   4                *pPhysicId = portId;
+ 531   4                return SAL_ERR_SUCCESS;
+ 532   4                  }
+ 533   3          }
+ 534   2        }
+ 535   1      
+ 536   1          *pPhysicId = min;
+ 537   1          return SAL_ERR_SUCCESS;
+ 538   1      }
+ 539          
+ 540          // Sal Trunk Physic ID to Logic ID: Converts physical port ID to logical port ID
+ 541          // Returns logical ID for port or trunk containing the physical port
+ 542          int32
+ 543          sal_trunk_physicId_toLogicId (
+ 544              sal_port_t *pLogicId, 
+ 545              sal_port_t physicId
+ 546            )
+ 547          {
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 10  
+
+ 548   1        sal_lPortmask_t l_PortMask;
+ 549   1          uint8   is_lacp;
+ 550   1        uint8   trkId;
+ 551   1        sal_pPortmask_t portMask;
+ 552   1          sal_pPortmask_t actMask;
+ 553   1      
+ 554   1        sal_trunk_logicPort_setAll(&l_PortMask);
+ 555   1        if (SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&l_PortMask, physicId)) {
+ 556   2          *pLogicId = physicId;
+ 557   2          return SAL_ERR_SUCCESS;
+ 558   2        }
+ 559   1      
+ 560   1        /* port belongs to a trunk */
+ 561   1        for (trkId = 0; trkId < SAL_MAX_STATIC_TRUNK; ++trkId) {
+ 562   2          sal_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 563   2      
+ 564   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&portMask, physicId)) {
+ 565   3            *pLogicId = SAL_MAX_PHY_N_CPU_PORT + trkId;
+ 566   3            return SAL_ERR_SUCCESS;
+ 567   3          }
+ 568   2        }
+ 569   1      
+ 570   1        /* not found */
+ 571   1        return SAL_ERR_PORT_RANGE;
+ 572   1      }
+ 573          
+ 574          // Sal Trunk Logic Mask to Physic Mask: Converts logical port mask to physical port mask
+ 575          // Expands trunk logical ports to their physical port members
+ 576          int32
+ 577          sal_trunk_logicMask_toPhysicMask (
+ 578            sal_pPortmask_t *pPPortMask, 
+ 579            sal_lPortmask_t *pLPortMask
+ 580            )
+ 581          {
+ 582   1        uint8 trkId;
+ 583   1      
+ 584   1        /* set physical mask: all ports with CPU port */
+ 585   1        sal_pPortMask_copyLMask(pPPortMask, pLPortMask);
+ 586   1        /* set physical mask: trunks */
+ 587   1        for (trkId = 0; trkId < SAL_MAX_STATIC_TRUNK; ++trkId) {
+ 588   2              uint8  is_lacp;
+ 589   2          sal_pPortmask_t portMask;
+ 590   2              sal_pPortmask_t actMask;
+ 591   2      
+ 592   2          if (SAL_ERR_SUCCESS != sal_lPortMask_chkPort(pLPortMask, SAL_MAX_PHY_N_CPU_PORT + trkId)) {
+ 593   3            continue; /* this trunk is not considered */
+ 594   3          }
+ 595   2          sal_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 596   2      
+ 597   2          sal_pPortMask_addPorts(pPPortMask, &portMask);
+ 598   2        }
+ 599   1        return SAL_ERR_SUCCESS;
+ 600   1      }
+ 601          
+ 602          // Sal Trunk Physic Mask to Logic Mask: Converts physical port mask to logical port mask
+ 603          // Collapses trunk physical ports into single logical trunk entries
+ 604          int32
+ 605          sal_trunk_physicMask_toLogicMask (
+ 606            sal_lPortmask_t * pLPortMask,
+ 607            sal_pPortmask_t * pPPortMask
+ 608            )
+ 609          {
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 11  
+
+ 610   1          uint8   is_lacp;
+ 611   1          uint8   portId;
+ 612   1          uint8   trkId;
+ 613   1          sal_lPortmask_t l_PortMask;
+ 614   1          sal_pPortmask_t portMask;
+ 615   1          sal_pPortmask_t actMask;
+ 616   1      
+ 617   1          memset(&l_PortMask, 0, sizeof(sal_lPortmask_t));
+ 618   1          memset(&portMask, 0, sizeof(sal_pPortmask_t));
+ 619   1      
+ 620   1        /* set logical mask: all ports with CPU */
+ 621   1        sal_lPortMask_copyPMask(pLPortMask, pPPortMask);
+ 622   1        for (portId = SAL_MAX_PHY_N_CPU_PORT; portId < SAL_MAX_PHY_N_CPU_PORT+SAL_MAX_TRK_PORT; ++portId) {
+ 623   2          sal_lPortMask_delPort(pLPortMask, portId);
+ 624   2        }
+ 625   1        /* set logical mask: trunks */
+ 626   1        for (trkId = 0; trkId < SAL_MAX_STATIC_TRUNK; ++trkId) {
+ 627   2      
+ 628   2          sal_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 629   2      
+ 630   2          if (SAL_ERR_SUCCESS == sal_pPortMask_isZero(&portMask)) {
+ 631   3            continue; /* trunk does not exist */
+ 632   3          }
+ 633   2      
+ 634   2          sal_pPortMask_and(&portMask, &portMask, pPPortMask);
+ 635   2          if (SAL_ERR_SUCCESS == sal_pPortMask_isZero(&portMask)) {
+ 636   3            continue; /* this trunk is not considered */
+ 637   3          }
+ 638   2      
+ 639   2              sal_lPortMask_copyPMask(&l_PortMask, &portMask);
+ 640   2          sal_lPortMask_delPorts(pLPortMask, &l_PortMask);
+ 641   2          sal_lPortMask_addPort(pLPortMask, SAL_MAX_PHY_N_CPU_PORT + trkId);
+ 642   2        }
+ 643   1        return SAL_ERR_SUCCESS;
+ 644   1      }
+ 645          
+ 646          // Sal Trunk Logic ID to Physic Mask: Converts logical port ID to physical port mask
+ 647          // Returns physical port mask for a single logical port or trunk
+ 648          int32
+ 649          sal_trunk_logicId_toPhysicMask (
+ 650              sal_pPortmask_t *pPPortMask, 
+ 651              sal_port_t logicId
+ 652            )
+ 653          {
+ 654   1          uint8   is_lacp;    
+ 655   1        uint8   trkId;
+ 656   1        sal_pPortmask_t portMask;
+ 657   1          sal_pPortmask_t actMask;
+ 658   1      
+ 659   1        sal_pPortMask_delAll(pPPortMask);
+ 660   1        //printf("logicId is : %d\n", (uint16)logicId);
+ 661   1      #if defined(LWS_8G_2F)
+                if (logicId < 8) {
+                  sal_pPortMask_addPort(pPPortMask, logicId);
+                  //printf("pPPortMask after Add is : %lx\n", pPPortMask->bits[0]);
+                  return SAL_ERR_SUCCESS;
+                }
+                if (logicId == 8 || logicId == 16){
+                    pPPortMask->bits[0] |= (1UL << EXT_PORT0);
+                  return SAL_ERR_SUCCESS;
+                }
+                if (logicId == 9 || logicId == 17){
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 12  
+
+                    pPPortMask->bits[0] |= (1UL << EXT_PORT1);
+                  return SAL_ERR_SUCCESS;
+                }     
+              #elif defined(LWS_5G_1F)
+                if (logicId < 5) {
+                  sal_pPortMask_addPort(pPPortMask, logicId);
+                  return SAL_ERR_SUCCESS;
+                }
+                if (logicId == 5 || logicId == 16){
+                    pPPortMask->bits[0] |= (1UL << EXT_PORT0);
+                  return SAL_ERR_SUCCESS;
+                }
+                if (logicId == 17){
+                    pPPortMask->bits[0] |= (1UL << EXT_PORT1);
+                  return SAL_ERR_SUCCESS;
+                } 
+              #else
+ 689   1        if (logicId < SAL_MAX_PHY_N_CPU_PORT) {
+ 690   2          sal_pPortMask_addPort(pPPortMask, logicId);
+ 691   2          //printf("pPPortMask after Add is : %lx\n", pPPortMask->bits[0]);
+ 692   2          return SAL_ERR_SUCCESS;
+ 693   2        }
+ 694   1      #endif
+ 695   1      
+ 696   1          memset(&portMask, 0, sizeof(sal_pPortmask_t));
+ 697   1        trkId = logicId - SAL_MAX_PHY_N_CPU_PORT;
+ 698   1        sal_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 699   1          //printf("ucTrkId : %bd, portmask[0]: %lx\n", trkId, portMask.bits[0]);
+ 700   1        if (SAL_ERR_SUCCESS != sal_pPortMask_isZero(&portMask)) {
+ 701   2          sal_pPortMask_copy(pPPortMask, &portMask);
+ 702   2          return SAL_ERR_SUCCESS;
+ 703   2        }
+ 704   1      
+ 705   1        return SAL_ERR_PORT_RANGE;
+ 706   1      }
+ 707          
+ 708          // Sal Trunk Logic Port Set All: Builds complete logical port mask with all active trunks
+ 709          // Creates logical port mask containing all physical ports and trunk groups
+ 710          int32
+ 711          sal_trunk_logicPort_setAll (
+ 712            sal_lPortmask_t * pstLPortMask
+ 713            )
+ 714          {
+ 715   1          uint8   is_lacp;
+ 716   1        uint8   portId;
+ 717   1        uint8   trkId;
+ 718   1          sal_lPortmask_t l_PortMask;
+ 719   1        sal_pPortmask_t portMask;
+ 720   1          sal_pPortmask_t actMask;
+ 721   1      
+ 722   1          sal_pPortMask_delAll(&portMask);
+ 723   1      
+ 724   1        sal_lPortMask_addAll(pstLPortMask);
+ 725   1        for (portId = SAL_MAX_PHY_PORT; portId < SAL_MAX_PHY_N_CPU_PORT + SAL_MAX_TRK_PORT; ++portId) {
+ 726   2          sal_lPortMask_delPort(pstLPortMask, portId);
+ 727   2        }
+ 728   1      
+ 729   1        for (trkId = 0; trkId < SAL_MAX_STATIC_TRUNK; ++trkId) {
+ 730   2          sal_trunk_port_get(trkId, &is_lacp, &portMask, &actMask);
+ 731   2      
+ 732   2          if (SAL_ERR_SUCCESS != sal_pPortMask_isZero(&portMask)) {
+ 733   3            sal_lPortMask_addPort(pstLPortMask, SAL_MAX_PHY_N_CPU_PORT + trkId);
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 13  
+
+ 734   3                  sal_lPortMask_copyPMask(&l_PortMask, &portMask);
+ 735   3            sal_lPortMask_delPorts(pstLPortMask, &l_PortMask);
+ 736   3          }
+ 737   2        }
+ 738   1      
+ 739   1        return SAL_ERR_SUCCESS;
+ 740   1      }
+ 741          
+ 742          // Sal Trunk Logic ID Exist: Checks if a logical port ID exists in the system
+ 743          // Returns TRUE if the logical ID represents a valid port or trunk
+ 744          int32
+ 745          sal_trunk_logicId_exist (
+ 746            sal_port_t logicId
+ 747            )
+ 748          {
+ 749   1        sal_lPortmask_t stLPortMask;
+ 750   1      
+ 751   1        sal_trunk_logicPort_setAll(&stLPortMask);
+ 752   1        if (SAL_ERR_SUCCESS != sal_lPortMask_chkPort(&stLPortMask, logicId)) {
+ 753   2          return FALSE;
+ 754   2        }
+ 755   1      
+ 756   1        return TRUE;
+ 757   1      }
+ 758          
+ 759          /* Function Name:
+ 760           *      sal_trunk_representPort_get
+ 761           * Description:
+ 762           *      Get a represent port of the trunk of a physical port
+ 763           * Input:
+ 764           *      port - Physical port number
+ 765           * Output:
+ 766           *      pLport - Port number of the represent port.
+ 767           * Return:
+ 768           *      SAL_ERR_SUCCESS
+ 769           *      SAL_ERR_PARAMETER
+ 770           * Note:
+ 771           *      None
+ 772           */
+ 773          // Sal Trunk Represent Port Get: Gets a representative port for a trunk group
+ 774          // Returns first linked port in trunk group, or port itself if not in trunk
+ 775          int32 sal_trunk_representPort_get(sal_port_t port, sal_port_t *pLport)
+ 776          {
+ 777   1          uint8  linkUp, found;
+ 778   1          uint16 i, trk_grp_start;
+ 779   1          uint32 pmsk;
+ 780   1      
+ 781   1          if(port >= SAL_PORT_ID_CPU)
+ 782   1              return SAL_ERR_PARAMETER;
+ 783   1      
+ 784   1          /* get trunk group) */
+ 785   1          rtl8367c_getAsicTrunkingGroup(port >> 2, &pmsk);
+ 786   1      
+ 787   1          if(port >= 4)
+ 788   1              pmsk = pmsk << 4;
+ 789   1      
+ 790   1          /* if port in trunk */
+ 791   1          if((1 << port) & (pmsk & 0xFFFF))
+ 792   1          {
+ 793   2              /* find the first linked port number in group */
+ 794   2              trk_grp_start = port & ~(0x3);
+ 795   2      
+C51 COMPILER V9.60.0.0   SALTRUNK                                                          11/02/2026 17:57:01 PAGE 14  
+
+ 796   2              found = FALSE;
+ 797   2              for(i = trk_grp_start;i < trk_grp_start + 4;i++)
+ 798   2              {
+ 799   3                  if(pmsk & (1 << i))
+ 800   3                  {
+ 801   4                      /* check if port is linked up */
+ 802   4                      linkUp = getReg(0x1352 + i) & 0x10;
+ 803   4                      if(linkUp)
+ 804   4                      {
+ 805   5                          found = TRUE;
+ 806   5                          break;
+ 807   5                      }
+ 808   4                  }
+ 809   3              }
+ 810   2      
+ 811   2              /* if cannot find represent port, then the represent port is itself */
+ 812   2              if(TRUE == found)
+ 813   2                  *pLport = i;
+ 814   2              else
+ 815   2                  *pLport = port;
+ 816   2          }
+ 817   1          /* else, the represent is itself */
+ 818   1          else
+ 819   1          {    
+ 820   2              *pLport = port;
+ 821   2          }
+ 822   1          
+ 823   1          return SAL_ERR_SUCCESS;
+ 824   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3803    ----
+   CONSTANT SIZE    =     28    ----
+   XDATA SIZE       =   ----     486
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     28    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

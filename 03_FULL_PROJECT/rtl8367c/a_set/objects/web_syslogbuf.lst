@@ -1,0 +1,1331 @@
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYSLOGBUF
+OBJECT MODULE PLACED IN .\objects\web_syslogbuf.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_syslogbuf.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(
+                    -0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\co
+                    -mmon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,
+                    -SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8
+                    -G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_syslogbuf.lst) TABS(2) OBJECT(.\objects\web_syslogbuf.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to IP function
+  10           *
+  11           * Feature : Response the request related to IP function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <string.h>
+  19          #include <stdio.h>
+  20          
+  21          #include <salutil.h>
+  22          #include <salsys.h>
+  23          #include <salflash.h>
+  24          #include <flash_config.h>
+  25          #include <syslog/syslog.h>
+  26          #include <syslog/syslogdefs.h>
+  27          #include <sal/salsyslog.h>
+  28          
+  29          #include <web/web_api.h>
+  30          #include "web_ip.h"
+  31          #include "web_util.h"   
+  32          #include <lib/lib_time.h>
+  33          #if 1
+  34          /*
+  35           * Symbol Definition
+  36           */
+  37          extern volatile uint32 data current_time;
+  38          /*
+  39           * Data Declaration
+  40           */
+  41          
+  42          /*
+  43           * Function Declaration
+  44           */
+  45          
+  46          /*
+  47           * Function: int_to_str_syslog_severity
+  48           * ------------------------------------
+  49           * Converts syslog severity numeric value to display string.
+  50           * Maps severity codes (Emergency, Alert, Error, etc.) to readable text.
+  51           * Prints formatted table cell with severity name.
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 2   
+
+  52           * Used for syslog buffer display formatting.
+  53           */
+  54          static void int_to_str_syslog_severity(uint8 severity, struct http_request_s *pReq)
+  55          {
+  56   1        switch(severity)
+  57   1        {
+  58   2          case SYSLOG_SEV_EMERG:
+  59   2             WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Emergency");
+  60   2            break;
+  61   2          case SYSLOG_SEV_ALERT:
+  62   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Alert");
+  63   2            break;
+  64   2          case SYSLOG_SEV_ERR:
+  65   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Error");
+  66   2            break;
+  67   2          case SYSLOG_SEV_CRIT:
+  68   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Critical");
+  69   2            break;
+  70   2          case SYSLOG_SEV_WARNING:
+  71   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Warning");
+  72   2            break;
+  73   2          case SYSLOG_SEV_NOTICE:
+  74   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Notice");
+  75   2            break;
+  76   2          case SYSLOG_SEV_INFO:
+  77   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Info");
+  78   2            break;
+  79   2          case SYSLOG_SEV_DEBUG:
+  80   2            WEB_PRINTF(pReq, "    <td width=\"15\">%s</td>\n", "Debug");
+  81   2            break;
+  82   2          default:
+  83   2            break;
+  84   2        }
+  85   1        return;
+  86   1      }
+  87          
+  88          /*
+  89           * Function: get_syslogbufsec
+  90           * --------------------------
+  91           * Displays syslog buffer contents in a formatted table.
+  92           * Shows log ID, timestamp, severity, and message content.
+  93           * Reads buffer entries from flash and converts timestamps.
+  94           * Provides option to clear syslog messages.
+  95           */
+  96          int32 get_syslogbufsec(struct http_request_s *pReq)
+  97          {
+  98   1        sal_enable_t  syslogStatus = 0;
+  99   1        uint16 headIndex = 0;
+ 100   1        uint16 tailIndex = 0;
+ 101   1        sal_flash_syslog_buf_entry_t sysLogBufEntry;
+ 102   1        uint16 logId = 1;
+ 103   1        struct tm ts;
+ 104   1        uint32 timestamp;
+ 105   1        char timeStr[30]={""};
+ 106   1      
+ 107   1      //  syslog_head_idx_get(&headIndex);  
+ 108   1      //  syslog_head_idx_get(&tailIndex);
+ 109   1        sal_syslog_buf_head_idx_get(&headIndex);
+ 110   1        sal_syslog_buf_tail_idx_get(&tailIndex);
+ 111   1      
+ 112   1          WEB_BEGIN(pReq);
+ 113   1      
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 3   
+
+ 114   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 115   1        WEB_HEADER(pReq, "Content-Type: text/html");
+ 116   1      
+ 117   1        WEB_PRINTF(pReq, "<html>\n");
+ 118   1          WEB_PRINTF(pReq, "\n");
+ 119   1        WEB_PRINTF(pReq, "<head>\n");
+ 120   1        WEB_PRINTF(pReq, "<title>Syslog Buffer</title>\n");
+ 121   1        WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 122   1        WEB_PRINTF(pReq, "</head>\n");
+ 123   1        WEB_PRINTF(pReq, "\n");
+ 124   1        WEB_PRINTF(pReq, "<body>\n");
+ 125   1        WEB_PRINTF(pReq, "<center>\n");
+ 126   1        WEB_PRINTF(pReq, "\n");
+ 127   1        WEB_PRINTF(pReq, "<fieldset>\n");
+ 128   1        WEB_PRINTF(pReq, "<legend>System Logs</legend>\n");
+ 129   1          WEB_PRINTF(pReq, "<form method=\"post\" name=\"syslogbufsec\" action=\"/syslogbuf.cgi?page=syslogbufse
+             -c\">\n");
+ 130   1      
+ 131   1        if(headIndex == tailIndex)
+ 132   1        {
+ 133   2          WEB_PRINTF(pReq, "<legend>No Syslog message to show..</legend>\n");
+ 134   2        }
+ 135   1        else
+ 136   1        {
+ 137   2          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 138   2      
+ 139   2          WEB_PRINTF(pReq, "  <tr>\n");
+ 140   2          WEB_PRINTF(pReq, "    <th width=\"200\">Syslog Clear</th>\n");
+ 141   2      
+ 142   2          WEB_PRINTF(pReq, "    <td width=\"150\">\n");
+ 143   2          WEB_PRINTF(pReq, "      <select name=\"state\" style=\"width:150\">\n");
+ 144   2      
+ 145   2          WEB_PRINTF(pReq, "    <option value=\"0\" selected >No \n");          
+ 146   2          WEB_PRINTF(pReq, "    <option value=\"1\" >Yes \n");
+ 147   2      
+ 148   2          WEB_PRINTF(pReq, "      </select>\n");
+ 149   2          WEB_PRINTF(pReq, "    </td>\n");
+ 150   2      
+ 151   2          WEB_PRINTF(pReq, "  <tr>\n");
+ 152   2          WEB_PRINTF(pReq, "</table>\n");
+ 153   2      
+ 154   2          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+ 155   2          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"syslogbuf\">\n");
+ 156   2          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 157   2      
+ 158   2      
+ 159   2          WEB_PRINTF(pReq, "<br>\n");
+ 160   2          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 161   2      
+ 162   2        //  WEB_PRINTF(pReq, "    <th width=\"15\">%d</th>\n", (uint16)headIndex);
+ 163   2        //  WEB_PRINTF(pReq, "    <th width=\"15\">%d</th>\n", (uint16)tailIndex);
+ 164   2          WEB_PRINTF(pReq, "    <th width=\"15\">ID</th>\n");
+ 165   2          WEB_PRINTF(pReq, "    <th width=\"45\">Time</th>\n");
+ 166   2          WEB_PRINTF(pReq, "    <th width=\"15\">Severity</th>\n");
+ 167   2          WEB_PRINTF(pReq, "    <th width=\"450\">Message Content</th>\n");
+ 168   2        //headIndex = 0;
+ 169   2      //  tailIndex = 1;
+ 170   2      
+ 171   2      
+ 172   2          while(headIndex != tailIndex)
+ 173   2          {
+ 174   3            memset(&sysLogBufEntry, 0x00, sizeof(sal_flash_syslog_buf_entry_t));
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 4   
+
+ 175   3            sal_flash_syslog_buf_get(&sysLogBufEntry, headIndex);
+ 176   3            timestamp = sysLogBufEntry.timestamp;
+ 177   3      
+ 178   3            // Format time, "ddd yyyy-mm-dd hh:mm:ss zzz"
+ 179   3            calcDate(&ts, timestamp);
+ 180   3            sprintf(timeStr, "%s %d %02d:%02d:%02d    \0", months[ts.tm_mon], (uint16)ts.tm_mday, (uint16)ts.tm_hour
+             -, (uint16)ts.tm_min, (uint16)ts.tm_sec);
+ 181   3      
+ 182   3            WEB_PRINTF(pReq, "  <tr>\n");
+ 183   3        //    WEB_PRINTF(pReq, "    <td width=\"15\">%d</td>\n", (uint16)sysLogBufEntry.sysLogIdBuf);
+ 184   3            WEB_PRINTF(pReq, "    <td width=\"15\">%d</td>\n", (uint16)logId);
+ 185   3            WEB_PRINTF(pReq, "    <td width=\"45\">%s</td>\n", timeStr);
+ 186   3            int_to_str_syslog_severity(sysLogBufEntry.sysLogSevBuf, pReq);
+ 187   3      
+ 188   3            if(sysLogBufEntry.sysLogIdBuf == SYSLOG_MSG_PORT_LINK_DOWN || sysLogBufEntry.sysLogIdBuf == SYSLOG_MSG_
+             -PORT_LINK_UP)
+ 189   3            {
+ 190   4              WEB_PRINTF(pReq, "    <td width=\"450\">Port %d %s</td>\n", (uint16)sysLogBufEntry.addInfo, syslogmsgc
+             -ontent[sysLogBufEntry.sysLogIdBuf]);
+ 191   4            }
+ 192   3            else
+ 193   3            {
+ 194   4              WEB_PRINTF(pReq, "    <td width=\"450\">%s</td>\n", syslogmsgcontent[sysLogBufEntry.sysLogIdBuf]);
+ 195   4            }
+ 196   3            
+ 197   3        //    WEB_PRINTF(pReq, "    <td align=\"left\" style=\"width:250px;\">%s</td align=\"center\">\n", "HAPPY")
+             -;
+ 198   3            WEB_PRINTF(pReq, "  </tr>\n");
+ 199   3            logId++;
+ 200   3            headIndex++;
+ 201   3            if(headIndex == SAL_SYS_LOG_BUF_MAX_ENTRY)
+ 202   3            {
+ 203   4              headIndex = 0; //wrap around
+ 204   4            }
+ 205   3          }
+ 206   2          WEB_PRINTF(pReq, "</table>\n");
+ 207   2        }
+ 208   1      
+ 209   1        WEB_PRINTF(pReq, "</form>\n");
+ 210   1        WEB_PRINTF(pReq, "</fieldset>\n");
+ 211   1        WEB_PRINTF(pReq, "</center>\n");
+ 212   1        WEB_PRINTF(pReq, "</body>\n");
+ 213   1        WEB_PRINTF(pReq, "</html>\n");
+ 214   1      
+ 215   1          WEB_END(pReq);
+ 216   1      
+ 217   1          return SUCCESS;
+ 218   1      
+ 219   1      }
+ 220          
+ 221          /*
+ 222           * Function: post_syslogbufsec
+ 223           * ---------------------------
+ 224           * Processes syslog buffer clear form submission.
+ 225           * Extracts clear state (Yes/No) from POST data.
+ 226           * If Yes, resets head/tail indices and clears buffer.
+ 227           * Saves configuration to flash and shows confirmation message.
+ 228           */
+ 229          int32 post_syslogbufsec(struct http_request_s *pReq)
+ 230          {
+ 231   1          uint8           *pValue;
+ 232   1        sal_enable_t  syslogBufClear = 0;
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 5   
+
+ 233   1      
+ 234   1          WEB_VAR(pReq, "state", &pValue);
+ 235   1          if (pValue) {
+ 236   2              syslogBufClear = atoi(pValue);
+ 237   2          }
+ 238   1        
+ 239   1          if (syslogBufClear == 1)
+ 240   1          {
+ 241   2          sal_sys_syslog_headIdx_set(DFLT_SYSLOG_BUF_HEAD_IDX, 1);
+ 242   2          sal_sys_syslog_tailIdx_set(DFLT_SYSLOG_BUF_TAIL_IDX, 1);
+ 243   2      
+ 244   2          //Clear buffer
+ 245   2          sal_syslog_buf_head_idx_set(DFLT_SYSLOG_BUF_HEAD_IDX);  
+ 246   2          sal_syslog_buf_tail_idx_set(DFLT_SYSLOG_BUF_TAIL_IDX);
+ 247   2          
+ 248   2          sal_flash_cfg_save();
+ 249   2      
+ 250   2          printmsg(pReq, "Syslog Messages Cleared..");
+ 251   2          }
+ 252   1            
+ 253   1          get_syslogbufsec(pReq);
+ 254   1      
+ 255   1          return SUCCESS;
+ 256   1      }
+ 257          #endif
+ 258          
+ 259          
+ 260          
+ 261          
+ 262          
+ 263          
+ 264          
+ 265          
+ 266          ///*
+ 267          // * Function: get_pdu
+ 268          // * -----------------
+ 269          // * Displays PDU (Power Distribution Unit) Rack 8 ports control panel page.
+ 270          // * Auto-refreshes status every 7 seconds via JavaScript.
+ 271          // * Fetches voltage, current, and port status from MCU.
+ 272          // *
+ 273          // * Visual rules:
+ 274          // *   - OFF                     ? complete card gray
+ 275          // *   - ON  (current = 0.1 A)   ? card normal/clear, socket gray
+ 276          // *   - ON  + current > 0.1 A   ? card normal/clear, socket GREEN
+ 277          // */
+ 278          //int32 get_pdu(struct http_request_s *pReq)
+ 279          //{
+ 280          //    int port = 0;
+ 281          //    WEB_BEGIN(pReq);
+ 282          //    WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 283          //    WEB_HEADER(pReq, "Content-Type: text/html");
+ 284          //    WEB_PRINTF(pReq, "<html lang=\"en\">\n");
+ 285          //    WEB_PRINTF(pReq, "<head>\n");
+ 286          //    WEB_PRINTF(pReq, "<meta charset=\"UTF-8\">\n");
+ 287          //    WEB_PRINTF(pReq, "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+ 288          //    WEB_PRINTF(pReq, "<title>PDU Rack 8 Outlets Control</title>\n");
+ 289          //    WEB_PRINTF(pReq, "<style>\n");
+ 290          //    WEB_PRINTF(pReq, "* { box-sizing: border-box; margin: 0; padding: 0; }\n");
+ 291          //    WEB_PRINTF(pReq, ":root { --bg1:#eef0f2; --bg2:#f5f6f8; --panel:#ffffff; --panel2:#ffffff; --border:
+             -#dde1e6; --green:#2f9e44; --green-dark:#1e7e34; --green-light:#d4edda; --red:#e03131; --red-light:#f8d7da; --grey:#868e9
+             -6; --txt:#1c1f23; --txtdim:#6b7280; }\n");
+ 292          //    WEB_PRINTF(pReq, "body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg1); min-hei
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 6   
+
+             -ght: 100vh; padding: 14px; color: var(--txt); }\n");
+ 293          //    WEB_PRINTF(pReq, ".container { max-width: 1180px; margin: 0 auto; }\n");
+ 294          //    WEB_PRINTF(pReq, ".header { border-bottom: 2px solid var(--green); padding: 4px 4px 12px; margin-bot
+             -tom: 20px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; }\n");
+ 295          //    WEB_PRINTF(pReq, ".page-title { font-size: 18px; font-weight: 700; letter-spacing: 0.5px; text-trans
+             -form: uppercase; color: var(--txt); display: flex; align-items: center; gap: 8px; }\n");
+ 296          //    WEB_PRINTF(pReq, ".page-title .ico { font-size: 18px; }\n");
+ 297          //  
+ 298          //    WEB_PRINTF(pReq, ".header-right { display: flex; align-items: center; gap: 28px; }\n");
+ 299          //    WEB_PRINTF(pReq, ".header-item { display: flex; flex-direction: column; align-items: flex-end; gap: 2p
+             -x; min-width: 140px; }\n");
+ 300          //    WEB_PRINTF(pReq, ".header-item .label { font-size: 11px; font-weight: 600; color: var(--txt); text-tra
+             -nsform: uppercase; letter-spacing: 0.6px; }\n");
+ 301          //    WEB_PRINTF(pReq, ".header-item b { font-size: 18px; font-weight: 700; color: var(--txt); letter-spacin
+             -g: 0.5px; line-height: 1.2; }\n");
+ 302          //  
+ 303          //    WEB_PRINTF(pReq, ".port-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }\n"
+             -);
+ 304          //    WEB_PRINTF(pReq, "@media (max-width: 900px) { .port-grid { grid-template-columns: repeat(2, 1fr); } 
+             -}\n");
+ 305          
+ 306          //    /* Base card (normal / clear look) */
+ 307          //    WEB_PRINTF(pReq, ".port-item { position: relative; background: var(--panel); border: 1px solid var(-
+             --border); border-radius: 12px; padding: 20px; text-align: left; box-shadow: 0 1px 3px rgba(20,22,25,0.06); transition: b
+             -order-color 0.2s, box-shadow 0.2s, background 0.3s, filter 0.3s; }\n");
+ 308          //    WEB_PRINTF(pReq, ".port-item:hover { box-shadow: 0 3px 10px rgba(20,22,25,0.1); }\n");
+ 309          //    WEB_PRINTF(pReq, ".port-item:active { box-shadow: 0 1px 2px rgba(20,22,25,0.08); }\n");
+ 310          
+ 311          //    /* OFF ? COMPLETELY GRAY */
+ 312          //    WEB_PRINTF(pReq, ".port-item.off-gray { background: #e8e8e8 !important; border-color: #c0c0c0 !impor
+             -tant; box-shadow: none; }\n");
+ 313          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-label,\n");
+ 314          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-status,\n");
+ 315          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-current,\n");
+ 316          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-current .current-value,\n");
+ 317          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-controls label,\n");
+ 318          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-controls span { color: #9e9e9e !important; }\n");
+ 319          //    WEB_PRINTF(pReq, ".port-item.off-gray .port-apply { background: #d0d0d0 !important; border-color: #b
+             -0b0b0 !important; color: #757575 !important; }\n");
+ 320          //    WEB_PRINTF(pReq, ".port-item.off-gray .socket-icon { filter: grayscale(100%%); opacity: 0.65; }\n");
+ 321          
+ 322          //    /* ON ? normal clear card (no special background) */
+ 323          //    WEB_PRINTF(pReq, ".port-item.on-normal { background: var(--panel); border-color: var(--border); }\n"
+             -);
+ 324          
+ 325          //    WEB_PRINTF(pReq, ".port-item.pending { opacity: 0.65; pointer-events: none; }\n");
+ 326          
+ 327          //    WEB_PRINTF(pReq, ".port-top { display: flex; align-items: center; justify-content: space-between; ga
+             -p: 8px; margin-bottom: 16px; }\n");
+ 328          //    WEB_PRINTF(pReq, ".port-info { display: flex; flex-direction: column; gap: 4px; }\n");
+ 329          //    WEB_PRINTF(pReq, ".socket-icon { width: 100px; height: 100px; flex-shrink: 0; }\n");
+ 330          //    WEB_PRINTF(pReq, ".socket-icon svg { width: 120%%; height: 120%%; }\n");
+ 331          //    WEB_PRINTF(pReq, ".socket-icon .outline { stroke-width: 3; }\n");
+ 332          //    WEB_PRINTF(pReq, ".socket-icon .pins { fill: none; stroke-width: 3; }\n");
+ 333          
+ 334          //    /* Socket GREEN only when current > 0.1 */
+ 335          //    WEB_PRINTF(pReq, ".socket-icon.on .outline { stroke:#1E8E3E; stroke-width:4; fill:#D8F0DB; }\n");
+ 336          //    WEB_PRINTF(pReq, ".socket-icon.on .pins { stroke:#1E8E3E; stroke-width:4; }\n");
+ 337          //    WEB_PRINTF(pReq, ".socket-icon.on { border:3px solid #1E8E3E; border-radius:12px; padding:4px; box-s
+             -izing:border-box; }\n");
+ 338          
+ 339          //    /* Socket GRAY (default / no current) */
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 7   
+
+ 340          //    WEB_PRINTF(pReq, ".socket-icon.off .outline, .socket-icon.off .pins { stroke:#A0A0A0; opacity:1; }\n
+             -");
+ 341          //    WEB_PRINTF(pReq, ".socket-icon.off .fill { fill:#E5E5E5; opacity:0.30; }\n");
+ 342          //    WEB_PRINTF(pReq, ".socket-icon.off { border:3px solid #E5E5E5; border-radius:12px; padding:4px; box-
+             -sizing:border-box; }\n");
+ 343          
+ 344          //    WEB_PRINTF(pReq, ".port-label { font-size: 16px; font-weight: 700; letter-spacing: 0.5px; text-trans
+             -form: uppercase; color: var(--txtdim); }\n");
+ 345          //    WEB_PRINTF(pReq, ".port-status { font-size: 19px; font-weight: 700; letter-spacing: 0.5px; }\n");
+ 346          //    WEB_PRINTF(pReq, ".port-status.on { color: var(--green); }\n");
+ 347          //    WEB_PRINTF(pReq, ".port-status.off { color: var(--red); }\n");
+ 348          //    
+ 349          //    WEB_PRINTF(pReq, ".port-current { font-size: 13px; color: var(--txtdim); margin-top: 2px; }\n");
+ 350          //    WEB_PRINTF(pReq, ".port-current .current-value { font-weight: 600; color: var(--txt); }\n");
+ 351          //    
+ 352          //    WEB_PRINTF(pReq, ".port-controls { display: flex; align-items: center; gap: 16px; margin-top: 14px; 
+             -padding: 12px 0; border-top: 1px solid var(--border); }\n");
+ 353          //    WEB_PRINTF(pReq, ".port-controls label { display: flex; align-items: center; gap: 5px; font-size: 13
+             -px; font-weight: 600; cursor: pointer; }\n");
+ 354          //    WEB_PRINTF(pReq, ".port-controls input[type=\"radio\"] { accent-color: var(--green); width: 16px; he
+             -ight: 16px; cursor: pointer; }\n");
+ 355          //    WEB_PRINTF(pReq, ".port-controls input[type=\"radio\"]:checked + span { color: var(--green); }\n");
+ 356          //    WEB_PRINTF(pReq, ".port-controls input[type=\"radio\"][value=\"0\"]:checked + span { color: var(--re
+             -d); }\n");
+ 357          //    WEB_PRINTF(pReq, ".port-controls input[type=\"radio\"][value=\"0\"] { accent-color: var(--red); }\n"
+             -);
+ 358          
+ 359          //    WEB_PRINTF(pReq, ".port-apply { width:100%%; padding:10px 0; margin-top:6px; border:2px solid #9E9E9
+             -E; border-radius:6px; font-size:13px; font-weight:700; letter-spacing:0.5px; text-transform:uppercase; cursor:pointer; t
+             -ransition:all 0.2s; background:#C0C0C0; color:#000000; }\n");
+ 360          //    WEB_PRINTF(pReq, ".port-apply:hover { transform:translateY(-1px); box-shadow:0 2px 8px rgba(0,0,0,0.
+             -15); }\n");
+ 361          //    WEB_PRINTF(pReq, ".port-apply:disabled { cursor:not-allowed; opacity:1; }\n");
+ 362          //    WEB_PRINTF(pReq, ".port-apply.on-state { background: #A5D6A7; border-color: #81C784; color: #1b5e20;
+             - }\n");
+ 363          //    WEB_PRINTF(pReq, ".port-apply.on-state:hover { background: #90C695; border-color: #81C784; color: #1
+             -b5e20; }\n");
+ 364          //    WEB_PRINTF(pReq, ".port-apply.off-state { background: #E0E0E0; border-color: #BDBDBD; color: #424242
+             -; }\n");
+ 365          //    WEB_PRINTF(pReq, ".port-apply.off-state:hover { background: #D5D5D5; border-color: #BDBDBD; color: #
+             -424242; }\n");
+ 366          //    WEB_PRINTF(pReq, ".port-apply.applying { background: #E0E0E0; border-color: #BDBDBD; color: #424242;
+             - cursor:wait; animation:pulse 1s infinite; }\n");
+ 367          //    WEB_PRINTF(pReq, "@keyframes pulse { 0%%,100%% { opacity:1; } 50%% { opacity:0.7; } }\n");
+ 368          //    WEB_PRINTF(pReq, ".port-apply.applied { background:#E0E0E0; border-color:#BDBDBD; color:#424242; }\n
+             -");
+ 369          //    WEB_PRINTF(pReq, "</style>\n");
+ 370          //    WEB_PRINTF(pReq, "</head>\n");
+ 371          
+ 372          //    /* ===== JavaScript ===== */
+ 373          //    WEB_PRINTF(pReq, "<script>\n");
+ 374          //    WEB_PRINTF(pReq, "let fetchFlag = true;\n");
+ 375          //    WEB_PRINTF(pReq, "let fetchInterval;\n");
+ 376          //    WEB_PRINTF(pReq, "async function getPduData() {\n");
+ 377          //    WEB_PRINTF(pReq, "  try {\n");
+ 378          //    WEB_PRINTF(pReq, "    const response = await fetch('/get_pdu_status', { cache: 'no-store' });\n");
+ 379          //    WEB_PRINTF(pReq, "    if (!response.ok) throw new Error(`HTTP ${response.status}`);\n");
+ 380          //    WEB_PRINTF(pReq, "    const res1 = await response.json();\n");
+ 381          //    WEB_PRINTF(pReq, "    const voltage = res1.v || res1.V || 0;\n");
+ 382          //    WEB_PRINTF(pReq, "    const voltageEl = document.getElementById('voltageDisplay');\n");
+ 383          //    WEB_PRINTF(pReq, "    if (voltageEl) voltageEl.textContent = voltage.toFixed(1) + 'V';\n");
+ 384          //    WEB_PRINTF(pReq, "    const ports = res1.p || res1.P || [0,0,0,0,0,0,0,0];\n");
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 8   
+
+ 385          //    WEB_PRINTF(pReq, "    let perPortCurrent = [0,0,0,0,0,0,0,0];\n");
+ 386          //    WEB_PRINTF(pReq, "    if (res1.i && Array.isArray(res1.i)) {\n");
+ 387          //    WEB_PRINTF(pReq, "      perPortCurrent = res1.i;\n");
+ 388          //    WEB_PRINTF(pReq, "    } else if (res1.I && Array.isArray(res1.I)) {\n");
+ 389          //    WEB_PRINTF(pReq, "      perPortCurrent = res1.I;\n");
+ 390          //    WEB_PRINTF(pReq, "    } else {\n");
+ 391          //    WEB_PRINTF(pReq, "      perPortCurrent = [\n");
+ 392          //    WEB_PRINTF(pReq, "        res1.I1 || 0, res1.I2 || 0, res1.I3 || 0, res1.I4 || 0,\n");
+ 393          //    WEB_PRINTF(pReq, "        res1.I5 || 0, res1.I6 || 0, res1.I7 || 0, res1.I8 || 0\n");
+ 394          //    WEB_PRINTF(pReq, "      ];\n");
+ 395          //    WEB_PRINTF(pReq, "    }\n");
+ 396          //    WEB_PRINTF(pReq, "    let totalCurrent = 0;\n");
+ 397          //    WEB_PRINTF(pReq, "    for (let i = 0; i < 8; i++) {\n");
+ 398          //    WEB_PRINTF(pReq, "      const currentVal = perPortCurrent[i] ? perPortCurrent[i] / 100 : 0;\n");
+ 399          //    WEB_PRINTF(pReq, "      totalCurrent += currentVal;\n");
+ 400          //    WEB_PRINTF(pReq, "      applyPortState(i + 1, ports[i] || 0, currentVal);\n");
+ 401          //    WEB_PRINTF(pReq, "    }\n");
+ 402          //    WEB_PRINTF(pReq, "    const currentEl = document.getElementById('currentDisplay');\n");
+ 403          //    WEB_PRINTF(pReq, "    if (currentEl) currentEl.textContent = totalCurrent.toFixed(1) + 'A';\n");
+ 404          //    WEB_PRINTF(pReq, "  } catch (error) { console.error('Error fetching PDU data:', error); }\n");
+ 405          //    WEB_PRINTF(pReq, "}\n");
+ 406          //    
+ 407          //    WEB_PRINTF(pReq, "function applyPortState(portNumber, portStatus, portCurrent) {\n");
+ 408          //    WEB_PRINTF(pReq, "  const socket = document.getElementById(`socket-${portNumber}`);\n");
+ 409          //    WEB_PRINTF(pReq, "  const status = document.getElementById(`port-status-${portNumber}`);\n");
+ 410          //    WEB_PRINTF(pReq, "  const item = document.getElementById(`port-item-${portNumber}`);\n");
+ 411          //    WEB_PRINTF(pReq, "  const radioOn = document.getElementById(`radio-on-${portNumber}`);\n");
+ 412          //    WEB_PRINTF(pReq, "  const radioOff = document.getElementById(`radio-off-${portNumber}`);\n");
+ 413          //    WEB_PRINTF(pReq, "  const applyBtn = document.getElementById(`apply-btn-${portNumber}`);\n");
+ 414          //    WEB_PRINTF(pReq, "  const currentDisplay = document.getElementById(`current-display-${portNumber}`);
+             -\n");
+ 415          //    WEB_PRINTF(pReq, "  if (!socket) return;\n");
+ 416          //    WEB_PRINTF(pReq, "  if (currentDisplay) {\n");
+ 417          //    WEB_PRINTF(pReq, "    currentDisplay.textContent = (portCurrent || 0).toFixed(2) + 'A';\n");
+ 418          //    WEB_PRINTF(pReq, "  }\n");
+ 419          
+ 420          //    WEB_PRINTF(pReq, "  if (portStatus === 1) {\n");
+ 421          //    WEB_PRINTF(pReq, "    /* Port is ON ? card always normal/clear */\n");
+ 422          //    WEB_PRINTF(pReq, "    if (status) { status.textContent = 'ON'; status.className = 'port-status on'; 
+             -}\n");
+ 423          //    WEB_PRINTF(pReq, "    if (item) item.className = 'port-item on-normal';\n");
+ 424          //    WEB_PRINTF(pReq, "    if (radioOn) radioOn.checked = true;\n");
+ 425          //    WEB_PRINTF(pReq, "    if (radioOff) radioOff.checked = false;\n");
+ 426          //    WEB_PRINTF(pReq, "    if (applyBtn) { applyBtn.textContent = 'Apply'; applyBtn.className = 'port-app
+             -ly on-state'; }\n");
+ 427          
+ 428          //    WEB_PRINTF(pReq, "    if (portCurrent > 0.1) {\n");
+ 429          //    WEB_PRINTF(pReq, "      /* current > 0.1 ? socket GREEN */\n");
+ 430          //    WEB_PRINTF(pReq, "      socket.className = 'socket-icon on';\n");
+ 431          //    WEB_PRINTF(pReq, "    } else {\n");
+ 432          //    WEB_PRINTF(pReq, "      /* ON but current = 0.1 ? socket GRAY */\n");
+ 433          //    WEB_PRINTF(pReq, "      socket.className = 'socket-icon off';\n");
+ 434          //    WEB_PRINTF(pReq, "    }\n");
+ 435          //    WEB_PRINTF(pReq, "    socket.dataset.state = 'on';\n");
+ 436          //    WEB_PRINTF(pReq, "  } else {\n");
+ 437          //    WEB_PRINTF(pReq, "    /* Port is OFF ? COMPLETELY GRAY card + gray socket */\n");
+ 438          //    WEB_PRINTF(pReq, "    socket.className = 'socket-icon off';\n");
+ 439          //    WEB_PRINTF(pReq, "    socket.dataset.state = 'off';\n");
+ 440          //    WEB_PRINTF(pReq, "    if (status) { status.textContent = 'OFF'; status.className = 'port-status off'
+             -; }\n");
+ 441          //    WEB_PRINTF(pReq, "    if (item) item.className = 'port-item off-gray';\n");
+ 442          //    WEB_PRINTF(pReq, "    if (radioOn) radioOn.checked = false;\n");
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 9   
+
+ 443          //    WEB_PRINTF(pReq, "    if (radioOff) radioOff.checked = true;\n");
+ 444          //    WEB_PRINTF(pReq, "    if (applyBtn) { applyBtn.textContent = 'Apply'; applyBtn.className = 'port-app
+             -ly off-state'; }\n");
+ 445          //    WEB_PRINTF(pReq, "  }\n");
+ 446          //    WEB_PRINTF(pReq, "}\n");
+ 447          
+ 448          //    WEB_PRINTF(pReq, "async function applyPort(portNumber) {\n");
+ 449          //    WEB_PRINTF(pReq, "  const socket = document.getElementById(`socket-${portNumber}`);\n");
+ 450          //    WEB_PRINTF(pReq, "  const applyBtn = document.getElementById(`apply-btn-${portNumber}`);\n");
+ 451          //    WEB_PRINTF(pReq, "  const item = document.getElementById(`port-item-${portNumber}`);\n");
+ 452          //    WEB_PRINTF(pReq, "  const radioOn = document.getElementById(`radio-on-${portNumber}`);\n");
+ 453          //    WEB_PRINTF(pReq, "  if (!socket || !applyBtn || applyBtn.disabled) return;\n");
+ 454          //    WEB_PRINTF(pReq, "  const newState = (radioOn && radioOn.checked) ? 1 : 0;\n");
+ 455          //    WEB_PRINTF(pReq, "  const currentValue = (socket.dataset.state === 'on') ? 1 : 0;\n");
+ 456          //    WEB_PRINTF(pReq, "  if (newState === currentValue) {\n");
+ 457          //    WEB_PRINTF(pReq, "    applyBtn.textContent = 'Already Set';\n");
+ 458          //    WEB_PRINTF(pReq, "    const stateClass = newState === 1 ? 'on-state' : 'off-state';\n");
+ 459          //    WEB_PRINTF(pReq, "    setTimeout(() => { applyBtn.textContent = 'Apply'; applyBtn.className = 'port-
+             -apply ' + stateClass; }, 10000);\n");
+ 460          //    WEB_PRINTF(pReq, "    return;\n");
+ 461          //    WEB_PRINTF(pReq, "  }\n");
+ 462          //    WEB_PRINTF(pReq, "  const applyStart = Date.now();\n");
+ 463          //    WEB_PRINTF(pReq, "  let ok = true;\n");
+ 464          //    WEB_PRINTF(pReq, "  fetchFlag = false;\n");
+ 465          //    WEB_PRINTF(pReq, "  if (item) item.classList.add('pending');\n");
+ 466          //    WEB_PRINTF(pReq, "  applyBtn.disabled = true;\n");
+ 467          //    WEB_PRINTF(pReq, "  applyBtn.textContent = `Applying Outlet ${portNumber}...`;\n");
+ 468          //    WEB_PRINTF(pReq, "  applyBtn.className = 'port-apply applying';\n");
+ 469          //    WEB_PRINTF(pReq, "  const controller = new AbortController();\n");
+ 470          //    WEB_PRINTF(pReq, "  const timeoutId = setTimeout(() => controller.abort(),5000);\n");
+ 471          //    WEB_PRINTF(pReq, "  try {\n");
+ 472          //    WEB_PRINTF(pReq, "    const url = `/set_port${portNumber}?state=${newState}`;\n");
+ 473          //    WEB_PRINTF(pReq, "    const startTime = Date.now();\n");
+ 474          //    WEB_PRINTF(pReq, "    const response = await fetch(url, { cache: 'no-store', signal: controller.sign
+             -al });\n");
+ 475          //    WEB_PRINTF(pReq, "    if (!response.ok) throw new Error(`HTTP ${response.status}`);\n");
+ 476          //    WEB_PRINTF(pReq, "    const elapsed = Date.now() - startTime;\n");
+ 477          //    WEB_PRINTF(pReq, "    if (elapsed < 1000) await new Promise(resolve => setTimeout(resolve, 1000 - el
+             -apsed));\n");
+ 478          //    WEB_PRINTF(pReq, "    await response.text();\n");
+ 479          //    WEB_PRINTF(pReq, "    applyPortState(portNumber, newState, 0);\n");
+ 480          //    WEB_PRINTF(pReq, "  } catch (error) {\n");
+ 481          //    WEB_PRINTF(pReq, "    clearTimeout(timeoutId);\n");
+ 482          //    WEB_PRINTF(pReq, "    ok = false;\n");
+ 483          //    WEB_PRINTF(pReq, "    if (error.name === 'AbortError') {\n");
+ 484          //    WEB_PRINTF(pReq, "      applyBtn.textContent = 'Timeout - Retry';\n");
+ 485          //    WEB_PRINTF(pReq, "    } else {\n");
+ 486          //    WEB_PRINTF(pReq, "      applyBtn.textContent = 'Failed - Retry';\n");
+ 487          //    WEB_PRINTF(pReq, "    }\n");
+ 488          //    WEB_PRINTF(pReq, "    applyBtn.className = 'port-apply';\n");
+ 489          //    WEB_PRINTF(pReq, "  } finally {\n");
+ 490          //    WEB_PRINTF(pReq, "    clearTimeout(timeoutId);\n");
+ 491          //    WEB_PRINTF(pReq, "    if (ok) {\n");
+ 492          //    WEB_PRINTF(pReq, "      for (let i = 0; i < 5; i++) {\n");
+ 493          //    WEB_PRINTF(pReq, "        if ((socket.dataset.state === 'on' ? 1 : 0) === newState) break;\n");
+ 494          //    WEB_PRINTF(pReq, "        if (i < 4) await new Promise(r => setTimeout(r, 350));\n");
+ 495          //    WEB_PRINTF(pReq, "      }\n");
+ 496          //    WEB_PRINTF(pReq, "    }\n");
+ 497          //    WEB_PRINTF(pReq, "    const totalElapsed = Date.now() - applyStart;\n");
+ 498          //    WEB_PRINTF(pReq, "    if (totalElapsed < 3000) {\n");
+ 499          //    WEB_PRINTF(pReq, "      await new Promise(resolve => setTimeout(resolve, 2000 - totalElapsed));\n");
+ 500          //    WEB_PRINTF(pReq, "    }\n");
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 10  
+
+ 501          //    WEB_PRINTF(pReq, "    if (ok) {\n");
+ 502          //    WEB_PRINTF(pReq, "      applyBtn.textContent = 'Apply';\n");
+ 503          //    WEB_PRINTF(pReq, "      const stateClass = newState === 1 ? 'on-state' : 'off-state';\n");
+ 504          //    WEB_PRINTF(pReq, "      applyBtn.className = 'port-apply ' + stateClass;\n");
+ 505          //    WEB_PRINTF(pReq, "    }\n");
+ 506          //    WEB_PRINTF(pReq, "    if (item) item.classList.remove('pending');\n");
+ 507          //    WEB_PRINTF(pReq, "    applyBtn.disabled = false;\n");
+ 508          //    WEB_PRINTF(pReq, "    fetchFlag = true;\n");
+ 509          //    WEB_PRINTF(pReq, "  }\n");
+ 510          //    WEB_PRINTF(pReq, "}\n");
+ 511          
+ 512          //    WEB_PRINTF(pReq, "function startTimer() {\n");
+ 513          //    WEB_PRINTF(pReq, "  fetchInterval = setInterval(() => { if (fetchFlag) getPduData(); }, 7000);\n");
+ 514          //    WEB_PRINTF(pReq, "}\n");
+ 515          //    WEB_PRINTF(pReq, "document.addEventListener('DOMContentLoaded', function() {\n");
+ 516          //    WEB_PRINTF(pReq, "  setTimeout(function() { getPduData(); }, 300);\n");
+ 517          //    WEB_PRINTF(pReq, "  startTimer();\n");
+ 518          //    WEB_PRINTF(pReq, "});\n");
+ 519          //    WEB_PRINTF(pReq, "</script>\n");
+ 520          
+ 521          //    WEB_PRINTF(pReq, "<body>\n");
+ 522          //    WEB_PRINTF(pReq, "<div class=\"container\">\n");
+ 523          //    WEB_PRINTF(pReq, "  <div class=\"header\">\n");
+ 524          //    WEB_PRINTF(pReq, "    <div class=\"page-title\"><span class=\"ico\">&#9889;</span>PDU Rack 8 &mdash;
+             - Control Panel</div>\n");
+ 525          //    WEB_PRINTF(pReq, "    <div class=\"header-right\">\n");
+ 526          //    WEB_PRINTF(pReq, "      <span class=\"header-item\">\n");
+ 527          //    WEB_PRINTF(pReq, "        <span class=\"label\">INPUT VOLTAGE</span>\n");
+ 528          //    WEB_PRINTF(pReq, "        <b id=\"voltageDisplay\">0.0V</b>\n");
+ 529          //    WEB_PRINTF(pReq, "      </span>\n");
+ 530          //    WEB_PRINTF(pReq, "      <span class=\"header-item\">\n");
+ 531          //    WEB_PRINTF(pReq, "        <span class=\"label\">TOTAL CURRENT</span>\n");
+ 532          //    WEB_PRINTF(pReq, "        <b id=\"currentDisplay\">0.0A</b>\n");
+ 533          //    WEB_PRINTF(pReq, "      </span>\n");
+ 534          //    WEB_PRINTF(pReq, "    </div>\n");
+ 535          //    WEB_PRINTF(pReq, "  </div>\n");
+ 536          //    WEB_PRINTF(pReq, "  <div class=\"port-grid\">\n");
+ 537          //    for (port = 1; port <= 8; port++) {
+ 538          //        WEB_PRINTF(pReq, "    <div id=\"port-item-%d\" class=\"port-item off-gray\">\n", port);
+ 539          //        WEB_PRINTF(pReq, "      <div class=\"port-top\">\n");
+ 540          //        WEB_PRINTF(pReq, "        <div class=\"port-info\">\n");
+ 541          //        WEB_PRINTF(pReq, "          <div class=\"port-label\">Outlet %d</div>\n", port);
+ 542          //        WEB_PRINTF(pReq, "          <div id=\"port-status-%d\" class=\"port-status off\">OFF</div>\n", p
+             -ort);
+ 543          //        WEB_PRINTF(pReq, "          <div class=\"port-current\">Current: <span id=\"current-display-%d\"
+             - class=\"current-value\">0.00A</span></div>\n", port);
+ 544          //        WEB_PRINTF(pReq, "        </div>\n");
+ 545          //        WEB_PRINTF(pReq, "        <div id=\"socket-%d\" class=\"socket-icon off\" data-state=\"off\">\n"
+             -, port);
+ 546          //        WEB_PRINTF(pReq, "          <svg viewBox=\"0 0 120 120\">\n");
+ 547          //        WEB_PRINTF(pReq, "            <rect class=\"outline fill\" x=\"5\" y=\"5\" width=\"90\" height=\
+             -"90\" rx=\"15\" ry=\"15\"/>\n");
+ 548          //        WEB_PRINTF(pReq, "            <rect class=\"pins\" x=\"43\" y=\"10\" width=\"14\" height=\"30\" 
+             -rx=\"3\"/>\n");
+ 549          //        WEB_PRINTF(pReq, "            <rect class=\"pins\" x=\"20\" y=\"58\" width=\"16\" height=\"28\" 
+             -rx=\"3\"/>\n");
+ 550          //        WEB_PRINTF(pReq, "            <rect class=\"pins\" x=\"64\" y=\"58\" width=\"16\" height=\"28\" 
+             -rx=\"3\"/>\n");
+ 551          //        WEB_PRINTF(pReq, "          </svg>\n");
+ 552          //        WEB_PRINTF(pReq, "        </div>\n");
+ 553          //        WEB_PRINTF(pReq, "      </div>\n");
+ 554          //        WEB_PRINTF(pReq, "      <div class=\"port-controls\">\n");
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 11  
+
+ 555          //        WEB_PRINTF(pReq, "        <label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-on-%d\"
+             - value=\"1\"> <span>ON</span></label>\n", port, port);
+ 556          //        WEB_PRINTF(pReq, "        <label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-off-%d\
+             -" value=\"0\" checked> <span>OFF</span></label>\n", port, port);
+ 557          //        WEB_PRINTF(pReq, "      </div>\n");
+ 558          //        WEB_PRINTF(pReq, "      <button id=\"apply-btn-%d\" class=\"port-apply off-state\" onclick=\"app
+             -lyPort(%d)\">Apply</button>\n", port, port);
+ 559          //        WEB_PRINTF(pReq, "    </div>\n");
+ 560          //    }
+ 561          //    WEB_PRINTF(pReq, "  </div>\n");
+ 562          //    WEB_PRINTF(pReq, "</div>\n");
+ 563          //    WEB_PRINTF(pReq, "</body>\n");
+ 564          //    WEB_PRINTF(pReq, "</html>\n");
+ 565          //    WEB_END(pReq);
+ 566          //    return SUCCESS;
+ 567          //}
+ 568          
+ 569          
+ 570          
+ 571          int32 get_pdu(struct http_request_s *pReq)
+ 572          {
+ 573   1          int port = 0;
+ 574   1          WEB_BEGIN(pReq);
+ 575   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 576   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 577   1          WEB_PUTS(pReq, "<html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"widt
+             -h=device-width,initial-scale=1.0\"><title>PDU Rack 8 Outlets Control</title><style>\n");
+ 578   1          WEB_PUTS(pReq, "*{box-sizing:border-box;margin:0;padding:0}"
+ 640   1              ":root{--bg1:#eef0f2;--bg2:#f5f6f8;--panel:#fff;--panel2:#fff;--border:#dde1e6;--green:#2f9e44;--g
+             -reen-dark:#1e7e34;--green-light:#d4edda;--red:#e03131;--red-light:#f8d7da;--grey:#868e96;--txt:#1c1f23;--txtdim:#6b7280}
+             -"
+ 640   1              "body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg1);min-height:100vh;padding:14px;
+             -color:var(--txt)}"
+ 640   1              ".container{max-width:1180px;margin:0 auto}"
+ 640   1              ".header{border-bottom:2px solid var(--green);padding:4px 4px 12px;margin-bottom:20px;display:flex
+             -;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}"
+ 640   1              ".page-title{font-size:18px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var
+             -(--txt);display:flex;align-items:center;gap:8px}"
+ 640   1              ".page-title .ico{font-size:18px}"
+ 640   1              ".header-right{display:flex;align-items:center;gap:28px}"
+ 640   1              ".header-item{display:flex;flex-direction:column;align-items:flex-end;gap:2px;min-width:140px}"
+ 640   1              ".header-item .label{font-size:11px;font-weight:600;color:var(--txt);text-transform:uppercase;lett
+             -er-spacing:.6px}"
+ 640   1              ".header-item b{font-size:18px;font-weight:700;color:var(--txt);letter-spacing:.5px;line-height:1.
+             -2}"
+ 640   1              ".port-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:22px}"
+ 640   1              "@media(max-width:900px){.port-grid{grid-template-columns:repeat(2,1fr)}}"
+ 640   1              ".port-item{position:relative;background:var(--panel);border:1px solid var(--border);border-radius
+             -:12px;padding:20px;text-align:left;box-shadow:0 1px 3px rgba(20,22,25,.06);transition:border-color .2s,box-shadow .2s,ba
+             -ckground .3s,filter .3s}"
+ 640   1              ".port-item:hover{box-shadow:0 3px 10px rgba(20,22,25,.1)}"
+ 640   1              ".port-item:active{box-shadow:0 1px 2px rgba(20,22,25,.08)}"
+ 640   1              ".port-item.off-gray{background:#e8e8e8!important;border-color:#c0c0c0!important;box-shadow:none}"
+ 640   1              ".port-item.off-gray .port-label,.port-item.off-gray .port-status,.port-item.off-gray .port-curren
+             -t,.port-item.off-gray .port-current .current-value,.port-item.off-gray .port-controls label,.port-item.off-gray .port-co
+             -ntrols span{color:#9e9e9e!important}"
+ 640   1              ".port-item.off-gray .port-apply{background:#d0d0d0!important;border-color:#b0b0b0!important;color
+             -:#757575!important}"
+ 640   1              ".port-item.off-gray .socket-icon{filter:grayscale(100%);opacity:.65}"
+ 640   1              ".port-item.on-normal{background:var(--panel);border-color:var(--border)}"
+ 640   1              ".port-item.pending{opacity:.65;pointer-events:none}"
+ 640   1              ".port-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:16p
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 12  
+
+             -x}"
+ 640   1              ".port-info{display:flex;flex-direction:column;gap:4px;flex:1 1 auto;min-width:0}"
+ 640   1              ".socket-icon{width:100px;height:100px;flex-shrink:0}"
+ 640   1              ".socket-icon svg{width:120%;height:120%}"
+ 640   1              ".socket-icon .outline{stroke-width:3}"
+ 640   1              ".socket-icon .pins{fill:none;stroke-width:3}"
+ 640   1              ".socket-icon.on .outline{stroke:#1E8E3E;stroke-width:4;fill:#D8F0DB}"
+ 640   1              ".socket-icon.on .pins{stroke:#1E8E3E;stroke-width:4}"
+ 640   1              ".socket-icon.on{border:3px solid #1E8E3E;border-radius:12px;padding:4px;box-sizing:border-box}"
+ 640   1              ".socket-icon.off .outline,.socket-icon.off .pins{stroke:#A0A0A0;opacity:1}"
+ 640   1              ".socket-icon.off .fill{fill:#E5E5E5;opacity:.30}"
+ 640   1              ".socket-icon.off{border:3px solid #E5E5E5;border-radius:12px;padding:4px;box-sizing:border-box}"
+ 640   1              ".port-label{font-size:16px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var
+             -(--txtdim)}"
+ 640   1              ".port-name{font-size:13px;font-weight:600;color:var(--txt);margin:2px 0;padding:4px 6px;border:1p
+             -x solid transparent;border-radius:4px;background:transparent;width:100%;font-family:inherit;text-overflow:ellipsis}"
+ 640   1              ".port-name::placeholder{color:#b0b0b0;font-weight:400}"
+ 640   1              ".port-name:hover{border-color:var(--border);background:#fff}"
+ 640   1              ".port-name:focus{outline:none;border-color:var(--green);background:#fff;box-shadow:0 0 0 2px rgba
+             -(47,158,68,.15)}"
+ 640   1              ".port-item.off-gray .port-name{color:#9e9e9e!important}"
+ 640   1              ".port-item.off-gray .port-name:hover{background:#f0f0f0}"
+ 640   1              ".port-status{font-size:19px;font-weight:700;letter-spacing:.5px}"
+ 640   1              ".port-status.on{color:var(--green)}"
+ 640   1              ".port-status.off{color:var(--red)}"
+ 640   1              ".port-current{font-size:13px;color:var(--txtdim);margin-top:2px}"
+ 640   1              ".port-current .current-value{font-weight:600;color:var(--txt)}"
+ 640   1              ".port-controls{display:flex;align-items:center;gap:16px;margin-top:14px;padding:12px 0;border-top
+             -:1px solid var(--border)}"
+ 640   1              ".port-controls label{display:flex;align-items:center;gap:5px;font-size:13px;font-weight:600;curso
+             -r:pointer}"
+ 640   1              ".port-controls input[type=\"radio\"]{accent-color:var(--green);width:16px;height:16px;cursor:poin
+             -ter}"
+ 640   1              ".port-controls input[type=\"radio\"]:checked+span{color:var(--green)}"
+ 640   1              ".port-controls input[type=\"radio\"][value=\"0\"]:checked+span{color:var(--red)}"
+ 640   1              ".port-controls input[type=\"radio\"][value=\"0\"]{accent-color:var(--red)}"
+ 640   1              ".port-apply{width:100%;padding:10px 0;margin-top:6px;border:2px solid #9E9E9E;border-radius:6px;f
+             -ont-size:13px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;cursor:pointer;transition:all .2s;background:
+             -#C0C0C0;color:#000}"
+ 640   1              ".port-apply:hover{transform:translateY(-1px);box-shadow:0 2px 8px rgba(0,0,0,.15)}"
+ 640   1              ".port-apply:disabled{cursor:not-allowed;opacity:1}"
+ 640   1              ".port-apply.on-state{background:#A5D6A7;border-color:#81C784;color:#1b5e20}"
+ 640   1              ".port-apply.on-state:hover{background:#90C695;border-color:#81C784;color:#1b5e20}"
+ 640   1              ".port-apply.off-state{background:#E0E0E0;border-color:#BDBDBD;color:#424242}"
+ 640   1              ".port-apply.off-state:hover{background:#D5D5D5;border-color:#BDBDBD;color:#424242}"
+ 640   1              ".port-apply.applying{background:#E0E0E0;border-color:#BDBDBD;color:#424242;cursor:wait;animation:
+             -pulse 1s infinite}"
+ 640   1              "@keyframes pulse{0%,100%{opacity:1}50%{opacity:.7}}"
+ 640   1              ".port-apply.applied{background:#E0E0E0;border-color:#BDBDBD;color:#424242}"
+ 640   1              "</style></head>\n");
+ 641   1      
+ 642   1          /* ===== JavaScript ===== */
+ 643   1          WEB_PUTS(pReq, "<script>\n");
+ 644   1          WEB_PUTS(pReq, "let fetchFlag=true,fetchInterval;"
+ 687   1              "async function getPduData(){try{let r=await fetch('/get_pdu_status',{cache:'no-store'});"
+ 687   1              "if(!r.ok)throw new Error(r.status);let d=await r.json(),v=d.v||d.V||0,e=document.getElementById('
+             -voltageDisplay');"
+ 687   1              "if(e)e.textContent=v.toFixed(1)+'V';let p=d.p||d.P||[0,0,0,0,0,0,0,0],i=d.i||d.I||[d.I1||0,d.I2||
+             -0,d.I3||0,d.I4||0,d.I5||0,d.I6||0,d.I7||0,d.I8||0],t=0;"
+ 687   1              "for(let n=0;n<8;n++){let c=i[n]?i[n]/100:0;t+=c;applyPortState(n+1,p[n]||0,c)}let cl=document.get
+             -ElementById('currentDisplay');"
+ 687   1              "if(cl)cl.textContent=t.toFixed(1)+'A'}catch(x){console.error('PDU:',x)}}"
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 13  
+
+ 687   1              "async function loadPortNames(){try{let r=await fetch('/get_pdu_names',{cache:'no-store'});"
+ 687   1              "if(!r.ok)throw new Error(r.status);let d=await r.json(),n=d.n||d.N||d.names||[];"
+ 687   1              "for(let i=0;i<8;i++){let el=document.getElementById('port-name-'+(i+1));if(el&&n[i]!==undefined)e
+             -l.value=String(n[i]).slice(0,32)}}catch(e){console.error('names:',e)}}"
+ 687   1              "let nameSaveTimers={};"
+ 687   1              "function setPortName(portNumber){let el=document.getElementById('port-name-'+portNumber);if(!el)r
+             -eturn;"
+ 687   1              "let name=el.value.slice(0,32);el.value=name;if(nameSaveTimers[portNumber])clearTimeout(nameSaveTi
+             -mers[portNumber]);"
+ 687   1              "nameSaveTimers[portNumber]=setTimeout(async()=>{try{let u=`/set_pdu_name?port=${portNumber}&name=
+             -${encodeURIComponent(name)}`,"
+ 687   1              "r=await fetch(u,{cache:'no-store'});if(!r.ok)throw new Error(r.status);el.style.borderColor='#2f9
+             -e44';"
+ 687   1              "setTimeout(()=>{el.style.borderColor=''},800)}catch(e){console.error('setName:',e);el.style.borde
+             -rColor='#e03131';"
+ 687   1              "setTimeout(()=>{el.style.borderColor=''},2000)}},400)}"
+ 687   1              "function applyPortState(n,st,cur){let s=document.getElementById(`socket-${n}`),sS=document.getEle
+             -mentById(`port-status-${n}`),"
+ 687   1              "it=document.getElementById(`port-item-${n}`),rO=document.getElementById(`radio-on-${n}`),rF=docum
+             -ent.getElementById(`radio-off-${n}`),"
+ 687   1              "b=document.getElementById(`apply-btn-${n}`),cd=document.getElementById(`current-display-${n}`);if
+             -(!s)return;"
+ 687   1              "if(cd)cd.textContent=(cur||0).toFixed(2)+'A';"
+ 687   1              "if(st===1){if(sS){sS.textContent='ON';sS.className='port-status on'}if(it)it.className='port-item
+             - on-normal';"
+ 687   1              "if(rO)rO.checked=true;if(rF)rF.checked=false;if(b){b.textContent='Apply';b.className='port-apply 
+             -on-state'};"
+ 687   1              "s.className=cur>0.01?'socket-icon on':'socket-icon off';s.dataset.state='on'}"
+ 687   1              "else{s.className='socket-icon off';s.dataset.state='off';if(sS){sS.textContent='OFF';sS.className
+             -='port-status off'};"
+ 687   1              "if(it)it.className='port-item off-gray';if(rO)rO.checked=false;if(rF)rF.checked=true;"
+ 687   1              "if(b){b.textContent='Apply';b.className='port-apply off-state'}}}"
+ 687   1              "async function applyPort(n){let s=document.getElementById(`socket-${n}`),b=document.getElementByI
+             -d(`apply-btn-${n}`),"
+ 687   1              "it=document.getElementById(`port-item-${n}`),rO=document.getElementById(`radio-on-${n}`);"
+ 687   1              "if(!s||!b||b.disabled)return;let ns=(rO&&rO.checked)?1:0,cv=(s.dataset.state==='on')?1:0;"
+ 687   1              "if(ns===cv){b.textContent='Already Set';let sc=ns===1?'on-state':'off-state';"
+ 687   1              "setTimeout(()=>{b.textContent='Apply';b.className='port-apply '+sc},10000);return}"
+ 687   1              "let as=Date.now(),ok=true;fetchFlag=false;if(it)it.classList.add('pending');b.disabled=true;"
+ 687   1              "b.textContent=`Applying Outlet ${n}...`;b.className='port-apply applying';"
+ 687   1              "let c=new AbortController(),tid=setTimeout(()=>c.abort(),5000);"
+ 687   1              "try{let u=`/set_port${n}?state=${ns}`,t0=Date.now(),r=await fetch(u,{cache:'no-store',signal:c.si
+             -gnal});"
+ 687   1              "if(!r.ok)throw new Error(r.status);let el=Date.now()-t0;if(el<1000)await new Promise(x=>setTimeou
+             -t(x,1000-el));"
+ 687   1              "await r.text();applyPortState(n,ns,0)}catch(e){clearTimeout(tid);ok=false;"
+ 687   1              "b.textContent=e.name==='AbortError'?'Timeout - Retry':'Failed - Retry';b.className='port-apply'}"
+ 687   1              "finally{clearTimeout(tid);if(ok)for(let i=0;i<5;i++){if((s.dataset.state==='on'?1:0)===ns)break;"
+ 687   1              "if(i<4)await new Promise(r=>setTimeout(r,350))}let te=Date.now()-as;if(te<3000)await new Promise(
+             -r=>setTimeout(r,2000-te));"
+ 687   1              "if(ok){b.textContent='Apply';let sc=ns===1?'on-state':'off-state';b.className='port-apply '+sc}"
+ 687   1              "if(it)it.classList.remove('pending');b.disabled=false;fetchFlag=true}}"
+ 687   1              "function startTimer(){fetchInterval=setInterval(()=>{if(fetchFlag)getPduData()},7000)}"
+ 687   1              "document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){getPduData()},300);
+             -loadPortNames();startTimer()});\n");
+ 688   1          WEB_PUTS(pReq, "</script>\n");
+ 689   1      
+ 690   1          WEB_PUTS(pReq, "<body><div class=\"container\"><div class=\"header\">"
+ 695   1              "<div class=\"page-title\"><span class=\"ico\">&#9889;</span>PDU Rack 8 &mdash; Control Panel</div
+             ->"
+ 695   1              "<div class=\"header-right\">"
+ 695   1              "<span class=\"header-item\"><span class=\"label\">INPUT VOLTAGE</span><b id=\"voltageDisplay\">0.
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 14  
+
+             -0V</b></span>"
+ 695   1              "<span class=\"header-item\"><span class=\"label\">TOTAL CURRENT</span><b id=\"currentDisplay\">0.
+             -0A</b></span>"
+ 695   1              "</div></div><div class=\"port-grid\">\n");
+ 696   1          for (port = 1; port <= 8; port++) {
+ 697   2              /* FIX: split into small calls (each < 256 bytes after expansion) and pass
+ 698   2               * the exact number of %d arguments (original had 14 %d but only 12 args). */
+ 699   2              WEB_PRINTF(pReq, "<div id=\"port-item-%d\" class=\"port-item off-gray\"><div class=\"port-top\"><d
+             -iv class=\"port-info\">", port);
+ 700   2              WEB_PRINTF(pReq, "<div class=\"port-label\">Outlet %d</div>", port);
+ 701   2              WEB_PRINTF(pReq, "<input id=\"port-name-%d\" class=\"port-name\" type=\"text\" maxlength=\"32\" pl
+             -aceholder=\"Name (32 chars)\" value=\"\" oninput=\"setPortName(%d)\" onblur=\"setPortName(%d)\">", port, port, port);
+ 702   2              WEB_PRINTF(pReq, "<div id=\"port-status-%d\" class=\"port-status off\">OFF</div>", port);
+ 703   2              WEB_PRINTF(pReq, "<div class=\"port-current\">Current: <span id=\"current-display-%d\" class=\"cur
+             -rent-value\">0.00A</span></div>", port);
+ 704   2              WEB_PRINTF(pReq, "</div><div id=\"socket-%d\" class=\"socket-icon off\" data-state=\"off\">", port
+             -);
+ 705   2              WEB_PUTS(pReq, "<svg viewBox=\"0 0 120 120\">" "<rect class=\"outline fill\" x=\"5\" y=\"5\" width
+             -=\"90\" height=\"90\" rx=\"15\" ry=\"15\"/>" "<rect class=\"pins\" x=\"43\" y=\"10\" width=\"14\" height=\"30\" rx=\"3\"
+             -/>" "<rect class=\"pins\" x=\"20\" y=\"58\" width=\"16\" height=\"28\" rx=\"3\"/>" "<rect class=\"pins\" x=\"64\" y=\"58
+             -\" width=\"16\" height=\"28\" rx=\"3\"/>" "</svg></div></div><div class=\"port-controls\">");
+ 706   2              WEB_PRINTF(pReq, "<label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-on-%d\" value=\"1
+             -\"> <span>ON</span></label>", port, port);
+ 707   2              WEB_PRINTF(pReq, "<label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-off-%d\" value=\"
+             -0\" checked> <span>OFF</span></label>", port, port);
+ 708   2              WEB_PRINTF(pReq, "</div><button id=\"apply-btn-%d\" class=\"port-apply off-state\" onclick=\"apply
+             -Port(%d)\">Apply</button></div>\n", port, port);
+ 709   2          }
+ 710   1          WEB_PUTS(pReq, "</div></div></body></html>\n");
+ 711   1          WEB_END(pReq);
+ 712   1          return SUCCESS;
+ 713   1      }
+ 714          /* ==================================================================
+ 715           *  PDU port-name storage and helpers
+ 716           * ================================================================== */
+ 717          
+ 718          ///* Per-port names: 8 ports, each up to 32 chars + NUL terminator */
+ 719          #define PDU_NUM_PORTS      8
+ 720          #define PDU_NAME_MAX_LEN   32
+ 721           char far pdu_names[PDU_NUM_PORTS][PDU_NAME_MAX_LEN + 1] = {
+ 722              "", "", "", "", "", "", "", ""
+ 723          };
+ 724           
+ 725          char far name_enc[1] = {0};
+ 726          char far name_dec[1] = {0};
+ 727          
+ 728          ///* URL-decode: handles %XX and '+'. Safe for the 32-char names we accept. */
+ 729          //static  void pdu_url_decode(const char *src, char *dst, int dst_size)
+ 730          //{
+ 731          //    int di = 0;
+ 732          //    if (!src || !dst || dst_size <= 0) return;
+ 733          
+ 734          //    while (*src && di < dst_size - 1) {
+ 735          //        if (*src == '%' && src[1] && src[2]) {
+ 736          //            char hex[3];
+ 737          //            hex[0] = src[1];
+ 738          //            hex[1] = src[2];
+ 739          //            hex[2] = '\0';
+ 740          //            dst[di++] = (char)strtol(hex, NULL, 16);
+ 741          //            src += 3;
+ 742          //        } else if (*src == '+') {
+ 743          //            dst[di++] = ' ';
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 15  
+
+ 744          //            src++;
+ 745          //        } else {
+ 746          //            dst[di++] = *src++;
+ 747          //        }
+ 748          //    }
+ 749          //    dst[di] = '\0';
+ 750          //}
+ 751          
+ 752          ///* Extract a URL-encoded string query parameter from pReq->pPath.
+ 753          // * Returns 1 if found, 0 otherwise. Value is NOT URL-decoded here. */
+ 754          //static int pdu_get_query_str(struct http_request_s *pReq,
+ 755          //                             const char *name,
+ 756          //                             char *out,
+ 757          //                             int out_size)
+ 758          //{
+ 759          //    const char *p;
+ 760          //    const char *qs_end;
+ 761          //    size_t      nlen;
+ 762          
+ 763          //    if (!pReq || !pReq->pPath || !name || !out || out_size <= 0)
+ 764          //        return 0;
+ 765          
+ 766          //    nlen = strlen(name);
+ 767          //    if (nlen == 0) return 0;
+ 768          
+ 769          //    p = (const char *)pReq->pPath;
+ 770          
+ 771          //    /* advance to '?' */
+ 772          //    while (*p && *p != '?' && *p != ' ' && *p != '\r' && *p != '\n')
+ 773          //        p++;
+ 774          //    if (*p != '?') return 0;
+ 775          //    p++;
+ 776          
+ 777          //    /* end of request line */
+ 778          //    qs_end = p;
+ 779          //    while (*qs_end && *qs_end != ' ' && *qs_end != '\r' && *qs_end != '\n')
+ 780          //        qs_end++;
+ 781          
+ 782          //    /* scan key=value&key=value */
+ 783          //    while (p < qs_end) {
+ 784          //        const char *kstart = p;
+ 785          //        const char *kend;
+ 786          //        size_t      klen;
+ 787          
+ 788          //        while (p < qs_end && *p != '=' && *p != '&')
+ 789          //            p++;
+ 790          //        kend = p;
+ 791          //        klen = (size_t)(kend - kstart);
+ 792          
+ 793          //        if (p >= qs_end || *p != '=') {
+ 794          //            while (p < qs_end && *p != '&') p++;
+ 795          //            if (p < qs_end && *p == '&') p++;
+ 796          //            continue;
+ 797          //        }
+ 798          //        p++;  /* skip '=' */
+ 799          
+ 800          //        if (klen == nlen && memcmp(kstart, name, nlen) == 0) {
+ 801          //            int i = 0;
+ 802          //            while (p < qs_end && *p != '&' && i < out_size - 1)
+ 803          //                out[i++] = *p++;
+ 804          //            out[i] = '\0';
+ 805          //            return 1;
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 16  
+
+ 806          //        }
+ 807          
+ 808          //        while (p < qs_end && *p != '&') p++;
+ 809          //        if (p < qs_end && *p == '&') p++;
+ 810          //    }
+ 811          
+ 812          //    return 0;
+ 813          //}
+ 814          
+ 815          ///* ==================================================================
+ 816          // *  GET /get_pdu_names
+ 817          // *  Returns: {"n":["name1","name2",...,"name8"]}
+ 818          // * ================================================================== */
+ 819          //int32 get_pdu_names(struct http_request_s *pReq)
+ 820          //{
+ 821          //    int i;
+ 822          //    WEB_BEGIN(pReq);
+ 823          //    WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 824          //    WEB_HEADER(pReq, "Content-Type: application/json");
+ 825          //    WEB_HEADER(pReq, "Cache-Control: no-cache");
+ 826          
+ 827          //    WEB_PRINTF(pReq, "{\"n\":[");
+ 828          //    for (i = 0; i < PDU_NUM_PORTS; i++) {
+ 829          //        if (i) WEB_PRINTF(pReq, ",");
+ 830          //        WEB_PRINTF(pReq, "\"%s\"", pdu_names[i]);
+ 831          //    }
+ 832          //    WEB_PRINTF(pReq, "]}");
+ 833          
+ 834          //    WEB_END(pReq);
+ 835          //    return SUCCESS;
+ 836          //}
+ 837          
+ 838          /* ==================================================================
+ 839           *  GET /get_pdu_names   (FIX: route + handler were missing; the page calls it on load)
+ 840           *  Returns: {"n":["","","","","","","",""]}
+ 841           *  Names are not persisted yet (set_pdu_name storage code was commented out).
+ 842           * ================================================================== */
+ 843          int32 get_pdu_names(struct http_request_s *pReq)
+ 844          {
+ 845   1          WEB_BEGIN(pReq);
+ 846   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 847   1          WEB_HEADER(pReq, "Content-Type: application/json");
+ 848   1          WEB_HEADER(pReq, "Cache-Control: no-cache");
+ 849   1          WEB_PUTS(pReq, "{\"n\":[\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"]}");
+ 850   1          WEB_END(pReq);
+ 851   1          return SUCCESS;
+ 852   1      }
+ 853          
+ 854          /* ==================================================================
+ 855           *  GET /set_pdu_name?port=N&name=xxx
+ 856           *  Stores up to 32 characters for outlet N (1..8).
+ 857           * ================================================================== */
+ 858          int32 set_pdu_name(struct http_request_s *pReq)
+ 859          {
+ 860   1          char port_buf[8]   = {0};
+ 861   1      
+ 862   1          int  port = 0;
+ 863   1      
+ 864   1      //    if (pdu_get_query_str(pReq, "port", port_buf, sizeof(port_buf)))
+ 865   1      //        port = atoi(port_buf);
+ 866   1      
+ 867   1      //    if (pdu_get_query_str(pReq, "name", name_enc, sizeof(name_enc)))
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 17  
+
+ 868   1      //        pdu_url_decode(name_enc, name_dec, sizeof(name_dec));
+ 869   1      
+ 870   1          WEB_BEGIN(pReq);
+ 871   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 872   1          WEB_HEADER(pReq, "Content-Type: text/plain");
+ 873   1          WEB_HEADER(pReq, "Cache-Control: no-cache");
+ 874   1      
+ 875   1          if (port >= 1 && port <= 8) {
+ 876   2              //strncpy(pdu_names[port - 1], name_dec, PDU_NAME_MAX_LEN);
+ 877   2              //pdu_names[port - 1][PDU_NAME_MAX_LEN] = '\0';
+ 878   2              /* Optionally persist to NVRAM/EEPROM here */
+ 879   2              WEB_PRINTF(pReq, "OK");
+ 880   2          } else {
+ 881   2              WEB_PRINTF(pReq, "ERR");
+ 882   2          }
+ 883   1      
+ 884   1          WEB_END(pReq);
+ 885   1          return SUCCESS;
+ 886   1      }
+ 887          
+ 888          
+ 889          uint8 far Get_Response_RTC[234];
+ 890          extern uint8 start_pdu_status;
+ 891          uint8 start_rtc_data = 0;
+ 892          uint8 start_alarm_data = 0;
+ 893          
+ 894          //uint8 far Get_Response_ALARM[64];
+ 895          
+ 896          
+ 897          
+ 898          void Copy_RTC_DATA(uint8* tempData)
+ 899          {
+ 900   1          strcpy((char*)Get_Response_RTC, tempData);
+ 901   1      }
+ 902          
+ 903          void Copy_Alarm_DATA(uint8* tempData)
+ 904          {
+ 905   1      //    strcpy((char*)Get_Response_ALARM, tempData);
+ 906   1      }
+*** WARNING C280 IN LINE 903 OF ..\src\web\web_syslogbuf.c: 'tempData': unreferenced local variable
+ 907          
+ 908          
+ 909          
+ 910          /* ============================================================
+ 911           * GET /get_rtc_time
+ 912           * Returns complete RTC data: current time + date + all alarms.
+ 913           * NOTE: Static test values are used below — replace with real
+ 914           *       RTC / alarm reads when ready.
+ 915           * JSON keys are all uppercase.
+ 916           * ============================================================ */
+ 917          int32 get_rtc_time(struct http_request_s *pReq)
+ 918          {
+ 919   1          start_pdu_status = 0;
+ 920   1          start_rtc_data  = 1;
+ 921   1          
+ 922   1          WEB_BEGIN(pReq);
+ 923   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 924   1          WEB_HEADER(pReq, "Content-Type: application/json");
+ 925   1          WEB_HEADER(pReq, "Cache-Control: no-cache");
+ 926   1          WEB_PRINTF(pReq, "%s" ,Get_Response_RTC);
+ 927   1          WEB_END(pReq);
+ 928   1          memset(Get_Response_RTC,'\0',234);
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 18  
+
+ 929   1          return SUCCESS;
+ 930   1      }
+ 931          
+ 932          
+ 933          
+ 934          /* ============================================================
+ 935           * GET /get_alarms
+ 936           * Returns all 3 alarm times only (JSON, uppercase keys).
+ 937           * Use null for alarms that are not configured.
+ 938           *   {"A1H":8,"A1M":18,"A2H":2,"A2M":12,"A3H":4,"A3M":19}
+ 939           * ============================================================ */
+ 940          int32 get_alarms(struct http_request_s *pReq)
+ 941          {
+ 942   1          start_alarm_data = 1;
+ 943   1          //printf("GET_ALARMS\r\n");
+ 944   1          WEB_BEGIN(pReq);
+ 945   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 946   1          WEB_HEADER(pReq, "Content-Type: application/json");
+ 947   1          WEB_HEADER(pReq, "Cache-Control: no-cache");
+ 948   1          //strcpy(Get_Response_ALARM, "{\"A1H\":2,\"A1M\":45,\"A2H\":4,\"A2M\":24,\"A3H\":6,\"A3M\":36}");
+ 949   1      //    WEB_PRINTF(pReq,"%s", Get_Response_ALARM);
+ 950   1      
+ 951   1          WEB_END(pReq);
+ 952   1          return SUCCESS;
+ 953   1      }
+ 954          
+ 955          /* ================================================================== *
+ 956           *  parse_query_uint
+ 957           *
+ 958           *  Extract an integer query parameter from the raw request buffer.
+ 959           *
+ 960           *  The firmware stores the full HTTP request in pReq->pPath, e.g.:
+ 961           *
+ 962           *    "GET /set_rtc_time?H=12&M=12&S=12&D=12&MO=12&Y=2012 HTTP/1.1\r\n"
+ 963           *    "Host: 192.168.1.1\r\n"
+ 964           *    "Referer: http://192.168.1.1/vlan.cgi?page=set_rtc_data_alarm\r\n"
+ 965           *    ...
+ 966           *
+ 967           *  So we must:
+ 968           *    - start scanning right after the '?' in the request line
+ 969           *    - stop at the first ' ', '\r' or '\n' (end of request line)
+ 970           *    - never scan the headers (a '?' in Referer must not confuse us)
+ 971           *
+ 972           *  Exact-length key match, so "M" never matches "MO".
+ 973           *  Returns 0 on success, -1 if not found or malformed.
+ 974           * ================================================================== */
+ 975          static int parse_query_uint(struct http_request_s *pReq,
+ 976                                      const char *name,
+ 977                                      int        *out)
+ 978          {
+ 979   1          const char *p;
+ 980   1          const char *qs_end;
+ 981   1          size_t      nlen;
+ 982   1      
+ 983   1          if (!pReq || !pReq->pPath || !name || !out) return -1;
+ 984   1      
+ 985   1          nlen = strlen(name);
+ 986   1          if (nlen == 0) return -1;
+ 987   1      
+ 988   1          p = (const char *)pReq->pPath;
+ 989   1      
+ 990   1          /* advance to the first '?' — start of the query string */
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 19  
+
+ 991   1          while (*p && *p != '?' && *p != ' ' && *p != '\r' && *p != '\n')
+ 992   1              p++;
+ 993   1          if (*p != '?') return -1;
+ 994   1          p++;                                   /* skip '?' */
+ 995   1      
+ 996   1          /* end of the request line — anything past this is headers */
+ 997   1          qs_end = p;
+ 998   1          while (*qs_end && *qs_end != ' ' && *qs_end != '\r' && *qs_end != '\n')
+ 999   1              qs_end++;
+1000   1      
+1001   1          /* scan "key=value&key=value..." inside [p, qs_end) */
+1002   1          while (p < qs_end) {
+1003   2              const char *kstart = p;
+1004   2              const char *kend;
+1005   2              size_t      klen;
+1006   2              long        val    = 0;
+1007   2              int         sign   = 1;
+1008   2              int         digits = 0;
+1009   2      
+1010   2              /* key runs until '=' or '&' or end of query string */
+1011   2              while (p < qs_end && *p != '=' && *p != '&')
+1012   2                  p++;
+1013   2              kend = p;
+1014   2              klen = (size_t)(kend - kstart);
+1015   2      
+1016   2              if (p >= qs_end || *p != '=') {
+1017   3                  /* key with no '=': skip to next '&' */
+1018   3                  while (p < qs_end && *p != '&') p++;
+1019   3                  if (p < qs_end && *p == '&') p++;
+1020   3                  continue;
+1021   3              }
+1022   2              p++;                               /* skip '=' */
+1023   2      
+1024   2              if (klen == nlen && memcmp(kstart, name, nlen) == 0) {
+1025   3                  /* matched — parse the value */
+1026   3                  if (p < qs_end && *p == '-')      { sign = -1; p++; }
+1027   3                  else if (p < qs_end && *p == '+') { p++; }
+1028   3      
+1029   3                  while (p < qs_end && *p >= '0' && *p <= '9') {
+1030   4                      val = val * 10 + (*p - '0');
+1031   4                      p++;
+1032   4                      digits++;
+1033   4                  }
+1034   3      
+1035   3                  /* value must end at '&' or end of query string */
+1036   3                  if (p != qs_end && *p != '&')
+1037   3                      return -1;
+1038   3                  if (digits == 0)
+1039   3                      return -1;
+1040   3      
+1041   3                  *out = (int)(sign * val);
+1042   3                  return 0;
+1043   3              }
+1044   2      
+1045   2              /* wrong key: skip to next '&' */
+1046   2              while (p < qs_end && *p != '&') p++;
+1047   2              if (p < qs_end && *p == '&') p++;
+1048   2          }
+1049   1      
+1050   1          return -1;
+1051   1      }
+1052          
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 20  
+
+1053          
+1054          /* ================================================================== *
+1055           *  set_rtc_time_handler
+1056           * ================================================================== */
+1057          int32 set_rtc_time_handler(struct http_request_s *pReq)
+1058          {
+1059   1          int H = -1, M = -1, S = -1, D = -1, MO = -1, Y = -1;
+1060   1          int ok = 0;
+1061   1      
+1062   1          if (parse_query_uint(pReq, "H",  &H)  != 0) H  = -1;
+1063   1          if (parse_query_uint(pReq, "M",  &M)  != 0) M  = -1;
+1064   1          if (parse_query_uint(pReq, "S",  &S)  != 0) S  = -1;
+1065   1          if (parse_query_uint(pReq, "D",  &D)  != 0) D  = -1;
+1066   1          if (parse_query_uint(pReq, "MO", &MO) != 0) MO = -1;
+1067   1          if (parse_query_uint(pReq, "Y",  &Y)  != 0) Y  = -1;
+1068   1      
+1069   1          printf("RTC set: %02d:%02d:%02d  %02d-%02d-%04d\r\n", H, M, S, D, MO, Y);
+1070   1      
+1071   1          if (H  >= 0   && H  <= 23 &&
+1072   1              M  >= 0   && M  <= 59 &&
+1073   1              S  >= 0   && S  <= 59 &&
+1074   1              D  >= 1   && D  <= 31 &&
+1075   1              MO >= 1   && MO <= 12 &&
+1076   1              Y  >= 2000 && Y <= 2099)
+1077   1          {
+1078   2              /* TODO: rtc_set_time(H, M, S); rtc_set_date(D, MO, Y); */
+1079   2              ok = 1;
+1080   2          }
+1081   1      
+1082   1          WEB_BEGIN(pReq);
+1083   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+1084   1          WEB_HEADER(pReq, "Content-Type: application/json");
+1085   1          WEB_HEADER(pReq, "Cache-Control: no-cache");
+1086   1      
+1087   1          if (ok)
+1088   1              WEB_PRINTF(pReq, "{\"STATUS\":\"OK\"}");
+1089   1          else
+1090   1              WEB_PRINTF(pReq, "{\"STATUS\":\"ERR\"}");
+1091   1      
+1092   1          WEB_END(pReq);
+1093   1          return SUCCESS;
+1094   1      }
+1095          
+1096          
+1097          
+1098          int32 set_alarm_handler(struct http_request_s *pReq, int alarm_idx)
+1099          {
+1100   1          int H = -1, M = -1, OUT = -1, ACT = -1;
+1101   1          int ok = 0;
+1102   1      
+1103   1          /* Extract variables safely using our direct query string parser */
+1104   1          if (parse_query_uint(pReq, "h",  &H)   != 0) H   = -1;
+1105   1          if (parse_query_uint(pReq, "m",  &M)   != 0) M   = -1;
+1106   1          if (parse_query_uint(pReq, "out", &OUT) != 0) OUT = -1;
+1107   1          if (parse_query_uint(pReq, "act", &ACT) != 0) ACT = -1;
+1108   1      
+1109   1          /* Validate ranges */
+1110   1          if (alarm_idx >= 1 && alarm_idx <= 3 &&
+1111   1              H   >= 0 && H   <= 23 &&
+1112   1              M   >= 0 && M   <= 59 &&
+1113   1              OUT >= 1 && OUT <= 8  &&
+1114   1              ACT >= 0 && ACT <= 1)
+C51 COMPILER V9.60.0.0   WEB_SYSLOGBUF                                                     11/02/2026 17:57:39 PAGE 21  
+
+1115   1          {
+1116   2              /* TODO: rtc_set_alarm(alarm_idx, H, M, OUT, ACT); */
+1117   2              
+1118   2      //        /* Debug log to verify reception */
+1119   2      //        printf("ALARM %d SET: %02d:%02d -> Outlet %d %s\r\n", 
+1120   2      //               alarm_idx, H, M, OUT, ACT ? "ON" : "OFF");
+1121   2            printf("A:%d H:%02d M:%02d O:%d S:%d\r\n",alarm_idx,H,M,OUT,ACT);
+1122   2              ok = 1;
+1123   2          }
+1124   1          else
+1125   1          {
+1126   2              printf("ALARM %d FAILED: H=%d M=%d OUT=%d ACT=%d\r\n", 
+1127   2                     alarm_idx, H, M, OUT, ACT);
+1128   2          }
+1129   1      
+1130   1          WEB_BEGIN(pReq);
+1131   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+1132   1          WEB_HEADER(pReq, "Content-Type: application/json");
+1133   1          WEB_HEADER(pReq, "Cache-Control: no-cache");
+1134   1      
+1135   1          if (ok)
+1136   1              WEB_PRINTF(pReq,
+1137   1                  "{\"STATUS\":\"OK\",\"ALARM\":%d,\"H\":%d,\"M\":%d,\"OUT\":%d,\"ACT\":%d}",
+1138   1                  alarm_idx, H, M, OUT, ACT);
+1139   1          else
+1140   1              WEB_PRINTF(pReq,
+1141   1                  "{\"STATUS\":\"ERR\",\"ALARM\":%d}", alarm_idx);
+1142   1      
+1143   1          WEB_END(pReq);
+1144   1          return SUCCESS;
+1145   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5649    ----
+   CONSTANT SIZE    =  13038    ----
+   XDATA SIZE       =    626     168
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =    500    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =  13038    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

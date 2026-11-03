@@ -1,0 +1,1564 @@
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE QOS
+OBJECT MODULE PLACED IN .\objects\qos.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\qos.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) IN
+                    -CDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\inclu
+                    -de\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLAC
+                    -E,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LED
+                    -_MODE) VARBANKING DEBUG PRINT(.\objects\qos.lst) TABS(2) OBJECT(.\objects\qos.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in QoS module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <qos.h>
+  23          #include <string.h>
+  24          
+  25          #include <rtl8367c_asicdrv.h>
+  26          #include <rtl8367c_asicdrv_qos.h>
+  27          #include <rtl8367c_asicdrv_fc.h>
+  28          #include <rtl8367c_asicdrv_scheduling.h>
+  29          #if 0//Not used
+              /* Function Name:
+               *      rtk_qos_init
+               * Description:
+               *      Configure Qos default settings with queue number assigment to each port.
+               * Input:
+               *      queueNum - Queue number of each port.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_QUEUE_NUM    - Invalid queue number.
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API will initialize related Qos setting with queue number assigment.
+               *      The queue number is from 1 to 8.
+               */
+              rtk_api_ret_t rtk_qos_init(rtk_queue_num_t queueNum)
+              {
+                  CONST_T uint16 g_prioritytToQid[8][8]= {
+                          {0, 0,0,0,0,0,0,0},
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 2   
+
+                          {0, 0,0,0,7,7,7,7},
+                          {0, 0,0,0,1,1,7,7},
+                          {0, 0,1,1,2,2,7,7},
+                          {0, 0,1,1,2,3,7,7},
+                          {0, 0,1,2,3,4,7,7},
+                          {0, 0,1,2,3,4,5,7},
+                          {0,1,2,3,4,5,6,7}
+                  };
+              
+                  CONST_T uint32 g_priorityDecision[8] = {0x01, 0x80,0x04,0x02,0x20,0x40,0x10,0x08};
+                  CONST_T uint32 g_prioritytRemap[8] = {0,1,2,3,4,5,6,7};
+              
+                  rtk_api_ret_t retVal;
+                  uint32 qmapidx;
+                  uint32 priority;
+                  uint32 priDec;
+                  uint32 port;
+                  uint32 dscp;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (queueNum <= 0 || queueNum > RTK_MAX_NUM_OF_QUEUE)
+                      return RT_ERR_QUEUE_NUM;
+              
+                  /*Set Output Queue Number*/
+                  if (RTK_MAX_NUM_OF_QUEUE == queueNum)
+                      qmapidx = 0;
+                  else
+                      qmapidx = queueNum;
+              
+                  RTK_SCAN_ALL_PHY_PORTMASK(port)
+                  {
+                      if ((retVal = rtl8367c_setAsicOutputQueueMappingIndex(port, qmapidx)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /*Set Priority to Qid*/
+                  for (priority = 0; priority <= RTK_PRIMAX; priority++)
+                  {
+                      if ((retVal = rtl8367c_setAsicPriorityToQIDMappingTable(queueNum - 1, priority, g_prioritytToQid[q
+             -ueueNum - 1][priority])) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /*Set Flow Control Type to Ingress Flow Control*/
+                  if ((retVal = rtl8367c_setAsicFlowControlSelect(FC_INGRESS)) != RT_ERR_OK)
+                      return retVal;
+              
+              
+                  /*Priority Decision Order*/
+                  for (priDec = 0;priDec < PRIDEC_END;priDec++)
+                  {
+                      if ((retVal = rtl8367c_setAsicPriorityDecision(PRIDECTBL_IDX0, priDec, g_priorityDecision[priDec])
+             -) != RT_ERR_OK)
+                          return retVal;
+                      if ((retVal = rtl8367c_setAsicPriorityDecision(PRIDECTBL_IDX1, priDec, g_priorityDecision[priDec])
+             -) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /*Set Port-based Priority to 0*/
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 3   
+
+                  RTK_SCAN_ALL_PHY_PORTMASK(port)
+                  {
+                      if ((retVal = rtl8367c_setAsicPriorityPortBased(port, 0)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /*Disable 1p Remarking*/
+                  RTK_SCAN_ALL_PHY_PORTMASK(port)
+                  {
+                      if ((retVal = rtl8367c_setAsicRemarkingDot1pAbility(port, DISABLED)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /*Disable DSCP Remarking*/
+                  if ((retVal = rtl8367c_setAsicRemarkingDscpAbility(DISABLED)) != RT_ERR_OK)
+                      return retVal;
+              
+                  /*Set 1p & DSCP  Priority Remapping & Remarking*/
+                  for (priority = 0; priority <= RTL8367C_PRIMAX; priority++)
+                  {
+                      if ((retVal = rtl8367c_setAsicPriorityDot1qRemapping(priority, g_prioritytRemap[priority])) != RT_
+             -ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRemarkingDot1pParameter(priority, 0)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRemarkingDscpParameter(priority, 0)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /*Set DSCP Priority*/
+                  for (dscp = 0; dscp <= 63; dscp++)
+                  {
+                      if ((retVal = rtl8367c_setAsicPriorityDscpBased(dscp, 0)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  /* Finetune B/T value */
+                  if((retVal = rtl8367c_setAsicReg(0x1722, 0x1158)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 155          /* Function Name:
+ 156           *      rtk_qos_priSel_set
+ 157           * Description:
+ 158           *      Configure the priority order among different priority mechanism.
+ 159           * Input:
+ 160           *      index - Priority decision table index (0~1)
+ 161           *      pPriDec - Priority assign for port, dscp, 802.1p, cvlan, svlan, acl based priority decision.
+ 162           * Output:
+ 163           *      None
+ 164           * Return:
+ 165           *      RT_ERR_OK                   - OK
+ 166           *      RT_ERR_FAILED               - Failed
+ 167           *      RT_ERR_SMI                  - SMI access error
+ 168           *      RT_ERR_QOS_SEL_PRI_SOURCE   - Invalid priority decision source parameter.
+ 169           * Note:
+ 170           *      ASIC will follow user priority setting of mechanisms to select mapped queue priority for receiving
+             - frame.
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 4   
+
+ 171           *      If two priority mechanisms are the same, the ASIC will chose the highest priority from mechanisms 
+             -to
+ 172           *      assign queue priority to receiving frame.
+ 173           *      The priority sources are:
+ 174           *      - PRIDEC_PORT
+ 175           *      - PRIDEC_ACL
+ 176           *      - PRIDEC_DSCP
+ 177           *      - PRIDEC_1Q
+ 178           *      - PRIDEC_1AD
+ 179           *      - PRIDEC_CVLAN
+ 180           *      - PRIDEC_DA
+ 181           *      - PRIDEC_SA
+ 182           */
+ 183          rtk_api_ret_t rtk_qos_priSel_set(rtk_qos_priDecTbl_t index, rtk_priority_select_t *pPriDec)
+ 184          {
+ 185   1          rtk_api_ret_t retVal;
+ 186   1          uint32 port_pow;
+ 187   1          uint32 dot1q_pow;
+ 188   1          uint32 dscp_pow;
+ 189   1          uint32 acl_pow;
+ 190   1          uint32 svlan_pow;
+ 191   1          uint32 cvlan_pow;
+ 192   1          uint32 smac_pow;
+ 193   1          uint32 dmac_pow;
+ 194   1          uint32 i;
+ 195   1      
+ 196   1          /* Check initialization state */
+ 197   1          RTK_CHK_INIT_STATE();
+ 198   1      
+ 199   1          if (index < 0 || index >= PRIDECTBL_END)
+ 200   1              return RT_ERR_ENTRY_INDEX;
+ 201   1      
+ 202   1          if (pPriDec->port_pri >= 8 || pPriDec->dot1q_pri >= 8 || pPriDec->acl_pri >= 8 || pPriDec->dscp_pri >=
+             - 8 ||
+ 203   1             pPriDec->cvlan_pri >= 8 || pPriDec->svlan_pri >= 8 || pPriDec->dmac_pri >= 8 || pPriDec->smac_pri >
+             -= 8)
+ 204   1              return RT_ERR_QOS_SEL_PRI_SOURCE;
+ 205   1      
+ 206   1          port_pow = 1;
+ 207   1          for (i = pPriDec->port_pri; i > 0; i--)
+ 208   1              port_pow = (port_pow)*2;
+ 209   1      
+ 210   1          dot1q_pow = 1;
+ 211   1          for (i = pPriDec->dot1q_pri; i > 0; i--)
+ 212   1              dot1q_pow = (dot1q_pow)*2;
+ 213   1      
+ 214   1          acl_pow = 1;
+ 215   1          for (i = pPriDec->acl_pri; i > 0; i--)
+ 216   1              acl_pow = (acl_pow)*2;
+ 217   1      
+ 218   1          dscp_pow = 1;
+ 219   1          for (i = pPriDec->dscp_pri; i > 0; i--)
+ 220   1              dscp_pow = (dscp_pow)*2;
+ 221   1      
+ 222   1          svlan_pow = 1;
+ 223   1          for (i = pPriDec->svlan_pri; i > 0; i--)
+ 224   1              svlan_pow = (svlan_pow)*2;
+ 225   1      
+ 226   1          cvlan_pow = 1;
+ 227   1          for (i = pPriDec->cvlan_pri; i > 0; i--)
+ 228   1              cvlan_pow = (cvlan_pow)*2;
+ 229   1      
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 5   
+
+ 230   1          dmac_pow = 1;
+ 231   1          for (i = pPriDec->dmac_pri; i > 0; i--)
+ 232   1              dmac_pow = (dmac_pow)*2;
+ 233   1      
+ 234   1          smac_pow = 1;
+ 235   1          for (i = pPriDec->smac_pri; i > 0; i--)
+ 236   1              smac_pow = (smac_pow)*2;
+ 237   1      
+ 238   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_PORT, port_pow)) != RT_ERR_OK)
+ 239   1              return retVal;
+ 240   1      
+ 241   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_ACL, acl_pow)) != RT_ERR_OK)
+ 242   1              return retVal;
+ 243   1      
+ 244   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_DSCP, dscp_pow)) != RT_ERR_OK)
+ 245   1              return retVal;
+ 246   1      
+ 247   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_1Q, dot1q_pow)) != RT_ERR_OK)
+ 248   1              return retVal;
+ 249   1      
+ 250   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_1AD, svlan_pow)) != RT_ERR_OK)
+ 251   1              return retVal;
+ 252   1      
+ 253   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_CVLAN, cvlan_pow)) != RT_ERR_OK)
+ 254   1              return retVal;
+ 255   1      
+ 256   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_DA, dmac_pow)) != RT_ERR_OK)
+ 257   1              return retVal;
+ 258   1      
+ 259   1          if ((retVal = rtl8367c_setAsicPriorityDecision(index, PRIDEC_SA, smac_pow)) != RT_ERR_OK)
+ 260   1              return retVal;
+ 261   1      
+ 262   1          return RT_ERR_OK;
+ 263   1      }
+ 264          
+ 265          /* Function Name:
+ 266           *      rtk_qos_priSel_get
+ 267           * Description:
+ 268           *      Get the priority order configuration among different priority mechanism.
+ 269           * Input:
+ 270           *      index - Priority decision table index (0~1)
+ 271           * Output:
+ 272           *      pPriDec - Priority assign for port, dscp, 802.1p, cvlan, svlan, acl based priority decision .
+ 273           * Return:
+ 274           *      RT_ERR_OK           - OK
+ 275           *      RT_ERR_FAILED       - Failed
+ 276           *      RT_ERR_SMI          - SMI access error
+ 277           * Note:
+ 278           *      ASIC will follow user priority setting of mechanisms to select mapped queue priority for receiving
+             - frame.
+ 279           *      If two priority mechanisms are the same, the ASIC will chose the highest priority from mechanisms 
+             -to
+ 280           *      assign queue priority to receiving frame.
+ 281           *      The priority sources are:
+ 282           *      - PRIDEC_PORT,
+ 283           *      - PRIDEC_ACL,
+ 284           *      - PRIDEC_DSCP,
+ 285           *      - PRIDEC_1Q,
+ 286           *      - PRIDEC_1AD,
+ 287           *      - PRIDEC_CVLAN,
+ 288           *      - PRIDEC_DA,
+ 289           *      - PRIDEC_SA,
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 6   
+
+ 290           */
+ 291          rtk_api_ret_t rtk_qos_priSel_get(rtk_qos_priDecTbl_t index, rtk_priority_select_t *pPriDec)
+ 292          {
+ 293   1      
+ 294   1          rtk_api_ret_t retVal;
+ 295   1          uint32 i;
+ 296   1          uint32 port_pow;
+ 297   1          uint32 dot1q_pow;
+ 298   1          uint32 dscp_pow;
+ 299   1          uint32 acl_pow;
+ 300   1          uint32 svlan_pow;
+ 301   1          uint32 cvlan_pow;
+ 302   1          uint32 smac_pow;
+ 303   1          uint32 dmac_pow;
+ 304   1      
+ 305   1          /* Check initialization state */
+ 306   1          RTK_CHK_INIT_STATE();
+ 307   1      
+ 308   1          if (index < 0 || index >= PRIDECTBL_END)
+ 309   1              return RT_ERR_ENTRY_INDEX;
+ 310   1      
+ 311   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_PORT, &port_pow)) != RT_ERR_OK)
+ 312   1              return retVal;
+ 313   1      
+ 314   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_ACL, &acl_pow)) != RT_ERR_OK)
+ 315   1              return retVal;
+ 316   1      
+ 317   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_DSCP, &dscp_pow)) != RT_ERR_OK)
+ 318   1              return retVal;
+ 319   1      
+ 320   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_1Q, &dot1q_pow)) != RT_ERR_OK)
+ 321   1              return retVal;
+ 322   1      
+ 323   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_1AD, &svlan_pow)) != RT_ERR_OK)
+ 324   1              return retVal;
+ 325   1      
+ 326   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_CVLAN, &cvlan_pow)) != RT_ERR_OK)
+ 327   1              return retVal;
+ 328   1      
+ 329   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_DA, &dmac_pow)) != RT_ERR_OK)
+ 330   1              return retVal;
+ 331   1      
+ 332   1          if ((retVal = rtl8367c_getAsicPriorityDecision(index, PRIDEC_SA, &smac_pow)) != RT_ERR_OK)
+ 333   1              return retVal;
+ 334   1      
+ 335   1          for (i = 31; i >= 0; i--)
+ 336   1          {
+ 337   2              if (port_pow & (1 << i))
+ 338   2              {
+ 339   3                  pPriDec->port_pri = i;
+ 340   3                  break;
+ 341   3              }
+ 342   2          }
+ 343   1      
+ 344   1          for (i = 31; i >= 0; i--)
+ 345   1          {
+ 346   2              if (dot1q_pow & (1 << i))
+ 347   2              {
+ 348   3                  pPriDec->dot1q_pri = i;
+ 349   3                  break;
+ 350   3              }
+ 351   2          }
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 7   
+
+ 352   1      
+ 353   1          for (i = 31; i >= 0; i--)
+ 354   1          {
+ 355   2              if (acl_pow & (1 << i))
+ 356   2              {
+ 357   3                  pPriDec->acl_pri = i;
+ 358   3                  break;
+ 359   3              }
+ 360   2          }
+ 361   1      
+ 362   1          for (i = 31; i >= 0; i--)
+ 363   1          {
+ 364   2              if (dscp_pow & (1 << i))
+ 365   2              {
+ 366   3                  pPriDec->dscp_pri = i;
+ 367   3                  break;
+ 368   3              }
+ 369   2          }
+ 370   1      
+ 371   1          for (i = 31; i >= 0; i--)
+ 372   1          {
+ 373   2              if (svlan_pow & (1 << i))
+ 374   2              {
+ 375   3                  pPriDec->svlan_pri = i;
+ 376   3                  break;
+ 377   3              }
+ 378   2          }
+ 379   1      
+ 380   1          for (i = 31;i  >= 0; i--)
+ 381   1          {
+ 382   2              if (cvlan_pow & (1 << i))
+ 383   2              {
+ 384   3                  pPriDec->cvlan_pri = i;
+ 385   3                  break;
+ 386   3              }
+ 387   2          }
+ 388   1      
+ 389   1          for (i = 31; i >= 0; i--)
+ 390   1          {
+ 391   2              if (dmac_pow&(1<<i))
+ 392   2              {
+ 393   3                  pPriDec->dmac_pri = i;
+ 394   3                  break;
+ 395   3              }
+ 396   2          }
+ 397   1      
+ 398   1          for (i = 31; i >= 0; i--)
+ 399   1          {
+ 400   2              if (smac_pow & (1 << i))
+ 401   2              {
+ 402   3                  pPriDec->smac_pri = i;
+ 403   3                  break;
+ 404   3              }
+ 405   2          }
+ 406   1      
+ 407   1          return RT_ERR_OK;
+ 408   1      }
+ 409          #if 0//Not used
+              /* Function Name:
+               *      rtk_qos_1pPriRemap_set
+               * Description:
+               *      Configure 1Q priorities mapping to internal absolute priority.
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 8   
+
+               * Input:
+               *      dot1p_pri   - 802.1p priority value.
+               *      int_pri     - internal priority value.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               *      RT_ERR_VLAN_PRIORITY    - Invalid 1p priority.
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               * Note:
+               *      Priority of 802.1Q assignment for internal asic priority, and it is used for queue usage and packe
+             -t scheduling.
+               */
+              rtk_api_ret_t rtk_qos_1pPriRemap_set(rtk_pri_t dot1p_pri, rtk_pri_t int_pri)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (dot1p_pri > RTL8367C_PRIMAX || int_pri > RTL8367C_PRIMAX)
+                      return  RT_ERR_VLAN_PRIORITY;
+              
+                  if ((retVal = rtl8367c_setAsicPriorityDot1qRemapping(dot1p_pri, int_pri)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_1pPriRemap_get
+               * Description:
+               *      Get 1Q priorities mapping to internal absolute priority.
+               * Input:
+               *      dot1p_pri - 802.1p priority value .
+               * Output:
+               *      pInt_pri - internal priority value.
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_VLAN_PRIORITY    - Invalid priority.
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               * Note:
+               *      Priority of 802.1Q assigment for internal asic priority, and it is uesed for queue usage and packe
+             -t scheduling.
+               */
+              rtk_api_ret_t rtk_qos_1pPriRemap_get(rtk_pri_t dot1p_pri, rtk_pri_t *pInt_pri)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (dot1p_pri > RTL8367C_PRIMAX)
+                      return  RT_ERR_QOS_INT_PRIORITY;
+              
+                  if ((retVal = rtl8367c_getAsicPriorityDot1qRemapping(dot1p_pri, pInt_pri)) != RT_ERR_OK)
+                      return retVal;
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 9   
+
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 478          /* Function Name:
+ 479           *      rtk_qos_dscpPriRemap_set
+ 480           * Description:
+ 481           *      Map dscp value to internal priority.
+ 482           * Input:
+ 483           *      dscp    - Dscp value of receiving frame
+ 484           *      int_pri - internal priority value .
+ 485           * Output:
+ 486           *      None
+ 487           * Return:
+ 488           *      RT_ERR_OK               - OK
+ 489           *      RT_ERR_FAILED           - Failed
+ 490           *      RT_ERR_SMI              - SMI access error
+ 491           *      RT_ERR_INPUT            - Invalid input parameters.
+ 492           *      RT_ERR_QOS_DSCP_VALUE   - Invalid DSCP value.
+ 493           *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+ 494           * Note:
+ 495           *      The Differentiated Service Code Point is a selector for router's per-hop behaviors. As a selector,
+             - there is no implication that a numerically
+ 496           *      greater DSCP implies a better network service. As can be seen, the DSCP totally overlaps the old p
+             -recedence field of TOS. So if values of
+ 497           *      DSCP are carefully chosen then backward compatibility can be achieved.
+ 498           */
+ 499          rtk_api_ret_t rtk_qos_dscpPriRemap_set(rtk_dscp_t dscp, rtk_pri_t int_pri)
+ 500          {
+ 501   1          rtk_api_ret_t retVal;
+ 502   1      
+ 503   1          /* Check initialization state */
+ 504   1          RTK_CHK_INIT_STATE();
+ 505   1      
+ 506   1          if (int_pri > RTL8367C_PRIMAX )
+ 507   1              return RT_ERR_QOS_INT_PRIORITY;
+ 508   1      
+ 509   1          if (dscp > RTL8367C_DSCPMAX)
+ 510   1              return RT_ERR_QOS_DSCP_VALUE;
+ 511   1      
+ 512   1          if ((retVal = rtl8367c_setAsicPriorityDscpBased(dscp, int_pri)) != RT_ERR_OK)
+ 513   1              return retVal;
+ 514   1      
+ 515   1          return RT_ERR_OK;
+ 516   1      }
+ 517          
+ 518          /* Function Name:
+ 519           *      rtk_qos_dscpPriRemap_get
+ 520           * Description:
+ 521           *      Get dscp value to internal priority.
+ 522           * Input:
+ 523           *      dscp - Dscp value of receiving frame
+ 524           * Output:
+ 525           *      pInt_pri - internal priority value.
+ 526           * Return:
+ 527           *      RT_ERR_OK               - OK
+ 528           *      RT_ERR_FAILED           - Failed
+ 529           *      RT_ERR_SMI              - SMI access error
+ 530           *      RT_ERR_QOS_DSCP_VALUE   - Invalid DSCP value.
+ 531           * Note:
+ 532           *      The Differentiated Service Code Point is a selector for router's per-hop behaviors. As a selector,
+             - there is no implication that a numerically
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 10  
+
+ 533           *      greater DSCP implies a better network service. As can be seen, the DSCP totally overlaps the old p
+             -recedence field of TOS. So if values of
+ 534           *      DSCP are carefully chosen then backward compatibility can be achieved.
+ 535           */
+ 536          rtk_api_ret_t rtk_qos_dscpPriRemap_get(rtk_dscp_t dscp, rtk_pri_t *pInt_pri)
+ 537          {
+ 538   1          rtk_api_ret_t retVal;
+ 539   1      
+ 540   1          /* Check initialization state */
+ 541   1          RTK_CHK_INIT_STATE();
+ 542   1      
+ 543   1          if (dscp > RTL8367C_DSCPMAX)
+ 544   1              return RT_ERR_QOS_DSCP_VALUE;
+ 545   1      
+ 546   1          if ((retVal = rtl8367c_getAsicPriorityDscpBased(dscp, pInt_pri)) != RT_ERR_OK)
+ 547   1              return retVal;
+ 548   1      
+ 549   1          return RT_ERR_OK;
+ 550   1      }
+ 551          
+ 552          /* Function Name:
+ 553           *      rtk_qos_portPri_set
+ 554           * Description:
+ 555           *      Configure priority usage to each port.
+ 556           * Input:
+ 557           *      port - Port id.
+ 558           *      int_pri - internal priority value.
+ 559           * Output:
+ 560           *      None
+ 561           * Return:
+ 562           *      RT_ERR_OK               - OK
+ 563           *      RT_ERR_FAILED           - Failed
+ 564           *      RT_ERR_SMI              - SMI access error
+ 565           *      RT_ERR_PORT_ID          - Invalid port number.
+ 566           *      RT_ERR_QOS_SEL_PORT_PRI - Invalid port priority.
+ 567           *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+ 568           * Note:
+ 569           *      The API can set priority of port assignments for queue usage and packet scheduling.
+ 570           */
+ 571          rtk_api_ret_t rtk_qos_portPri_set(rtk_port_t port, rtk_pri_t int_pri)
+ 572          {
+ 573   1          rtk_api_ret_t retVal;
+ 574   1      
+ 575   1          /* Check initialization state */
+ 576   1          RTK_CHK_INIT_STATE();
+ 577   1      
+ 578   1          /* Check Port Valid */
+ 579   1          RTK_CHK_PORT_VALID(port);
+ 580   1      
+ 581   1          if (int_pri > RTL8367C_PRIMAX )
+ 582   1              return RT_ERR_QOS_INT_PRIORITY;
+ 583   1      
+ 584   1          if ((retVal = rtl8367c_setAsicPriorityPortBased(rtk_switch_port_L2P_get(port), int_pri)) != RT_ERR_OK)
+ 585   1              return retVal;
+ 586   1      
+ 587   1          return RT_ERR_OK;
+ 588   1      }
+ 589          
+ 590          /* Function Name:
+ 591           *      rtk_qos_portPri_get
+ 592           * Description:
+ 593           *      Get priority usage to each port.
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 11  
+
+ 594           * Input:
+ 595           *      port - Port id.
+ 596           * Output:
+ 597           *      pInt_pri - internal priority value.
+ 598           * Return:
+ 599           *      RT_ERR_OK           - OK
+ 600           *      RT_ERR_FAILED       - Failed
+ 601           *      RT_ERR_SMI          - SMI access error
+ 602           *      RT_ERR_PORT_ID      - Invalid port number.
+ 603           *      RT_ERR_INPUT        - Invalid input parameters.
+ 604           * Note:
+ 605           *      The API can get priority of port assignments for queue usage and packet scheduling.
+ 606           */
+ 607          rtk_api_ret_t rtk_qos_portPri_get(rtk_port_t port, rtk_pri_t *pInt_pri)
+ 608          {
+ 609   1          rtk_api_ret_t retVal;
+ 610   1      
+ 611   1          /* Check initialization state */
+ 612   1          RTK_CHK_INIT_STATE();
+ 613   1      
+ 614   1          /* Check Port Valid */
+ 615   1          RTK_CHK_PORT_VALID(port);
+ 616   1      
+ 617   1          if ((retVal = rtl8367c_getAsicPriorityPortBased(rtk_switch_port_L2P_get(port), pInt_pri)) != RT_ERR_OK
+             -)
+ 618   1              return retVal;
+ 619   1      
+ 620   1      
+ 621   1          return RT_ERR_OK;
+ 622   1      }
+ 623          
+ 624          /* Function Name:
+ 625           *      rtk_qos_queueNum_set
+ 626           * Description:
+ 627           *      Set output queue number for each port.
+ 628           * Input:
+ 629           *      port    - Port id.
+ 630           *      index   - Mapping queue number (1~8)
+ 631           * Output:
+ 632           *      None
+ 633           * Return:
+ 634           *      RT_ERR_OK           - OK
+ 635           *      RT_ERR_FAILED       - Failed
+ 636           *      RT_ERR_SMI          - SMI access error
+ 637           *      RT_ERR_PORT_ID      - Invalid port number.
+ 638           *      RT_ERR_QUEUE_NUM    - Invalid queue number.
+ 639           * Note:
+ 640           *      The API can set the output queue number of the specified port. The queue number is from 1 to 8.
+ 641           */
+ 642          rtk_api_ret_t rtk_qos_queueNum_set(rtk_port_t port, rtk_queue_num_t queue_num)
+ 643          {
+ 644   1          rtk_api_ret_t retVal;
+ 645   1      
+ 646   1          /* Check initialization state */
+ 647   1          RTK_CHK_INIT_STATE();
+ 648   1      
+ 649   1          /* Check Port Valid */
+ 650   1          RTK_CHK_PORT_VALID(port);
+ 651   1      
+ 652   1          if ((0 == queue_num) || (queue_num > RTK_MAX_NUM_OF_QUEUE))
+ 653   1              return RT_ERR_FAILED;
+ 654   1      
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 12  
+
+ 655   1          if (RTK_MAX_NUM_OF_QUEUE == queue_num)
+ 656   1              queue_num = 0;
+ 657   1      
+ 658   1          if ((retVal = rtl8367c_setAsicOutputQueueMappingIndex(rtk_switch_port_L2P_get(port), queue_num)) != RT
+             -_ERR_OK)
+ 659   1              return retVal;
+ 660   1      
+ 661   1          return RT_ERR_OK;
+ 662   1      }
+ 663          
+ 664          /* Function Name:
+ 665           *      rtk_qos_queueNum_get
+ 666           * Description:
+ 667           *      Get output queue number.
+ 668           * Input:
+ 669           *      port - Port id.
+ 670           * Output:
+ 671           *      pQueue_num - Mapping queue number
+ 672           * Return:
+ 673           *      RT_ERR_OK           - OK
+ 674           *      RT_ERR_FAILED       - Failed
+ 675           *      RT_ERR_SMI          - SMI access error
+ 676           *      RT_ERR_PORT_ID      - Invalid port number.
+ 677           * Note:
+ 678           *      The API will return the output queue number of the specified port. The queue number is from 1 to 8
+             -.
+ 679           */
+ 680          rtk_api_ret_t rtk_qos_queueNum_get(rtk_port_t port, rtk_queue_num_t *pQueue_num)
+ 681          {
+ 682   1          rtk_api_ret_t retVal;
+ 683   1          uint32 qidx;
+ 684   1      
+ 685   1          /* Check initialization state */
+ 686   1          RTK_CHK_INIT_STATE();
+ 687   1      
+ 688   1          /* Check Port Valid */
+ 689   1          RTK_CHK_PORT_VALID(port);
+ 690   1      
+ 691   1          if ((retVal = rtl8367c_getAsicOutputQueueMappingIndex(rtk_switch_port_L2P_get(port), &qidx)) != RT_ERR
+             -_OK)
+ 692   1              return retVal;
+ 693   1      
+ 694   1          if (0 == qidx)
+ 695   1              *pQueue_num = 8;
+ 696   1          else
+ 697   1              *pQueue_num = qidx;
+ 698   1      
+ 699   1          return RT_ERR_OK;
+ 700   1      }
+ 701          
+ 702          /* Function Name:
+ 703           *      rtk_qos_priMap_set
+ 704           * Description:
+ 705           *      Set output queue number for each port.
+ 706           * Input:
+ 707           *      queue_num   - Queue number usage.
+ 708           *      pPri2qid    - Priority mapping to queue ID.
+ 709           * Output:
+ 710           *      None
+ 711           * Return:
+ 712           *      RT_ERR_OK               - OK
+ 713           *      RT_ERR_FAILED           - Failed
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 13  
+
+ 714           *      RT_ERR_SMI              - SMI access error
+ 715           *      RT_ERR_INPUT            - Invalid input parameters.
+ 716           *      RT_ERR_QUEUE_NUM        - Invalid queue number.
+ 717           *      RT_ERR_QUEUE_ID         - Invalid queue id.
+ 718           *      RT_ERR_PORT_ID          - Invalid port number.
+ 719           *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+ 720           * Note:
+ 721           *      ASIC supports priority mapping to queue with different queue number from 1 to 8.
+ 722           *      For different queue numbers usage, ASIC supports different internal available queue IDs.
+ 723           */
+ 724          rtk_api_ret_t rtk_qos_priMap_set(rtk_queue_num_t queue_num, rtk_qos_pri2queue_t *pPri2qid)
+ 725          {
+ 726   1          rtk_api_ret_t retVal;
+ 727   1          uint32 pri;
+ 728   1      
+ 729   1          /* Check initialization state */
+ 730   1          RTK_CHK_INIT_STATE();
+ 731   1      
+ 732   1          if ((0 == queue_num) || (queue_num > RTK_MAX_NUM_OF_QUEUE))
+ 733   1              return RT_ERR_QUEUE_NUM;
+ 734   1      
+ 735   1          for (pri = 0; pri <= RTK_PRIMAX; pri++)
+ 736   1          {
+ 737   2              if (pPri2qid->pri2queue[pri] > RTK_QIDMAX)
+ 738   2                  return RT_ERR_QUEUE_ID;
+ 739   2      
+ 740   2              if ((retVal = rtl8367c_setAsicPriorityToQIDMappingTable(queue_num - 1, pri, pPri2qid->pri2queue[pr
+             -i])) != RT_ERR_OK)
+ 741   2                  return retVal;
+ 742   2          }
+ 743   1      
+ 744   1          return RT_ERR_OK;
+ 745   1      }
+ 746          
+ 747          /* Function Name:
+ 748           *      rtk_qos_priMap_get
+ 749           * Description:
+ 750           *      Get priority to queue ID mapping table parameters.
+ 751           * Input:
+ 752           *      queue_num - Queue number usage.
+ 753           * Output:
+ 754           *      pPri2qid - Priority mapping to queue ID.
+ 755           * Return:
+ 756           *      RT_ERR_OK           - OK
+ 757           *      RT_ERR_FAILED       - Failed
+ 758           *      RT_ERR_SMI          - SMI access error
+ 759           *      RT_ERR_INPUT        - Invalid input parameters.
+ 760           *      RT_ERR_QUEUE_NUM    - Invalid queue number.
+ 761           * Note:
+ 762           *      The API can return the mapping queue id of the specified priority and queue number.
+ 763           *      The queue number is from 1 to 8.
+ 764           */
+ 765          rtk_api_ret_t rtk_qos_priMap_get(rtk_queue_num_t queue_num, rtk_qos_pri2queue_t *pPri2qid)
+ 766          {
+ 767   1          rtk_api_ret_t retVal;
+ 768   1          uint32 pri;
+ 769   1      
+ 770   1          /* Check initialization state */
+ 771   1          RTK_CHK_INIT_STATE();
+ 772   1      
+ 773   1          if ((0 == queue_num) || (queue_num > RTK_MAX_NUM_OF_QUEUE))
+ 774   1              return RT_ERR_QUEUE_NUM;
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 14  
+
+ 775   1      
+ 776   1          for (pri = 0; pri <= RTK_PRIMAX; pri++)
+ 777   1          {
+ 778   2              if ((retVal = rtl8367c_getAsicPriorityToQIDMappingTable(queue_num-1, pri, &pPri2qid->pri2queue[pri
+             -])) != RT_ERR_OK)
+ 779   2                  return retVal;
+ 780   2          }
+ 781   1      
+ 782   1          return RT_ERR_OK;
+ 783   1      }
+ 784          
+ 785          /* Function Name:
+ 786           *      rtk_qos_schedulingQueue_set
+ 787           * Description:
+ 788           *      Set weight and type of queues in dedicated port.
+ 789           * Input:
+ 790           *      port        - Port id.
+ 791           *      pQweights   - The array of weights for WRR/WFQ queue (0 for STRICT_PRIORITY queue).
+ 792           * Output:
+ 793           *      None
+ 794           * Return:
+ 795           *      RT_ERR_OK               - OK
+ 796           *      RT_ERR_FAILED           - Failed
+ 797           *      RT_ERR_SMI              - SMI access error
+ 798           *      RT_ERR_PORT_ID          - Invalid port number.
+ 799           *      RT_ERR_QOS_QUEUE_WEIGHT - Invalid queue weight.
+ 800           * Note:
+ 801           *      The API can set weight and type, strict priority or weight fair queue (WFQ) for
+ 802           *      dedicated port for using queues. If queue id is not included in queue usage,
+ 803           *      then its type and weight setting in dummy for setting. There are priorities
+ 804           *      as queue id in strict queues. It means strict queue id 5 carrying higher priority
+ 805           *      than strict queue id 4. The WFQ queue weight is from 1 to 127, and weight 0 is
+ 806           *      for strict priority queue type.
+ 807           */
+ 808          rtk_api_ret_t rtk_qos_schedulingQueue_set(rtk_port_t port, rtk_qos_queue_weights_t *pQweights)
+ 809          {
+ 810   1          rtk_api_ret_t retVal;
+ 811   1          uint32 qid;
+ 812   1      
+ 813   1          /* Check initialization state */
+ 814   1          RTK_CHK_INIT_STATE();
+ 815   1      
+ 816   1          /* Check Port Valid */
+ 817   1          RTK_CHK_PORT_VALID(port);
+ 818   1      
+ 819   1          for (qid = 0; qid < RTL8367C_QUEUENO; qid ++)
+ 820   1          {
+ 821   2      
+ 822   2              if (pQweights->weights[qid] > QOS_WEIGHT_MAX)
+ 823   2                  return RT_ERR_QOS_QUEUE_WEIGHT;
+ 824   2      
+ 825   2              if (0 == pQweights->weights[qid])
+ 826   2              {
+ 827   3                  if ((retVal = rtl8367c_setAsicQueueType(rtk_switch_port_L2P_get(port), qid, QTYPE_STRICT)) != 
+             -RT_ERR_OK)
+ 828   3                      return retVal;
+ 829   3              }
+ 830   2              else
+ 831   2              {
+ 832   3                  if ((retVal = rtl8367c_setAsicQueueType(rtk_switch_port_L2P_get(port), qid, QTYPE_WFQ)) != RT_
+             -ERR_OK)
+ 833   3                      return retVal;
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 15  
+
+ 834   3      
+ 835   3                  if ((retVal = rtl8367c_setAsicWFQWeight(rtk_switch_port_L2P_get(port),qid, pQweights->weights[
+             -qid])) != RT_ERR_OK)
+ 836   3                      return retVal;
+ 837   3              }
+ 838   2          }
+ 839   1      
+ 840   1          return RT_ERR_OK;
+ 841   1      }
+ 842          
+ 843          /* Function Name:
+ 844           *      rtk_qos_schedulingQueue_get
+ 845           * Description:
+ 846           *      Get weight and type of queues in dedicated port.
+ 847           * Input:
+ 848           *      port - Port id.
+ 849           * Output:
+ 850           *      pQweights - The array of weights for WRR/WFQ queue (0 for STRICT_PRIORITY queue).
+ 851           * Return:
+ 852           *      RT_ERR_OK           - OK
+ 853           *      RT_ERR_FAILED       - Failed
+ 854           *      RT_ERR_SMI          - SMI access error
+ 855           *      RT_ERR_INPUT        - Invalid input parameters.
+ 856           *      RT_ERR_PORT_ID      - Invalid port number.
+ 857           * Note:
+ 858           *      The API can get weight and type, strict priority or weight fair queue (WFQ) for dedicated port for
+             - using queues.
+ 859           *      The WFQ queue weight is from 1 to 127, and weight 0 is for strict priority queue type.
+ 860           */
+ 861          rtk_api_ret_t rtk_qos_schedulingQueue_get(rtk_port_t port, rtk_qos_queue_weights_t *pQweights)
+ 862          {
+ 863   1          rtk_api_ret_t retVal;
+ 864   1          uint32 qid,qtype,qweight;
+ 865   1      
+ 866   1          /* Check initialization state */
+ 867   1          RTK_CHK_INIT_STATE();
+ 868   1      
+ 869   1          /* Check Port Valid */
+ 870   1          RTK_CHK_PORT_VALID(port);
+ 871   1      
+ 872   1          for (qid = 0; qid < RTL8367C_QUEUENO; qid++)
+ 873   1          {
+ 874   2              if ((retVal = rtl8367c_getAsicQueueType(rtk_switch_port_L2P_get(port), qid, &qtype)) != RT_ERR_OK)
+ 875   2                  return retVal;
+ 876   2      
+ 877   2              if (QTYPE_STRICT == qtype)
+ 878   2              {
+ 879   3                  pQweights->weights[qid] = 0;
+ 880   3              }
+ 881   2              else if (QTYPE_WFQ == qtype)
+ 882   2              {
+ 883   3                  if ((retVal = rtl8367c_getAsicWFQWeight(rtk_switch_port_L2P_get(port), qid, &qweight)) != RT_E
+             -RR_OK)
+ 884   3                      return retVal;
+ 885   3                  pQweights->weights[qid] = qweight;
+ 886   3              }
+ 887   2          }
+ 888   1          return RT_ERR_OK;
+ 889   1      }
+ 890          #if 0//Not used
+              /* Function Name:
+               *      rtk_qos_1pRemarkEnable_set
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 16  
+
+               * Description:
+               *      Set 1p Remarking state
+               * Input:
+               *      port        - Port id.
+               *      enable      - State of per-port 1p Remarking
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_ENABLE       - Invalid enable parameter.
+               * Note:
+               *      The API can enable or disable 802.1p remarking ability for whole system.
+               *      The status of 802.1p remark:
+               *      - DISABLED
+               *      - ENABLED
+               */
+              rtk_api_ret_t rtk_qos_1pRemarkEnable_set(rtk_port_t port, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (enable >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicRemarkingDot1pAbility(rtk_switch_port_L2P_get(port), enable)) != RT_ERR_
+             -OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_1pRemarkEnable_get
+               * Description:
+               *      Get 802.1p remarking ability.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - Status of 802.1p remark.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get 802.1p remarking ability.
+               *      The status of 802.1p remark:
+               *      - DISABLED
+               *      - ENABLED
+               */
+              rtk_api_ret_t rtk_qos_1pRemarkEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 17  
+
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDot1pAbility(rtk_switch_port_L2P_get(port), pEnable)) != RT_ERR
+             -_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_1pRemark_set
+               * Description:
+               *      Set 802.1p remarking parameter.
+               * Input:
+               *      int_pri     - Internal priority value.
+               *      dot1p_pri   - 802.1p priority value.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_VLAN_PRIORITY    - Invalid 1p priority.
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               * Note:
+               *      The API can set 802.1p parameters source priority and new priority.
+               */
+              rtk_api_ret_t rtk_qos_1pRemark_set(rtk_pri_t int_pri, rtk_pri_t dot1p_pri)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (int_pri > RTL8367C_PRIMAX )
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  if (dot1p_pri > RTL8367C_PRIMAX)
+                      return RT_ERR_VLAN_PRIORITY;
+              
+                  if ((retVal = rtl8367c_setAsicRemarkingDot1pParameter(int_pri, dot1p_pri)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_1pRemark_get
+               * Description:
+               *      Get 802.1p remarking parameter.
+               * Input:
+               *      int_pri - Internal priority value.
+               * Output:
+               *      pDot1p_pri - 802.1p priority value.
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 18  
+
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               * Note:
+               *      The API can get 802.1p remarking parameters. It would return new priority of ingress priority.
+               */
+              rtk_api_ret_t rtk_qos_1pRemark_get(rtk_pri_t int_pri, rtk_pri_t *pDot1p_pri)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (int_pri > RTL8367C_PRIMAX )
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDot1pParameter(int_pri, pDot1p_pri)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_1pRemarkSrcSel_set
+               * Description:
+               *      Set remarking source of 802.1p remarking.
+               * Input:
+               *      type      - remarking source
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_NOT_INIT         - The module is not initial
+               *      RT_ERR_PORT_ID  - invalid port id
+               *      RT_ERR_INPUT            - invalid input parameter
+              
+               * Note:
+               *      The API can configure 802.1p remark functionality to map original 802.1p value or internal
+               *      priority to TX DSCP value.
+               */
+              rtk_api_ret_t rtk_qos_1pRemarkSrcSel_set(rtk_qos_1pRmkSrc_t type)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (type >= DOT1P_RMK_SRC_END )
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  if ((retVal = rtl8367c_setAsicRemarkingDot1pSrc(type)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_1pRemarkSrcSel_get
+               * Description:
+               *      Get remarking source of 802.1p remarking.
+               * Input:
+               *      none
+               * Output:
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 19  
+
+               *      pType      - remarking source
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_NOT_INIT         - The module is not initial
+               *      RT_ERR_PORT_ID          - invalid port id
+               *      RT_ERR_INPUT            - invalid input parameter
+               *      RT_ERR_NULL_POINTER     - input parameter may be null pointer
+              
+               * Note:
+               *      None
+               */
+              rtk_api_ret_t rtk_qos_1pRemarkSrcSel_get(rtk_qos_1pRmkSrc_t *pType)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDot1pSrc(pType)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemarkEnable_set
+               * Description:
+               *      Set DSCP remarking ability.
+               * Input:
+               *      port    - Port id.
+               *      enable  - status of DSCP remark.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               *      RT_ERR_ENABLE           - Invalid enable parameter.
+               * Note:
+               *      The API can enable or disable DSCP remarking ability for whole system.
+               *      The status of DSCP remark:
+               *      - DISABLED
+               *      - ENABLED
+               */
+              rtk_api_ret_t rtk_qos_dscpRemarkEnable_set(rtk_port_t port, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /*for whole system function, the port value should be 0xFF*/
+                  if (port != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_PORT_ID;
+              
+                  if (enable >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 20  
+
+                  if ((retVal = rtl8367c_setAsicRemarkingDscpAbility(enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemarkEnable_get
+               * Description:
+               *      Get DSCP remarking ability.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - status of DSCP remarking.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get DSCP remarking ability.
+               *      The status of DSCP remark:
+               *      - DISABLED
+               *      - ENABLED
+               */
+              rtk_api_ret_t rtk_qos_dscpRemarkEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /*for whole system function, the port value should be 0xFF*/
+                  if (port != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_PORT_ID;
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDscpAbility(pEnable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemark_set
+               * Description:
+               *      Set DSCP remarking parameter.
+               * Input:
+               *      int_pri - Internal priority value.
+               *      dscp    - DSCP value.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               *      RT_ERR_QOS_DSCP_VALUE   - Invalid DSCP value.
+               * Note:
+               *      The API can set DSCP value and mapping priority.
+               */
+              rtk_api_ret_t rtk_qos_dscpRemark_set(rtk_pri_t int_pri, rtk_dscp_t dscp)
+              {
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 21  
+
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (int_pri > RTK_PRIMAX )
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  if (dscp > RTK_DSCPMAX)
+                      return RT_ERR_QOS_DSCP_VALUE;
+              
+                  if ((retVal = rtl8367c_setAsicRemarkingDscpParameter(int_pri, dscp)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemark_get
+               * Description:
+               *      Get DSCP remarking parameter.
+               * Input:
+               *      int_pri - Internal priority value.
+               * Output:
+               *      Dscp - DSCP value.
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_QOS_INT_PRIORITY - Invalid priority.
+               * Note:
+               *      The API can get DSCP parameters. It would return DSCP value for mapping priority.
+               */
+              rtk_api_ret_t rtk_qos_dscpRemark_get(rtk_pri_t int_pri, rtk_dscp_t *pDscp)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (int_pri > RTK_PRIMAX )
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDscpParameter(int_pri, pDscp)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemarkSrcSel_set
+               * Description:
+               *      Set remarking source of DSCP remarking.
+               * Input:
+               *      type      - remarking source
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_NOT_INIT         - The module is not initial
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 22  
+
+               *      RT_ERR_PORT_ID  - invalid port id
+               *      RT_ERR_INPUT            - invalid input parameter
+              
+               * Note:
+               *      The API can configure DSCP remark functionality to map original DSCP value or internal
+               *      priority to TX DSCP value.
+               */
+              rtk_api_ret_t rtk_qos_dscpRemarkSrcSel_set(rtk_qos_dscpRmkSrc_t type)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (type >= DSCP_RMK_SRC_END )
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  if ((retVal = rtl8367c_setAsicRemarkingDscpSrc(type)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_dcpRemarkSrcSel_get
+               * Description:
+               *      Get remarking source of DSCP remarking.
+               * Input:
+               *      none
+               * Output:
+               *      pType      - remarking source
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_NOT_INIT         - The module is not initial
+               *      RT_ERR_PORT_ID          - invalid port id
+               *      RT_ERR_INPUT            - invalid input parameter
+               *      RT_ERR_NULL_POINTER     - input parameter may be null pointer
+              
+               * Note:
+               *      None
+               */
+              rtk_api_ret_t rtk_qos_dscpRemarkSrcSel_get(rtk_qos_dscpRmkSrc_t *pType)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDscpSrc(pType)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemark2Dscp_set
+               * Description:
+               *      Set DSCP to remarked DSCP mapping.
+               * Input:
+               *      dscp    - DSCP value
+               *      rmkDscp - remarked DSCP value
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 23  
+
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_QOS_DSCP_VALUE   - Invalid dscp value
+               * Note:
+               *      dscp parameter can be DSCP value or internal priority according to configuration of API
+               *      dal_apollomp_qos_dscpRemarkSrcSel_set(), because DSCP remark functionality can map original DSCP
+               *      value or internal priority to TX DSCP value.
+               */
+              rtk_api_ret_t rtk_qos_dscpRemark2Dscp_set(rtk_dscp_t dscp, rtk_dscp_t rmkDscp)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((dscp > RTK_DSCPMAX) || (rmkDscp > RTK_DSCPMAX))
+                      return RT_ERR_QOS_DSCP_VALUE;
+              
+                  if ((retVal = rtl8367c_setAsicRemarkingDscp2Dscp(dscp, rmkDscp)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_dscpRemark2Dscp_get
+               * Description:
+               *      Get DSCP to remarked DSCP mapping.
+               * Input:
+               *      dscp    - DSCP value
+               * Output:
+               *      pDscp   - remarked DSCP value
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_QOS_DSCP_VALUE   - Invalid dscp value
+               *      RT_ERR_NULL_POINTER     - NULL pointer
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_qos_dscpRemark2Dscp_get(rtk_dscp_t dscp, rtk_dscp_t *pDscp)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (dscp > RTK_DSCPMAX)
+                      return RT_ERR_QOS_DSCP_VALUE;
+              
+                  if ((retVal = rtl8367c_getAsicRemarkingDscp2Dscp(dscp, pDscp)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_portPriSelIndex_set
+               * Description:
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 24  
+
+               *      Configure priority decision index to each port.
+               * Input:
+               *      port - Port id.
+               *      index - priority decision index.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_ENTRY_INDEX - Invalid entry index.
+               * Note:
+               *      The API can set priority of port assignments for queue usage and packet scheduling.
+               */
+              rtk_api_ret_t rtk_qos_portPriSelIndex_set(rtk_port_t port, rtk_qos_priDecTbl_t index)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (index >= PRIDECTBL_END )
+                      return RT_ERR_ENTRY_INDEX;
+              
+                  if ((retVal = rtl8367c_setAsicPortPriorityDecisionIndex(rtk_switch_port_L2P_get(port), index)) != RT_E
+             -RR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_qos_portPriSelIndex_get
+               * Description:
+               *      Get priority decision index from each port.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pIndex - priority decision index.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get priority of port assignments for queue usage and packet scheduling.
+               */
+              rtk_api_ret_t rtk_qos_portPriSelIndex_get(rtk_port_t port, rtk_qos_priDecTbl_t *pIndex)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if ((retVal = rtl8367c_getAsicPortPriorityDecisionIndex(rtk_switch_port_L2P_get(port), pIndex)) != RT_
+C51 COMPILER V9.60.0.0   QOS                                                               11/02/2026 17:57:13 PAGE 25  
+
+             -ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1453          
+1454          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   4772    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----     167
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

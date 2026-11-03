@@ -1,0 +1,530 @@
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ETH
+OBJECT MODULE PLACED IN .\objects\eth.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\eth.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR
+                    -(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\c
+                    -ommon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS
+                    -,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_
+                    -8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\eth.lst) TABS(2) OBJECT(.\objects\eth.obj)
+
+line level    source
+
+   1          //#pragma STRING (far)
+   2          /*
+   3           * Ethernet of Light-weight Protocol Stack
+   4           */
+   5          
+   6          #include <local/lwps_config.h>
+   7          
+   8          #if LWPS_ENABLE
+   9          
+  10          
+  11          /*
+  12           * Include Files
+  13           */
+  14          
+  15          #include <lwps/lwps.h>
+  16          #include <stdio.h>
+  17          #if LWPS_LLDP
+              #include <lldp/lldp.h>
+              #endif
+  20          #include <rtk_proto/rtk_proto.h>
+  21          #include <salnic.h>
+  22          #include <salvlan.h>
+  23          #if RTK_PROTO_RRCPV3
+  24          #include <rrcpv3.h>
+  25          #endif
+  26          
+  27          /*
+  28           * Symbol Definition
+  29           */
+  30          /*
+  31           * Data Declaration
+  32           */
+  33          
+  34          
+  35          /*
+  36           * Macro Definition
+  37           */
+  38          
+  39          
+  40          /*
+  41           * Function Declaration
+  42           */
+  43          /* For Debug */
+  44           
+  45           
+  46          #if DBG_LWPS_ETH_ENABLE
+              //static void eth_hdr_dump(eth_hdr_t *pEthHdr)
+              // Ethernet Header Dump: Prints formatted Ethernet header information for debugging purposes
+              // Displays destination MAC, source MAC, and ethertype fields in readable format
+              void eth_hdr_dump(eth_hdr_t *pEthHdr)  large
+              {
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 2   
+
+                  OSAL_PRINTF("-- [ETH HDR dump] -----------------------------\n");
+                  OSAL_PRINTF(" Dst-MAC: %02X:%02X:%02X:%02X:%02X:%02X \n",
+                      (uint16)pEthHdr->dst_mac.addr[0],
+                      (uint16)pEthHdr->dst_mac.addr[1],
+                      (uint16)pEthHdr->dst_mac.addr[2],
+                      (uint16)pEthHdr->dst_mac.addr[3],
+                      (uint16)pEthHdr->dst_mac.addr[4],
+                      (uint16)pEthHdr->dst_mac.addr[5]
+                      );
+                  OSAL_PRINTF(" Src-MAC: %02X:%02X:%02X:%02X:%02X:%02X \n",
+                      (uint16)pEthHdr->src_mac.addr[0],
+                      (uint16)pEthHdr->src_mac.addr[1],
+                      (uint16)pEthHdr->src_mac.addr[2],
+                      (uint16)pEthHdr->src_mac.addr[3],
+                      (uint16)pEthHdr->src_mac.addr[4],
+                      (uint16)pEthHdr->src_mac.addr[5]
+                      );
+                  OSAL_PRINTF(" Ethtype: 0x%04X\n", pEthHdr->ether_type);
+                  OSAL_PRINTF("-----------------------------------------------\n");
+              }
+              #endif /* end of DBG_LWPS_ETH_ENABLE */
+  73          
+  74          // Ethernet Initialize: Initializes the Ethernet layer of the protocol stack
+  75          // Returns LWPS_OK on successful initialization
+  76          int32 eth_init(void)
+  77          {
+  78   1          DBG_LWPS_ETH_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+  79   1      
+  80   1          return LWPS_OK;
+  81   1      }
+  82          
+  83          // Ethernet Up: Processes incoming Ethernet frames and dispatches to appropriate protocol handlers
+  84          // Handles CPU tags, VLAN tags, and routes packets to IP, ARP, RSTP, or Realtek protocol handlers
+  85          int32 eth_up(pktBuf_t *pBuf)
+  86          {
+  87   1          uint16    xdata eth_type;
+  88   1          uint16    xdata *eth_type_ptr = NULL;
+  89   1          uint8     xdata rtk_proto_id;
+  90   1          eth_hdr_t xdata *pEthHdr;
+  91   1          uint8     xdata tag_off = 0;
+  92   1          ip_addr_t *sip;
+  93   1      
+  94   1          DBG_LWPS_ETH_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+  95   1      
+  96   1          /* DO NOT check NULL pointer */
+  97   1      
+  98   1          /* Basic process */
+  99   1          pEthHdr = (eth_hdr_t *)pBuf->l2;
+ 100   1      
+ 101   1          if ( ETH_TYPE_REALTEK==(eth_type=ntohs(pEthHdr->ether_type)) )
+ 102   1          {
+ 103   2              /* cpu tag */
+ 104   2              if ( RTK_CPUTAG_PROTO_ID == *(pBuf->l2 + sizeof(eth_hdr_t)) )
+ 105   2              {
+ 106   3                  pBuf->pkt_cputag = pBuf->l2 + sizeof(struct eth_addr_s)*2;
+ 107   3                  eth_type_ptr =  (uint16*)(pBuf->pkt_cputag + CPU_TAG_SIZE);
+ 108   3                  eth_type = ntohs( *eth_type_ptr );
+ 109   3            tag_off = CPU_TAG_SIZE;
+ 110   3              }
+ 111   2      #ifdef RTL8367C
+ 112   2              else if( 0x23 == *(pBuf->l2 + sizeof(eth_hdr_t)) ) //0x23 is RLDP protocol identifier--> do not ta
+             -ke action
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 3   
+
+ 113   2              {
+ 114   3                  return LWPS_OK;
+ 115   3              }
+ 116   2      #endif        
+ 117   2              else
+ 118   2              {
+ 119   3                  pBuf->pkt_cputag = NULL;
+ 120   3              }
+ 121   2          }
+ 122   1          else
+ 123   1          {
+ 124   2              pBuf->pkt_cputag = NULL;
+ 125   2          }
+ 126   1          sal_nic_rxPort_set(pBuf);
+ 127   1      
+ 128   1          if ( ETH_TYPE_VLAN == eth_type )
+ 129   1          {
+ 130   2              pBuf->pkt_vlantag = pBuf->l2 + sizeof(struct eth_addr_s)*2 + tag_off;
+ 131   2              eth_type_ptr =  (uint16*)(pBuf->pkt_vlantag + ETH_VLANTAG_LEN);
+ 132   2              eth_type = ntohs( *eth_type_ptr );    
+ 133   2          tag_off += ETH_VLANTAG_LEN;
+ 134   2          }
+ 135   1          else
+ 136   1          {
+ 137   2              pBuf->pkt_vlantag = NULL;
+ 138   2          }    
+ 139   1          sal_nic_rxVid_set(pBuf);
+ 140   1      
+ 141   1          if(tag_off)
+ 142   1          {
+ 143   2              int8 i;
+ 144   2              /* move DA, SA backward serveral bytes to overwrite CPU tag or VLAN tag */
+ 145   2              /* move last byte of SA first and first byte of DA last */
+ 146   2              for(i = ETH_HWADDR_LEN * 2 - 1; i >= 0; i--)
+ 147   2              {
+ 148   3                  *(pBuf->l2 + i + tag_off) = *(pBuf->l2 + i);
+ 149   3              }
+ 150   2      
+ 151   2              pBuf->l2 += tag_off;
+ 152   2              pBuf->size -= tag_off;
+ 153   2              /* Since the tag have been removed, set this pointer to NULL */
+ 154   2              pBuf->pkt_vlantag = NULL;
+ 155   2          }
+ 156   1      
+ 157   1      
+ 158   1          switch ( eth_type )
+ 159   1          {
+ 160   2      #if LWPS_IP
+ 161   2          case ETH_TYPE_IP:   /* 0x0800 */
+ 162   2              pBuf->l3fmt = L3FMT_IP;
+ 163   2              pBuf->l3 = pBuf->l2 + sizeof(eth_hdr_t);
+ 164   2      
+ 165   2      #if LWPS_ETHARP
+ 166   2              /* Update ARP entry */
+ 167   2          sip = (ip_addr_t *)&(((ip_hdr_t *)pBuf->l3)->src_ip);
+ 168   2      
+ 169   2            if (((sip->addr[0] & netmask[0]) != (this_ip[0] & netmask[0])) ||
+ 170   2                 ((sip->addr[1] & netmask[1]) != (this_ip[1] & netmask[1])) ||
+ 171   2                 ((sip->addr[2] & netmask[2]) != (this_ip[2] & netmask[2])) ||
+ 172   2                 ((sip->addr[3] & netmask[3]) != (this_ip[3] & netmask[3])))
+ 173   2            { 
+ 174   3              //different subnet
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 4   
+
+ 175   3            }
+ 176   2              else
+ 177   2            {
+ 178   3              //only update ARP cache from same subnet, don't learn the routing packet from other subnet
+ 179   3                  etharp_entry_update((ip_addr_t *)&(((ip_hdr_t *)pBuf->l3)->src_ip), &(((eth_hdr_t *)pBuf->l2)-
+             ->src_mac));
+ 180   3            }        
+ 181   2      #endif /* end of LWPS_ETHARP */
+ 182   2      
+ 183   2              if (LWPS_OK != ip_up(pBuf))
+ 184   2              {
+ 185   3                 return LWPS_ERR;
+ 186   3              }
+ 187   2              break;
+ 188   2      #endif /* end of LWPS_IP */
+ 189   2      
+ 190   2      #if LWPS_IPV6
+                  case ETH_TYPE_IPV6:
+                      pBuf->l3fmt = L3FMT_IPV6;
+                      pBuf->l3 = pBuf->l2 + sizeof(eth_hdr_t);
+                      if (LWPS_OK != ipv6_up(pBuf))
+                      {
+                          return LWPS_ERR;
+                      }
+                      break;
+              #endif /* end of LWPS_IPV6 */
+ 200   2      
+ 201   2      #if LWPS_RSTP
+                  case ETH_TYPE_STP_TCN:
+                  case ETH_TYPE_STP:
+                  case ETH_TYPE_RSTP:
+                      pBuf->l2fmt = L2FMT_LEN;
+                      pBuf->l3fmt = L3FMT_RSTP; 
+                      pBuf->l3 = pBuf->l2 + sizeof(eth_hdr_t);
+                      rstp_up(pBuf);/* LLC check in rstp_up */
+                      break;
+              #endif /* end of LWPS_RSTP */
+ 211   2      
+ 212   2      #if LWPS_ETHARP
+ 213   2          case ETH_TYPE_ARP:  /* 0x0806 */
+ 214   2            pBuf->l2fmt = L2FMT_ETHARP;
+ 215   2              pBuf->l3 = pBuf->l2 + sizeof(eth_hdr_t);        
+ 216   2              if (LWPS_OK != etharp_up(pBuf))
+ 217   2              {
+ 218   3                  return LWPS_ERR;
+ 219   3              }
+ 220   2              break;
+ 221   2      #endif /* end of LWPS_ETHARP */
+ 222   2      
+ 223   2      #if LWPS_LLDP
+                      case ETH_TYPE_LLDP:
+                          //handleLLDPpkt(pBuf);
+                          break;
+              #endif
+ 228   2      
+ 229   2      #if LWPS_REALTEK
+ 230   2          case ETH_TYPE_REALTEK:
+ 231   2          pBuf->l3 = pBuf->l2 + sizeof(eth_hdr_t);
+ 232   2          rtk_proto_id = *pBuf->l3;
+ 233   2              switch ( rtk_proto_id )
+ 234   2              {
+ 235   3      #if RTK_PROTO_RRCPV1
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 5   
+
+ 236   3              case RTK_PROTO_ID_RRCPV1:
+ 237   3            rrcpv1_up(pBuf);
+ 238   3            break;
+ 239   3      #endif
+ 240   3      
+ 241   3      #if RTK_PROTO_RRCPV3       
+ 242   3              case RTK_PROTO_ID_RRCPV3:
+ 243   3                  rrcpv3_up(pBuf);
+ 244   3                  break;
+ 245   3      #endif
+ 246   3      
+ 247   3      #if RTK_PROTO_RLPP
+ 248   3              case RTK_PROTO_ID_RLPP:
+ 249   3            rlpp_up(pBuf);
+ 250   3            break;
+ 251   3      #endif
+ 252   3      
+ 253   3          default:
+ 254   3            DBG_LWPS_ETH_PRINTF(("%s(): %u - rtk_proto_id: %u\n", __FILE__, (uint16)__LINE__, (uint16)rtk_proto_id)
+             -);
+ 255   3            break;
+ 256   3              }
+ 257   2            break;
+ 258   2      #endif /* end of LWPS_REALTEK */
+ 259   2      
+ 260   2          default:
+ 261   2              DBG_LWPS_ETH_PRINTF(("%s():%d - ethertype (%04X) is not supported!\n", __FILE__, (uint16)__LINE__,
+             - pEthHdr->ether_type));
+ 262   2              return LWPS_ERR_L2_NDEF;
+ 263   2          }
+ 264   1      
+ 265   1          return LWPS_OK;
+ 266   1      }
+ 267          
+ 268          
+ 269          #if LWPS_IP
+ 270          // Ethernet Down Handle IP: Prepares IP packet for transmission by resolving destination MAC via ARP
+ 271          // Determines if packet is broadcast, routed to gateway, or local, then finds corresponding ARP entry
+ 272          static int32 eth_down_handle_ip(pktBuf_t *pBuf)
+ 273          {
+ 274   1          eth_hdr_t  xdata *pEthHdr;
+ 275   1          eth_addr_t xdata DstEthAddr;
+ 276   1          ip_hdr_t   xdata *pIpHdr;
+ 277   1          ip_addr_t  xdata DstIpAddr;
+ 278   1      
+ 279   1          DBG_LWPS_ETH_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 280   1      
+ 281   1      #if LWPS_ETHARP
+ 282   1      
+ 283   1          pIpHdr = (ip_hdr_t *)pBuf->l3;
+ 284   1          /* Broadcast packet? */
+ 285   1          if ( (pIpHdr->dst_ip[0] == 255) &&
+ 286   1               (pIpHdr->dst_ip[1] == 255) &&
+ 287   1               (pIpHdr->dst_ip[2] == 255) &&
+ 288   1               (pIpHdr->dst_ip[3] == 255))
+ 289   1          {
+ 290   2              IPADDR_COPY(DstIpAddr.addr, pIpHdr->dst_ip);
+ 291   2          }
+ 292   1          /* Routing: to default gateway? */
+ 293   1          else if (  (pIpHdr->dst_ip[0] & netmask[0]) != (this_ip[0] & netmask[0]) ||
+ 294   1                (pIpHdr->dst_ip[1] & netmask[1]) != (this_ip[1] & netmask[1]) ||
+ 295   1                (pIpHdr->dst_ip[2] & netmask[2]) != (this_ip[2] & netmask[2]) ||
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 6   
+
+ 296   1                (pIpHdr->dst_ip[3] & netmask[3]) != (this_ip[3] & netmask[3])    )
+ 297   1          {
+ 298   2              /* DIP and MyIP are not in the same subnet */
+ 299   2              IPADDR_COPY(DstIpAddr.addr, default_gateway.addr);
+ 300   2              gw_mac_need = 1;
+ 301   2          }
+ 302   1          else
+ 303   1          {
+ 304   2              IPADDR_COPY(DstIpAddr.addr, pIpHdr->dst_ip);
+ 305   2          }
+ 306   1      
+ 307   1          DBG_LWPS_ETH_PRINTF(("DstIpAddr is %d.%d.%d.%d \n", \
+ 308   1              (uint16)DstIpAddr.addr[0], \
+ 309   1              (uint16)DstIpAddr.addr[1], \
+ 310   1              (uint16)DstIpAddr.addr[2], \
+ 311   1              (uint16)DstIpAddr.addr[3]));
+ 312   1      
+ 313   1          /* Find ARP entry */
+ 314   1          if (LWPS_OK != etharp_entry_find(&DstIpAddr, &DstEthAddr))
+ 315   1          {
+ 316   2              /* [FIXME] send arp request */
+ 317   2              DBG_LWPS_ETH_PRINTF(("%s():%d - ETHARP not found (drop packet)!\n", __FILE__, (uint16)__LINE__));
+ 318   2      
+ 319   2              return LWPS_ERR;
+ 320   2          }
+ 321   1      
+ 322   1          /* Extend Buffer */
+ 323   1          pBuf->l2 = pBuf->l3 - sizeof(eth_hdr_t);
+ 324   1          pBuf->size += sizeof(eth_hdr_t);
+ 325   1          pEthHdr = (eth_hdr_t *)pBuf->l2;
+ 326   1      
+ 327   1          /* Ethernet Header Setting */
+ 328   1          ETHADDR_COPY(pEthHdr->dst_mac.addr, DstEthAddr.addr);
+ 329   1          ETHADDR_COPY(pEthHdr->src_mac.addr, this_mac);
+ 330   1          pEthHdr->ether_type = ETH_TYPE_IP;
+ 331   1      
+ 332   1      #endif /* end of LWPS_ETHARP */
+ 333   1          //eth_hdr_dump(pEthHdr);
+ 334   1      
+ 335   1          return LWPS_OK;
+ 336   1      }
+ 337          #endif  /* LWPS_IP */
+ 338          
+ 339          // Ethernet Down: Prepares packets for transmission by adding Ethernet headers and VLAN tags
+ 340          // Handles IP packet routing, VLAN insertion, and padding for minimum frame size
+ 341          int32 eth_down(pktBuf_t *pBuf)
+ 342          {
+ 343   1        //tcp_hdr_t xdata *pTcpHdr_Xmit = pBuf->l4;
+ 344   1        //ip_hdr_t xdata *pIpHdr_Xmit = pBuf->l3;
+ 345   1        uint16 vid;
+ 346   1        eth_hdr_t  xdata *pEthHdr;
+ 347   1          uint16 i;
+ 348   1          uint16 padding;
+ 349   1          sal_enable_t vlanEnable;
+ 350   1          //uint8 protocolType;
+ 351   1          DBG_LWPS_ETH_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 352   1      
+ 353   1          /* Check parameter */
+ 354   1          if (pBuf == NULL)
+ 355   1          {
+ 356   2              return LWPS_ERR_NULLPOINT;
+ 357   2          }
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 7   
+
+ 358   1      
+ 359   1      
+ 360   1          /* Insert Ethernet Header into the packet(pBuf) */
+ 361   1          switch (pBuf->l3fmt)
+ 362   1          {
+ 363   2          case L3FMT_NONE:
+ 364   2              switch (pBuf->l2fmt)
+ 365   2              {
+ 366   3              case L2FMT_NONE:
+ 367   3      //            DBG_LWPS_ETH_PRINTF(("%s():%d - l2fmt (%d) and l3fmt (%d) is not handled!\n", __FILE__, (uin
+             -t16)__LINE__, pBuf->l2fmt, pBuf->l3fmt));
+ 368   3                  return LWPS_ERR;
+ 369   3                  break;
+ 370   3      
+ 371   3              case L2FMT_ETHARP:
+ 372   3              case L2FMT_ETH:
+ 373   3                  break;
+ 374   3      
+ 375   3              default:
+ 376   3      //            DBG_LWPS_ETH_PRINTF(("%s():%d - l2fmt (%d) is not supported!\n", __FILE__, (uint16)__LINE__,
+             - pBuf->l2fmt));
+ 377   3                  return LWPS_ERR;
+ 378   3                  break;
+ 379   3              }
+ 380   2              break;
+ 381   2      
+ 382   2      #if  LWPS_IP
+ 383   2          case L3FMT_IP:
+ 384   2              if (LWPS_OK != eth_down_handle_ip(pBuf))
+ 385   2              {
+ 386   3                  DBG_LWPS_ETH_PRINTF(("%s():%d - eth_down_handle_ip failed!\n", __FILE__, (uint16)__LINE__));
+ 387   3                  return LWPS_ERR;
+ 388   3              }
+ 389   2              
+ 390   2              break;
+ 391   2      #endif  /* LWPS_IP */
+ 392   2      
+ 393   2          default:
+ 394   2              DBG_LWPS_ETH_PRINTF(("%s():%d - l3fmt (%d) is not supported!\n", __FILE__, (uint16)__LINE__, pBuf-
+             ->l3fmt));
+ 395   2              return LWPS_ERR;
+ 396   2              break;
+ 397   2          }
+ 398   1      
+ 399   1              pBuf->pkt_head = pBuf->l2;
+ 400   1              pEthHdr = (eth_hdr_t *)pBuf->l2;
+ 401   1              //protocolType = *(pBuf->l2+ sizeof(eth_hdr_t));
+ 402   1              sal_vlan_enable_get(&vlanEnable);
+ 403   1          
+ 404   1              if ((0 == sal_nic_rxVid_get(&vid)) && vlanEnable && (pEthHdr->ether_type != 0x8899))
+ 405   1              {
+ 406   2                  if(pBuf->l3fmt == L3FMT_IP) /* fix TCP WEB packet with size < 60 will cause FCS error */
+ 407   2                  {
+ 408   3                      if(pBuf->size < 60)
+ 409   3                          padding = 60 - (pBuf->size);
+ 410   3                      else
+ 411   3                          padding = 0;
+ 412   3                              
+ 413   3                      for( i = 0; i < MAC_ADDR_LEN * 2; i++)
+ 414   3                      {
+ 415   4                          *(pBuf->l2 + i - 4 - padding) = *(pBuf->l2 + i);
+ 416   4                      }
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 8   
+
+ 417   3                      if(padding != 0)
+ 418   3                      {
+ 419   4                          for (i = ETH_HWADDR_LEN*2;i < (pBuf->size) ; i++)
+ 420   4                          {
+ 421   5                              *(pBuf->l2 + i - padding) = *(pBuf->l2 + i);  
+ 422   5                          }
+ 423   4                      }
+ 424   3                          
+ 425   3                      pBuf->l2 -= (4 + padding);
+ 426   3                      pBuf->pkt_head = pBuf->l2;
+ 427   3                      pEthHdr = (eth_hdr_t *)pBuf->l2;
+ 428   3                      pBuf->size += (4 + padding);
+ 429   3              
+ 430   3                      pEthHdr = (eth_hdr_t *)pBuf->pkt_head;
+ 431   3                      pEthHdr->ether_type = ETH_TYPE_VLAN;
+ 432   3                      pBuf->pkt_vlantag = pBuf->l2 + sizeof(struct eth_addr_s)*2;
+ 433   3                      *(pBuf->pkt_vlantag + 2) = (uint8)(vid >> 8);
+ 434   3                      *(pBuf->pkt_vlantag + 3) = (uint8)(vid&0xff);            
+ 435   3      
+ 436   3                  }
+ 437   2                  else
+ 438   2                  {
+ 439   3                      /* Fix arp reply packet FCS error */
+ 440   3                      for( i = 0; i < MAC_ADDR_LEN * 2; i++)
+ 441   3                      {
+ 442   4                          *(pBuf->l2 + i - 4) = *(pBuf->l2 + i);
+ 443   4                      }
+ 444   3                     
+ 445   3                      pBuf->l2 -= 4;
+ 446   3                      pBuf->pkt_head = pBuf->l2;
+ 447   3                      //pEthHdr = (eth_hdr_t *)pBuf->l2;
+ 448   3                      pBuf->size += 4;
+ 449   3              
+ 450   3                      //pEthHdr = (eth_hdr_t *)pBuf->pkt_head;
+ 451   3                      //pEthHdr->ether_type = ETH_TYPE_VLAN;
+ 452   3                      pBuf->pkt_vlantag = pBuf->l2 + sizeof(struct eth_addr_s)*2;
+ 453   3                      *(pBuf->pkt_vlantag + 0) = (uint8)(0x81);
+ 454   3                      *(pBuf->pkt_vlantag + 1) = (uint8)(0x00);
+ 455   3                      *(pBuf->pkt_vlantag + 2) = (uint8)(vid >> 8);
+ 456   3                      *(pBuf->pkt_vlantag + 3) = (uint8)(vid&0xff);            
+ 457   3                  }
+ 458   2      
+ 459   2          /*OSAL_PRINTF("\n");
+ 460   2              OSAL_PRINTF("Out:\n");
+ 461   2              for(i = 0; i < pBuf->size; i++)
+ 462   2              {
+ 463   2                  if(i%16 ==0)
+ 464   2                      OSAL_PRINTF("\n");
+ 465   2                  OSAL_PRINTF("%-2.2X ",(uint16)(*(pBuf->l2 + i)));
+ 466   2                  
+ 467   2          }*/
+ 468   2        //sal_nic_rxVid_clear();      
+ 469   2          }
+ 470   1      
+ 471   1          lwps_pbuf_tx(pBuf);
+ 472   1      
+ 473   1          return LWPS_OK;
+ 474   1      }
+ 475          
+ 476          #endif /* end of LWPS_ENABLE */
+
+
+C51 COMPILER V9.60.0.0   ETH                                                               11/02/2026 17:56:57 PAGE 9   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2782    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      37
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

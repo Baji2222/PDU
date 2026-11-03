@@ -1,0 +1,121 @@
+C51 COMPILER V9.60.0.0   WEB_PANEL                                                         11/02/2026 17:57:35 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_PANEL
+OBJECT MODULE PLACED IN .\objects\web_panel.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_panel.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X10
+                    -00) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common
+                    -\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_
+                    -REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SC
+                    -AN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_panel.lst) TABS(2) OBJECT(.\objects\web_panel.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to port function
+  10           *
+  11           * Feature : Response the request related to port function
+  12           *
+  13           */
+  14          
+  15          
+  16          /*
+  17           * Include Files
+  18           */
+  19          #include <stdio.h>
+  20          
+  21          #include <salport.h>
+  22          #include <salloop.h>
+  23          
+  24          #include <web/web_api.h>
+  25          #include <web/web_err.h>
+  26          #include <web/http_debug.h>
+  27          
+  28          #include "web_panel.h"
+  29          #include "web_menu.h"
+  30          
+  31          
+  32          /*
+  33           * Symbol Definition
+  34           */
+  35          
+  36          
+  37          /*
+  38           * Data Declaration
+  39           */
+  40          
+  41          
+  42          /*
+  43           * Function Declaration
+  44           */
+  45          
+  46          /*
+  47           * Function: get_panel
+  48           * -------------------
+  49           * Displays the main panel page with "OPL SMART PDU RACK" title.
+  50           * Uses clean, centered design with beetroot red colored heading.
+  51           * Sets up full viewport height with flexbox centering.
+C51 COMPILER V9.60.0.0   WEB_PANEL                                                         11/02/2026 17:57:35 PAGE 2   
+
+  52           * Serves as the default landing/display page for the switch.
+  53           */
+  54          int32 get_panel(struct http_request_s *pReq)
+  55          {
+  56   1          WEB_BEGIN(pReq);
+  57   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  58   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  59   1         WEB_PRINTF(pReq, "<html>\n");
+  60   1      WEB_PRINTF(pReq, "<head>\n");
+  61   1      WEB_PRINTF(pReq, "<style>\n");
+  62   1      WEB_PRINTF(pReq, "body {\n");
+  63   1      WEB_PRINTF(pReq, "font-family: 'Arial', sans-serif;\n");
+  64   1      WEB_PRINTF(pReq, "display: flex;\n");
+  65   1      WEB_PRINTF(pReq, "justify-content: center;\n");
+  66   1      WEB_PRINTF(pReq, "align-items: center;\n");
+  67   1      WEB_PRINTF(pReq, "height: 100vh;\n");
+  68   1      WEB_PRINTF(pReq, "margin: 0;\n");
+  69   1      WEB_PRINTF(pReq, "background-color: #f4f4f9;\n");
+  70   1      WEB_PRINTF(pReq, "}\n");
+  71   1      WEB_PRINTF(pReq, "h1 {\n");
+  72   1      WEB_PRINTF(pReq, "color: #8a0303; /* Beetroot red */\n");
+  73   1      WEB_PRINTF(pReq, "font-size: 3rem;\n");
+  74   1      WEB_PRINTF(pReq, "text-align: center;\n");
+  75   1      WEB_PRINTF(pReq, "text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);\n");
+  76   1      WEB_PRINTF(pReq, "letter-spacing: 2px;\n");
+  77   1      WEB_PRINTF(pReq, "font-weight: bold;\n");
+  78   1      WEB_PRINTF(pReq, "}\n");
+  79   1      WEB_PRINTF(pReq, "</style>\n");
+  80   1      WEB_PRINTF(pReq, "</head>\n");
+  81   1      WEB_PRINTF(pReq, "<body>\n");
+  82   1      WEB_PRINTF(pReq, "<h1>OPL SMART PDU RACK</h1>\n");
+  83   1      WEB_PRINTF(pReq, "</body>\n");
+  84   1      WEB_PRINTF(pReq, "</html>\n");
+  85   1      WEB_PRINTF(pReq, "\n");
+  86   1          WEB_END(pReq);
+  87   1          return SUCCESS;
+  88   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    633    ----
+   CONSTANT SIZE    =    460    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    460    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

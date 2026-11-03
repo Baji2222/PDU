@@ -1,0 +1,1059 @@
+; .\objects\SPIFlashDrv.SRC generated from: ..\src\drivers\SPIFlashDrv.c
+; COMPILER INVOKED BY:
+;        C:\Keil_v5\C51\BIN\C51.EXE ..\src\drivers\SPIFlashDrv.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\SPIFlashDrv.lst) TABS(2) SRC(.\objects\SPIFlashDrv.SRC)
+
+$NOMOD51
+
+NAME	SPIFLASHDRV
+
+P0	DATA	080H
+TB81	BIT	0C0H.3
+P1	DATA	090H
+P2	DATA	0A0H
+SM01	BIT	0C0H.7
+P3	DATA	0B0H
+SM11	BIT	0C0H.6
+T0	BIT	0B0H.4
+AC	BIT	0D0H.6
+SM21	BIT	0C0H.5
+T1	BIT	0B0H.5
+T2	BIT	090H.0
+EA	BIT	0A8H.7
+GPIO2_E	DATA	0C4H
+GPIO2_I	DATA	0C3H
+IE	DATA	0A8H
+SPI_CMD_ISSUE	BIT	080H.2
+DPH1	DATA	085H
+FL	BIT	0D0H.1
+GPIO2_O	DATA	0C2H
+DPL1	DATA	084H
+RD	BIT	0B0H.7
+EXF2	BIT	0C8H.6
+REN1	BIT	0C0H.4
+IP	DATA	0B8H
+DATA_BANK	DATA	097H
+CODE_BANK	DATA	096H
+RI	BIT	098H.0
+CACHE_CLEAN	BIT	080H.1
+INDACC_RDATA_H	DATA	0A6H
+INT0	BIT	0B0H.2
+CY	BIT	0D0H.7
+TI	BIT	098H.1
+INT1	BIT	0B0H.3
+INT2	BIT	090H.4
+SPI_RI_CMD	DATA	09CH
+RXD0	BIT	0B0H.0
+INT3	BIT	090H.5
+INDACC_RDATA_L	DATA	0A7H
+SPC_FNC	DATA	08FH
+RXD1	BIT	090H.2
+INT4	BIT	090H.6
+INDACC_WDATA_H	DATA	0A4H
+TXD0	BIT	0B0H.1
+INT5	BIT	090H.7
+TXD1	BIT	090H.3
+RCAP2H	DATA	0CBH
+SP	DATA	081H
+T2EX	BIT	090H.1
+INDACC_WDATA_L	DATA	0A5H
+OV	BIT	0D0H.2
+RCAP2L	DATA	0CAH
+SPI_S_RCMD	DATA	0B1H
+SPI_S_CONF	DATA	09DH
+WR	BIT	0B0H.6
+C_T2	BIT	0C8H.1
+SPI_CTRL_BUSY	BIT	080H.0
+PEDMA_LEN	DATA	0B7H
+EWDI	BIT	0E8H.4
+RCLK	BIT	0C8H.5
+SPI_S_WCMD	DATA	0B2H
+EXIF	DATA	091H
+TCLK	BIT	0C8H.4
+PCON	DATA	087H
+FLASH_MSB	DATA	096H
+TMOD	DATA	089H
+TCON	DATA	088H
+PWDI	BIT	0F8H.4
+SPI_S_ACCESS	DATA	09EH
+PEDMA_E_ADDR0	DATA	0B3H
+PEDMA_E_ADDR1	DATA	0B4H
+IE0	BIT	088H.1
+IE1	BIT	088H.3
+SSIO	DATA	0BBH
+SSPH	DATA	0BAH
+B	DATA	0F0H
+SSPL	DATA	0B9H
+CP_RL2	BIT	0C8H.0
+PEDMA_P_ADDR0	DATA	0B5H
+ACC	DATA	0E0H
+PEDMA_P_ADDR1	DATA	0B6H
+ES0	BIT	0A8H.4
+ET0	BIT	0A8H.1
+ES1	BIT	0A8H.6
+SPI_DSEL_CYCLE	DATA	0BCH
+INDACC_ADDR_H	DATA	0A2H
+ET1	BIT	0A8H.3
+TF0	BIT	088H.5
+ET2	BIT	0A8H.5
+TF1	BIT	088H.7
+RB8	BIT	098H.2
+TH0	DATA	08CH
+RI1	BIT	0C0H.0
+TF2	BIT	0C8H.7
+SPI_S_DATA0	DATA	0ACH
+EX0	BIT	0A8H.0
+IT0	BIT	088H.0
+TH1	DATA	08DH
+SPI_S_DATA1	DATA	0ADH
+SPI_S_ADDR0	DATA	0A9H
+INDACC_ADDR_L	DATA	0A3H
+TB8	BIT	098H.3
+EX1	BIT	0A8H.2
+IT1	BIT	088H.2
+TI1	BIT	0C0H.1
+SPI_S_DATA2	DATA	0AEH
+SPI_S_ADDR1	DATA	0AAH
+TH2	DATA	0CDH
+P	BIT	0D0H.0
+EX2	BIT	0E8H.0
+SPI_S_DATA3	DATA	0AFH
+SPI_S_ADDR2	DATA	0ABH
+SM0	BIT	098H.7
+TL0	DATA	08AH
+EX3	BIT	0E8H.1
+SM1	BIT	098H.6
+TL1	DATA	08BH
+EX4	BIT	0E8H.2
+SM2	BIT	098H.5
+EX5	BIT	0E8H.3
+TL2	DATA	0CCH
+PS0	BIT	0B8H.4
+EIE	DATA	0E8H
+PT0	BIT	0B8H.1
+PS1	BIT	0B8H.6
+PT1	BIT	0B8H.3
+RS0	BIT	0D0H.3
+SYNC_CTRL	DATA	08EH
+GPIO_E	DATA	093H
+PT2	BIT	0B8H.5
+TR0	BIT	088H.4
+RS1	BIT	0D0H.4
+TR1	BIT	088H.6
+PX0	BIT	0B8H.0
+TR2	BIT	0C8H.2
+PX1	BIT	0B8H.2
+INDACC_CMD	DATA	0A0H
+GPIO_I	DATA	095H
+PX2	BIT	0F8H.0
+PX3	BIT	0F8H.1
+DPH	DATA	083H
+PX4	BIT	0F8H.2
+PX5	BIT	0F8H.3
+EIP	DATA	0F8H
+GPIO_O	DATA	094H
+DPL	DATA	082H
+SBUF0	DATA	099H
+SBUF1	DATA	0C1H
+EXEN2	BIT	0C8H.3
+SCON0	DATA	098H
+REN	BIT	098H.4
+SCON1	DATA	0C0H
+T2CON	DATA	0C8H
+DPS	DATA	086H
+INDACC_STATUS	DATA	0A1H
+CACHE_CRTL	DATA	080H
+SPI_IO_CONF	DATA	09AH
+EICON	DATA	0D8H
+CKCON	DATA	08EH
+SPI_RI_CONF	DATA	09BH
+F0	BIT	0D0H.5
+PSW	DATA	0D0H
+RB81	BIT	0C0H.2
+?PR?__spi_flash_drv_init?SPIFLASHDRV     SEGMENT CODE 
+?PR?__spi_flash_drv_entry?SPIFLASHDRV    SEGMENT CODE 
+	EXTRN	XDATA (spi_flash_driver_entry)
+	PUBLIC	__spi_flash_drv_init
+; #include <stdio.h>
+; #include "SPIFlashDrv.h"
+; 
+; //#pragma REGPARMS
+; 
+; #define SPI_WINBOND_SIO  (0)
+; #define SPI_WINBOND_DIO  (1)
+; #define SPI_WINBOND_QIO  (0)
+; 
+; 
+; #ifdef CONFIG_TO_USE_SCKU_SPI_DRIVER
+; // *********************************************
+; //              Shan-Chyun Ku's SPI Driver
+; // *********************************************
+; 
+; #ifdef FLASH_MODE_DUAL
+; #if (defined(CONFIG_FOR_LOADER) || defined(CONFIG_STANDALONE))
+; #define XCALL           LCALL
+; #define XJMP            LJMP
+; 
+; #define M_SPI_C_QPP     0xfa
+; #define M_SPI_C_MREAD   0xfb
+; #define M_SPI_C_EMIO    0xfd
+; #define M_SPI_C_RSTQIO  0xFF
+; #define M_SPI_C_READ    0x03
+; #define M_SPI_C_FREAD   0x0B
+; #define M_SPI_C_RDID    0x9F
+; #define M_SPI_C_4RDID   0xAF
+; #define M_SPI_C_WREN    0x06
+; #define M_SPI_C_WRDI    0x04
+; #define M_SPI_C_BE      0xD8
+; #define M_SPI_C_CE      0xC7
+; #define M_SPI_C_SE      0x20
+; #define M_SPI_C_PP      0x02
+; #define M_SPI_C_RDSR    0x05
+; #define M_SPI_C_WRSR    0x01
+; #define M_SPI_C_WBPR    0x42
+; #define M_SPI_C_DP      0xB9
+; #define M_SPI_C_RES     0xAB
+; #define M_SPI_C_AAI     0xAD
+; 
+; #define M_IO1           (1<<0)
+; #define M_IO2           (1<<1)
+; #define M_IO4           (1<<2)
+; #define M_CIO1          (1<<3)
+; #define M_CIO2          (1<<4)
+; #define M_CIO4          (1<<5)
+; #define M_CMD_IO1       ((1)<<6)
+; #define M_CMD_IO2       ((2)<<6)
+; #define M_CMD_IO4       ((3)<<6)
+; #define M_CMD_IO_Reserved (1<<8)
+; #define M_R_ADDR_IO1    ((1)<<9)
+; #define M_R_ADDR_IO2    ((2)<<9)
+; #define M_R_ADDR_IO4    ((3)<<9)
+; #define M_R_ADDR_IO_Reserved (1<<11)
+; #define M_W_ADDR_IO1    ((1)<<12)
+; #define M_W_ADDR_IO2    ((2)<<12)
+; #define M_W_ADDR_IO4    ((3)<<12)
+; #define M_W_ADDR_IO_Reserved (1<<14)
+; #define M_R_DATA_IO1    ((1)<<15)
+; #define M_R_DATA_IO2    ((2)<<15)
+; #define M_R_DATA_IO4    ((3)<<15)
+; #define M_R_DATA_IO_Reserved (1<<17)
+; #define M_W_DATA_IO1    ((1)<<18)
+; #define M_W_DATA_IO2    ((2)<<18)
+; #define M_W_DATA_IO4    ((3)<<18)
+; #define M_W_DATA_IO_Reserved (1<<20)
+; #define M_HAVE_EQ_CMD   (1<<29)
+; #define M_QE_BIT        (1<<30)
+; #define M_MODE_EN       (1<<31)
+; 
+; uint8 __spi_flash_drv_init(void) large;
+; static void __spi_flash_drv_entry(void) large;
+; 
+; uint8 __spi_flash_drv_init(void) large {
+
+	RSEG  ?PR?__spi_flash_drv_init?SPIFLASHDRV
+__spi_flash_drv_init:
+	USING	0
+			; SOURCE LINE # 75
+;     spi_flash_driver_entry = (spi_flash_driver_entry_t*) &__spi_flash_drv_entry;
+			; SOURCE LINE # 76
+	MOV  	DPTR,#spi_flash_driver_entry
+	MOV  	A,#HIGH (__spi_flash_drv_entry)
+	MOVX 	@DPTR,A
+	INC  	DPTR
+	MOV  	A,#LOW (__spi_flash_drv_entry)
+	MOVX 	@DPTR,A
+;     
+;     SPI_DSEL_CYCLE = 0x09; /* 10 cycles */
+			; SOURCE LINE # 78
+	MOV  	SPI_DSEL_CYCLE,#09H
+;     SPI_RI_CMD  = spi_chip0_spi_ri_cmd;
+			; SOURCE LINE # 79
+	MOV  	SPI_RI_CMD,#0BBH
+;     SPI_RI_CONF = spi_chip0_spi_ri_conf;
+			; SOURCE LINE # 80
+	MOV  	SPI_RI_CONF,#04H
+?C0001:
+;     //SPI_S_CONF  = spi_chip0_spi_s_conf;           // be remarked due to override later
+;     //SPI_S_RCMD  = spi_chip0_spi_s_rcmd;           // be remarked due to override later
+;     //SPI_IO_CONF = spi_chip0_spi_io_config_r;      // be remarked due to override later
+; 
+;     /* Check Controller Ready */
+;     while( 1==SPI_CTRL_BUSY );
+			; SOURCE LINE # 86
+	JB   	SPI_CTRL_BUSY,?C0001
+;     
+;     /* Set sfr for ReadSR */
+;     SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+			; SOURCE LINE # 89
+	CLR  	A
+	MOV  	SPI_S_CONF,A
+;     SPI_IO_CONF   = SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS);
+			; SOURCE LINE # 90
+	MOV  	SPI_IO_CONF,A
+;     SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_SKIP_ADR;
+			; SOURCE LINE # 91
+	MOV  	SPI_S_ACCESS,#019H
+;     SPI_S_WCMD    = SPI_C_WRSR;
+			; SOURCE LINE # 92
+	MOV  	SPI_S_WCMD,#01H
+;     SPI_S_DATA0   = 0;                              // new_value=0
+			; SOURCE LINE # 93
+	MOV  	SPI_S_DATA0,A
+;     SPI_CMD_ISSUE = 1;
+			; SOURCE LINE # 94
+	SETB 	SPI_CMD_ISSUE
+?C0003:
+;     
+;     /* Check Controller Ready */
+;     while( 1==SPI_CTRL_BUSY );
+			; SOURCE LINE # 97
+	JB   	SPI_CTRL_BUSY,?C0003
+;     
+; #pragma asm
+;     //__spi_flash_drv_restore_S_mode_reg();
+	  
+;     LCALL   __spi_flash_drv_restore_S_mode_reg;
+	  LCALL   __spi_flash_drv_restore_S_mode_reg;
+; #pragma endasm
+;     return SUCCESS;
+			; SOURCE LINE # 103
+	MOV  	R7,#00H
+; }
+			; SOURCE LINE # 104
+	RET  	
+; END OF __spi_flash_drv_init
+
+; 
+; static void __spi_flash_drv_entry(void) large {
+
+	RSEG  ?PR?__spi_flash_drv_entry?SPIFLASHDRV
+__spi_flash_drv_entry:
+	USING	0
+			; SOURCE LINE # 106
+;     // It should be uint8 __spi_flash_drv_entry(uint16 argx), but I have to 
+;     // trick C51, which generates the unnecessary to access XDATA
+;     // now arg is in R6/R7
+; 
+; #pragma asm
+; //  struct spi_write_flash_argument_t * xdata arg=(struct spi_write_flash_argument_t *)argx;
+	  
+; //  if (arg==NULL) return FALSE;
+	  
+;     MOV     A, R7
+	  MOV     A, R7
+;     MOV     DPL, A
+	  MOV     DPL, A
+;     MOV     A, R6
+	  MOV     A, R6
+;     MOV     DPH, A
+	  MOV     DPH, A
+;     ORL     A, R7
+	  ORL     A, R7
+;     JZ      ?0034
+	  JZ      ?0034
+; 
+	  
+; //  SPI_S_CONF  = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+	  
+;     MOV     SPI_S_CONF, #(SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle))
+	  MOV     SPI_S_CONF, #(((0)))
+; 
+	  
+; //  SPI_IO_CONF = spi_chip0_spi_io_config_w;
+	  
+;     MOV     SPI_IO_CONF, #(spi_chip0_spi_io_config_w)
+	  MOV     SPI_IO_CONF, #((((((0x00))<<3)&(0x1F<<3))))
+; 
+	  
+; //  uint24 start_adr = arg->f_addr; (R0:MSB/R1/R2:LSB)
+	  
+;     INC     DPTR            // skip first byte of f_addr
+	  INC     DPTR             
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     R0, A
+	  MOV     R0, A
+;     INC     DPTR
+	  INC     DPTR
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     R1, A
+	  MOV     R1, A
+;     INC     DPTR
+	  INC     DPTR
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     R2, A
+	  MOV     R2, A
+; 
+	  
+; // uint8 op = arg->op; (R5)
+	  
+;     INC     DPTR
+	  INC     DPTR
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     R5, A
+	  MOV     R5, A
+;     
+	  
+;     CJNE    R5, #(SPI_FLASH_OP_ERASE), ?0030
+	  CJNE    R5, #((3)), ?0030
+;     XJMP    __spi_flash_driver_erase
+	   LJMP    __spi_flash_driver_erase
+; ?0030:
+	  ?0030:
+;     CJNE    R5, #(SPI_FLASH_OP_ERASE_BLOCKING), ?0031
+	  CJNE    R5, #((4)), ?0031
+;     XJMP    __spi_flash_driver_erase
+	   LJMP    __spi_flash_driver_erase
+; ?0031:
+	  ?0031:
+;     CJNE    R5, #(SPI_FLASH_OP_INIT), ?0032
+	  CJNE    R5, #((0xff)), ?0032
+;     LJMP    __spi_flash_drv_init
+	  LJMP    __spi_flash_drv_init
+; ?0032:
+	  ?0032:
+;     
+	  
+; //  uint8 len=arg->len; (R3)
+	  
+;     INC     DPTR
+	  INC     DPTR
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     R3, A
+	  MOV     R3, A
+; 
+	  
+; //  uint8 *buf=(uint8*)arg->x_addr; (DPTR)
+	  
+;     INC     DPTR
+	  INC     DPTR
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     R7, A
+	  MOV     R7, A
+;     INC     DPTR
+	  INC     DPTR
+;     MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;     MOV     DPL, A
+	  MOV     DPL, A
+;     MOV     A, R7
+	  MOV     A, R7
+;     MOV     DPH, A
+	  MOV     DPH, A
+; 
+	  
+;     CJNE    R5, #(SPI_FLASH_OP_WRITE), ?0033
+	  CJNE    R5, #((2)), ?0033
+;     SJMP    __spi_flash_driver_write
+	  SJMP    __spi_flash_driver_write
+; ?0033:
+	  ?0033:
+;     CJNE    R5, #(SPI_FLASH_OP_READ), ?0034
+	  CJNE    R5, #((1)), ?0034
+;     XJMP    __spi_flash_driver_read
+	   LJMP    __spi_flash_driver_read
+; ?0034:
+	  ?0034:
+;     
+	  
+;     //  return FALSE;
+	  
+;     MOV     R7, #FALSE
+	  MOV     R7, #0
+; __spi_flash_drv_restore_S_mode_reg:
+	  __spi_flash_drv_restore_S_mode_reg:
+; //  SPI_IO_CONF =   spi_chip0_spi_io_config_r;
+	  
+; //  SPI_S_RCMD =    spi_chip0_spi_s_rcmd;
+	  
+; //  SPI_S_CONF =    spi_chip0_spi_s_conf; 
+	  
+;     MOV     SPI_IO_CONF, #(spi_chip0_spi_io_config_r)
+	  MOV     SPI_IO_CONF, #((((((0x03))<<3)&(0x1F<<3))))
+;     MOV     SPI_S_RCMD, #(spi_chip0_spi_s_rcmd)
+	  MOV     SPI_S_RCMD, #((0xBB))
+;     MOV     SPI_S_CONF, #(spi_chip0_spi_s_conf)
+	  MOV     SPI_S_CONF, #((((4))))
+;     RET
+	  RET
+; 
+	  
+; __spi_flash_readSR:
+	  __spi_flash_readSR:
+; //  ****Check Controller Ready 
+	  
+; //  while( 1==SPI_CTRL_BUSY );
+	  
+; ?0006:
+	  ?0006:
+;     JB      SPI_CTRL_BUSY,?0006
+	  JB      SPI_CTRL_BUSY,?0006
+; 
+	  
+;     // assume:
+	  
+;     //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+	  
+;     //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+	  
+; 
+	  
+; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_READ |  SPI_S_ACCESS_SKIP_ADR;
+	  
+;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_READ |  SPI_S_ACCESS_SKIP_ADR)
+	  MOV     SPI_S_ACCESS, #(((1)<<0) | (0<<3) |  (1<<4))
+; 
+	  
+; //  SPI_S_RCMD    = SPI_C_RDSR;
+	  
+;     MOV     SPI_S_RCMD, #(M_SPI_C_RDSR)
+	  MOV     SPI_S_RCMD, #(0x05)
+; 
+	  
+; //  SPI_CMD_ISSUE = 1;
+	  
+;     SETB    SPI_CMD_ISSUE
+	  SETB    SPI_CMD_ISSUE
+; 
+	  
+; //  ****Check Controller Ready 
+	  
+; //  while( 1==SPI_CTRL_BUSY );
+	  
+; ?0008:
+	  ?0008:
+;     JB      SPI_CTRL_BUSY,?0008
+	  JB      SPI_CTRL_BUSY,?0008
+;     
+	  
+; //  return SPI_S_DATA0;
+	  
+;     MOV     R7, SPI_S_DATA0
+	  MOV     R7, SPI_S_DATA0
+;     RET
+	  RET
+; 
+	  
+; __spi_flash_waitRdy:
+	  __spi_flash_waitRdy:
+; //  while( __spi_flash_readSR()&SPI_FLASH_WIP );
+	  
+; ?0009:
+	  ?0009:
+;     XCALL   __spi_flash_readSR
+	   LCALL   __spi_flash_readSR
+;     MOV     A,R7
+	  MOV     A,R7
+;     JB      ACC.0,?0009
+	  JB      ACC.0,?0009
+;     RET
+	  RET
+; 
+	  
+; __spi_flash_waitWEL:
+	  __spi_flash_waitWEL:
+; //  __spi_flash_waitRdy();
+	  
+;     XCALL   __spi_flash_waitRdy
+	   LCALL   __spi_flash_waitRdy
+; 
+	  
+;     // assume:
+	  
+;     //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+	  
+;     //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+	  
+; 
+	  
+; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_SKIP_ADR;
+	  
+;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_SKIP_ADR)
+	  MOV     SPI_S_ACCESS, #(((0)<<0) | (1<<3) | (1<<4))
+; 
+	  
+; //  SPI_S_WCMD    = SPI_C_WREN;
+	  
+;     MOV     SPI_S_WCMD, #(M_SPI_C_WREN)
+	  MOV     SPI_S_WCMD, #(0x06)
+; 
+	  
+; //  SPI_CMD_ISSUE = 1;
+	  
+;     SETB    SPI_CMD_ISSUE
+	  SETB    SPI_CMD_ISSUE
+; 
+	  
+; //  while (!(__spi_flash_readSR()&SPI_FLASH_WEL));
+	  
+; ?000A:
+	  ?000A:
+;     XCALL   __spi_flash_readSR
+	   LCALL   __spi_flash_readSR
+;     MOV     A, R7
+	  MOV     A, R7
+;     JNB     ACC.(SPI_FLASH_WEL_SHIFT), ?000A
+	  JNB     ACC.((1)), ?000A
+;     RET
+	  RET
+;     
+	  
+; __spi_flash_driver_write:
+	  __spi_flash_driver_write:
+;     // uint24 start_adr in (R0/R1/R2)
+	  
+;     // uint8 len is (R3)
+	  
+;     // uint8 *buf is (DPTR)
+	  
+; //  while (1){
+	  
+; ?000D:
+	  ?000D:
+; //      __spi_flash_waitWEL();
+	  
+;         XCALL   __spi_flash_waitWEL
+	   LCALL   __spi_flash_waitWEL
+; 
+	  
+;         // assume:
+	  
+;         //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+	  
+;         //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+	  
+; 
+	  
+; //      SPI_S_WCMD  = spi_chip0_spi_s_wcmd;
+	  
+;         MOV     SPI_S_WCMD, #(spi_chip0_spi_s_wcmd)
+	  MOV     SPI_S_WCMD, #((0x02))
+; 
+	  
+; //      clen=4; to_quit=0;  to_quit is in (R5)
+	  
+; //      if (!((len>4)||(len==0))) {
+	  
+; //          clen=len; to_quit++;
+	  
+; //      }
+	  
+; //      SPI_S_ACCESS = clen  | SPI_S_ACCESS_WRITE ;
+	  
+;         MOV     SPI_S_ACCESS, #(0x04|(SPI_S_ACCESS_WRITE))
+	  MOV     SPI_S_ACCESS, #(0x04|((1<<3)))
+;         MOV     R5, #0
+	  MOV     R5, #0
+;         MOV     A, R3
+	  MOV     A, R3
+;         JZ      ?000E
+	  JZ      ?000E
+; 	ADD 	A,#0xFB
+	  ADD 	A,#0xFB
+; 	JC      ?000E
+	  JC      ?000E
+; 	MOV     A, #(SPI_S_ACCESS_WRITE)
+	  MOV     A, #((1<<3))
+; 	ORL     A, R3
+	  ORL     A, R3
+;         MOV     SPI_S_ACCESS, A
+	  MOV     SPI_S_ACCESS, A
+;         INC     R5
+	  INC     R5
+; ?000E:
+	  ?000E:
+; 
+	  
+; //      SPI_S_ADDR2 = (uint8)( start_adr>>16);
+	  
+; //      SPI_S_ADDR1 = (uint8)((start_adr>> 8)&0x0000FF);
+	  
+; //      SPI_S_ADDR0 = (uint8)((start_adr>> 0)&0x0000FF);
+	  
+;         MOV     A, R0
+	  MOV     A, R0
+;         MOV     SPI_S_ADDR2, A
+	  MOV     SPI_S_ADDR2, A
+;         MOV     A, R1
+	  MOV     A, R1
+;         MOV     SPI_S_ADDR1, A
+	  MOV     SPI_S_ADDR1, A
+;         MOV     A, R2
+	  MOV     A, R2
+;         MOV     SPI_S_ADDR0, A
+	  MOV     SPI_S_ADDR0, A
+; 
+	  
+; //      SPI_S_DATA0 = *buf++;
+	  
+; //      SPI_S_DATA1 = *buf++;
+	  
+; //      SPI_S_DATA2 = *buf++;
+	  
+; //      SPI_S_DATA3 = *buf++;
+	  
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     SPI_S_DATA0, A
+	  MOV     SPI_S_DATA0, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     SPI_S_DATA1, A
+	  MOV     SPI_S_DATA1, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     SPI_S_DATA2, A
+	  MOV     SPI_S_DATA2, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     SPI_S_DATA3, A
+	  MOV     SPI_S_DATA3, A
+;         INC     DPTR
+	  INC     DPTR
+; 
+	  
+; //      SPI_CMD_ISSUE = 1;
+	  
+;         SETB    SPI_CMD_ISSUE
+	  SETB    SPI_CMD_ISSUE
+; 
+	  
+; //      if (to_quit) break;
+	  
+;         MOV     A, R5
+	  MOV     A, R5
+;         JNZ     ?0010
+	  JNZ     ?0010
+;         
+	  
+; //      len -= 4;
+	  
+;         MOV     A, #(0xFC)
+	  MOV     A, #(0xFC)
+;         ADD     A, R3
+	  ADD     A, R3
+;         MOV     R3, A
+	  MOV     R3, A
+; 
+	  
+; //      start_adr +=4;
+	  
+;         MOV     A, #(0x04)
+	  MOV     A, #(0x04)
+;         ADD     A, R2
+	  ADD     A, R2
+;         MOV     R2, A
+	  MOV     R2, A
+;         CLR     A
+	  CLR     A
+;         ADDC    A, R1
+	  ADDC    A, R1
+;         MOV     R1, A
+	  MOV     R1, A
+;         CLR     A
+	  CLR     A
+;         ADDC    A, R0
+	  ADDC    A, R0
+;         MOV     R0, A
+	  MOV     R0, A
+; //  }
+	  
+;     SJMP    ?000D
+	  SJMP    ?000D
+; 
+	  
+; //    
+	  
+; ?0010:
+	  ?0010:
+; //  __spi_flash_waitRdy();
+	  
+;     XCALL   __spi_flash_waitRdy
+	   LCALL   __spi_flash_waitRdy
+; 
+	  
+; //  __spi_flash_drv_restore_S_mode_reg(); 
+	  
+; //  return SUCCESS
+	  
+;     MOV     R7, #SUCCESS
+	  MOV     R7, #0
+;     XJMP    __spi_flash_drv_restore_S_mode_reg;
+	   LJMP    __spi_flash_drv_restore_S_mode_reg;
+; 
+	  
+; __spi_flash_driver_read:
+	  __spi_flash_driver_read:
+;     // uint24 start_adr in (R0/R1/R2)
+	  
+;     // uint8 len is (R3)
+	  
+;     // uint8 *buf is (DPTR)
+	  
+; 
+	  
+; //  __spi_flash_waitRdy();
+	  
+;     XCALL   __spi_flash_waitRdy
+	   LCALL   __spi_flash_waitRdy
+;     
+	  
+; //  __spi_flash_drv_restore_S_mode_reg();
+	  
+; //      to get SPI_S_RCMD, SPI_S_CONF, and SPI_IO_CONF
+	  
+;     XCALL   __spi_flash_drv_restore_S_mode_reg
+	   LCALL   __spi_flash_drv_restore_S_mode_reg
+;     
+	  
+; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(4) | SPI_S_ACCESS_READ ;
+	  
+;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(4) | SPI_S_ACCESS_READ)
+	  MOV     SPI_S_ACCESS, #(((4)<<0) | (0<<3))
+;    
+	  
+; //  while(1) {
+	  
+; ?0021:
+	  ?0021:
+; //      SPI_S_ADDR2 = (uint8)( start_adr>>16);
+	  
+; //      SPI_S_ADDR1 = (uint8)((start_adr>> 8)&0x0000FF);
+	  
+; //      SPI_S_ADDR0 = (uint8)((start_adr>> 0)&0x0000FF);
+	  
+;         MOV     A, R0
+	  MOV     A, R0
+;         MOV     SPI_S_ADDR2, A
+	  MOV     SPI_S_ADDR2, A
+;         MOV     A, R1
+	  MOV     A, R1
+;         MOV     SPI_S_ADDR1, A
+	  MOV     SPI_S_ADDR1, A
+;         MOV     A, R2
+	  MOV     A, R2
+;         MOV     SPI_S_ADDR0, A
+	  MOV     SPI_S_ADDR0, A
+;     
+	  
+; //      SPI_CMD_ISSUE = 1;
+	  
+;         SETB    SPI_CMD_ISSUE
+	  SETB    SPI_CMD_ISSUE
+; 
+	  
+; //      while( 1==SPI_CTRL_BUSY );
+	  
+; ?0022:
+	  ?0022:
+;         JB      SPI_CTRL_BUSY, ?0022
+	  JB      SPI_CTRL_BUSY, ?0022
+;             
+	  
+; //      *buf++   = SPI_S_DATA0;
+	  
+; //      if ((--len)==0) break;
+	  
+;         MOV     A, SPI_S_DATA0
+	  MOV     A, SPI_S_DATA0
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         DEC     R3
+	  DEC     R3
+;         MOV     A, R3
+	  MOV     A, R3
+;         JZ      ?0020
+	  JZ      ?0020
+; 
+	  
+; //      *buf++   = SPI_S_DATA1;
+	  
+; //      if ((--len)==0) break;
+	  
+;         MOV     A, SPI_S_DATA1
+	  MOV     A, SPI_S_DATA1
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         DEC     R3
+	  DEC     R3
+;         MOV     A, R3
+	  MOV     A, R3
+;         JZ      ?0020
+	  JZ      ?0020
+; 
+	  
+; //      *buf++   = SPI_S_DATA2;
+	  
+; //      if ((--len)==0) break;
+	  
+;         MOV     A, SPI_S_DATA2
+	  MOV     A, SPI_S_DATA2
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         DEC     R3
+	  DEC     R3
+;         MOV     A, R3
+	  MOV     A, R3
+;         JZ      ?0020
+	  JZ      ?0020
+; 
+	  
+; //      *buf++   = SPI_S_DATA3;
+	  
+; //      if ((--len==0)) break;
+	  
+;         MOV     A, SPI_S_DATA3
+	  MOV     A, SPI_S_DATA3
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         DEC     R3
+	  DEC     R3
+;         MOV     A, R3
+	  MOV     A, R3
+;         JZ      ?0020
+	  JZ      ?0020
+; 
+	  
+; //      start_adr += 4;
+	  
+;         MOV     A, #(0x04)
+	  MOV     A, #(0x04)
+;         ADD     A, R2
+	  ADD     A, R2
+;         MOV     R2, A
+	  MOV     R2, A
+;         CLR     A
+	  CLR     A
+;         ADDC    A, R1
+	  ADDC    A, R1
+;         MOV     R1, A
+	  MOV     R1, A
+;         CLR     A
+	  CLR     A
+;         ADDC    A, R0
+	  ADDC    A, R0
+;         MOV     R0, A
+	  MOV     R0, A
+; 
+	  
+; //  }
+	  
+;     SJMP    ?0021
+	  SJMP    ?0021
+; 
+	  
+; ?0020:
+	  ?0020:
+;     MOV     R7, #SUCCESS
+	  MOV     R7, #0
+;     RET    
+	  RET    
+; 
+	  
+; __spi_flash_driver_erase:
+	  __spi_flash_driver_erase:
+;     // erase_block_adr is in (R0/R1/R2)
+	  
+;     // blocking mode is in (R5)
+	  
+;     
+	  
+; //  __spi_flash_waitWEL();
+	  
+;     XCALL   __spi_flash_waitWEL
+	   LCALL   __spi_flash_waitWEL
+; 
+	  
+;     // assume:
+	  
+;     //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+	  
+;     //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+	  
+; 
+	  
+; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE ;
+	  
+;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE)
+	  MOV     SPI_S_ACCESS, #(((0)<<0) | (1<<3))
+; 
+	  
+; //  SPI_S_WCMD    = SPI_C_SE;
+	  
+;     MOV     SPI_S_WCMD, #(M_SPI_C_SE)
+	  MOV     SPI_S_WCMD, #(0x20)
+; 
+	  
+; //  SPI_S_ADDR2   = (uint8)((erase_block_adr >> 16)&0xff);
+	  
+;     MOV     A,R0
+	  MOV     A,R0
+;     MOV     SPI_S_ADDR2, A
+	  MOV     SPI_S_ADDR2, A
+; 
+	  
+; //  SPI_S_ADDR1   = (uint8)((erase_block_adr >> 8)&0xff);
+	  
+;     MOV     A,R1
+	  MOV     A,R1
+;     MOV     SPI_S_ADDR1,A
+	  MOV     SPI_S_ADDR1,A
+; 
+	  
+; //  SPI_S_ADDR1   = (uint8)((erase_block_adr)&0xff);
+	  
+;     MOV     A,R2
+	  MOV     A,R2
+;     MOV     SPI_S_ADDR0,A
+	  MOV     SPI_S_ADDR0,A
+; 
+	  
+; //  SPI_CMD_ISSUE = 1;
+	  
+;     SETB    SPI_CMD_ISSUE
+	  SETB    SPI_CMD_ISSUE
+; 
+	  
+; //  if (op(R5)==SPI_FLASH_OP_ERASE_BLOCKING) __spi_flash_waitRdy();
+	  
+;     MOV     A, R5
+	  MOV     A, R5
+;     CJNE    A, #(SPI_FLASH_OP_ERASE_BLOCKING), ?000B
+	  CJNE    A, #((4)), ?000B
+;     XCALL   __spi_flash_waitRdy
+	   LCALL   __spi_flash_waitRdy
+; ?000B:
+	  ?000B:
+; 
+	  
+; //  __spi_flash_drv_restore_S_mode_reg();
+	  
+;     MOV     R7, #(TRUE)
+	  MOV     R7, #(1)
+;     XJMP    __spi_flash_drv_restore_S_mode_reg
+	   LJMP    __spi_flash_drv_restore_S_mode_reg
+; #pragma endasm
+; }   // entry
+			; SOURCE LINE # 471
+	RET  	
+; END OF __spi_flash_drv_entry
+
+	END

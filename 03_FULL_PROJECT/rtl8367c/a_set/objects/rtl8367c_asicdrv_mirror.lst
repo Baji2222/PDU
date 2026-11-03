@@ -1,0 +1,547 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_MIRROR
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_mirror.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_mirror.c LARGE OMF2 OPTIMIZE(8,SIZE) BRO
+                    -WSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\commo
+                    -n\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT
+                    -,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPAT
+                    -IBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_mirror.lst) TABS(2) OBJECT(.\objects\rt
+                    -l8367c_asicdrv_mirror.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Port mirror related functions
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_mirror.h>
+  20          #include <string.h> //test
+  21          #include <stdio.h> //test
+  22          
+  23          /* Function Name:
+  24           *      rtl8367c_setAsicPortMirror
+  25           * Description:
+  26           *      Set port mirror function
+  27           * Input:
+  28           *      source  - Source port
+  29           *      monitor - Monitor (destination) port
+  30           * Output:
+  31           *      None
+  32           * Return:
+  33           *      RT_ERR_OK       - Success
+  34           *      RT_ERR_SMI      - SMI access error
+  35           *      RT_ERR_PORT_ID  - Invalid port number
+  36           * Note:
+  37           *      None
+  38           */
+  39          ret_t rtl8367c_setAsicPortMirror(uint32 source, uint32 monitor)
+  40          {
+  41   1          ret_t retVal;
+  42   1      
+  43   1          if((source > RTL8367C_PORTIDMAX) || (monitor > RTL8367C_PORTIDMAX))
+  44   1              return RT_ERR_PORT_ID;
+  45   1      
+  46   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_SOURCE_PORT_MASK, source);
+  47   1          if(retVal != RT_ERR_OK)
+  48   1              return retVal;
+  49   1      
+  50   1      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 2   
+
+  51   1          return rtl8367c_setAsicRegBits(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_MONITOR_PORT_MASK, monitor);
+  52   1      }
+  53          /* Function Name:
+  54           *      rtl8367c_getAsicPortMirror
+  55           * Description:
+  56           *      Get port mirror function
+  57           * Input:
+  58           *      pSource     - Source port
+  59           *      pMonitor - Monitor (destination) port
+  60           * Output:
+  61           *      None
+  62           * Return:
+  63           *      RT_ERR_OK       - Success
+  64           *      RT_ERR_SMI      - SMI access error
+  65           * Note:
+  66           *      None
+  67           */
+  68          ret_t rtl8367c_getAsicPortMirror(uint32 *pSource, uint32 *pMonitor)
+  69          {
+  70   1          ret_t retVal;
+  71   1      
+  72   1          retVal = rtl8367c_getAsicRegBits(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_SOURCE_PORT_MASK, pSource);
+  73   1          if(retVal != RT_ERR_OK)
+  74   1              return retVal;
+  75   1      
+  76   1          return rtl8367c_getAsicRegBits(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_MONITOR_PORT_MASK, pMonitor);
+  77   1      }
+  78          /* Function Name:
+  79           *      rtl8367c_setAsicPortMirrorRxFunction
+  80           * Description:
+  81           *      Set the mirror function on RX of the mirrored
+  82           * Input:
+  83           *      enabled     - 1: enabled, 0: disabled
+  84           * Output:
+  85           *      None
+  86           * Return:
+  87           *      RT_ERR_OK       - Success
+  88           *      RT_ERR_SMI      - SMI access error
+  89           * Note:
+  90           *      None
+  91           */
+  92          ret_t rtl8367c_setAsicPortMirrorRxFunction(uint32 enabled)
+  93          {
+  94   1          return rtl8367c_setAsicRegBit(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_RX_OFFSET, enabled);
+  95   1      }
+  96          /* Function Name:
+  97           *      rtl8367c_getAsicPortMirrorRxFunction
+  98           * Description:
+  99           *      Get the mirror function on RX of the mirrored
+ 100           * Input:
+ 101           *      pEnabled    - 1: enabled, 0: disabled
+ 102           * Output:
+ 103           *      None
+ 104           * Return:
+ 105           *      RT_ERR_OK       - Success
+ 106           *      RT_ERR_SMI      - SMI access error
+ 107           * Note:
+ 108           *      None
+ 109           */
+ 110          ret_t rtl8367c_getAsicPortMirrorRxFunction(uint32* pEnabled)
+ 111          {
+ 112   1          return rtl8367c_getAsicRegBit(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_RX_OFFSET, pEnabled);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 3   
+
+ 113   1      }
+ 114          /* Function Name:
+ 115           *      rtl8367c_setAsicPortMirrorTxFunction
+ 116           * Description:
+ 117           *      Set the mirror function on TX of the mirrored
+ 118           * Input:
+ 119           *      enabled     - 1: enabled, 0: disabled
+ 120           * Output:
+ 121           *      None
+ 122           * Return:
+ 123           *      RT_ERR_OK       - Success
+ 124           *      RT_ERR_SMI      - SMI access error
+ 125           * Note:
+ 126           *      None
+ 127           */
+ 128          ret_t rtl8367c_setAsicPortMirrorTxFunction(uint32 enabled)
+ 129          {
+ 130   1          return rtl8367c_setAsicRegBit(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_TX_OFFSET, enabled);
+ 131   1      }
+ 132          /* Function Name:
+ 133           *      rtl8367c_getAsicPortMirrorTxFunction
+ 134           * Description:
+ 135           *      Get the mirror function on TX of the mirrored
+ 136           * Input:
+ 137           *      pEnabled    - 1: enabled, 0: disabled
+ 138           * Output:
+ 139           *      None
+ 140           * Return:
+ 141           *      RT_ERR_OK       - Success
+ 142           *      RT_ERR_SMI      - SMI access error
+ 143           * Note:
+ 144           *      None
+ 145           */
+ 146          ret_t rtl8367c_getAsicPortMirrorTxFunction(uint32* pEnabled)
+ 147          {
+ 148   1          return rtl8367c_getAsicRegBit(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_TX_OFFSET, pEnabled);
+ 149   1      }
+ 150          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicPortMirrorIsolation
+               * Description:
+               *      Set the traffic isolation on monitor port
+               * Input:
+               *      enabled     - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortMirrorIsolation(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_ISO_OFFSET, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorIsolation
+               * Description:
+               *      Get the traffic isolation on monitor port
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 4   
+
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortMirrorIsolation(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_MIRROR_CTRL_REG, RTL8367C_MIRROR_ISO_OFFSET, pEnabled);
+              }
+              #endif
+ 188          
+ 189          /* Function Name:
+ 190           *      rtl8367c_setAsicPortMirrorMask
+ 191           * Description:
+ 192           *      Set mirror source port mask
+ 193           * Input:
+ 194           *      SourcePortmask  - Source Portmask
+ 195           * Output:
+ 196           *      None
+ 197           * Return:
+ 198           *      RT_ERR_OK       - Success
+ 199           *      RT_ERR_SMI      - SMI access error
+ 200           *      RT_ERR_PORT_MASK- Port Mask Error
+ 201           * Note:
+ 202           *      None
+ 203           */
+ 204          ret_t rtl8367c_setAsicPortMirrorMask(uint32 SourcePortmask)
+ 205          {
+ 206   1          if( SourcePortmask > RTL8367C_PORTMASK)
+ 207   1              return RT_ERR_PORT_MASK;
+ 208   1      
+ 209   1          return rtl8367c_setAsicRegBits(RTL8367C_REG_MIRROR_SRC_PMSK, RTL8367C_MIRROR_SRC_PMSK_MASK, SourcePort
+             -mask);
+ 210   1      }
+ 211          
+ 212          /* Function Name:
+ 213           *      rtl8367c_getAsicPortMirrorMask
+ 214           * Description:
+ 215           *      Get mirror source port mask
+ 216           * Input:
+ 217           *      None
+ 218           * Output:
+ 219           *      pSourcePortmask     - Source Portmask
+ 220           * Return:
+ 221           *      RT_ERR_OK       - Success
+ 222           *      RT_ERR_SMI      - SMI access error
+ 223           *      RT_ERR_PORT_MASK- Port Mask Error
+ 224           * Note:
+ 225           *      None
+ 226           */
+ 227          ret_t rtl8367c_getAsicPortMirrorMask(uint32 *pSourcePortmask)
+ 228          {
+ 229   1          return rtl8367c_getAsicRegBits(RTL8367C_REG_MIRROR_SRC_PMSK, RTL8367C_MIRROR_SRC_PMSK_MASK, pSourcePor
+             -tmask);
+ 230   1      }
+ 231          
+ 232          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicPortMirrorVlanRxLeaky
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 5   
+
+               * Description:
+               *      Set the mirror function of VLAN RX leaky
+               * Input:
+               *      enabled     - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortMirrorVlanRxLeaky(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_RX_VLAN_LEAKY_OFFSET, enabled
+             -);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorVlanRxLeaky
+               * Description:
+               *      Get the mirror function of VLAN RX leaky
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortMirrorVlanRxLeaky(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_RX_VLAN_LEAKY_OFFSET, pEnable
+             -d);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicPortMirrorVlanTxLeaky
+               * Description:
+               *      Set the mirror function of VLAN TX leaky
+               * Input:
+               *      enabled     - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortMirrorVlanTxLeaky(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_TX_VLAN_LEAKY_OFFSET, enabled
+             -);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorVlanTxLeaky
+               * Description:
+               *      Get the mirror function of VLAN TX leaky
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 6   
+
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortMirrorVlanTxLeaky(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_TX_VLAN_LEAKY_OFFSET, pEnable
+             -d);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicPortMirrorIsolationRxLeaky
+               * Description:
+               *      Set the mirror function of  Isolation RX leaky
+               * Input:
+               *      enabled     - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortMirrorIsolationRxLeaky(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_RX_ISOLATION_LEAKY_OFFSET, en
+             -abled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorIsolationRxLeaky
+               * Description:
+               *      Get the mirror function of VLAN RX leaky
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortMirrorIsolationRxLeaky(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_RX_ISOLATION_LEAKY_OFFSET, pE
+             -nabled);
+              }
+              #endif
+ 344          /* Function Name:
+ 345           *      rtl8367c_setAsicPortMirrorIsolationTxLeaky
+ 346           * Description:
+ 347           *      Set the mirror function of Isolation TX leaky
+ 348           * Input:
+ 349           *      enabled     - 1: enabled, 0: disabled
+ 350           * Output:
+ 351           *      None
+ 352           * Return:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 7   
+
+ 353           *      RT_ERR_OK       - Success
+ 354           *      RT_ERR_SMI      - SMI access error
+ 355           * Note:
+ 356           *      None
+ 357           */
+ 358          ret_t rtl8367c_setAsicPortMirrorIsolationTxLeaky(uint32 enabled)
+ 359          {
+ 360   1          return rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_TX_ISOLATION_LEAKY_OFFSET, en
+             -abled);
+ 361   1      }
+ 362          #if 0
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorIsolationTxLeaky
+               * Description:
+               *      Get the mirror function of VLAN TX leaky
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortMirrorIsolationTxLeaky(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_TX_ISOLATION_LEAKY_OFFSET, pE
+             -nabled);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicPortMirrorRealKeep
+               * Description:
+               *      Set the mirror function of keep format
+               * Input:
+               *      mode    - 1: keep original format, 0: follow VLAN config
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortMirrorRealKeep(uint32 mode)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_REALKEEP_EN_OFFSET, mode);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorRealKeep
+               * Description:
+               *      Get the mirror function of keep format
+               * Input:
+               *      pMode   - 1: keep original format, 0: follow VLAN config
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 8   
+
+               */
+              ret_t rtl8367c_getAsicPortMirrorRealKeep(uint32* pMode)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL2, RTL8367C_MIRROR_REALKEEP_EN_OFFSET, pMode);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicPortMirrorOverride
+               * Description:
+               *      Set the mirror function of override
+               * Input:
+               *      rxMirror    - 1: output rx Mirror format, 0: output forward format
+               *      txMirror    - 1: output tx Mirror format, 0: output forward format
+               *      aclMirror   - 1: output ACL Mirror format, 0: output forward format
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortMirrorOverride(uint32 rxMirror, uint32 txMirror, uint32 aclMirror)
+              {
+                  ret_t retVal;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL3, RTL8367C_MIRROR_RX_OVERRIDE_EN_OFFSET, 
+             -rxMirror)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL3, RTL8367C_MIRROR_TX_OVERRIDE_EN_OFFSET, 
+             -txMirror)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MIRROR_CTRL3, RTL8367C_MIRROR_ACL_OVERRIDE_EN_OFFSET,
+             - aclMirror)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicPortMirrorOverride
+               * Description:
+               *      Get the mirror function of override
+               * Input:
+               *      None
+               * Output:
+               *      pRxMirror   - 1: output rx Mirror format, 0: output forward format
+               *      pTxMirror   - 1: output tx Mirror format, 0: output forward format
+               *      pAclMirror  - 1: output ACL Mirror format, 0: output forward format
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortMirrorOverride(uint32 *pRxMirror, uint32 *pTxMirror, uint32 *pAclMirror)
+              {
+                  ret_t retVal;
+              
+                  if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL3, RTL8367C_MIRROR_RX_OVERRIDE_EN_OFFSET, 
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIRROR                                           11/02/2026 17:57:21 PAGE 9   
+
+             -pRxMirror)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL3, RTL8367C_MIRROR_TX_OVERRIDE_EN_OFFSET, 
+             -pTxMirror)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MIRROR_CTRL3, RTL8367C_MIRROR_ACL_OVERRIDE_EN_OFFSET,
+             - pAclMirror)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 483          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    508    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      39
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

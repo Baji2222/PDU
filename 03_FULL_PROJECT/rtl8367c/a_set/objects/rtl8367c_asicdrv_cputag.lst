@@ -1,0 +1,423 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_CPUTAG
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_cputag.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_cputag.c LARGE OMF2 OPTIMIZE(8,SIZE) BRO
+                    -WSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\commo
+                    -n\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT
+                    -,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPAT
+                    -IBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_cputag.lst) TABS(2) OBJECT(.\objects\rt
+                    -l8367c_asicdrv_cputag.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Proprietary CPU-tag related function drivers
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_cputag.h>
+  20          /* Function Name:
+  21           *      rtl8367c_setAsicCputagEnable
+  22           * Description:
+  23           *      Set cpu tag function enable/disable
+  24           * Input:
+  25           *      enabled - 1: enabled, 0: disabled
+  26           * Output:
+  27           *      None
+  28           * Return:
+  29           *      RT_ERR_OK       - Success
+  30           *      RT_ERR_SMI      - SMI access error
+  31           *      RT_ERR_ENABLE   - Invalid enable/disable input
+  32           * Note:
+  33           *      If CPU tag function is disabled, CPU tag will not be added to frame
+  34           *      forwarded to CPU port, and all ports cannot parse CPU tag.
+  35           */
+  36          ret_t rtl8367c_setAsicCputagEnable(uint32 enabled)
+  37          {
+  38   1          if(enabled > 1)
+  39   1              return RT_ERR_ENABLE;
+  40   1      
+  41   1          return rtl8367c_setAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_EN_OFFSET, enabled);
+  42   1      }
+  43          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicCputagEnable
+               * Description:
+               *      Get cpu tag function enable/disable
+               * Input:
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 2   
+
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicCputagEnable(uint32 *pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_EN_OFFSET, pEnabled);
+              }
+              #endif
+  63          /* Function Name:
+  64           *      rtl8367c_setAsicCputagTrapPort
+  65           * Description:
+  66           *      Set cpu tag trap port
+  67           * Input:
+  68           *      port - port number
+  69           * Output:
+  70           *      None
+  71           * Return:
+  72           *      RT_ERR_OK       - Success
+  73           *      RT_ERR_SMI      - SMI access error
+  74           *      RT_ERR_PORT_ID  - Invalid port number
+  75           * Note:
+  76           *     API can set destination port of trapping frame
+  77           */
+  78          ret_t rtl8367c_setAsicCputagTrapPort(uint32 port)
+  79          {
+  80   1          ret_t retVal;
+  81   1      
+  82   1          if(port >= RTL8367C_PORTNO)
+  83   1              return RT_ERR_PORT_ID;
+  84   1      
+  85   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TRAP_PORT_MASK, port & 7);
+  86   1          if(retVal != RT_ERR_OK)
+  87   1              return retVal;
+  88   1      
+  89   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TRAP_PORT_EXT_MASK, (port>>3) & 1
+             -);
+  90   1          if(retVal != RT_ERR_OK)
+  91   1              return retVal;
+  92   1      
+  93   1          return RT_ERR_OK;
+  94   1      }
+  95          /* Function Name:
+  96           *      rtl8367c_getAsicCputagTrapPort
+  97           * Description:
+  98           *      Get cpu tag trap port
+  99           * Input:
+ 100           *      pPort - port number
+ 101           * Output:
+ 102           *      None
+ 103           * Return:
+ 104           *      RT_ERR_OK       - Success
+ 105           *      RT_ERR_SMI      - SMI access error
+ 106           * Note:
+ 107           *     None
+ 108           */
+ 109          ret_t rtl8367c_getAsicCputagTrapPort(uint32 *pPort)
+ 110          {
+ 111   1          ret_t retVal;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 3   
+
+ 112   1          uint32 tmpPort;
+ 113   1      
+ 114   1          retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TRAP_PORT_MASK, &tmpPort);
+ 115   1          if(retVal != RT_ERR_OK)
+ 116   1              return retVal;
+ 117   1          *pPort = tmpPort;
+ 118   1      
+ 119   1          retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TRAP_PORT_EXT_MASK, &tmpPort);
+ 120   1          if(retVal != RT_ERR_OK)
+ 121   1              return retVal;
+ 122   1          *pPort |= (tmpPort & 1) << 3;
+ 123   1      
+ 124   1          return RT_ERR_OK;
+ 125   1      }
+ 126          /* Function Name:
+ 127           *      rtl8367c_setAsicCputagPortmask
+ 128           * Description:
+ 129           *      Set ports that can parse CPU tag
+ 130           * Input:
+ 131           *      portmask - port mask
+ 132           * Output:
+ 133           *      None
+ 134           * Return:
+ 135           *      RT_ERR_OK           - Success
+ 136           *      RT_ERR_SMI          - SMI access error
+ 137           *      RT_ERR_PORT_MASK    - Invalid portmask
+ 138           * Note:
+ 139           *     None
+ 140           */
+ 141          ret_t rtl8367c_setAsicCputagPortmask(uint32 portmask)
+ 142          {
+ 143   1          if(portmask > RTL8367C_PORTMASK)
+ 144   1              return RT_ERR_PORT_MASK;
+ 145   1      
+ 146   1          return rtl8367c_setAsicReg(RTL8367C_CPU_PORT_MASK_REG, portmask);
+ 147   1      }
+ 148          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicCputagPortmask
+               * Description:
+               *      Get ports that can parse CPU tag
+               * Input:
+               *      pPortmask - port mask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *     None
+               */
+              ret_t rtl8367c_getAsicCputagPortmask(uint32 *pPortmask)
+              {
+                  return rtl8367c_getAsicReg(RTL8367C_CPU_PORT_MASK_REG, pPortmask);
+              }
+              #endif
+ 168          /* Function Name:
+ 169           *      rtl8367c_setAsicCputagInsertMode
+ 170           * Description:
+ 171           *      Set CPU-tag insert mode
+ 172           * Input:
+ 173           *      mode - 0: insert to all packets; 1: insert to trapped packets; 2: don't insert
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 4   
+
+ 174           * Output:
+ 175           *      None
+ 176           * Return:
+ 177           *      RT_ERR_OK           - Success
+ 178           *      RT_ERR_SMI          - SMI access error
+ 179           *      RT_ERR_NOT_ALLOWED  - Actions not allowed by the function
+ 180           * Note:
+ 181           *     None
+ 182           */
+ 183          ret_t rtl8367c_setAsicCputagInsertMode(uint32 mode)
+ 184          {
+ 185   1          if(mode >= CPUTAG_INSERT_END)
+ 186   1              return RT_ERR_NOT_ALLOWED;
+ 187   1      
+ 188   1          return rtl8367c_setAsicRegBits(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_INSERTMODE_MASK, mode);
+ 189   1      }
+ 190          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicCputagInsertMode
+               * Description:
+               *      Get CPU-tag insert mode
+               * Input:
+               *      pMode - 0: insert to all packets; 1: insert to trapped packets; 2: don't insert
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *     None
+               */
+              ret_t rtl8367c_getAsicCputagInsertMode(uint32 *pMode)
+              {
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_INSERTMODE_MASK, pMode);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicCputagPriorityRemapping
+               * Description:
+               *      Set queue assignment of CPU port
+               * Input:
+               *      srcPri - internal priority (0~7)
+               *      newPri - internal priority after remapping (0~7)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_QOS_INT_PRIORITY     - Invalid priority
+               * Note:
+               *     None
+               */
+              ret_t rtl8367c_setAsicCputagPriorityRemapping(uint32 srcPri, uint32 newPri)
+              {
+                  if((srcPri > RTL8367C_PRIMAX) || (newPri > RTL8367C_PRIMAX))
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  return rtl8367c_setAsicRegBits(RTL8367C_QOS_PRIPORITY_REMAPPING_IN_CPU_REG(srcPri), RTL8367C_QOS_PRIPO
+             -RITY_REMAPPING_IN_CPU_MASK(srcPri), newPri);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicCputagPriorityRemapping
+               * Description:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 5   
+
+               *      Get queue assignment of CPU port
+               * Input:
+               *      srcPri - internal priority (0~7)
+               *      pNewPri - internal priority after remapping (0~7)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_QOS_INT_PRIORITY     - Invalid priority
+               * Note:
+               *     None
+               */
+              ret_t rtl8367c_getAsicCputagPriorityRemapping(uint32 srcPri, uint32 *pNewPri)
+              {
+                  if(srcPri > RTL8367C_PRIMAX)
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_QOS_PRIPORITY_REMAPPING_IN_CPU_REG(srcPri), RTL8367C_QOS_PRIPO
+             -RITY_REMAPPING_IN_CPU_MASK(srcPri), pNewPri);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicCputagPosition
+               * Description:
+               *      Set cpu tag insert position
+               * Input:
+               *      postion - 1: After entire packet(before CRC field), 0: After MAC_SA (Default)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               * Note:
+               *     None
+               */
+              ret_t rtl8367c_setAsicCputagPosition(uint32 postion)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TAG_POSITION_OFFSET, postion);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicCputagPosition
+               * Description:
+               *      Get cpu tag insert position
+               * Input:
+               *      pPostion - 1: After entire packet(before CRC field), 0: After MAC_SA (Default)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               * Note:
+               *     None
+               */
+              ret_t rtl8367c_getAsicCputagPosition(uint32* pPostion)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TAG_POSITION_OFFSET, pPostion);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicCputagMode
+               * Description:
+               *      Set cpu tag mode
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 6   
+
+               * Input:
+               *      mode - 1: 4bytes mode, 0: 8bytes mode
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_INPUT    - Invalid input parameters
+               * Note:
+               *      If CPU tag function is disabled, CPU tag will not be added to frame
+               *      forwarded to CPU port, and all ports cannot parse CPU tag.
+               */
+              ret_t rtl8367c_setAsicCputagMode(uint32 mode)
+              {
+                  if(mode > 1)
+                      return RT_ERR_INPUT;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TAG_FORMAT_OFFSET, mode);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicCputagMode
+               * Description:
+               *      Get cpu tag mode
+               * Input:
+               *      pMode - 1: 4bytes mode, 0: 8bytes mode
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicCputagMode(uint32 *pMode)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TAG_FORMAT_OFFSET, pMode);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicCputagRxMinLength
+               * Description:
+               *      Set cpu tag mode
+               * Input:
+               *      mode - 1: 64bytes, 0: 72bytes
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_INPUT    - Invalid input parameters
+               * Note:
+               *      If CPU tag function is disabled, CPU tag will not be added to frame
+               *      forwarded to CPU port, and all ports cannot parse CPU tag.
+               */
+              ret_t rtl8367c_setAsicCputagRxMinLength(uint32 mode)
+              {
+                  if(mode > 1)
+                      return RT_ERR_INPUT;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TAG_RXBYTECOUNT_OFFSET, mode);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicCputagRxMinLength
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_CPUTAG                                           11/02/2026 17:57:16 PAGE 7   
+
+               * Description:
+               *      Get cpu tag mode
+               * Input:
+               *      pMode - 1: 64bytes, 0: 72bytes
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicCputagRxMinLength(uint32 *pMode)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_CPU_CTRL, RTL8367C_CPU_TAG_RXBYTECOUNT_OFFSET, pMode);
+              }
+              #endif
+ 375          
+ 376          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    485    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      23
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

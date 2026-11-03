@@ -1,0 +1,63 @@
+C51 COMPILER V9.60.0.0   USER_EVENTS                                                       08/20/2025 22:07:54 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE USER_EVENTS
+OBJECT MODULE PLACED IN .\objects\user_events.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\user_events.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..
+                    -\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\l
+                    -ocal;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_6
+                    -25,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\user_events.lst) TABS(2) OBJECT(.\objects\user_events.ob
+                    -j)
+
+line level    source
+
+   1          #include <common_types.h>
+   2          #include <lwps/pktBuf.h>
+   3          
+   4          /* called every 5ms */
+   5          void handler_timer()
+   6          {
+   7   1      }
+   8          #if 0
+              /* called when link down port is detected */
+              void handler_linkdown(uint16 pmsk)
+              {
+                  /* kill warning message */
+                pmsk = 0;
+              }
+              
+              /* called when link up port is detected */
+              void handler_linkup(uint16 pmsk)
+              {
+                  /* kill warning message */
+                pmsk = 0;
+              }
+              #endif
+  23          void handler_net_l2(pktBuf_t *pBuf)
+  24          {
+  25   1          /* kill warning message */
+  26   1          *(uint8*)pBuf = 0;
+  27   1      }
+  28          
+  29          /* called at system initilization time */
+  30          void handler_init()
+  31          {
+  32   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =      6    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

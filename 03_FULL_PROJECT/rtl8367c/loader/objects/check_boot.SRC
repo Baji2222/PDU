@@ -1,0 +1,1306 @@
+; .\objects\check_boot.SRC generated from: src\check_boot.c
+; COMPILER INVOKED BY:
+;        C:\Keil_v5\C51\BIN\C51.EXE src\check_boot.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\check_boot.lst) TABS(2) SRC(.\objects\check_boot.SRC)
+
+$NOMOD51
+
+NAME	CHECK_BOOT
+
+P0	DATA	080H
+TB81	BIT	0C0H.3
+P1	DATA	090H
+P2	DATA	0A0H
+SM01	BIT	0C0H.7
+P3	DATA	0B0H
+SM11	BIT	0C0H.6
+T0	BIT	0B0H.4
+AC	BIT	0D0H.6
+SM21	BIT	0C0H.5
+T1	BIT	0B0H.5
+T2	BIT	090H.0
+EA	BIT	0A8H.7
+GPIO2_E	DATA	0C4H
+GPIO2_I	DATA	0C3H
+IE	DATA	0A8H
+SPI_CMD_ISSUE	BIT	080H.2
+DPH1	DATA	085H
+FL	BIT	0D0H.1
+GPIO2_O	DATA	0C2H
+DPL1	DATA	084H
+RD	BIT	0B0H.7
+EXF2	BIT	0C8H.6
+REN1	BIT	0C0H.4
+IP	DATA	0B8H
+DATA_BANK	DATA	097H
+CODE_BANK	DATA	096H
+RI	BIT	098H.0
+CACHE_CLEAN	BIT	080H.1
+INDACC_RDATA_H	DATA	0A6H
+INT0	BIT	0B0H.2
+CY	BIT	0D0H.7
+TI	BIT	098H.1
+INT1	BIT	0B0H.3
+INT2	BIT	090H.4
+SPI_RI_CMD	DATA	09CH
+RXD0	BIT	0B0H.0
+INT3	BIT	090H.5
+INDACC_RDATA_L	DATA	0A7H
+SPC_FNC	DATA	08FH
+RXD1	BIT	090H.2
+INT4	BIT	090H.6
+INDACC_WDATA_H	DATA	0A4H
+TXD0	BIT	0B0H.1
+INT5	BIT	090H.7
+TXD1	BIT	090H.3
+RCAP2H	DATA	0CBH
+SP	DATA	081H
+T2EX	BIT	090H.1
+INDACC_WDATA_L	DATA	0A5H
+OV	BIT	0D0H.2
+RCAP2L	DATA	0CAH
+SPI_S_RCMD	DATA	0B1H
+SPI_S_CONF	DATA	09DH
+WR	BIT	0B0H.6
+C_T2	BIT	0C8H.1
+SPI_CTRL_BUSY	BIT	080H.0
+PEDMA_LEN	DATA	0B7H
+EWDI	BIT	0E8H.4
+RCLK	BIT	0C8H.5
+SPI_S_WCMD	DATA	0B2H
+EXIF	DATA	091H
+TCLK	BIT	0C8H.4
+PCON	DATA	087H
+FLASH_MSB	DATA	096H
+TMOD	DATA	089H
+TCON	DATA	088H
+PWDI	BIT	0F8H.4
+SPI_S_ACCESS	DATA	09EH
+PEDMA_E_ADDR0	DATA	0B3H
+PEDMA_E_ADDR1	DATA	0B4H
+IE0	BIT	088H.1
+IE1	BIT	088H.3
+SSIO	DATA	0BBH
+SSPH	DATA	0BAH
+B	DATA	0F0H
+SSPL	DATA	0B9H
+CP_RL2	BIT	0C8H.0
+PEDMA_P_ADDR0	DATA	0B5H
+ACC	DATA	0E0H
+PEDMA_P_ADDR1	DATA	0B6H
+ES0	BIT	0A8H.4
+ET0	BIT	0A8H.1
+ES1	BIT	0A8H.6
+SPI_DSEL_CYCLE	DATA	0BCH
+INDACC_ADDR_H	DATA	0A2H
+ET1	BIT	0A8H.3
+TF0	BIT	088H.5
+ET2	BIT	0A8H.5
+TF1	BIT	088H.7
+RB8	BIT	098H.2
+TH0	DATA	08CH
+RI1	BIT	0C0H.0
+TF2	BIT	0C8H.7
+SPI_S_DATA0	DATA	0ACH
+EX0	BIT	0A8H.0
+IT0	BIT	088H.0
+TH1	DATA	08DH
+SPI_S_DATA1	DATA	0ADH
+SPI_S_ADDR0	DATA	0A9H
+INDACC_ADDR_L	DATA	0A3H
+TB8	BIT	098H.3
+EX1	BIT	0A8H.2
+IT1	BIT	088H.2
+TI1	BIT	0C0H.1
+SPI_S_DATA2	DATA	0AEH
+SPI_S_ADDR1	DATA	0AAH
+TH2	DATA	0CDH
+P	BIT	0D0H.0
+EX2	BIT	0E8H.0
+SPI_S_DATA3	DATA	0AFH
+SPI_S_ADDR2	DATA	0ABH
+SM0	BIT	098H.7
+TL0	DATA	08AH
+EX3	BIT	0E8H.1
+SM1	BIT	098H.6
+TL1	DATA	08BH
+EX4	BIT	0E8H.2
+SM2	BIT	098H.5
+EX5	BIT	0E8H.3
+TL2	DATA	0CCH
+PS0	BIT	0B8H.4
+EIE	DATA	0E8H
+PT0	BIT	0B8H.1
+PS1	BIT	0B8H.6
+PT1	BIT	0B8H.3
+RS0	BIT	0D0H.3
+SYNC_CTRL	DATA	08EH
+GPIO_E	DATA	093H
+PT2	BIT	0B8H.5
+TR0	BIT	088H.4
+RS1	BIT	0D0H.4
+TR1	BIT	088H.6
+PX0	BIT	0B8H.0
+TR2	BIT	0C8H.2
+PX1	BIT	0B8H.2
+INDACC_CMD	DATA	0A0H
+GPIO_I	DATA	095H
+PX2	BIT	0F8H.0
+PX3	BIT	0F8H.1
+DPH	DATA	083H
+PX4	BIT	0F8H.2
+PX5	BIT	0F8H.3
+EIP	DATA	0F8H
+GPIO_O	DATA	094H
+DPL	DATA	082H
+SBUF0	DATA	099H
+SBUF1	DATA	0C1H
+EXEN2	BIT	0C8H.3
+SCON0	DATA	098H
+REN	BIT	098H.4
+SCON1	DATA	0C0H
+T2CON	DATA	0C8H
+DPS	DATA	086H
+INDACC_STATUS	DATA	0A1H
+CACHE_CRTL	DATA	080H
+SPI_IO_CONF	DATA	09AH
+EICON	DATA	0D8H
+CKCON	DATA	08EH
+SPI_RI_CONF	DATA	09BH
+F0	BIT	0D0H.5
+PSW	DATA	0D0H
+RB81	BIT	0C0H.2
+?PR?_check_header?CHECK_BOOT             SEGMENT CODE 
+?XD?_check_header?CHECK_BOOT             SEGMENT XDATA OVERLAYABLE
+?PR?_sum_up_payload?CHECK_BOOT           SEGMENT CODE 
+?XD?_sum_up_payload?CHECK_BOOT           SEGMENT XDATA OVERLAYABLE
+?PR?_check_boot?CHECK_BOOT               SEGMENT CODE 
+?XD?_check_boot?CHECK_BOOT               SEGMENT XDATA OVERLAYABLE
+?PR?get_runtime_header?CHECK_BOOT        SEGMENT CODE 
+?PR?_print_runtime_header?CHECK_BOOT     SEGMENT CODE 
+?XD?_print_runtime_header?CHECK_BOOT     SEGMENT XDATA OVERLAYABLE
+?FC?CHECK_BOOT       SEGMENT HCONST INSEG 
+?XD?CHECK_BOOT       SEGMENT XDATA 
+	EXTRN	CODE (_printf)
+	EXTRN	XDATA (?_printf?BYTE)
+	EXTRN	CODE (?C?PSTXDATA)
+	EXTRN	CODE (?C?LLDPTR)
+	EXTRN	CODE (?C?ULCMP)
+	EXTRN	CODE (?C?LSTXDATA)
+	EXTRN	CODE (?C?PLDXDATA)
+	EXTRN	CODE (?C?LSTPTR)
+	EXTRN	CODE (?C?LLDXDATA0)
+	EXTRN	CODE (?C?CLDPTR)
+	EXTRN	CODE (?C?LADD)
+	EXTRN	CODE (?C?IILDX)
+	EXTRN	CODE (?C?LLDXDATA)
+	EXTRN	CODE (?C?ICALL)
+	EXTRN	CODE (?C?LLDCODE)
+	PUBLIC	_print_runtime_header
+	PUBLIC	get_runtime_header
+	PUBLIC	_check_boot
+	PUBLIC	_check_header
+
+	RSEG  ?XD?_check_boot?CHECK_BOOT
+?_check_boot?BYTE:
+  to_bootup?248:   DS   1
+	ORG  1
+        sum?249:   DS   4
+	ORG  5
+ org_chksum?250:   DS   4
+	ORG  9
+ org_length?251:   DS   4
+	ORG  13
+   irom_sum?252:   DS   4
+	ORG  17
+ banked_sum?253:   DS   4
+	ORG  21
+          i?254:   DS   2
+	ORG  23
+     u8_ptr?255:   DS   2
+	ORG  25
+u8_code_ptr?256:   DS   2
+
+	RSEG  ?XD?_check_header?CHECK_BOOT
+?_check_header?BYTE:
+        sum?041:   DS   4
+	ORG  4
+ org_chksum?042:   DS   4
+	ORG  8
+          i?043:   DS   2
+	ORG  10
+     u8_ptr?044:   DS   3
+	ORG  13
+  rt_header?045:   DS   3
+
+	RSEG  ?XD?_print_runtime_header?CHECK_BOOT
+?_print_runtime_header?BYTE:
+          p?458:   DS   3
+	ORG  3
+          q?459:   DS   3
+
+	RSEG  ?XD?_sum_up_payload?CHECK_BOOT
+?_sum_up_payload?BYTE:
+        len?146:   DS   4
+	ORG  4
+        sum?147:   DS   4
+
+	RSEG  ?XD?CHECK_BOOT
+      rt_header:   DS   20
+
+	RSEG  ?FC?CHECK_BOOT
+?SC_0:
+	DB  ' ' ,' ' ,' ' ,' ' ,'H' ,'d' ,'r' ,' ' ,'C' ,'h' 
+	DB  'k' ,'s' ,'u' ,'m' ,' ' ,'E' ,'r' ,'r' ,'o' ,'r' 
+	DB  00AH,000H
+
+?SC_22:
+	DB  ' ' ,' ' ,' ' ,' ' ,'P' ,'a' ,'y' ,'L' ,'o' ,'a' 
+	DB  'd' ,' ' ,'C' ,'h' ,'k' ,'s' ,'u' ,'m' ,' ' ,'E' 
+	DB  'r' ,'r' ,'o' ,'r' ,00AH,000H
+
+?SC_48:
+	DB  ' ' ,' ' ,' ' ,' ' ,'C' ,'h' ,'k' ,'s' ,'u' ,'m' 
+	DB  ' ' ,'C' ,'o' ,'r' ,'r' ,'e' ,'c' ,'t' ,'!' ,00AH
+	DB  000H
+
+?SC_69:
+	DB  ' ' ,' ' ,' ' ,' ' ,'R' ,'u' ,'n' ,'T' ,'i' ,'m' 
+	DB  'e' ,' ' ,'K' ,'e' ,'r' ,'n' ,'e' ,'l' ,' ' ,'S' 
+	DB  't' ,'a' ,'r' ,'t' ,'i' ,'n' ,'g' ,'.' ,'.' ,'.' 
+	DB  '.' ,' ' ,' ' ,00AH,000H
+
+?SC_104:
+	DB  ' ' ,' ' ,' ' ,' ' ,'m' ,'a' ,'g' ,'i' ,'c' ,'_' 
+	DB  'n' ,'u' ,'m' ,'b' ,'e' ,'r' ,':' ,' ' ,' ' ,'0' 
+	DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+
+?SC_132:
+	DB  ' ' ,' ' ,' ' ,' ' ,'l' ,'e' ,'n' ,'g' ,'t' ,'h' 
+	DB  ':' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,'0' 
+	DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,' ' ,'(' ,'%' ,'l' 
+	DB  'd' ,')' ,00AH,000H
+
+?SC_166:
+	DB  ' ' ,' ' ,' ' ,' ' ,'h' ,'e' ,'a' ,'d' ,'e' ,'r' 
+	DB  '_' ,'c' ,'h' ,'k' ,'s' ,'u' ,'m' ,':' ,' ' ,'0' 
+	DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+
+?SC_194:
+	DB  ' ' ,' ' ,' ' ,' ' ,'p' ,'a' ,'y' ,'l' ,'o' ,'a' 
+	DB  'd' ,'_' ,'c' ,'h' ,'k' ,'s' ,'u' ,'m' ,':' ,'0' 
+	DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+
+?SC_222:
+	DB  ' ' ,' ' ,' ' ,' ' ,'r' ,'e' ,'s' ,'e' ,'r' ,'v' 
+	DB  'e' ,'d' ,':' ,' ' ,' ' ,' ' ,' ' ,' ' ,' ' ,'0' 
+	DB  'x' ,'%' ,'0' ,'8' ,'l' ,'x' ,00AH,000H
+
+; #pragma STRING (far)
+; 
+; #include <local/config.h>
+; #include <reg_sfr.h>
+; 
+; #include <common.h>
+; #include <asicreg.h>
+; #include <image.h>
+; 
+; #include <stdio.h>
+; 
+; 
+; typedef void (*rt_entry)(void);
+; void print_runtime_header(void *p);
+; void *get_runtime_header(void);
+; u8_t check_header(u8_t *hdr_adr){
+
+	RSEG  ?PR?_check_header?CHECK_BOOT
+_check_header:
+	USING	0
+			; SOURCE LINE # 16
+;---- Variable 'hdr_adr?040' assigned to Register 'R1/R2/R3' ----
+; 	u32_t sum, org_chksum;
+; 	u16_t i;
+; 	u8_t *u8_ptr;
+; 	runTimeImageHeader_t *rt_header = (runTimeImageHeader_t *)hdr_adr;
+			; SOURCE LINE # 20
+	MOV  	DPTR,#rt_header?045
+	LCALL	?C?PSTXDATA
+; 
+; 	/* Check Magic Number */
+; 	if( RUNTIME_MAGIC_NUMBER!=rt_header->magic_number ){
+			; SOURCE LINE # 23
+	LCALL	?C?LLDPTR
+	MOV  	R3,#078H
+	MOV  	R2,#056H
+	MOV  	R1,#034H
+	MOV  	R0,#012H
+	CLR  	C
+	LCALL	?C?ULCMP
+	JZ   	?C0001
+; 		/* TBC Magic Number Error */
+; 		return 1;
+			; SOURCE LINE # 25
+	MOV  	R7,#01H
+	RET  	
+; 	}
+			; SOURCE LINE # 26
+?C0001:
+; 
+; 	/* Check Header Checksum */
+; 	sum = 0;
+			; SOURCE LINE # 29
+	CLR  	A
+	MOV  	R7,A
+	MOV  	R6,A
+	MOV  	R5,A
+	MOV  	R4,A
+	MOV  	DPTR,#sum?041
+	LCALL	?C?LSTXDATA
+; 	u8_ptr = (u8_t*)rt_header;
+			; SOURCE LINE # 30
+	MOV  	DPTR,#rt_header?045
+	LCALL	?C?PLDXDATA
+	MOV  	DPTR,#u8_ptr?044
+	LCALL	?C?PSTXDATA
+; 	org_chksum = rt_header->header_chksum;
+			; SOURCE LINE # 31
+	MOV  	DPTR,#rt_header?045
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ADD  	A,#08H
+	MOV  	R1,A
+	CLR  	A
+	ADDC 	A,R2
+	MOV  	R2,A
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#org_chksum?042
+	LCALL	?C?LSTXDATA
+; 	rt_header->header_chksum = 0;
+			; SOURCE LINE # 32
+	CLR  	A
+	MOV  	R7,A
+	MOV  	R6,A
+	MOV  	R5,A
+	MOV  	R4,A
+	LCALL	?C?LSTPTR
+; 
+; 	for (i=0; i<sizeof(runTimeImageHeader_t); i++, u8_ptr++){
+			; SOURCE LINE # 34
+	CLR  	A
+	MOV  	DPTR,#i?043
+	MOVX 	@DPTR,A
+	INC  	DPTR
+	MOVX 	@DPTR,A
+?C0003:
+	CLR  	C
+	MOV  	DPTR,#i?043+01H
+	MOVX 	A,@DPTR
+	SUBB 	A,#014H
+	MOV  	DPTR,#i?043
+	MOVX 	A,@DPTR
+	SUBB 	A,#00H
+	JNC  	?C0004
+; 		sum += *u8_ptr;
+			; SOURCE LINE # 35
+	MOV  	DPTR,#sum?041
+	LCALL	?C?LLDXDATA0
+	PUSH 	AR1
+	PUSH 	AR2
+	PUSH 	AR3
+	MOV  	DPTR,#u8_ptr?044
+	LCALL	?C?PLDXDATA
+	LCALL	?C?CLDPTR
+	MOV  	R7,A
+	CLR  	A
+	MOV  	R4,A
+	MOV  	R5,A
+	MOV  	R6,A
+	POP  	AR3
+	POP  	AR2
+	POP  	AR1
+	LCALL	?C?LADD
+	MOV  	DPTR,#sum?041
+	LCALL	?C?LSTXDATA
+; 	}
+			; SOURCE LINE # 36
+	MOV  	DPTR,#i?043
+	CLR  	A
+	MOV  	B,#01H
+	LCALL	?C?IILDX
+	MOV  	DPTR,#u8_ptr?044+01H
+	CLR  	A
+	MOV  	B,#01H
+	LCALL	?C?IILDX
+	SJMP 	?C0003
+?C0004:
+; 	
+; 	if( org_chksum!=sum ){
+			; SOURCE LINE # 38
+	MOV  	DPTR,#sum?041
+	LCALL	?C?LLDXDATA
+	MOV  	DPTR,#org_chksum?042
+	LCALL	?C?LLDXDATA0
+	CLR  	C
+	LCALL	?C?ULCMP
+	JZ   	?C0006
+; 		/* TBC header_chksum Error */
+; 		return 1;
+			; SOURCE LINE # 40
+	MOV  	R7,#01H
+	RET  	
+; 	}
+			; SOURCE LINE # 41
+?C0006:
+; 	rt_header->header_chksum = org_chksum;
+			; SOURCE LINE # 42
+	MOV  	DPTR,#org_chksum?042
+	LCALL	?C?LLDXDATA
+	MOV  	DPTR,#rt_header?045
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ADD  	A,#08H
+	MOV  	R1,A
+	CLR  	A
+	ADDC 	A,R2
+	MOV  	R2,A
+	LCALL	?C?LSTPTR
+; 
+; 	return 0;
+			; SOURCE LINE # 44
+	MOV  	R7,#00H
+; }
+			; SOURCE LINE # 45
+?C0002:
+	RET  	
+; END OF _check_header
+
+; 
+; 
+; 
+; // this function should be in irom
+; static uint32 sum_up_payload(uint32 len) large {
+
+	RSEG  ?PR?_sum_up_payload?CHECK_BOOT
+_sum_up_payload:
+	USING	0
+			; SOURCE LINE # 50
+	MOV  	DPTR,#len?146
+	LCALL	?C?LSTXDATA
+;     uint32 sum=0;
+			; SOURCE LINE # 51
+	CLR  	A
+	MOV  	R7,A
+	MOV  	R6,A
+	MOV  	R5,A
+	MOV  	R4,A
+	MOV  	DPTR,#sum?147
+	LCALL	?C?LSTXDATA
+;     
+;     #pragma asm
+;         PUSH    CODE_BANK
+	  PUSH    CODE_BANK
+;         MOV     CODE_BANK, #(RUNTIME_HEADER_BANK)
+	  MOV     CODE_BANK, #((0x03))
+?C0007:
+;     #pragma endasm
+;     
+;     while(len>=BANK_SIZE) {
+			; SOURCE LINE # 58
+	CLR  	A
+	MOV  	R7,A
+	MOV  	R6,#0C0H
+	MOV  	R5,A
+	MOV  	R4,A
+	MOV  	DPTR,#len?146
+	LCALL	?C?LLDXDATA0
+	CLR  	C
+	LCALL	?C?ULCMP
+	JNC  	$ + 5H
+	LJMP 	?C0008
+;         #pragma asm
+;             // R4/R5/R6: sum (R4: LSB, R6: MSB)
+	  
+;             CLR     A
+	  CLR     A
+;             MOV     R4, A
+	  MOV     R4, A
+;             MOV     R5, A
+	  MOV     R5, A
+;             MOV     R6, A
+	  MOV     R6, A
+;             MOV     DPTR, #(IROM_size)
+	  MOV     DPTR, #((16*1024))
+;             // do {
+	  
+; ?sumup_002:
+	  ?sumup_002:
+;                 // R0:R1: sub-sum (R0: LSB, R1: MSB)
+	  
+;                 // R2: 8-bit counter 
+	  
+;                 CLR     A
+	  CLR     A
+;                 MOV     R0, A
+	  MOV     R0, A
+;                 MOV     R1, A
+	  MOV     R1, A
+;                 MOV     R2, A
+	  MOV     R2, A
+;     
+	  
+;                 // do {(R0:R1) += *(dptr++); R2++;} while(R2!=0);
+	  
+; ?sumup_003:
+	  ?sumup_003:
+;                     CLR     A
+	  CLR     A
+;                     MOVC    A, @A+DPTR
+	  MOVC    A, @A+DPTR
+;                     ADD     A, R0
+	  ADD     A, R0
+;                     MOV     R0, A
+	  MOV     R0, A
+;                     CLR     A
+	  CLR     A
+;                     ADDC    A, R1
+	  ADDC    A, R1
+;                     MOV     R1, A
+	  MOV     R1, A
+;                     INC     DPTR
+	  INC     DPTR
+;                     DJNZ    R2, ?sumup_003
+	  DJNZ    R2, ?sumup_003
+;                 
+	  
+;                 // (R4:R5:R6) += (R0:R1)
+	  
+;                 MOV     A, R0
+	  MOV     A, R0
+;                 ADD     A, R4
+	  ADD     A, R4
+;                 MOV     R4, A
+	  MOV     R4, A
+;                 MOV     A, R1
+	  MOV     A, R1
+;                 ADDC    A, R5
+	  ADDC    A, R5
+;                 MOV     R5, A
+	  MOV     R5, A
+;                 CLR     A
+	  CLR     A
+;                 ADDC    A, R6
+	  ADDC    A, R6
+;                 MOV     R6, A
+	  MOV     R6, A
+;             
+	  
+;             // while (dptr!=0);
+	  
+;             MOV     A, DPH
+	  MOV     A, DPH
+;             JNZ     ?sumup_002
+	  JNZ     ?sumup_002
+;             
+	  
+;             // sum += (R4:R5:R6)
+	  
+;             MOV     DPTR, #(sum?147 + 3)
+	  MOV     DPTR, #(sum?147 + 3)
+;             MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;             ADD     A, R4
+	  ADD     A, R4
+;             MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;             MOV     DPTR, #(sum?147 + 2)
+	  MOV     DPTR, #(sum?147 + 2)
+;             MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;             ADDC    A, R5
+	  ADDC    A, R5
+;             MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;             MOV     DPTR, #(sum?147 + 1)
+	  MOV     DPTR, #(sum?147 + 1)
+;             MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;             ADDC    A, R6
+	  ADDC    A, R6
+;             MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;             MOV     DPTR, #(sum?147 + 0)
+	  MOV     DPTR, #(sum?147 + 0)
+;             MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;             ADDC    A, #0
+	  ADDC    A, #0
+;             MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;             
+	  
+;             MOV     A, CODE_BANK 
+	  MOV     A, CODE_BANK 
+;             INC     A
+	  INC     A
+;             MOV     CODE_BANK, A
+	  MOV     CODE_BANK, A
+;         #pragma endasm
+;         len -= BANK_SIZE;
+			; SOURCE LINE # 124
+	MOV  	DPTR,#len?146
+	LCALL	?C?LLDXDATA
+	CLR  	C
+	MOV  	A,R7
+	SUBB 	A,#00H
+	MOV  	R7,A
+	MOV  	A,R6
+	SUBB 	A,#0C0H
+	MOV  	R6,A
+	MOV  	A,R5
+	SUBB 	A,#00H
+	MOV  	R5,A
+	MOV  	A,R4
+	SUBB 	A,#00H
+	MOV  	R4,A
+	MOV  	DPTR,#len?146
+	LCALL	?C?LSTXDATA
+;     }        
+			; SOURCE LINE # 125
+	LJMP 	?C0007
+?C0008:
+;     #pragma asm    
+;         // (R0:R1)=(unsigned int)len;
+	  
+;         MOV     DPTR, #(len?146 + 2)
+	  MOV     DPTR, #(len?146 + 2)
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     R1, A
+	  MOV     R1, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     R0, A
+	  MOV     R0, A
+;         
+	  
+;         // (R4:R5:R6:R7)=sum
+	  
+;         MOV     DPTR, #(sum?147)
+	  MOV     DPTR, #(sum?147)
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     R7, A
+	  MOV     R7, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     R6, A
+	  MOV     R6, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     R5, A
+	  MOV     R5, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOVX    A, @DPTR
+	  MOVX    A, @DPTR
+;         MOV     R4, A
+	  MOV     R4, A
+;         
+	  
+;         // DPTR=IROM
+	  
+;         MOV     DPTR, #(IROM_size)
+	  MOV     DPTR, #((16*1024))
+;         
+	  
+;         // while ((len--)!=0) {
+	  
+; ?sumup_012:
+	  ?sumup_012:
+;         MOV     A, R0
+	  MOV     A, R0
+;         ORL     A, R1
+	  ORL     A, R1
+;         JZ      ?sumup_011
+	  JZ      ?sumup_011
+;         DEC     R0
+	  DEC     R0
+;         CJNE    R0, #(0xFF), ?sumup_013
+	  CJNE    R0, #(0xFF), ?sumup_013
+;         DEC     R1
+	  DEC     R1
+; ?sumup_013:
+	  ?sumup_013:
+;         //      sum += *(dptr++)
+	  
+;             CLR     A
+	  CLR     A
+;             MOVC    A, @A+DPTR
+	  MOVC    A, @A+DPTR
+;             ADD     A, R4
+	  ADD     A, R4
+;             MOV     R4, A
+	  MOV     R4, A
+;             CLR     A
+	  CLR     A
+;             ADDC    A, R5
+	  ADDC    A, R5
+;             MOV     R5, A
+	  MOV     R5, A
+;             CLR     A
+	  CLR     A
+;             ADDC    A, R6
+	  ADDC    A, R6
+;             MOV     R6, A
+	  MOV     R6, A
+;             CLR     A
+	  CLR     A
+;             ADDC    A, R7
+	  ADDC    A, R7
+;             MOV     R7, A
+	  MOV     R7, A
+;             
+	  
+;             INC     DPTR
+	  INC     DPTR
+;         // }
+	  
+;         SJMP    ?sumup_012
+	  SJMP    ?sumup_012
+; ?sumup_011:
+	  ?sumup_011:
+;         
+	  
+;         // sum=(R4:R5:R6:R7)
+	  
+;         MOV     DPTR, #(sum?147)
+	  MOV     DPTR, #(sum?147)
+;         MOV     A, R7
+	  MOV     A, R7
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOV     A, R6
+	  MOV     A, R6
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOV     A, R5
+	  MOV     A, R5
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         INC     DPTR
+	  INC     DPTR
+;         MOV     A, R4
+	  MOV     A, R4
+;         MOVX    @DPTR, A
+	  MOVX    @DPTR, A
+;         
+	  
+;         POP     CODE_BANK
+	  POP     CODE_BANK
+;     #pragma endasm    
+;     
+;     return sum;
+			; SOURCE LINE # 198
+	MOV  	DPTR,#sum?147
+	LJMP 	?C?LLDXDATA
+; END OF _sum_up_payload
+
+; }
+; 
+; 
+; static runTimeImageHeader_t xdata rt_header ; //_at_ 0x1400;
+; //static u8_t bank_reg_backup _at_ 0x13ff;
+; void check_boot(uint8 to_bootup) large {
+
+	RSEG  ?PR?_check_boot?CHECK_BOOT
+_check_boot:
+	USING	0
+			; SOURCE LINE # 204
+	MOV  	DPTR,#to_bootup?248
+	MOV  	A,R7
+	MOVX 	@DPTR,A
+; 	u32_t sum, org_chksum, org_length, irom_sum, banked_sum;
+; 	u16_t i;
+; 	u8_t xdata *u8_ptr;
+; 	u8_t code *u8_code_ptr;
+; 	rt_entry fp;
+; 	
+; 	get_runtime_header();
+			; SOURCE LINE # 211
+	LCALL	get_runtime_header
+;         //print_runtime_header(NULL);
+;         
+; 	if ( 0!=check_header((u8_t*)&rt_header) ){
+			; SOURCE LINE # 214
+	MOV  	R3,#01H
+	MOV  	R2,#HIGH (rt_header)
+	MOV  	R1,#LOW (rt_header)
+	LCALL	_check_header
+	MOV  	A,R7
+	JZ   	?C0010
+; 		OSAL_PRINTF("    Hdr Chksum Error\n");
+			; SOURCE LINE # 215
+	MOV  	R3,#MBYTE (?SC_0)
+	MOV  	R2,#HIGH (?SC_0)
+	MOV  	R1,#LOW (?SC_0)
+	LJMP 	?C0025
+; 		return ;
+; 	}
+			; SOURCE LINE # 217
+?C0010:
+; 
+; 	/* Check Image Payload Checksum */	
+; 	u8_code_ptr = (u8_t code *)0x1000;
+			; SOURCE LINE # 220
+	MOV  	DPTR,#u8_code_ptr?256
+	MOV  	A,#010H
+	MOVX 	@DPTR,A
+	INC  	DPTR
+	CLR  	A
+	MOVX 	@DPTR,A
+; 	//OSAL_PRINTF("    First 4 bytes of iROM Part: %02bx:%02bx:%02bx:%02bx\n", 
+; 	    //u8_code_ptr[0], u8_code_ptr[1], u8_code_ptr[2], u8_code_ptr[3]);
+; 	
+; 	// irom checksum
+; 	sum = 0;
+			; SOURCE LINE # 225
+	MOV  	R7,A
+	MOV  	R6,A
+	MOV  	R5,A
+	MOV  	R4,A
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LSTXDATA
+; 	for (i=0; i<(RUNTIME_IROM_SIZE-2); i++, u8_code_ptr++){
+			; SOURCE LINE # 226
+	CLR  	A
+	MOV  	DPTR,#i?254
+	MOVX 	@DPTR,A
+	INC  	DPTR
+	MOVX 	@DPTR,A
+?C0012:
+	MOV  	DPTR,#i?254
+	MOVX 	A,@DPTR
+	MOV  	R6,A
+	INC  	DPTR
+	MOVX 	A,@DPTR
+	MOV  	R7,A
+	CLR  	A
+	MOV  	R4,A
+	MOV  	R5,A
+	MOV  	R3,#0FEH
+	MOV  	R2,#02FH
+	MOV  	R1,A
+	MOV  	R0,A
+	SETB 	C
+	LCALL	?C?ULCMP
+	JC   	?C0013
+; 		sum += *u8_code_ptr;
+			; SOURCE LINE # 227
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LLDXDATA0
+	MOV  	DPTR,#u8_code_ptr?256
+	MOVX 	A,@DPTR
+	MOV  	R6,A
+	INC  	DPTR
+	MOVX 	A,@DPTR
+	MOV  	DPL,A
+	MOV  	DPH,R6
+	CLR  	A
+	MOVC 	A,@A+DPTR
+	MOV  	R7,A
+	CLR  	A
+	MOV  	R4,A
+	MOV  	R5,A
+	MOV  	R6,A
+	LCALL	?C?LADD
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LSTXDATA
+; 	}
+			; SOURCE LINE # 228
+	MOV  	DPTR,#i?254
+	CLR  	A
+	MOV  	B,#01H
+	LCALL	?C?IILDX
+	MOV  	DPTR,#u8_code_ptr?256
+	CLR  	A
+	MOV  	B,#01H
+	LCALL	?C?IILDX
+	SJMP 	?C0012
+?C0013:
+; 	irom_sum=sum;
+			; SOURCE LINE # 229
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LLDXDATA
+	MOV  	DPTR,#irom_sum?252
+	LCALL	?C?LSTXDATA
+; 	
+; 	// compensate checksum
+; 	banked_sum=0;
+			; SOURCE LINE # 232
+	CLR  	A
+	MOV  	R7,A
+	MOV  	R6,A
+	MOV  	R5,A
+	MOV  	R4,A
+	MOV  	DPTR,#banked_sum?253
+	LCALL	?C?LSTXDATA
+; 	u8_ptr = (u8_t xdata *)(&rt_header);
+			; SOURCE LINE # 233
+	MOV  	DPTR,#u8_ptr?255
+	MOV  	A,#HIGH (rt_header)
+	MOVX 	@DPTR,A
+	INC  	DPTR
+	MOV  	A,#LOW (rt_header)
+	MOVX 	@DPTR,A
+; 	for(i=0; i<sizeof(runTimeImageHeader_t); i++, u8_ptr++){
+			; SOURCE LINE # 234
+	CLR  	A
+	MOV  	DPTR,#i?254
+	MOVX 	@DPTR,A
+	INC  	DPTR
+	MOVX 	@DPTR,A
+?C0015:
+	CLR  	C
+	MOV  	DPTR,#i?254+01H
+	MOVX 	A,@DPTR
+	SUBB 	A,#014H
+	MOV  	DPTR,#i?254
+	MOVX 	A,@DPTR
+	SUBB 	A,#00H
+	JNC  	?C0016
+; 		banked_sum += 0xFFUL - *u8_ptr;
+			; SOURCE LINE # 235
+	MOV  	DPTR,#banked_sum?253
+	LCALL	?C?LLDXDATA0
+	PUSH 	AR3
+	MOV  	DPTR,#u8_ptr?255
+	MOVX 	A,@DPTR
+	MOV  	R6,A
+	INC  	DPTR
+	MOVX 	A,@DPTR
+	MOV  	DPL,A
+	MOV  	DPH,R6
+	MOVX 	A,@DPTR
+	MOV  	R3,A
+	CLR  	C
+	MOV  	A,#0FFH
+	SUBB 	A,R3
+	MOV  	R7,A
+	CLR  	A
+	SUBB 	A,#00H
+	MOV  	R6,A
+	CLR  	A
+	SUBB 	A,#00H
+	MOV  	R5,A
+	CLR  	A
+	SUBB 	A,#00H
+	MOV  	R4,A
+	POP  	AR3
+	LCALL	?C?LADD
+	MOV  	DPTR,#banked_sum?253
+	LCALL	?C?LSTXDATA
+; 	}
+			; SOURCE LINE # 236
+	MOV  	DPTR,#i?254
+	CLR  	A
+	MOV  	B,#01H
+	LCALL	?C?IILDX
+	MOV  	DPTR,#u8_ptr?255
+	CLR  	A
+	MOV  	B,#01H
+	LCALL	?C?IILDX
+	SJMP 	?C0015
+?C0016:
+; 	org_length = rt_header.length - (RUNTIME_IROM_SIZE - 2);
+			; SOURCE LINE # 237
+	MOV  	DPTR,#rt_header+04H
+	LCALL	?C?LLDXDATA
+	MOV  	A,R7
+	ADD  	A,#02H
+	MOV  	R7,A
+	MOV  	A,R6
+	ADDC 	A,#0D0H
+	MOV  	R6,A
+	MOV  	A,R5
+	ADDC 	A,#0FFH
+	MOV  	R5,A
+	MOV  	A,R4
+	ADDC 	A,#0FFH
+	MOV  	R4,A
+	MOV  	DPTR,#org_length?251
+	LCALL	?C?LSTXDATA
+; 
+;         banked_sum+=sum_up_payload(org_length);
+			; SOURCE LINE # 239
+	MOV  	DPTR,#banked_sum?253
+	LCALL	?C?LLDXDATA0
+	PUSH 	AR0
+	PUSH 	AR1
+	PUSH 	AR2
+	PUSH 	AR3
+	MOV  	DPTR,#org_length?251
+	LCALL	?C?LLDXDATA
+	LCALL	_sum_up_payload
+	POP  	AR3
+	POP  	AR2
+	POP  	AR1
+	POP  	AR0
+	LCALL	?C?LADD
+	MOV  	DPTR,#banked_sum?253
+	LCALL	?C?LSTXDATA
+;     
+;         sum+=banked_sum;
+			; SOURCE LINE # 241
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LLDXDATA
+	MOV  	DPTR,#banked_sum?253
+	LCALL	?C?LLDXDATA0
+	LCALL	?C?LADD
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LSTXDATA
+; 	
+; 	org_chksum = rt_header.payload_chksum;
+			; SOURCE LINE # 243
+	MOV  	DPTR,#rt_header+0CH
+	LCALL	?C?LLDXDATA
+	MOV  	DPTR,#org_chksum?250
+	LCALL	?C?LSTXDATA
+; 	if( org_chksum!=sum ){
+			; SOURCE LINE # 244
+	MOV  	DPTR,#sum?249
+	LCALL	?C?LLDXDATA
+	MOV  	DPTR,#org_chksum?250
+	LCALL	?C?LLDXDATA0
+	CLR  	C
+	LCALL	?C?ULCMP
+	JZ   	?C0018
+; 		OSAL_PRINTF("    PayLoad Chksum Error\n");
+			; SOURCE LINE # 245
+	MOV  	R3,#MBYTE (?SC_22)
+	MOV  	R2,#HIGH (?SC_22)
+	MOV  	R1,#LOW (?SC_22)
+?C0025:
+	LJMP 	_printf
+; 		//OSAL_PRINTF("      Org=0x%08lx, sum=0x%08lx\n", org_chksum, sum);
+; 		//OSAL_PRINTF("      iROM sum=0x%08lx\n", irom_sum);
+; 		//OSAL_PRINTF("      banked area sum=0x%08lx\n", banked_sum);
+; 		return;
+; 	}
+			; SOURCE LINE # 250
+?C0018:
+; 	OSAL_PRINTF("    Chksum Correct!\n");
+			; SOURCE LINE # 251
+	MOV  	R3,#MBYTE (?SC_48)
+	MOV  	R2,#HIGH (?SC_48)
+	MOV  	R1,#LOW (?SC_48)
+	LCALL	_printf
+;     if (to_bootup) {
+			; SOURCE LINE # 252
+	MOV  	DPTR,#to_bootup?248
+	MOVX 	A,@DPTR
+	JZ   	?C0011
+; 	OSAL_PRINTF("    RunTime Kernel Starting....  \n");
+			; SOURCE LINE # 253
+	MOV  	R3,#MBYTE (?SC_69)
+	MOV  	R2,#HIGH (?SC_69)
+	MOV  	R1,#LOW (?SC_69)
+	LCALL	_printf
+; 	fp = (rt_entry)(0x1000);
+			; SOURCE LINE # 254
+	MOV  	R2,#010H
+	MOV  	R1,#00H
+;---- Variable 'fp?257' assigned to Register 'R1/R2/R3' ----
+; 	fp();
+			; SOURCE LINE # 255
+	LCALL	?C?ICALL
+;     }
+			; SOURCE LINE # 256
+; }
+			; SOURCE LINE # 257
+?C0011:
+	RET  	
+; END OF _check_boot
+
+; 
+; void *get_runtime_header(void) {
+
+	RSEG  ?PR?get_runtime_header?CHECK_BOOT
+get_runtime_header:
+	USING	0
+			; SOURCE LINE # 259
+;     //runTimeImageHeader_t xdata *rt_header_far = (runTimeImageHeader_t *)(RUNTIME_HEADER_ADDRESS&0xFFFF);
+;     #define rt_header_code ((runTimeImageHeader_t code *)(RUNTIME_HEADER_ADDRESS&0xFFFF))
+;     #pragma asm
+;         PUSH    CODE_BANK
+	  PUSH    CODE_BANK
+;         MOV     CODE_BANK, #(RUNTIME_HEADER_BANK)
+	  MOV     CODE_BANK, #((0x03))
+;     #pragma endasm
+; 
+;     rt_header.magic_number   = rt_header_code->magic_number;
+			; SOURCE LINE # 267
+	MOV  	DPTR,#05000H
+	LCALL	?C?LLDCODE
+	MOV  	DPTR,#rt_header
+	LCALL	?C?LSTXDATA
+;     rt_header.length         = rt_header_code->length;
+			; SOURCE LINE # 268
+	MOV  	DPTR,#05004H
+	LCALL	?C?LLDCODE
+	MOV  	DPTR,#rt_header+04H
+	LCALL	?C?LSTXDATA
+;     rt_header.header_chksum  = rt_header_code->header_chksum;
+			; SOURCE LINE # 269
+	MOV  	DPTR,#05008H
+	LCALL	?C?LLDCODE
+	MOV  	DPTR,#rt_header+08H
+	LCALL	?C?LSTXDATA
+;     rt_header.payload_chksum = rt_header_code->payload_chksum;
+			; SOURCE LINE # 270
+	MOV  	DPTR,#0500CH
+	LCALL	?C?LLDCODE
+	MOV  	DPTR,#rt_header+0CH
+	LCALL	?C?LSTXDATA
+;     rt_header.reserved       = rt_header_code->reserved;
+			; SOURCE LINE # 271
+	MOV  	DPTR,#05010H
+	LCALL	?C?LLDCODE
+	MOV  	DPTR,#rt_header+010H
+	LCALL	?C?LSTXDATA
+;     
+;     #pragma asm
+;         POP     CODE_BANK
+	  POP     CODE_BANK
+;     #pragma endasm
+;     
+;     return &rt_header;
+			; SOURCE LINE # 277
+	MOV  	R3,#01H
+	MOV  	R2,#HIGH (rt_header)
+	MOV  	R1,#LOW (rt_header)
+; }
+			; SOURCE LINE # 278
+	RET  	
+; END OF get_runtime_header
+
+; 
+; void print_runtime_header(void *p) {
+
+	RSEG  ?PR?_print_runtime_header?CHECK_BOOT
+_print_runtime_header:
+	USING	0
+			; SOURCE LINE # 280
+	MOV  	DPTR,#p?458
+	LCALL	?C?PSTXDATA
+;     runTimeImageHeader_t *q=(p!=NULL)?(runTimeImageHeader_t *)p:&rt_header;
+			; SOURCE LINE # 281
+	MOV  	DPTR,#p?458
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ORL  	A,R2
+	ORL  	A,R3
+	JZ   	?C0021
+	MOV  	DPTR,#p?458
+	LCALL	?C?PLDXDATA
+	SJMP 	?C0022
+?C0021:
+	MOV  	R3,#01H
+	MOV  	R2,#HIGH (rt_header)
+	MOV  	R1,#LOW (rt_header)
+?C0022:
+	MOV  	DPTR,#q?459
+	LCALL	?C?PSTXDATA
+;     OSAL_PRINTF("    magic_number:  0x%08lx\n", q->magic_number);
+			; SOURCE LINE # 282
+	MOV  	DPTR,#q?459
+	LCALL	?C?PLDXDATA
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#?_printf?BYTE+03H
+	LCALL	?C?LSTXDATA
+	MOV  	R3,#MBYTE (?SC_104)
+	MOV  	R2,#HIGH (?SC_104)
+	MOV  	R1,#LOW (?SC_104)
+	LCALL	_printf
+;     OSAL_PRINTF("    length:        0x%08lx (%ld)\n", q->length, q->length);
+			; SOURCE LINE # 283
+	MOV  	DPTR,#q?459
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ADD  	A,#04H
+	MOV  	R1,A
+	CLR  	A
+	ADDC 	A,R2
+	MOV  	R2,A
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#?_printf?BYTE+03H
+	LCALL	?C?LSTXDATA
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#?_printf?BYTE+07H
+	LCALL	?C?LSTXDATA
+	MOV  	R3,#MBYTE (?SC_132)
+	MOV  	R2,#HIGH (?SC_132)
+	MOV  	R1,#LOW (?SC_132)
+	LCALL	_printf
+;     OSAL_PRINTF("    header_chksum: 0x%08lx\n", q->header_chksum);
+			; SOURCE LINE # 284
+	MOV  	DPTR,#q?459
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ADD  	A,#08H
+	MOV  	R1,A
+	CLR  	A
+	ADDC 	A,R2
+	MOV  	R2,A
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#?_printf?BYTE+03H
+	LCALL	?C?LSTXDATA
+	MOV  	R3,#MBYTE (?SC_166)
+	MOV  	R2,#HIGH (?SC_166)
+	MOV  	R1,#LOW (?SC_166)
+	LCALL	_printf
+;     OSAL_PRINTF("    payload_chksum:0x%08lx\n", q->payload_chksum);
+			; SOURCE LINE # 285
+	MOV  	DPTR,#q?459
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ADD  	A,#0CH
+	MOV  	R1,A
+	CLR  	A
+	ADDC 	A,R2
+	MOV  	R2,A
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#?_printf?BYTE+03H
+	LCALL	?C?LSTXDATA
+	MOV  	R3,#MBYTE (?SC_194)
+	MOV  	R2,#HIGH (?SC_194)
+	MOV  	R1,#LOW (?SC_194)
+	LCALL	_printf
+;     OSAL_PRINTF("    reserved:      0x%08lx\n", q->reserved);
+			; SOURCE LINE # 286
+	MOV  	DPTR,#q?459
+	LCALL	?C?PLDXDATA
+	MOV  	A,R1
+	ADD  	A,#010H
+	MOV  	R1,A
+	CLR  	A
+	ADDC 	A,R2
+	MOV  	R2,A
+	LCALL	?C?LLDPTR
+	MOV  	DPTR,#?_printf?BYTE+03H
+	LCALL	?C?LSTXDATA
+	MOV  	R3,#MBYTE (?SC_222)
+	MOV  	R2,#HIGH (?SC_222)
+	MOV  	R1,#LOW (?SC_222)
+	LJMP 	_printf
+; END OF _print_runtime_header
+
+	END

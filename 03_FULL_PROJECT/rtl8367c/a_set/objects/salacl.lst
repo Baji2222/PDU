@@ -1,0 +1,2352 @@
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALACL
+OBJECT MODULE PLACED IN .\objects\salacl.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salacl.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\salacl.lst) TABS(2) OBJECT(.\objects\salacl.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in ACL module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <acl.h>
+  23          #include <vlan.h>
+  24          #include <svlan.h>
+  25          #include <rate.h>
+  26          #include <string.h>
+  27          #include <stdio.h>
+  28          #include <salacl.h>
+  29          
+  30          #include <rtl8367c_asicdrv.h>
+  31          #include <rtl8367c_asicdrv_acl.h>
+  32          #include <rtl8367c_asicdrv_hsb.h>
+  33          #include <rtl8367c_asicdrv_vlan.h>
+  34          #include <rtl8367c_asicdrv_svlan.h>
+  35          #include <rtl8367c_asicdrv_cputag.h>
+  36          #include <rtl8367c_asicdrv_mib.h>
+  37          
+  38          #if 1
+  39          uint8 filter_templateField[RTL8367C_ACLTEMPLATENO][RTL8367C_ACLRULEFIELDNO] = {
+  40              {ACL_DMAC0,        ACL_DMAC1,      ACL_DMAC2,     ACL_SMAC0,      ACL_SMAC1,      ACL_SMAC2,      ACL_ETHERTYPE,
+             -     ACL_FIELD_SELECT11},
+  41              {ACL_IP4SIP0,      ACL_IP4SIP1,    ACL_IP4DIP0,     ACL_IP4DIP1,    ACL_FIELD_SELECT00, ACL_FIELD_SELECT01, 
+             -ACL_FIELD_SELECT10, ACL_FIELD_SELECT08},
+  42            {ACL_CTAG,       ACL_STAG,       ACL_FIELD_SELECT09,ACL_PORTRANGE,    ACL_FIELD_SELECT07, ACL_VIDRANGE,   ACL_IPRA
+             -NGE,      ACL_FIELD_SELECT15},
+  43              {ACL_FIELD_SELECT00, ACL_FIELD_SELECT01, ACL_FIELD_SELECT02,ACL_FIELD_SELECT03, ACL_FIELD_SELECT05, AC
+             -L_FIELD_SELECT05, ACL_FIELD_SELECT06, ACL_FIELD_SELECT07},
+  44              {ACL_FIELD_SELECT08, ACL_FIELD_SELECT09, ACL_FIELD_SELECT10,ACL_FIELD_SELECT11, ACL_FIELD_SELECT12, AC
+             -L_FIELD_SELECT13, ACL_FIELD_SELECT14, ACL_FIELD_SELECT15}   
+  45          };
+  46          
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 2   
+
+  47          uint8 filter_advanceCaretagField[RTL8367C_ACLTEMPLATENO][2] = {
+  48              {FALSE,   0},
+  49              {FALSE,   0},
+  50              {TRUE,    7},
+  51              {FALSE,   0},
+  52              {FALSE,   0},
+  53          };
+  54          
+  55          
+  56          uint8 filter_fieldTemplateIndex[FILTER_FIELD_END][RTK_FILTER_FIELD_USED_MAX] = {
+  57            {0x00, 0x01, 0x02},/*SMAC*/
+  58            {0x03, 0x04, 0x05},/*DMAC*/
+  59            {0x06},/*EtherType*/
+  60            {0x20},/*C-tag*/
+  61            {0x21},/*S-tag*/
+  62            
+  63            {0x10, 0x11},/*SIP*/
+  64            {0x12, 0x13},/*DIP*/
+  65            {0x17},/*ToS*/
+  66            {0x16},/*protocol*/
+  67            {0x22},/*IP flag*/
+  68            {0x22},/*IP offset*/
+  69            {0x36, 0x36,0x36,0x36},/*not support*/
+  70            {0x36, 0x36,0x36,0x36},/*not support*/
+  71            {0x44},/*ipv6 traffic class*/
+  72            {0x45},/*ipv6 next header*/
+  73            
+  74            {0x14},
+  75            {0x15},
+  76            {0x24},/*TCP flag*/
+  77            {0x14},
+  78            {0x15},
+  79            {0x07},
+  80            {0x07},
+  81            {0x07},
+  82          
+  83            {0x25},/*VID range*/
+  84            {0x26},/*IP range*/
+  85            {0x23},/*L4 PORT range*/
+  86          
+  87            {0x30},
+  88            {0x31},
+  89            {0x32},
+  90            {0x33},
+  91            {0x34},
+  92            {0x35},
+  93            {0x36},
+  94            {0x37},
+  95            {0x40},
+  96            {0x41},
+  97            {0x42},
+  98            {0x43},
+  99            {0x44},
+ 100            {0x45},
+ 101            {0x46},
+ 102            {0x47},
+ 103          
+ 104              {0xFF} /* Pattern Match */
+ 105          };
+ 106          
+ 107          uint8 filter_fieldSize[FILTER_FIELD_END] = {
+ 108              3, 3, 1, 1, 1,
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 3   
+
+ 109              2, 2, 1, 1, 1, 1, 4, 4, 1, 1,
+ 110              1, 1, 1, 1, 1, 1, 1, 1,
+ 111              1, 1, 1,
+ 112              1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ 113              8
+ 114          };
+ 115          
+ 116          uint16 field_selector[RTL8367C_FIELDSEL_FORMAT_NUMBER][2] =
+ 117          {
+ 118              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 0 */ 
+ 119              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 1 */ 
+ 120              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 2 */ 
+ 121              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 3 */ 
+ 122              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 4 */ 
+ 123              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 5 */ 
+ 124              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 6 */  
+ 125          
+ 126              {FIELDSEL_FORMAT_IPPAYLOAD, 12},/* Field Selector 7 */  
+ 127              {FIELDSEL_FORMAT_IPV4, 0},      /* Field Selector 8 */  
+ 128              {FIELDSEL_FORMAT_IPV4, 6},      /* Field Selector 9 */  
+ 129              {FIELDSEL_FORMAT_IPV4, 8},    /* Field Selector 10 */          
+ 130              {FIELDSEL_FORMAT_IPPAYLOAD, 0}, /* Field Selector 11 */
+ 131              {FIELDSEL_FORMAT_IPV6, 0},      /* Field Selector 12 */
+ 132              {FIELDSEL_FORMAT_IPV6, 6},      /* Field Selector 13 */
+ 133              {FIELDSEL_FORMAT_DEFAULT, 0},   /* Field Selector 14 */  
+ 134              {FIELDSEL_FORMAT_DEFAULT, 0}    /* Field Selector 15 */
+ 135          
+ 136          };
+ 137          
+ 138          #else
+              
+              CONST_T uint8 filter_templateField[RTL8367C_ACLTEMPLATENO][RTL8367C_ACLRULEFIELDNO] = {
+                  {ACL_DMAC0,         ACL_DMAC1,      ACL_DMAC2,      ACL_SMAC0,      ACL_SMAC1,      ACL_SMAC2,      ACL_ETHERTYP
+             -E,     ACL_FIELD_SELECT15},
+                  {ACL_IP4SIP0,       ACL_IP4SIP1,    ACL_IP4DIP0,    ACL_IP4DIP1,    ACL_FIELD_SELECT13, ACL_FIELD_SELECT14, 
+             -ACL_FIELD_SELECT02, ACL_FIELD_SELECT15},
+                  {ACL_IP6SIP0WITHIPV4, ACL_IP6SIP1WITHIPV4,ACL_FIELD_SELECT03, ACL_FIELD_SELECT04, ACL_FIELD_SELECT05, 
+             -ACL_FIELD_SELECT06, ACL_FIELD_SELECT07, ACL_FIELD_SELECT08},
+                  {ACL_IP6DIP0WITHIPV4, ACL_IP6DIP1WITHIPV4,ACL_FIELD_SELECT09, ACL_FIELD_SELECT10, ACL_FIELD_SELECT11, 
+             -ACL_FIELD_SELECT12, ACL_FIELD_SELECT13, ACL_FIELD_SELECT14},
+                  {ACL_VIDRANGE,      ACL_IPRANGE,    ACL_PORTRANGE,    ACL_CTAG,       ACL_STAG,       ACL_FIELD_SELECT13, ACL_FI
+             -ELD_SELECT14,  ACL_FIELD_SELECT15}
+              };
+              
+              CONST_T uint8 filter_advanceCaretagField[RTL8367C_ACLTEMPLATENO][2] = {
+                  {TRUE,    7},
+                  {TRUE,    7},
+                  {FALSE,   0},
+                  {FALSE,   0},
+                  {TRUE,    7},
+              };
+              
+              
+              CONST_T uint8 filter_fieldTemplateIndex[FILTER_FIELD_END][RTK_FILTER_FIELD_USED_MAX] = {
+                {0x00, 0x01,0x02},
+                {0x03, 0x04,0x05},
+                {0x06},
+                {0x43},
+                {0x44},
+                {0x10, 0x11},
+                {0x12, 0x13},
+                {0x24},
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 4   
+
+                {0x25},
+                {0x35},
+                {0x35},
+                {0x20, 0x21,0x22,0x23},
+                {0x30, 0x31,0x32,0x33},
+                {0x26},
+                {0x27},
+                {0x14},
+                {0x15},
+                {0x16},
+                {0x14},
+                {0x15},
+                {0x14},
+                {0x14},
+                {0x14},
+              
+                {0x40},
+                {0x41},
+                {0x42},
+              
+                {0x14},
+                {0x15},
+                {0x16},
+                {0x22},
+                {0x23},
+                {0x24},
+                {0x25},
+                {0x26},
+                {0x27},
+                {0x32},
+                {0x33},
+                {0x34},
+                {0x35},
+                {0x36},
+                {0x37},
+                {0x47},
+              
+                  {0xFF} /* Pattern Match */
+              };
+              
+              CONST_T uint8 filter_fieldSize[FILTER_FIELD_END] = {
+                  3, 3, 1, 1, 1,
+                  2, 2, 1, 1, 1, 1, 4, 4, 1, 1,
+                  1, 1, 1, 1, 1, 1, 1, 1,
+                  1, 1, 1,
+                  1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+                  8
+              };
+              
+              CONST_T uint16 field_selector[RTL8367C_FIELDSEL_FORMAT_NUMBER][2] =
+              {
+                  {FIELDSEL_FORMAT_DEFAULT, 0},    /* Field Selector 0 */
+                  {FIELDSEL_FORMAT_DEFAULT, 0},    /* Field Selector 1 */
+                  {FIELDSEL_FORMAT_IPPAYLOAD, 12}, /* Field Selector 2 */
+                  {FIELDSEL_FORMAT_IPV6, 10},      /* Field Selector 3 */
+                  {FIELDSEL_FORMAT_IPV6, 8},       /* Field Selector 4 */
+                  {FIELDSEL_FORMAT_IPV4, 0},       /* Field Selector 5 */
+                  {FIELDSEL_FORMAT_IPV4, 8},       /* Field Selector 6 */
+                  {FIELDSEL_FORMAT_IPV6, 0},       /* Field Selector 7 */
+                  {FIELDSEL_FORMAT_IPV6, 6},       /* Field Selector 8 */
+                  {FIELDSEL_FORMAT_IPV6, 26},      /* Field Selector 9 */
+                  {FIELDSEL_FORMAT_IPV6, 24},      /* Field Selector 10 */
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 5   
+
+                  {FIELDSEL_FORMAT_DEFAULT, 0},    /* Field Selector 11 */
+                  {FIELDSEL_FORMAT_IPV4, 6},       /* Field Selector 12 */
+                  {FIELDSEL_FORMAT_IPPAYLOAD, 0},  /* Field Selector 13 */
+                  {FIELDSEL_FORMAT_IPPAYLOAD, 2},  /* Field Selector 14 */
+                  {FIELDSEL_FORMAT_DEFAULT, 0}     /* Field Selector 15 */
+              };
+              #endif
+ 235          
+ 236          
+ 237          static rtk_api_ret_t _sal_filter_igrAcl_writeDataField(rtl8367c_aclrule *aclRule, rtk_filter_field_t *fiel
+             -dPtr);
+ 238          
+ 239          
+ 240          /* Function Name:
+ 241           *      rtk_filter_igrAcl_init
+ 242           * Description:
+ 243           *      ACL initialization function
+ 244           * Input:
+ 245           *      None
+ 246           * Output:
+ 247           *      None
+ 248           * Return:
+ 249           *      RT_ERR_OK           - OK
+ 250           *      RT_ERR_FAILED       - Failed
+ 251           *      RT_ERR_SMI          - SMI access error
+ 252           *      RT_ERR_NULL_POINTER - Pointer pFilter_field or pFilter_cfg point to NULL.
+ 253           * Note:
+ 254           *      This function enable and intialize ACL function
+ 255           */
+ 256          rtk_api_ret_t sal_filter_igrAcl_init(void)
+ 257          {
+ 258   1          rtl8367c_acltemplate_t       aclTemp;
+ 259   1          uint32                 i, j;
+ 260   1          rtk_api_ret_t          ret;
+ 261   1      
+ 262   1          /* Check initialization state */
+ 263   1          RTK_CHK_INIT_STATE();
+ 264   1      
+ 265   1          if ((ret = sal_filter_igrAcl_cfg_delAll()) != RT_ERR_OK)
+ 266   1              return ret;
+ 267   1      
+ 268   1          for(i = 0; i < RTL8367C_ACLTEMPLATENO; i++)
+ 269   1          {
+ 270   2              for(j = 0; j < RTL8367C_ACLRULEFIELDNO;j++)
+ 271   2                  aclTemp.field[j] = filter_templateField[i][j];
+ 272   2      
+ 273   2              if ((ret = rtl8367c_setAsicAclTemplate(i, &aclTemp)) != RT_ERR_OK)
+ 274   2                  return ret;
+ 275   2          }
+ 276   1      
+ 277   1          for(i = 0; i < RTL8367C_FIELDSEL_FORMAT_NUMBER; i++)
+ 278   1          {
+ 279   2              if ((ret = rtl8367c_setAsicFieldSelector(i, field_selector[i][0], field_selector[i][1])) != RT_ERR
+             -_OK)
+ 280   2                  return ret;
+ 281   2          }
+ 282   1      
+ 283   1          RTK_SCAN_ALL_PHY_PORTMASK(i)
+ 284   1          {
+ 285   2              if ((ret = rtl8367c_setAsicAcl(i, TRUE)) != RT_ERR_OK)
+ 286   2                  return ret;
+ 287   2      
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 6   
+
+ 288   2              if ((ret = rtl8367c_setAsicAclUnmatchedPermit(i, TRUE)) != RT_ERR_OK)
+ 289   2                  return ret;
+ 290   2          }
+ 291   1      
+ 292   1          return RT_ERR_OK;
+ 293   1      }
+ 294          
+ 295          /* Function Name:
+ 296           *      sal_filter_igrAcl_field_add
+ 297           * Description:
+ 298           *      Add comparison rule to an ACL configuration
+ 299           * Input:
+ 300           *      pFilter_cfg     - The ACL configuration that this function will add comparison rule
+ 301           *      pFilter_field   - The comparison rule that will be added.
+ 302           * Output:
+ 303           *      None
+ 304           * Return:
+ 305           *      RT_ERR_OK               - OK
+ 306           *      RT_ERR_FAILED           - Failed
+ 307           *      RT_ERR_SMI              - SMI access error
+ 308           *      RT_ERR_NULL_POINTER     - Pointer pFilter_field or pFilter_cfg point to NULL.
+ 309           *      RT_ERR_INPUT            - Invalid input parameters.
+ 310           * Note:
+ 311           *      This function add a comparison rule (*pFilter_field) to an ACL configuration (*pFilter_cfg).
+ 312           *      Pointer pFilter_cfg points to an ACL configuration structure, this structure keeps multiple ACL
+ 313           *      comparison rules by means of linked list. Pointer pFilter_field will be added to linked
+ 314           *      list keeped by structure that pFilter_cfg points to.
+ 315           */
+ 316          rtk_api_ret_t sal_filter_igrAcl_field_add(rtk_filter_cfg_t* pFilter_cfg, rtk_filter_field_t* pFilter_field
+             -)
+ 317          {
+ 318   1          uint32 i;
+ 319   1          rtk_filter_field_t *tailPtr;
+ 320   1      
+ 321   1          /* Check initialization state */
+ 322   1          RTK_CHK_INIT_STATE();
+ 323   1      
+ 324   1          if(NULL == pFilter_cfg || NULL == pFilter_field)
+ 325   1              return RT_ERR_NULL_POINTER;
+ 326   1      
+ 327   1          if(pFilter_field->fieldType >= FILTER_FIELD_END)
+ 328   1              return RT_ERR_ENTRY_INDEX;
+ 329   1      
+ 330   1      
+ 331   1          if(0 == pFilter_field->fieldTemplateNo)
+ 332   1          {
+ 333   2              pFilter_field->fieldTemplateNo = filter_fieldSize[pFilter_field->fieldType];
+ 334   2      
+ 335   2              for(i = 0; i < pFilter_field->fieldTemplateNo; i++)
+ 336   2              {
+ 337   3                  pFilter_field->fieldTemplateIdx[i] = filter_fieldTemplateIndex[pFilter_field->fieldType][i];
+ 338   3              }
+ 339   2          }
+ 340   1      
+ 341   1          if(NULL == pFilter_cfg->fieldHead)
+ 342   1          {
+ 343   2              pFilter_cfg->fieldHead = pFilter_field;
+ 344   2          }
+ 345   1          else
+ 346   1          {
+ 347   2              if (pFilter_cfg->fieldHead->next == NULL)
+ 348   2              {
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 7   
+
+ 349   3                  pFilter_cfg->fieldHead->next = pFilter_field;
+ 350   3              }
+ 351   2              else
+ 352   2              {
+ 353   3                  tailPtr = pFilter_cfg->fieldHead->next;
+ 354   3                  while( tailPtr->next != NULL)
+ 355   3                  {
+ 356   4                      tailPtr = tailPtr->next;
+ 357   4                  }
+ 358   3                  tailPtr->next = pFilter_field;
+ 359   3              }
+ 360   2          }
+ 361   1      
+ 362   1          return RT_ERR_OK;
+ 363   1      }
+ 364          
+ 365          static rtk_api_ret_t _sal_filter_igrAcl_writeDataField(rtl8367c_aclrule *aclRule, rtk_filter_field_t *fiel
+             -dPtr)
+ 366          {
+ 367   1          uint32 i, tempIdx,fieldIdx, ipValue, ipMask;
+ 368   1          uint32 ip6addr[RTK_IPV6_ADDR_WORD_LENGTH];
+ 369   1          uint32 ip6mask[RTK_IPV6_ADDR_WORD_LENGTH];
+ 370   1      
+ 371   1          for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 372   1          {
+ 373   2              tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 374   2      
+ 375   2              aclRule[tempIdx].valid = TRUE;
+ 376   2          }
+ 377   1      
+ 378   1          switch (fieldPtr->fieldType)
+ 379   1          {
+ 380   2          /* use DMAC structure as representative for mac structure */
+ 381   2          case FILTER_FIELD_DMAC:
+ 382   2          case FILTER_FIELD_SMAC:
+ 383   2      
+ 384   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 385   2              {
+ 386   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 387   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 388   3      
+ 389   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.mac.value.octet[5 
+             -- i*2] | (fieldPtr->filter_pattern_union.mac.value.octet[5 - (i*2 + 1)] << 8);
+ 390   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.mac.mask.octet[5 -
+             - i*2] | (fieldPtr->filter_pattern_union.mac.mask.octet[5 - (i*2 + 1)] << 8);
+ 391   3              }
+ 392   2              break;
+ 393   2          case FILTER_FIELD_ETHERTYPE:
+ 394   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 395   2              {
+ 396   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 397   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 398   3      
+ 399   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.etherType.value;
+ 400   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.etherType.mask;
+ 401   3              }
+ 402   2              break;
+ 403   2          case FILTER_FIELD_IPV4_SIP:
+ 404   2          case FILTER_FIELD_IPV4_DIP:
+ 405   2      
+ 406   2              ipValue = fieldPtr->filter_pattern_union.sip.value;
+ 407   2              ipMask = fieldPtr->filter_pattern_union.sip.mask;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 8   
+
+ 408   2      
+ 409   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 410   2              {
+ 411   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 412   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 413   3      
+ 414   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = (0xFFFF & (ipValue >> (i*16)));
+ 415   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = (0xFFFF & (ipMask >> (i*16)));
+ 416   3              }
+ 417   2              break;
+ 418   2          case FILTER_FIELD_IPV4_TOS:
+ 419   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 420   2              {
+ 421   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 422   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 423   3      
+ 424   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.ipTos.value & 0xFF
+             -;
+ 425   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.ipTos.mask  & 0xFF
+             -;
+ 426   3              }
+ 427   2              break;
+ 428   2          case FILTER_FIELD_IPV4_PROTOCOL:
+ 429   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 430   2              {
+ 431   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 432   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 433   3      
+ 434   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.protocol.value & 0
+             -xFF;
+ 435   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.protocol.mask  & 0
+             -xFF;
+ 436   3              }
+ 437   2              break;
+ 438   2          case FILTER_FIELD_IPV6_SIPV6:
+ 439   2          case FILTER_FIELD_IPV6_DIPV6:
+ 440   2              for(i = 0; i < RTK_IPV6_ADDR_WORD_LENGTH; i++)
+ 441   2              {
+ 442   3                  ip6addr[i] = fieldPtr->filter_pattern_union.sipv6.value.addr[i];
+ 443   3                  ip6mask[i] = fieldPtr->filter_pattern_union.sipv6.mask.addr[i];
+ 444   3              }
+ 445   2      
+ 446   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 447   2              {
+ 448   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 449   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 450   3      
+ 451   3                  if(i < 2)
+ 452   3                  {
+ 453   4                      aclRule[tempIdx].data_bits.field[fieldIdx] = ((ip6addr[0] & (0xFFFF << (i * 16))) >> (i * 
+             -16));
+ 454   4                      aclRule[tempIdx].care_bits.field[fieldIdx] = ((ip6mask[0] & (0xFFFF << (i * 16))) >> (i * 
+             -16));
+ 455   4                  }
+ 456   3                  else
+ 457   3                  {
+ 458   4                      /*default acl template for ipv6 address supports MSB 32-bits and LSB 32-bits only*/
+ 459   4                      aclRule[tempIdx].data_bits.field[fieldIdx] = ((ip6addr[3] & (0xFFFF << ((i&1) * 16))) >> (
+             -(i&1) * 16));
+ 460   4                      aclRule[tempIdx].care_bits.field[fieldIdx] = ((ip6mask[3] & (0xFFFF << ((i&1) * 16))) >> (
+             -(i&1) * 16));
+ 461   4                  }
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 9   
+
+ 462   3              }
+ 463   2      
+ 464   2              break;
+ 465   2          case FILTER_FIELD_CTAG:
+ 466   2          case FILTER_FIELD_STAG:
+ 467   2      
+ 468   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 469   2              {
+ 470   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 471   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 472   3      
+ 473   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = (fieldPtr->filter_pattern_union.l2tag.pri.value <
+             -< 13) | (fieldPtr->filter_pattern_union.l2tag.cfi.value << 12) | fieldPtr->filter_pattern_union.l2tag.vid.value;
+ 474   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = (fieldPtr->filter_pattern_union.l2tag.pri.mask <<
+             - 13) | (fieldPtr->filter_pattern_union.l2tag.cfi.mask << 12) | fieldPtr->filter_pattern_union.l2tag.vid.mask;
+ 475   3              }
+ 476   2              break;
+ 477   2          case FILTER_FIELD_IPV4_FLAG:
+ 478   2      
+ 479   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 480   2              {
+ 481   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 482   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 483   3      
+ 484   3                  aclRule[tempIdx].data_bits.field[fieldIdx] &= 0x1FFF;
+ 485   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.ipFlag.xf.value 
+             -<< 15);
+ 486   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.ipFlag.df.value 
+             -<< 14);
+ 487   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.ipFlag.mf.value 
+             -<< 13);
+ 488   3      
+ 489   3                  aclRule[tempIdx].care_bits.field[fieldIdx] &= 0x1FFF;
+ 490   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.ipFlag.xf.mask <
+             -< 15);
+ 491   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.ipFlag.df.mask <
+             -< 14);
+ 492   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.ipFlag.mf.mask <
+             -< 13);
+ 493   3              }
+ 494   2      
+ 495   2              break;
+ 496   2          case FILTER_FIELD_IPV4_OFFSET:
+ 497   2      
+ 498   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 499   2              {
+ 500   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 501   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 502   3      
+ 503   3                  aclRule[tempIdx].data_bits.field[fieldIdx] &= 0xE000;
+ 504   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.inData.value;
+ 505   3      
+ 506   3                  aclRule[tempIdx].care_bits.field[fieldIdx] &= 0xE000;
+ 507   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.inData.mask;
+ 508   3              }
+ 509   2      
+ 510   2              break;
+ 511   2      
+ 512   2          case FILTER_FIELD_IPV6_TRAFFIC_CLASS:
+ 513   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 514   2              {
+ 515   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 10  
+
+ 516   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 517   3      
+ 518   3      
+ 519   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = (fieldPtr->filter_pattern_union.inData.value << 4
+             -)&0x0FF0;
+ 520   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = (fieldPtr->filter_pattern_union.inData.mask << 4)
+             -&0x0FF0;
+ 521   3              }
+ 522   2              break;
+ 523   2          case FILTER_FIELD_IPV6_NEXT_HEADER:
+ 524   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 525   2              {
+ 526   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 527   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 528   3      
+ 529   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.inData.value << 8;
+ 530   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.inData.mask << 8;
+ 531   3              }
+ 532   2              break;
+ 533   2          case FILTER_FIELD_TCP_SPORT:
+ 534   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 535   2              {
+ 536   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 537   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 538   3      
+ 539   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.tcpSrcPort.value;
+ 540   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.tcpSrcPort.mask;
+ 541   3              }
+ 542   2              break;
+ 543   2          case FILTER_FIELD_TCP_DPORT:
+ 544   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 545   2              {
+ 546   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 547   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 548   3      
+ 549   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.tcpDstPort.value;
+ 550   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.tcpDstPort.mask;
+ 551   3              }
+ 552   2              break;
+ 553   2          case FILTER_FIELD_TCP_FLAG:
+ 554   2      
+ 555   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 556   2              {
+ 557   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 558   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 559   3      
+ 560   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.cwr.valu
+             -e << 7);
+ 561   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.ece.valu
+             -e << 6);
+ 562   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.urg.valu
+             -e << 5);
+ 563   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.ack.valu
+             -e << 4);
+ 564   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.psh.valu
+             -e << 3);
+ 565   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.rst.valu
+             -e << 2);
+ 566   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.syn.valu
+             -e << 1);
+ 567   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.tcpFlag.fin.value
+             -;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 11  
+
+ 568   3      
+ 569   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.cwr.mask
+             - << 7);
+ 570   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.ece.mask
+             - << 6);
+ 571   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.urg.mask
+             - << 5);
+ 572   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.ack.mask
+             - << 4);
+ 573   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.psh.mask
+             - << 3);
+ 574   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.rst.mask
+             - << 2);
+ 575   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.tcpFlag.syn.mask
+             - << 1);
+ 576   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.tcpFlag.fin.mask;
+ 577   3              }
+ 578   2              break;
+ 579   2          case FILTER_FIELD_UDP_SPORT:
+ 580   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 581   2              {
+ 582   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 583   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 584   3      
+ 585   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.udpSrcPort.value;
+ 586   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.udpSrcPort.mask;
+ 587   3              }
+ 588   2              break;
+ 589   2          case FILTER_FIELD_UDP_DPORT:
+ 590   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 591   2              {
+ 592   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 593   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 594   3      
+ 595   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.udpDstPort.value;
+ 596   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.udpDstPort.mask;
+ 597   3              }
+ 598   2              break;
+ 599   2          case FILTER_FIELD_ICMP_CODE:
+ 600   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 601   2              {
+ 602   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 603   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 604   3      
+ 605   3                  aclRule[tempIdx].data_bits.field[fieldIdx] &= 0xFF00;
+ 606   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.icmpCode.value;
+ 607   3                  aclRule[tempIdx].care_bits.field[fieldIdx] &= 0xFF00;
+ 608   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= fieldPtr->filter_pattern_union.icmpCode.mask;
+ 609   3              }
+ 610   2              break;
+ 611   2          case FILTER_FIELD_ICMP_TYPE:
+ 612   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 613   2              {
+ 614   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 615   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 616   3      
+ 617   3                  aclRule[tempIdx].data_bits.field[fieldIdx] &= 0x00FF;
+ 618   3                  aclRule[tempIdx].data_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.icmpType.value <
+             -< 8);
+ 619   3                  aclRule[tempIdx].care_bits.field[fieldIdx] &= 0x00FF;
+ 620   3                  aclRule[tempIdx].care_bits.field[fieldIdx] |= (fieldPtr->filter_pattern_union.icmpType.mask <<
+             - 8);
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 12  
+
+ 621   3              }
+ 622   2              break;
+ 623   2          case FILTER_FIELD_IGMP_TYPE:
+ 624   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 625   2              {
+ 626   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 627   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 628   3      
+ 629   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = (fieldPtr->filter_pattern_union.igmpType.value <<
+             - 8);
+ 630   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = (fieldPtr->filter_pattern_union.igmpType.mask << 
+             -8);
+ 631   3              }
+ 632   2              break;
+ 633   2          case FILTER_FIELD_PATTERN_MATCH:
+ 634   2              for(i = 0; i < fieldPtr->fieldTemplateNo; i++)
+ 635   2              {
+ 636   3                  tempIdx = (fieldPtr->fieldTemplateIdx[i] & 0xF0) >> 4;
+ 637   3                  fieldIdx = fieldPtr->fieldTemplateIdx[i] & 0x0F;
+ 638   3      
+ 639   3                  aclRule[tempIdx].data_bits.field[fieldIdx] = ((fieldPtr->filter_pattern_union.pattern.value[i/
+             -2] >> (16 * (i%2))) & 0x0000FFFF );
+ 640   3                  aclRule[tempIdx].care_bits.field[fieldIdx] = ((fieldPtr->filter_pattern_union.pattern.mask[i/2
+             -] >> (16 * (i%2))) & 0x0000FFFF );
+ 641   3              }
+ 642   2              break;
+ 643   2          case FILTER_FIELD_VID_RANGE:
+ 644   2          case FILTER_FIELD_IP_RANGE:
+ 645   2          case FILTER_FIELD_PORT_RANGE:
+ 646   2          default:
+ 647   2              tempIdx = (fieldPtr->fieldTemplateIdx[0] & 0xF0) >> 4;
+ 648   2              fieldIdx = fieldPtr->fieldTemplateIdx[0] & 0x0F;
+ 649   2      
+ 650   2              aclRule[tempIdx].data_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.inData.value;
+ 651   2              aclRule[tempIdx].care_bits.field[fieldIdx] = fieldPtr->filter_pattern_union.inData.mask;
+ 652   2              break;
+ 653   2          }
+ 654   1      
+ 655   1          return RT_ERR_OK;
+ 656   1      }
+ 657          
+ 658          /* Function Name:
+ 659           *      sal_filter_igrAcl_cfg_add
+ 660           * Description:
+ 661           *      Add an ACL configuration to ASIC
+ 662           * Input:
+ 663           *      filter_id       - Start index of ACL configuration.
+ 664           *      pFilter_cfg     - The ACL configuration that this function will add comparison rule
+ 665           *      pFilter_action  - Action(s) of ACL configuration.
+ 666           * Output:
+ 667           *      ruleNum - number of rules written in acl table
+ 668           * Return:
+ 669           *      RT_ERR_OK                               - OK
+ 670           *      RT_ERR_FAILED                           - Failed
+ 671           *      RT_ERR_SMI                              - SMI access error
+ 672           *      RT_ERR_NULL_POINTER                     - Pointer pFilter_field or pFilter_cfg point to NULL.
+ 673           *      RT_ERR_INPUT                            - Invalid input parameters.
+ 674           *      RT_ERR_ENTRY_INDEX                      - Invalid filter_id .
+ 675           *      RT_ERR_NULL_POINTER                     - Pointer pFilter_action or pFilter_cfg point to NULL.
+ 676           *      RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT     - Action is not supported in this chip.
+ 677           *      RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT    - Rule is not supported.
+ 678           * Note:
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 13  
+
+ 679           *      This function store pFilter_cfg, pFilter_action into ASIC. The starting
+ 680           *      index(es) is filter_id.
+ 681           */
+ 682          rtk_api_ret_t sal_filter_igrAcl_cfg_add(rtk_filter_id_t filter_id, rtk_filter_cfg_t* pFilter_cfg, rtk_filt
+             -er_action_t* pFilter_action, rtk_filter_number_t *ruleNum)
+ 683          {
+ 684   1          rtk_api_ret_t               retVal;
+ 685   1          uint32                  careTagData, careTagMask;
+ 686   1          uint32                  i,vidx, /*svidx, */actType, ruleId;
+ 687   1          uint32                  aclActCtrl;
+ 688   1          uint32                  cpuPort;
+ 689   1          rtk_filter_field_t*         fieldPtr;
+ 690   1          rtl8367c_aclrule            aclRule[RTL8367C_ACLTEMPLATENO];
+ 691   1          rtl8367c_aclrule            tempRule;
+ 692   1          rtl8367c_acl_act_t          aclAct;
+ 693   1          uint32                  noRulesAdd;
+ 694   1          uint32                  portmask;
+ 695   1          /* Check initialization state */
+ 696   1          RTK_CHK_INIT_STATE();
+ 697   1      
+ 698   1          if(filter_id > RTL8367C_ACLRULEMAX )
+ 699   1              return RT_ERR_ENTRY_INDEX;
+ 700   1      
+ 701   1          if((NULL == pFilter_cfg) || (NULL == pFilter_action) || (NULL == ruleNum))
+ 702   1              return RT_ERR_NULL_POINTER;
+ 703   1      
+ 704   1          fieldPtr = pFilter_cfg->fieldHead;
+ 705   1      
+ 706   1          /* init RULE */
+ 707   1          for(i = 0; i < RTL8367C_ACLTEMPLATENO; i++)
+ 708   1          {
+ 709   2              memset(&aclRule[i], 0, sizeof(rtl8367c_aclrule));
+ 710   2      
+ 711   2              aclRule[i].data_bits.type= i;
+ 712   2              aclRule[i].care_bits.type= 0x7;
+ 713   2          }
+ 714   1      
+ 715   1          while(NULL != fieldPtr)
+ 716   1          {
+ 717   2              _sal_filter_igrAcl_writeDataField(aclRule, fieldPtr);
+ 718   2      
+ 719   2              fieldPtr = fieldPtr->next;
+ 720   2          }
+ 721   1      
+ 722   1          /*set care tag mask in User Defined Field 15*/
+ 723   1          /*Follow care tag should not be used while ACL template and User defined fields are fully control by s
+             -ystem designer*/
+ 724   1          /*those advanced packet type care tag is used in default template design structure only*/
+ 725   1          careTagData = 0;
+ 726   1          careTagMask = 0;
+ 727   1      
+ 728   1          for(i = CARE_TAG_TCP; i < CARE_TAG_END; i++)
+ 729   1          {
+ 730   2              if(pFilter_cfg->careTag.tagType[i].mask)
+ 731   2                  careTagMask = careTagMask | (1 << (i-CARE_TAG_TCP));
+ 732   2      
+ 733   2              if(pFilter_cfg->careTag.tagType[i].value)
+ 734   2                  careTagData = careTagData | (1 << (i-CARE_TAG_TCP));
+ 735   2          }
+ 736   1      
+ 737   1          if(careTagData || careTagMask)
+ 738   1          {
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 14  
+
+ 739   2              i = 0;
+ 740   2              while(i < RTL8367C_ACLTEMPLATENO)
+ 741   2              {
+ 742   3                  if(aclRule[i].valid == 1 && filter_advanceCaretagField[i][0] == TRUE)
+ 743   3                  {
+ 744   4      
+ 745   4                      aclRule[i].data_bits.field[filter_advanceCaretagField[i][1]] = careTagData & 0xFFFF;
+ 746   4                      aclRule[i].care_bits.field[filter_advanceCaretagField[i][1]] = careTagMask & 0xFFFF;
+ 747   4                      break;
+ 748   4                  }
+ 749   3                  i++;
+ 750   3              }
+ 751   2              /*none of previous used template containing field 15*/
+ 752   2              if(i == RTL8367C_ACLTEMPLATENO)
+ 753   2              {
+ 754   3                  i = 0;
+ 755   3                  while(i < RTL8367C_ACLTEMPLATENO)
+ 756   3                  {
+ 757   4                      if(filter_advanceCaretagField[i][0] == TRUE)
+ 758   4                      {
+ 759   5                          aclRule[i].data_bits.field[filter_advanceCaretagField[i][1]] = careTagData & 0xFFFF;
+ 760   5                          aclRule[i].care_bits.field[filter_advanceCaretagField[i][1]] = careTagMask & 0xFFFF;
+ 761   5                          aclRule[i].valid = 1;
+ 762   5                          break;
+ 763   5                      }
+ 764   4                      i++;
+ 765   4                  }
+ 766   3              }
+ 767   2          }
+ 768   1      
+ 769   1          /*Check rule number*/
+ 770   1          noRulesAdd = 0;
+ 771   1          for(i = 0; i < RTL8367C_ACLTEMPLATENO; i++)
+ 772   1          {
+ 773   2              if(1 == aclRule[i].valid)
+ 774   2              {
+ 775   3                  noRulesAdd ++;
+ 776   3              }
+ 777   2          }
+ 778   1      
+ 779   1          *ruleNum = noRulesAdd;
+ 780   1      
+ 781   1          if((filter_id + noRulesAdd - 1) > RTL8367C_ACLRULEMAX)
+ 782   1          {
+ 783   2              return RT_ERR_ENTRY_INDEX;
+ 784   2          }
+ 785   1      
+ 786   1          /*set care tag mask in TAG Indicator*/
+ 787   1          careTagData = 0;
+ 788   1          careTagMask = 0;
+ 789   1      
+ 790   1          for(i = 0; i <= CARE_TAG_IPV6;i++)
+ 791   1          {
+ 792   2              if(0 == pFilter_cfg->careTag.tagType[i].mask )
+ 793   2              {
+ 794   3                  careTagMask &=  ~(1 << i);
+ 795   3              }
+ 796   2              else
+ 797   2              {
+ 798   3                  careTagMask |= (1 << i);
+ 799   3                  if(0 == pFilter_cfg->careTag.tagType[i].value )
+ 800   3                      careTagData &= ~(1 << i);
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 15  
+
+ 801   3                  else
+ 802   3                      careTagData |= (1 << i);
+ 803   3              }
+ 804   2          }
+ 805   1      
+ 806   1          for(i = 0; i < RTL8367C_ACLTEMPLATENO; i++)
+ 807   1          {
+ 808   2              aclRule[i].data_bits.tag_exist = (careTagData) & ACL_RULE_CARETAG_MASK;
+ 809   2              aclRule[i].care_bits.tag_exist = (careTagMask) & ACL_RULE_CARETAG_MASK;
+ 810   2          }
+ 811   1      
+ 812   1          RTK_CHK_PORTMASK_VALID(&pFilter_cfg->activeport.value);
+ 813   1          RTK_CHK_PORTMASK_VALID(&pFilter_cfg->activeport.mask);
+ 814   1      
+ 815   1          for(i = 0; i < RTL8367C_ACLTEMPLATENO; i++)
+ 816   1          {
+ 817   2              if(TRUE == aclRule[i].valid)
+ 818   2              {
+ 819   3                  if(rtk_switch_portmask_L2P_get(&pFilter_cfg->activeport.value, &portmask) != RT_ERR_OK)
+ 820   3                      return RT_ERR_PORT_MASK;
+ 821   3      
+ 822   3                  aclRule[i].data_bits.active_portmsk = portmask;
+ 823   3      
+ 824   3                  if(rtk_switch_portmask_L2P_get(&pFilter_cfg->activeport.mask, &portmask) != RT_ERR_OK)
+ 825   3                      return RT_ERR_PORT_MASK;
+ 826   3      
+ 827   3                  aclRule[i].care_bits.active_portmsk = portmask;
+ 828   3              }
+ 829   2          }
+ 830   1      
+ 831   1          if(pFilter_cfg->invert >= FILTER_INVERT_END )
+ 832   1              return RT_ERR_INPUT;
+ 833   1      
+ 834   1      
+ 835   1          /*Last action gets high priority if actions are the same*/
+ 836   1          memset(&aclAct, 0, sizeof(rtl8367c_acl_act_t));
+ 837   1          aclActCtrl = 0;
+ 838   1          for(actType = 0; actType < FILTER_ENACT_END; actType ++)
+ 839   1          {
+ 840   2              if(pFilter_action->actEnable[actType])
+ 841   2              {
+ 842   3                  switch (actType)
+ 843   3                  {
+ 844   4                  case FILTER_ENACT_CVLAN_INGRESS:
+ 845   4                      if(pFilter_action->filterCvlanVid > RTL8367C_EVIDMAX)
+ 846   4                          return RT_ERR_INPUT;
+ 847   4      
+ 848   4                      if((retVal = rtk_vlan_checkAndCreateMbr(pFilter_action->filterCvlanVid, &vidx)) != RT_ERR_
+             -OK)
+ 849   4                      {
+ 850   5                          return retVal;
+ 851   5                      }
+ 852   4                      aclAct.cact = FILTER_ENACT_CVLAN_TYPE(actType);
+ 853   4                      aclAct.cvidx_cact = vidx;
+ 854   4      
+ 855   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+ 856   4                      {
+ 857   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_TAGONLY)
+ 858   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+ 859   5                      }
+ 860   4                      else
+ 861   4                      {
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 16  
+
+ 862   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_VLANONLY;
+ 863   5                      }
+ 864   4      
+ 865   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+ 866   4                      break;
+ 867   4                  case FILTER_ENACT_CVLAN_EGRESS:
+ 868   4                      if(pFilter_action->filterCvlanVid > RTL8367C_EVIDMAX)
+ 869   4                          return RT_ERR_INPUT;
+ 870   4      
+ 871   4                      if((retVal = rtk_vlan_checkAndCreateMbr(pFilter_action->filterCvlanVid, &vidx)) != RT_ERR_
+             -OK)
+ 872   4                          return retVal;
+ 873   4      
+ 874   4                      aclAct.cact = FILTER_ENACT_CVLAN_TYPE(actType);
+ 875   4                      aclAct.cvidx_cact = vidx;
+ 876   4      
+ 877   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+ 878   4                      {
+ 879   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_TAGONLY)
+ 880   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+ 881   5                      }
+ 882   4                      else
+ 883   4                      {
+ 884   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_VLANONLY;
+ 885   5                      }
+ 886   4      
+ 887   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+ 888   4                      break;
+ 889   4                   case FILTER_ENACT_CVLAN_SVID:
+ 890   4      
+ 891   4                      aclAct.cact = FILTER_ENACT_CVLAN_TYPE(actType);
+ 892   4      
+ 893   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+ 894   4                      {
+ 895   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_TAGONLY)
+ 896   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+ 897   5                      }
+ 898   4                      else
+ 899   4                      {
+ 900   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_VLANONLY;
+ 901   5                      }
+ 902   4      
+ 903   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+ 904   4                      break;
+ 905   4                   case FILTER_ENACT_POLICING_1:
+ 906   4                      if(pFilter_action->filterPolicingIdx[1] >= (RTK_METER_NUM + RTL8367C_MAX_LOG_CNT_NUM))
+ 907   4                          return RT_ERR_INPUT;
+ 908   4      
+ 909   4                      aclAct.cact = FILTER_ENACT_CVLAN_TYPE(actType);
+ 910   4                      aclAct.cvidx_cact = pFilter_action->filterPolicingIdx[1];
+ 911   4      
+ 912   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+ 913   4                      {
+ 914   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_TAGONLY)
+ 915   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+ 916   5                      }
+ 917   4                      else
+ 918   4                      {
+ 919   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_VLANONLY;
+ 920   5                      }
+ 921   4      
+ 922   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 17  
+
+ 923   4                      break;
+ 924   4      #if 0 //NOT used
+                          case FILTER_ENACT_SVLAN_INGRESS:
+                          case FILTER_ENACT_SVLAN_EGRESS:
+              
+                              if((retVal = rtk_svlan_checkAndCreateMbr(pFilter_action->filterSvlanVid, &svidx)) != RT_ER
+             -R_OK)
+                                  return retVal;
+              
+                              aclAct.sact = FILTER_ENACT_SVLAN_TYPE(actType);
+                              aclAct.svidx_sact = svidx;
+                              aclActCtrl |= FILTER_ENACT_SVLAN_MASK;
+                              break;
+                          case FILTER_ENACT_SVLAN_CVID:
+              
+                              aclAct.sact = FILTER_ENACT_SVLAN_TYPE(actType);
+                              aclActCtrl |= FILTER_ENACT_SVLAN_MASK;
+                              break;
+              #endif        
+ 941   4                  case FILTER_ENACT_POLICING_2:
+ 942   4                      if(pFilter_action->filterPolicingIdx[2] >= (RTK_METER_NUM + RTL8367C_MAX_LOG_CNT_NUM))
+ 943   4                          return RT_ERR_INPUT;
+ 944   4      
+ 945   4                      aclAct.sact = FILTER_ENACT_SVLAN_TYPE(actType);
+ 946   4                      aclAct.svidx_sact = pFilter_action->filterPolicingIdx[2];
+ 947   4                      aclActCtrl |= FILTER_ENACT_SVLAN_MASK;
+ 948   4                      break;
+ 949   4                  case FILTER_ENACT_POLICING_0:
+ 950   4                      if(pFilter_action->filterPolicingIdx[0] >= (RTK_METER_NUM + RTL8367C_MAX_LOG_CNT_NUM))
+ 951   4                          return RT_ERR_INPUT;
+ 952   4      
+ 953   4                      aclAct.aclmeteridx = pFilter_action->filterPolicingIdx[0];
+ 954   4                      aclActCtrl |= FILTER_ENACT_POLICING_MASK;
+ 955   4                      break;
+ 956   4                  case FILTER_ENACT_PRIORITY:
+ 957   4                  case FILTER_ENACT_1P_REMARK:
+ 958   4                      if(pFilter_action->filterPriority > RTL8367C_PRIMAX)
+ 959   4                          return RT_ERR_INPUT;
+ 960   4      
+ 961   4                      aclAct.priact = FILTER_ENACT_PRI_TYPE(actType);
+ 962   4                      aclAct.pridx = pFilter_action->filterPriority;
+ 963   4                      aclActCtrl |= FILTER_ENACT_PRIORITY_MASK;
+ 964   4                      break;
+ 965   4                  case FILTER_ENACT_DSCP_REMARK:
+ 966   4                      if(pFilter_action->filterPriority > RTL8367C_DSCPMAX)
+ 967   4                          return RT_ERR_INPUT;
+ 968   4      
+ 969   4                      aclAct.priact = FILTER_ENACT_PRI_TYPE(actType);
+ 970   4                      aclAct.pridx = pFilter_action->filterPriority;
+ 971   4                      aclActCtrl |= FILTER_ENACT_PRIORITY_MASK;
+ 972   4                      break;
+ 973   4                  case FILTER_ENACT_POLICING_3:
+ 974   4                      if(pFilter_action->filterPriority >= (RTK_METER_NUM + RTL8367C_MAX_LOG_CNT_NUM))
+ 975   4                          return RT_ERR_INPUT;
+ 976   4      
+ 977   4                      aclAct.priact = FILTER_ENACT_PRI_TYPE(actType);
+ 978   4                      aclAct.pridx = pFilter_action->filterPolicingIdx[3];
+ 979   4                      aclActCtrl |= FILTER_ENACT_PRIORITY_MASK;
+ 980   4                      break;
+ 981   4                  case FILTER_ENACT_DROP:
+ 982   4      
+ 983   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(FILTER_ENACT_REDIRECT);
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 18  
+
+ 984   4                      aclAct.fwdact_ext = FALSE;
+ 985   4      
+ 986   4                      aclAct.fwdpmask = 0;
+ 987   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+ 988   4                      break;
+ 989   4                  case FILTER_ENACT_REDIRECT:
+ 990   4                      RTK_CHK_PORTMASK_VALID(&pFilter_action->filterPortmask);
+ 991   4      
+ 992   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(actType);
+ 993   4                      aclAct.fwdact_ext = FALSE;
+ 994   4      
+ 995   4                      if(rtk_switch_portmask_L2P_get(&pFilter_action->filterPortmask, &portmask) != RT_ERR_OK)
+ 996   4                          return RT_ERR_PORT_MASK;
+ 997   4                      aclAct.fwdpmask = portmask;
+ 998   4      
+ 999   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+1000   4                      break;
+1001   4      
+1002   4                  case FILTER_ENACT_ADD_DSTPORT:
+1003   4                      RTK_CHK_PORTMASK_VALID(&pFilter_action->filterPortmask);
+1004   4      
+1005   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(actType);
+1006   4                      aclAct.fwdact_ext = FALSE;
+1007   4      
+1008   4                      if(rtk_switch_portmask_L2P_get(&pFilter_action->filterPortmask, &portmask) != RT_ERR_OK)
+1009   4                          return RT_ERR_PORT_MASK;
+1010   4                      aclAct.fwdpmask = portmask;
+1011   4      
+1012   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+1013   4                      break;
+1014   4                  case FILTER_ENACT_MIRROR:
+1015   4                      RTK_CHK_PORTMASK_VALID(&pFilter_action->filterPortmask);
+1016   4      
+1017   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(actType);
+1018   4                      aclAct.cact_ext = FALSE;
+1019   4      
+1020   4                      if(rtk_switch_portmask_L2P_get(&pFilter_action->filterPortmask, &portmask) != RT_ERR_OK)
+1021   4                          return RT_ERR_PORT_MASK;
+1022   4                      aclAct.fwdpmask = portmask;
+1023   4      
+1024   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+1025   4                      break;
+1026   4                  case FILTER_ENACT_TRAP_CPU:
+1027   4      
+1028   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(actType);
+1029   4                      aclAct.fwdact_ext = FALSE;
+1030   4      
+1031   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+1032   4                      break;
+1033   4                  case FILTER_ENACT_COPY_CPU:
+1034   4                      if((retVal = rtl8367c_getAsicCputagTrapPort(&cpuPort)) != RT_ERR_OK)
+1035   4                          return retVal;
+1036   4      
+1037   4                      aclAct.fwdact = FILTER_ENACT_FWD_TYPE(FILTER_ENACT_MIRROR);
+1038   4                      aclAct.fwdact_ext = FALSE;
+1039   4      
+1040   4                      aclAct.fwdpmask = 1 << cpuPort;
+1041   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+1042   4                      break;
+1043   4                  case FILTER_ENACT_ISOLATION:
+1044   4                      RTK_CHK_PORTMASK_VALID(&pFilter_action->filterPortmask);
+1045   4      
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 19  
+
+1046   4                      aclAct.fwdact_ext = TRUE;
+1047   4      
+1048   4                      if(rtk_switch_portmask_L2P_get(&pFilter_action->filterPortmask, &portmask) != RT_ERR_OK)
+1049   4                          return RT_ERR_PORT_MASK;
+1050   4                      aclAct.fwdpmask = portmask;
+1051   4      
+1052   4                      aclActCtrl |= FILTER_ENACT_FWD_MASK;
+1053   4                      break;
+1054   4      
+1055   4                  case FILTER_ENACT_INTERRUPT:
+1056   4      
+1057   4                      aclAct.aclint = TRUE;
+1058   4                      aclActCtrl |= FILTER_ENACT_INTGPIO_MASK;
+1059   4                      break;
+1060   4                  case FILTER_ENACT_GPO:
+1061   4      
+1062   4                      aclAct.gpio_en = TRUE;
+1063   4                      aclAct.gpio_pin = pFilter_action->filterPin;
+1064   4                      aclActCtrl |= FILTER_ENACT_INTGPIO_MASK;
+1065   4                      break;
+1066   4                   case FILTER_ENACT_EGRESSCTAG_TAG:
+1067   4      
+1068   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+1069   4                      {
+1070   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_VLANONLY)
+1071   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+1072   5                      }
+1073   4                      else
+1074   4                      {
+1075   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_TAGONLY;
+1076   5                      }
+1077   4                      aclAct.tag_fmt = FILTER_CTAGFMT_TAG;
+1078   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+1079   4                      break;
+1080   4                   case FILTER_ENACT_EGRESSCTAG_UNTAG:
+1081   4      
+1082   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+1083   4                      {
+1084   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_VLANONLY)
+1085   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+1086   5                      }
+1087   4                      else
+1088   4                      {
+1089   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_TAGONLY;
+1090   5                      }
+1091   4                      aclAct.tag_fmt = FILTER_CTAGFMT_UNTAG;
+1092   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+1093   4                      break;
+1094   4                   case FILTER_ENACT_EGRESSCTAG_KEEP:
+1095   4      
+1096   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+1097   4                      {
+1098   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_VLANONLY)
+1099   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+1100   5                      }
+1101   4                      else
+1102   4                      {
+1103   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_TAGONLY;
+1104   5                      }
+1105   4                      aclAct.tag_fmt = FILTER_CTAGFMT_KEEP;
+1106   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+1107   4                      break;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 20  
+
+1108   4                   case FILTER_ENACT_EGRESSCTAG_KEEPAND1PRMK:
+1109   4      
+1110   4                      if(aclActCtrl &(FILTER_ENACT_CVLAN_MASK))
+1111   4                      {
+1112   5                          if(aclAct.cact_ext == FILTER_ENACT_CACTEXT_VLANONLY)
+1113   5                              aclAct.cact_ext = FILTER_ENACT_CACTEXT_BOTHVLANTAG;
+1114   5                      }
+1115   4                      else
+1116   4                      {
+1117   5                          aclAct.cact_ext = FILTER_ENACT_CACTEXT_TAGONLY;
+1118   5                      }
+1119   4                      aclAct.tag_fmt = FILTER_CTAGFMT_KEEP1PRMK;
+1120   4                      aclActCtrl |= FILTER_ENACT_CVLAN_MASK;
+1121   4                      break;
+1122   4                 default:
+1123   4                      return RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT;
+1124   4                  }
+1125   3              }
+1126   2          }
+1127   1      
+1128   1      
+1129   1          /*check if free ACL rules are enough*/
+1130   1          for(i = filter_id; i < (filter_id + noRulesAdd); i++)
+1131   1          {
+1132   2              if((retVal = rtl8367c_getAsicAclRule(i, &tempRule)) != RT_ERR_OK )
+1133   2                  return retVal;
+1134   2      
+1135   2              if(tempRule.valid == TRUE)
+1136   2              {
+1137   3                  return RT_ERR_TBL_FULL;
+1138   3              }
+1139   2          }
+1140   1      
+1141   1          ruleId = 0;
+1142   1          for(i = 0; i < RTL8367C_ACLTEMPLATENO; i++)
+1143   1          {
+1144   2              if(aclRule[i].valid == TRUE)
+1145   2              {
+1146   3                  /* write ACL action control */
+1147   3                  if((retVal = rtl8367c_setAsicAclActCtrl(filter_id + ruleId, aclActCtrl)) != RT_ERR_OK )
+1148   3                      return retVal;
+1149   3                  /* write ACL action */
+1150   3                  if((retVal = rtl8367c_setAsicAclAct(filter_id + ruleId, &aclAct)) != RT_ERR_OK )
+1151   3                      return retVal;
+1152   3      
+1153   3                  /* write ACL not */
+1154   3                  if((retVal = rtl8367c_setAsicAclNot(filter_id + ruleId, pFilter_cfg->invert)) != RT_ERR_OK )
+1155   3                      return retVal;
+1156   3                  /* write ACL rule */
+1157   3                  if((retVal = rtl8367c_setAsicAclRule(filter_id + ruleId, &aclRule[i])) != RT_ERR_OK )
+1158   3                      return retVal;
+1159   3      
+1160   3                  /* only the first rule will be written with input action control, aclActCtrl of other rules wi
+             -ll be zero */
+1161   3                  aclActCtrl = 0;
+1162   3                  memset(&aclAct, 0, sizeof(rtl8367c_acl_act_t));
+1163   3      
+1164   3                  ruleId ++;
+1165   3              }
+1166   2          }
+1167   1      
+1168   1          return RT_ERR_OK;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 21  
+
+1169   1      }
+1170          
+1171          /* Function Name:
+1172           *      sal_filter_igrAcl_cfg_del
+1173           * Description:
+1174           *      Delete an ACL configuration from ASIC
+1175           * Input:
+1176           *      filter_id   - Start index of ACL configuration.
+1177           * Output:
+1178           *      None
+1179           * Return:
+1180           *      RT_ERR_OK               - OK
+1181           *      RT_ERR_FAILED           - Failed
+1182           *      RT_ERR_SMI              - SMI access error
+1183           *      RT_ERR_FILTER_ENTRYIDX  - Invalid filter_id.
+1184           * Note:
+1185           *      This function delete a group of ACL rules starting from filter_id.
+1186           */
+1187          rtk_api_ret_t sal_filter_igrAcl_cfg_del(rtk_filter_id_t filter_id)
+1188          {
+1189   1          rtl8367c_aclrule initRule;
+1190   1          rtl8367c_acl_act_t  initAct;
+1191   1          rtk_api_ret_t ret;
+1192   1      
+1193   1          /* Check initialization state */
+1194   1          RTK_CHK_INIT_STATE();
+1195   1      
+1196   1          if(filter_id > RTL8367C_ACLRULEMAX )
+1197   1              return RT_ERR_FILTER_ENTRYIDX;
+1198   1      
+1199   1          memset(&initRule, 0, sizeof(rtl8367c_aclrule));
+1200   1          memset(&initAct, 0, sizeof(rtl8367c_acl_act_t));
+1201   1      
+1202   1          if((ret = rtl8367c_setAsicAclRule(filter_id, &initRule)) != RT_ERR_OK)
+1203   1              return ret;
+1204   1          if((ret = rtl8367c_setAsicAclActCtrl(filter_id, FILTER_ENACT_INIT_MASK))!= RT_ERR_OK)
+1205   1              return ret;
+1206   1          if((ret = rtl8367c_setAsicAclAct(filter_id, &initAct)) != RT_ERR_OK)
+1207   1              return ret;
+1208   1          if((ret = rtl8367c_setAsicAclNot(filter_id, DISABLED)) != RT_ERR_OK )
+1209   1              return ret;
+1210   1      
+1211   1          return RT_ERR_OK;
+1212   1      }
+1213          
+1214          /* Function Name:
+1215           *      sal_filter_igrAcl_cfg_delAll
+1216           * Description:
+1217           *      Delete all ACL entries from ASIC
+1218           * Input:
+1219           *      None
+1220           * Output:
+1221           *      None
+1222           * Return:
+1223           *      RT_ERR_OK           - OK
+1224           *      RT_ERR_FAILED       - Failed
+1225           *      RT_ERR_SMI          - SMI access error
+1226           * Note:
+1227           *      This function delete all ACL configuration from ASIC.
+1228           */
+1229          rtk_api_ret_t sal_filter_igrAcl_cfg_delAll(void)
+1230          {
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 22  
+
+1231   1          uint32            i;
+1232   1          rtk_api_ret_t     ret;
+1233   1      
+1234   1          /* Check initialization state */
+1235   1          RTK_CHK_INIT_STATE();
+1236   1      
+1237   1          for(i = 0; i < RTL8367C_ACLRULENO; i++)
+1238   1          {
+1239   2              if((ret = rtl8367c_setAsicAclActCtrl(i, FILTER_ENACT_INIT_MASK))!= RT_ERR_OK)
+1240   2                  return ret;
+1241   2              if((ret = rtl8367c_setAsicAclNot(i, DISABLED)) != RT_ERR_OK )
+1242   2                  return ret;
+1243   2          }
+1244   1      
+1245   1          return rtl8367c_setAsicRegBit(RTL8367C_REG_ACL_RESET_CFG, RTL8367C_ACL_RESET_CFG_OFFSET, TRUE);;
+1246   1      }
+1247          
+1248          /* Function Name:
+1249           *      sal_filter_igrAcl_cfg_get
+1250           * Description:
+1251           *      Get one ingress acl configuration from ASIC.
+1252           * Input:
+1253           *      filter_id       - Start index of ACL configuration.
+1254           * Output:
+1255           *      pFilter_cfg     - buffer pointer of ingress acl data
+1256           *      pFilter_action  - buffer pointer of ingress acl action
+1257           * Return:
+1258           *      RT_ERR_OK               - OK
+1259           *      RT_ERR_FAILED           - Failed
+1260           *      RT_ERR_SMI              - SMI access error
+1261           *      RT_ERR_NULL_POINTER     - Pointer pFilter_action or pFilter_cfg point to NULL.
+1262           *      RT_ERR_FILTER_ENTRYIDX  - Invalid entry index.
+1263           * Note:
+1264           *      This function get configuration from ASIC.
+1265           */
+1266          rtk_api_ret_t sal_filter_igrAcl_cfg_get(rtk_filter_id_t filter_id, rtk_filter_cfg_raw_t *pFilter_cfg, rtk_
+             -filter_action_t *pAction)
+1267          {
+1268   1          rtk_api_ret_t               retVal;
+1269   1          uint32                  i, tmp;
+1270   1          rtl8367c_aclrule            aclRule;
+1271   1          rtl8367c_acl_act_t          aclAct;
+1272   1          uint32                  cpuPort;
+1273   1          rtl8367c_acltemplate_t      type;
+1274   1          rtl8367c_svlan_memconf_t    svlan_cfg;
+1275   1          rtl8367c_vlanconfiguser     vlanMC;
+1276   1          uint32                  phyPmask;
+1277   1      
+1278   1          /* Check initialization state */
+1279   1          RTK_CHK_INIT_STATE();
+1280   1      
+1281   1          if(NULL == pFilter_cfg || NULL == pAction)
+1282   1              return RT_ERR_NULL_POINTER;
+1283   1      
+1284   1          if(filter_id > RTL8367C_ACLRULEMAX)
+1285   1              return RT_ERR_ENTRY_INDEX;
+1286   1      
+1287   1          if ((retVal = rtl8367c_getAsicAclRule(filter_id, &aclRule)) != RT_ERR_OK)
+1288   1              return retVal;
+1289   1      
+1290   1          /* Check valid */
+1291   1          if(aclRule.valid == 0)
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 23  
+
+1292   1          {
+1293   2              pFilter_cfg->valid = DISABLED;
+1294   2              return RT_ERR_OK;
+1295   2          }
+1296   1      
+1297   1          phyPmask = aclRule.data_bits.active_portmsk;
+1298   1          if(rtk_switch_portmask_P2L_get(phyPmask,&(pFilter_cfg->activeport.value)) != RT_ERR_OK)
+1299   1              return RT_ERR_FAILED;
+1300   1      
+1301   1          phyPmask = aclRule.care_bits.active_portmsk;
+1302   1          if(rtk_switch_portmask_P2L_get(phyPmask,&(pFilter_cfg->activeport.mask)) != RT_ERR_OK)
+1303   1              return RT_ERR_FAILED;
+1304   1      
+1305   1          for(i = 0; i <= CARE_TAG_IPV6; i++)
+1306   1          {
+1307   2              if(aclRule.data_bits.tag_exist & (1 << i))
+1308   2                  pFilter_cfg->careTag.tagType[i].value = 1;
+1309   2              else
+1310   2                  pFilter_cfg->careTag.tagType[i].value = 0;
+1311   2      
+1312   2              if (aclRule.care_bits.tag_exist & (1 << i))
+1313   2                  pFilter_cfg->careTag.tagType[i].mask = 1;
+1314   2              else
+1315   2                  pFilter_cfg->careTag.tagType[i].mask = 0;
+1316   2          }
+1317   1      
+1318   1          if(filter_advanceCaretagField[aclRule.data_bits.type][0] == TRUE)
+1319   1          {
+1320   2              /* Advanced Care tag setting */
+1321   2              for(i = CARE_TAG_TCP; i < CARE_TAG_END; i++)
+1322   2              {
+1323   3                  if(aclRule.data_bits.field[filter_advanceCaretagField[aclRule.data_bits.type][1]] & (0x0001 <<
+             - (i-CARE_TAG_TCP)) )
+1324   3                      pFilter_cfg->careTag.tagType[i].value = 1;
+1325   3                  else
+1326   3                      pFilter_cfg->careTag.tagType[i].value = 0;
+1327   3      
+1328   3                  if(aclRule.care_bits.field[filter_advanceCaretagField[aclRule.care_bits.type][1]] & (0x0001 <<
+             - (i-CARE_TAG_TCP)) )
+1329   3                      pFilter_cfg->careTag.tagType[i].mask = 1;
+1330   3                  else
+1331   3                      pFilter_cfg->careTag.tagType[i].mask = 0;
+1332   3              }
+1333   2          }
+1334   1      
+1335   1          for(i = 0; i < RTL8367C_ACLRULEFIELDNO; i++)
+1336   1          {
+1337   2              pFilter_cfg->careFieldRaw[i] = aclRule.care_bits.field[i];
+1338   2              pFilter_cfg->dataFieldRaw[i] = aclRule.data_bits.field[i];
+1339   2          }
+1340   1      
+1341   1          if ((retVal = rtl8367c_getAsicAclNot(filter_id, &tmp))!= RT_ERR_OK)
+1342   1              return retVal;
+1343   1      
+1344   1          pFilter_cfg->invert = tmp;
+1345   1      
+1346   1          pFilter_cfg->valid = aclRule.valid;
+1347   1      
+1348   1          memset(pAction, 0, sizeof(rtk_filter_action_t));
+1349   1      
+1350   1          if ((retVal = rtl8367c_getAsicAclActCtrl(filter_id, &tmp))!= RT_ERR_OK)
+1351   1              return retVal;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 24  
+
+1352   1      
+1353   1          if ((retVal = rtl8367c_getAsicAclAct(filter_id, &aclAct)) != RT_ERR_OK)
+1354   1              return retVal;
+1355   1      
+1356   1          if(tmp & FILTER_ENACT_FWD_MASK)
+1357   1          {
+1358   2              if(TRUE == aclAct.fwdact_ext)
+1359   2              {
+1360   3                  pAction->actEnable[FILTER_ENACT_ISOLATION] = TRUE;
+1361   3      
+1362   3                  phyPmask = aclAct.fwdpmask;
+1363   3                  if(rtk_switch_portmask_P2L_get(phyPmask,&(pAction->filterPortmask)) != RT_ERR_OK)
+1364   3                      return RT_ERR_FAILED;
+1365   3              }
+1366   2              else if(aclAct.fwdact == RTL8367C_ACL_FWD_TRAP)
+1367   2              {
+1368   3                  pAction->actEnable[FILTER_ENACT_TRAP_CPU] = TRUE;
+1369   3              }
+1370   2              else if (aclAct.fwdact == RTL8367C_ACL_FWD_MIRRORFUNTION )
+1371   2              {
+1372   3                  pAction->actEnable[FILTER_ENACT_MIRROR] = TRUE;
+1373   3      
+1374   3                  phyPmask = aclAct.fwdpmask;
+1375   3                  if(rtk_switch_portmask_P2L_get(phyPmask,&(pAction->filterPortmask)) != RT_ERR_OK)
+1376   3                      return RT_ERR_FAILED;
+1377   3              }
+1378   2              else if (aclAct.fwdact == RTL8367C_ACL_FWD_REDIRECT)
+1379   2              {
+1380   3                  if(aclAct.fwdpmask == 0 )
+1381   3                      pAction->actEnable[FILTER_ENACT_DROP] = TRUE;
+1382   3                  else
+1383   3                  {
+1384   4                      pAction->actEnable[FILTER_ENACT_REDIRECT] = TRUE;
+1385   4      
+1386   4                      phyPmask = aclAct.fwdpmask;
+1387   4                      if(rtk_switch_portmask_P2L_get(phyPmask,&(pAction->filterPortmask)) != RT_ERR_OK)
+1388   4                          return RT_ERR_FAILED;
+1389   4                  }
+1390   3              }
+1391   2              else if (aclAct.fwdact == RTL8367C_ACL_FWD_MIRROR)
+1392   2              {
+1393   3                  if((retVal = rtl8367c_getAsicCputagTrapPort(&cpuPort)) != RT_ERR_OK)
+1394   3                      return retVal;
+1395   3                  if (aclAct.fwdpmask == (1 << cpuPort))
+1396   3                  {
+1397   4                      pAction->actEnable[FILTER_ENACT_COPY_CPU] = TRUE;
+1398   4                  }
+1399   3                  else
+1400   3                  {
+1401   4                      pAction->actEnable[FILTER_ENACT_ADD_DSTPORT] = TRUE;
+1402   4      
+1403   4                      phyPmask = aclAct.fwdpmask;
+1404   4                      if(rtk_switch_portmask_P2L_get(phyPmask,&(pAction->filterPortmask)) != RT_ERR_OK)
+1405   4                          return RT_ERR_FAILED;
+1406   4                  }
+1407   3              }
+1408   2              else
+1409   2              {
+1410   3                  return RT_ERR_FAILED;
+1411   3              }
+1412   2          }
+1413   1      
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 25  
+
+1414   1          if(tmp & FILTER_ENACT_POLICING_MASK)
+1415   1          {
+1416   2              pAction->actEnable[FILTER_ENACT_POLICING_0] = TRUE;
+1417   2              pAction->filterPolicingIdx[0] = aclAct.aclmeteridx;
+1418   2          }
+1419   1      
+1420   1          if(tmp & FILTER_ENACT_PRIORITY_MASK)
+1421   1          {
+1422   2              if(aclAct.priact == FILTER_ENACT_PRI_TYPE(FILTER_ENACT_PRIORITY))
+1423   2              {
+1424   3                  pAction->actEnable[FILTER_ENACT_PRIORITY] = TRUE;
+1425   3                  pAction->filterPriority = aclAct.pridx;
+1426   3              }
+1427   2              else if(aclAct.priact == FILTER_ENACT_PRI_TYPE(FILTER_ENACT_1P_REMARK))
+1428   2              {
+1429   3                  pAction->actEnable[FILTER_ENACT_1P_REMARK] = TRUE;
+1430   3                  pAction->filterPriority = aclAct.pridx;
+1431   3              }
+1432   2              else if(aclAct.priact == FILTER_ENACT_PRI_TYPE(FILTER_ENACT_DSCP_REMARK))
+1433   2              {
+1434   3                  pAction->actEnable[FILTER_ENACT_DSCP_REMARK] = TRUE;
+1435   3                  pAction->filterPriority = aclAct.pridx;
+1436   3              }
+1437   2              else if(aclAct.priact == FILTER_ENACT_PRI_TYPE(FILTER_ENACT_POLICING_3))
+1438   2              {
+1439   3                  pAction->actEnable[FILTER_ENACT_POLICING_3] = TRUE;
+1440   3                  pAction->filterPolicingIdx[3]  = aclAct.pridx;
+1441   3              }
+1442   2          }
+1443   1      
+1444   1          if(tmp & FILTER_ENACT_SVLAN_MASK)
+1445   1          {
+1446   2              if(aclAct.sact == FILTER_ENACT_SVLAN_TYPE(FILTER_ENACT_SVLAN_INGRESS))
+1447   2              {
+1448   3                  if((retVal = rtl8367c_getAsicSvlanMemberConfiguration(aclAct.svidx_sact, &svlan_cfg)) != RT_ER
+             -R_OK)
+1449   3                      return retVal;
+1450   3      
+1451   3                  pAction->actEnable[FILTER_ENACT_SVLAN_INGRESS] = TRUE;
+1452   3                  pAction->filterSvlanIdx = aclAct.svidx_sact;
+1453   3                  pAction->filterSvlanVid = svlan_cfg.vs_svid;
+1454   3              }
+1455   2              else if(aclAct.sact == FILTER_ENACT_SVLAN_TYPE(FILTER_ENACT_SVLAN_EGRESS))
+1456   2              {
+1457   3                  if((retVal = rtl8367c_getAsicSvlanMemberConfiguration(aclAct.svidx_sact, &svlan_cfg)) != RT_ER
+             -R_OK)
+1458   3                      return retVal;
+1459   3      
+1460   3                  pAction->actEnable[FILTER_ENACT_SVLAN_EGRESS] = TRUE;
+1461   3                  pAction->filterSvlanIdx = aclAct.svidx_sact;
+1462   3                  pAction->filterSvlanVid = svlan_cfg.vs_svid;
+1463   3              }
+1464   2              else if(aclAct.sact == FILTER_ENACT_SVLAN_TYPE(FILTER_ENACT_SVLAN_CVID))
+1465   2                  pAction->actEnable[FILTER_ENACT_SVLAN_CVID] = TRUE;
+1466   2              else if(aclAct.sact == FILTER_ENACT_SVLAN_TYPE(FILTER_ENACT_POLICING_2))
+1467   2              {
+1468   3                  pAction->actEnable[FILTER_ENACT_POLICING_2] = TRUE;
+1469   3                  pAction->filterPolicingIdx[2]  = aclAct.svidx_sact;
+1470   3              }
+1471   2          }
+1472   1      
+1473   1      
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 26  
+
+1474   1          if(tmp & FILTER_ENACT_CVLAN_MASK)
+1475   1          {
+1476   2              if(FILTER_ENACT_CACTEXT_TAGONLY == aclAct.cact_ext ||
+1477   2                  FILTER_ENACT_CACTEXT_BOTHVLANTAG == aclAct.cact_ext )
+1478   2              {
+1479   3                  if(FILTER_CTAGFMT_UNTAG == aclAct.tag_fmt)
+1480   3                  {
+1481   4                      pAction->actEnable[FILTER_ENACT_EGRESSCTAG_UNTAG] = TRUE;
+1482   4                  }
+1483   3                  else if(FILTER_CTAGFMT_TAG == aclAct.tag_fmt)
+1484   3                  {
+1485   4                      pAction->actEnable[FILTER_ENACT_EGRESSCTAG_TAG] = TRUE;
+1486   4                  }
+1487   3                  else if(FILTER_CTAGFMT_KEEP == aclAct.tag_fmt)
+1488   3                  {
+1489   4                      pAction->actEnable[FILTER_ENACT_EGRESSCTAG_KEEP] = TRUE;
+1490   4                  }
+1491   3                   else if(FILTER_CTAGFMT_KEEP1PRMK== aclAct.tag_fmt)
+1492   3                  {
+1493   4                      pAction->actEnable[FILTER_ENACT_EGRESSCTAG_KEEPAND1PRMK] = TRUE;
+1494   4                  }
+1495   3      
+1496   3              }
+1497   2      
+1498   2              if(FILTER_ENACT_CACTEXT_VLANONLY == aclAct.cact_ext ||
+1499   2                  FILTER_ENACT_CACTEXT_BOTHVLANTAG == aclAct.cact_ext )
+1500   2              {
+1501   3                  if(aclAct.cact == FILTER_ENACT_CVLAN_TYPE(FILTER_ENACT_CVLAN_INGRESS))
+1502   3                  {
+1503   4                      if((retVal = rtl8367c_getAsicVlanMemberConfig(aclAct.cvidx_cact, &vlanMC)) != RT_ERR_OK)
+1504   4                          return retVal;
+1505   4      
+1506   4                      pAction->actEnable[FILTER_ENACT_CVLAN_INGRESS] = TRUE;
+1507   4                      pAction->filterCvlanIdx  = aclAct.cvidx_cact;
+1508   4                      pAction->filterCvlanVid  = vlanMC.evid;
+1509   4                  }
+1510   3                  else if(aclAct.cact == FILTER_ENACT_CVLAN_TYPE(FILTER_ENACT_CVLAN_EGRESS))
+1511   3                  {
+1512   4                      if((retVal = rtl8367c_getAsicVlanMemberConfig(aclAct.cvidx_cact, &vlanMC)) != RT_ERR_OK)
+1513   4                          return retVal;
+1514   4      
+1515   4                      pAction->actEnable[FILTER_ENACT_CVLAN_EGRESS] = TRUE;
+1516   4                      pAction->filterCvlanIdx  = aclAct.cvidx_cact;
+1517   4                      pAction->filterCvlanVid  = vlanMC.evid;
+1518   4                  }
+1519   3                  else if(aclAct.cact == FILTER_ENACT_CVLAN_TYPE(FILTER_ENACT_CVLAN_SVID))
+1520   3                  {
+1521   4                      pAction->actEnable[FILTER_ENACT_CVLAN_SVID] = TRUE;
+1522   4                  }
+1523   3                  else if(aclAct.cact == FILTER_ENACT_CVLAN_TYPE(FILTER_ENACT_POLICING_1))
+1524   3                  {
+1525   4                      pAction->actEnable[FILTER_ENACT_POLICING_1] = TRUE;
+1526   4                      pAction->filterPolicingIdx[1]  = aclAct.cvidx_cact;
+1527   4                  }
+1528   3              }
+1529   2          }
+1530   1      
+1531   1          if(tmp & FILTER_ENACT_INTGPIO_MASK)
+1532   1          {
+1533   2              if(TRUE == aclAct.aclint)
+1534   2              {
+1535   3                  pAction->actEnable[FILTER_ENACT_INTERRUPT] = TRUE;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 27  
+
+1536   3              }
+1537   2      
+1538   2              if(TRUE == aclAct.gpio_en)
+1539   2              {
+1540   3                  pAction->actEnable[FILTER_ENACT_GPO] = TRUE;
+1541   3                  pAction->filterPin = aclAct.gpio_pin;
+1542   3              }
+1543   2          }
+1544   1      
+1545   1          /* Get field type of RAW data */
+1546   1          if ((retVal = rtl8367c_getAsicAclTemplate(aclRule.data_bits.type, &type))!= RT_ERR_OK)
+1547   1              return retVal;
+1548   1      
+1549   1          for(i = 0; i < RTL8367C_ACLRULEFIELDNO; i++)
+1550   1          {
+1551   2              pFilter_cfg->fieldRawType[i] = type.field[i];
+1552   2          }/* end of for(i...) */
+1553   1      
+1554   1          return RT_ERR_OK;
+1555   1      }
+1556          #if 0//NOT used
+              /* Function Name:
+               *      sal_filter_igrAcl_unmatchAction_set
+               * Description:
+               *      Set action to packets when no ACL configuration match
+               * Input:
+               *      port    - Port id.
+               *      action  - Action.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port id.
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This function sets action of packets when no ACL configruation matches.
+               */
+              rtk_api_ret_t sal_filter_igrAcl_unmatchAction_set(rtk_port_t port, rtk_filter_unmatch_action_t action)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(action >= FILTER_UNMATCH_END)
+                      return RT_ERR_INPUT;
+              
+                  if((ret = rtl8367c_setAsicAclUnmatchedPermit(rtk_switch_port_L2P_get(port), action)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_igrAcl_unmatchAction_get
+               * Description:
+               *      Get action to packets when no ACL configuration match
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 28  
+
+               * Input:
+               *      port    - Port id.
+               * Output:
+               *      pAction - Action.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port id.
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This function gets action of packets when no ACL configruation matches.
+               */
+              rtk_api_ret_t sal_filter_igrAcl_unmatchAction_get(rtk_port_t port, rtk_filter_unmatch_action_t* pAction)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pAction)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* Check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if((ret = rtl8367c_getAsicAclUnmatchedPermit(rtk_switch_port_L2P_get(port), pAction)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1630          /* Function Name:
+1631           *      sal_filter_igrAcl_state_set
+1632           * Description:
+1633           *      Set state of ingress ACL.
+1634           * Input:
+1635           *      port    - Port id.
+1636           *      state   - Ingress ACL state.
+1637           * Output:
+1638           *      None
+1639           * Return:
+1640           *      RT_ERR_OK           - OK
+1641           *      RT_ERR_FAILED       - Failed
+1642           *      RT_ERR_SMI          - SMI access error
+1643           *      RT_ERR_PORT_ID      - Invalid port id.
+1644           *      RT_ERR_INPUT        - Invalid input parameters.
+1645           * Note:
+1646           *      This function gets action of packets when no ACL configruation matches.
+1647           */
+1648          rtk_api_ret_t sal_filter_igrAcl_state_set(rtk_port_t port, rtk_filter_state_t state)
+1649          {
+1650   1          rtk_api_ret_t ret;
+1651   1      
+1652   1          /* Check initialization state */
+1653   1          RTK_CHK_INIT_STATE();
+1654   1      
+1655   1          /* Check port valid */
+1656   1          RTK_CHK_PORT_VALID(port);
+1657   1      
+1658   1          if(state >= RTK_ENABLE_END)
+1659   1              return RT_ERR_INPUT;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 29  
+
+1660   1      
+1661   1          if((ret = rtl8367c_setAsicAcl(rtk_switch_port_L2P_get(port), state)) != RT_ERR_OK)
+1662   1             return ret;
+1663   1      
+1664   1          return RT_ERR_OK;
+1665   1      }
+1666          
+1667          /* Function Name:
+1668           *      sal_filter_igrAcl_state_get
+1669           * Description:
+1670           *      Get state of ingress ACL.
+1671           * Input:
+1672           *      port    - Port id.
+1673           * Output:
+1674           *      pState  - Ingress ACL state.
+1675           * Return:
+1676           *      RT_ERR_OK           - OK
+1677           *      RT_ERR_FAILED       - Failed
+1678           *      RT_ERR_SMI          - SMI access error
+1679           *      RT_ERR_PORT_ID      - Invalid port id.
+1680           *      RT_ERR_INPUT        - Invalid input parameters.
+1681           * Note:
+1682           *      This function gets action of packets when no ACL configruation matches.
+1683           */
+1684          rtk_api_ret_t sal_filter_igrAcl_state_get(rtk_port_t port, rtk_filter_state_t* pState)
+1685          {
+1686   1          rtk_api_ret_t ret;
+1687   1      
+1688   1          /* Check initialization state */
+1689   1          RTK_CHK_INIT_STATE();
+1690   1      
+1691   1          if(NULL == pState)
+1692   1              return RT_ERR_NULL_POINTER;
+1693   1      
+1694   1          /* Check port valid */
+1695   1          RTK_CHK_PORT_VALID(port);
+1696   1      
+1697   1          if((ret = rtl8367c_getAsicAcl(rtk_switch_port_L2P_get(port), pState)) != RT_ERR_OK)
+1698   1             return ret;
+1699   1      
+1700   1          return RT_ERR_OK;
+1701   1      }
+1702          #if 0//NOT used
+              /* Function Name:
+               *      sal_filter_igrAcl_template_set
+               * Description:
+               *      Set template of ingress ACL.
+               * Input:
+               *      template - Ingress ACL template
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_INPUT           - Invalid input parameters.
+               * Note:
+               *      This function set ACL template.
+               */
+              rtk_api_ret_t sal_filter_igrAcl_template_set(rtk_filter_template_t *aclTemplate)
+              {
+                  rtk_api_ret_t retVal;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 30  
+
+                  uint32 idxField;
+                  rtl8367c_acltemplate_t aclType;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(aclTemplate->index >= RTK_MAX_NUM_OF_FILTER_TYPE)
+                      return RT_ERR_INPUT;
+              
+                  for(idxField = 0; idxField < RTK_MAX_NUM_OF_FILTER_FIELD; idxField++)
+                  {
+                      if(aclTemplate->fieldType[idxField] < FILTER_FIELD_RAW_DMAC_15_0 ||
+                          (aclTemplate->fieldType[idxField] > FILTER_FIELD_RAW_CTAG && aclTemplate->fieldType[idxField] 
+             -< FILTER_FIELD_RAW_IPV4_SIP_15_0 ) ||
+                          (aclTemplate->fieldType[idxField] > FILTER_FIELD_RAW_IPV4_DIP_31_16 && aclTemplate->fieldType[
+             -idxField] < FILTER_FIELD_RAW_IPV6_SIP_15_0 ) ||
+                          (aclTemplate->fieldType[idxField] > FILTER_FIELD_RAW_IPV6_DIP_31_16 && aclTemplate->fieldType[
+             -idxField] < FILTER_FIELD_RAW_VIDRANGE ) ||
+                          (aclTemplate->fieldType[idxField] > FILTER_FIELD_RAW_FIELD_VALID && aclTemplate->fieldType[idx
+             -Field] < FILTER_FIELD_RAW_FIELD_SELECT00 ) ||
+                          aclTemplate->fieldType[idxField] >= FILTER_FIELD_RAW_END)
+                      {
+                          return RT_ERR_INPUT;
+                      }
+                  }
+              
+                  for(idxField = 0; idxField < RTK_MAX_NUM_OF_FILTER_FIELD; idxField++)
+                  {
+                      aclType.field[idxField] = aclTemplate->fieldType[idxField];
+                  }
+              
+                  if((retVal = rtl8367c_setAsicAclTemplate(aclTemplate->index, &aclType)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_igrAcl_template_get
+               * Description:
+               *      Get template of ingress ACL.
+               * Input:
+               *      template - Ingress ACL template
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               * Note:
+               *      This function gets template of ACL.
+               */
+              rtk_api_ret_t sal_filter_igrAcl_template_get(rtk_filter_template_t *aclTemplate)
+              {
+                  rtk_api_ret_t ret;
+                  uint32 idxField;
+                  rtl8367c_acltemplate_t aclType;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == aclTemplate)
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 31  
+
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(aclTemplate->index >= RTK_MAX_NUM_OF_FILTER_TYPE)
+                      return RT_ERR_INPUT;
+              
+                 if((ret = rtl8367c_getAsicAclTemplate(aclTemplate->index, &aclType)) != RT_ERR_OK)
+                     return ret;
+              
+                  for(idxField = 0; idxField < RTK_MAX_NUM_OF_FILTER_FIELD; idxField ++)
+                  {
+                      aclTemplate->fieldType[idxField] = aclType.field[idxField];
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_igrAcl_field_sel_set
+               * Description:
+               *      Set user defined field selectors in HSB
+               * Input:
+               *      index       - index of field selector 0-15
+               *      format      - Format of field selector
+               *      offset      - Retrieving data offset
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               * Note:
+               *      System support 16 user defined field selctors.
+               *      Each selector can be enabled or disable.
+               *      User can defined retrieving 16-bits in many predefiend
+               *      standard l2/l3/l4 payload.
+               */
+              rtk_api_ret_t sal_filter_igrAcl_field_sel_set(uint32 index, rtk_field_sel_t format, uint32 offset)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(index >= RTL8367C_FIELDSEL_FORMAT_NUMBER)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(format >= FORMAT_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(offset > RTL8367C_FIELDSEL_MAX_OFFSET)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((ret = rtl8367c_setAsicFieldSelector(index, (uint32)format, offset)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_igrAcl_field_sel_get
+               * Description:
+               *      Get user defined field selectors in HSB
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 32  
+
+               * Input:
+               *      index       - index of field selector 0-15
+               * Output:
+               *      pFormat     - Format of field selector
+               *      pOffset     - Retrieving data offset
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t sal_filter_igrAcl_field_sel_get(uint32 index, rtk_field_sel_t *pFormat, uint32 *pOffset)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pFormat || NULL == pOffset)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(index >= RTL8367C_FIELDSEL_FORMAT_NUMBER)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((ret = rtl8367c_getAsicFieldSelector(index, (uint32 *)pFormat, pOffset)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_iprange_set
+               * Description:
+               *      Set IP Range check
+               * Input:
+               *      index       - index of IP Range 0-15
+               *      type        - IP Range check type, 0:Delete a entry, 1: IPv4_SIP, 2: IPv4_DIP, 3:IPv6_SIP, 4:IPv6_
+             -DIP
+               *      upperIp     - The upper bound of IP range
+               *      lowerIp     - The lower Bound of IP range
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_OUT_OF_RANGE    - The parameter is out of range
+               *      RT_ERR_INPUT           - Input error
+               * Note:
+               *      upperIp must be larger or equal than lowerIp.
+               */
+              rtk_api_ret_t sal_filter_iprange_set(uint32 index, rtk_filter_iprange_t type, ipaddr_t upperIp, ipaddr_t l
+             -owerIp)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(index > RTL8367C_ACLRANGEMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 33  
+
+              
+                  if(type >= IPRANGE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(lowerIp > upperIp)
+                      return RT_ERR_INPUT;
+              
+                  if((ret = rtl8367c_setAsicAclIpRange(index, type, upperIp, lowerIp)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_iprange_get
+               * Description:
+               *      Set IP Range check
+               * Input:
+               *      index       - index of IP Range 0-15
+               * Output:
+               *      pType        - IP Range check type, 0:Delete a entry, 1: IPv4_SIP, 2: IPv4_DIP, 3:IPv6_SIP, 4:IPv6
+             -_DIP
+               *      pUpperIp     - The upper bound of IP range
+               *      pLowerIp     - The lower Bound of IP range
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_OUT_OF_RANGE    - The parameter is out of range
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t sal_filter_iprange_get(uint32 index, rtk_filter_iprange_t *pType, ipaddr_t *pUpperIp, ipaddr
+             -_t *pLowerIp)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if((NULL == pType) || (NULL == pUpperIp) || (NULL == pLowerIp))
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(index > RTL8367C_ACLRANGEMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((ret = rtl8367c_getAsicAclIpRange(index, (uint32 *)pType, pUpperIp, pLowerIp)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_vidrange_set
+               * Description:
+               *      Set VID Range check
+               * Input:
+               *      index       - index of VID Range 0-15
+               *      type        - IP Range check type, 0:Delete a entry, 1: CVID, 2: SVID
+               *      upperVid    - The upper bound of VID range
+               *      lowerVid    - The lower Bound of VID range
+               * Output:
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 34  
+
+               *      None.
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_OUT_OF_RANGE    - The parameter is out of range
+               *      RT_ERR_INPUT           - Input error
+               * Note:
+               *      upperVid must be larger or equal than lowerVid.
+               */
+              rtk_api_ret_t sal_filter_vidrange_set(uint32 index, rtk_filter_vidrange_t type, uint32 upperVid, uint32 lo
+             -werVid)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(index > RTL8367C_ACLRANGEMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(type >= VIDRANGE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(lowerVid > upperVid)
+                      return RT_ERR_INPUT;
+              
+                  if( (upperVid > RTL8367C_VIDMAX) || (lowerVid > RTL8367C_VIDMAX))
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((ret = rtl8367c_setAsicAclVidRange(index, type, upperVid, lowerVid)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_vidrange_get
+               * Description:
+               *      Get VID Range check
+               * Input:
+               *      index       - index of VID Range 0-15
+               * Output:
+               *      pType        - IP Range check type, 0:Unused, 1: CVID, 2: SVID
+               *      pUpperVid    - The upper bound of VID range
+               *      pLowerVid    - The lower Bound of VID range
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_OUT_OF_RANGE    - The parameter is out of range
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t sal_filter_vidrange_get(uint32 index, rtk_filter_vidrange_t *pType, uint32 *pUpperVid, uint3
+             -2 *pLowerVid)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 35  
+
+                  if((NULL == pType) || (NULL == pUpperVid) || (NULL == pLowerVid))
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(index > RTL8367C_ACLRANGEMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((ret = rtl8367c_getAsicAclVidRange(index, (uint32 *)pType, pUpperVid, pLowerVid)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_portrange_set
+               * Description:
+               *      Set Port Range check
+               * Input:
+               *      index       - index of Port Range 0-15
+               *      type        - IP Range check type, 0:Delete a entry, 1: Source Port, 2: Destnation Port
+               *      upperPort   - The upper bound of Port range
+               *      lowerPort   - The lower Bound of Port range
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_OUT_OF_RANGE    - The parameter is out of range
+               *      RT_ERR_INPUT           - Input error
+               * Note:
+               *      upperPort must be larger or equal than lowerPort.
+               */
+              rtk_api_ret_t sal_filter_portrange_set(uint32 index, rtk_filter_portrange_t type, uint32 upperPort, uint32
+             - lowerPort)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(index > RTL8367C_ACLRANGEMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(type >= PORTRANGE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(lowerPort > upperPort)
+                      return RT_ERR_INPUT;
+              
+                  if(upperPort > RTL8367C_ACL_PORTRANGEMAX)
+                      return RT_ERR_INPUT;
+              
+                  if(lowerPort > RTL8367C_ACL_PORTRANGEMAX)
+                      return RT_ERR_INPUT;
+              
+                  if((ret = rtl8367c_setAsicAclPortRange(index, type, upperPort, lowerPort)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 36  
+
+               *      sal_filter_portrange_get
+               * Description:
+               *      Set Port Range check
+               * Input:
+               *      index       - index of Port Range 0-15
+               * Output:
+               *      pType       - IP Range check type, 0:Delete a entry, 1: Source Port, 2: Destnation Port
+               *      pUpperPort  - The upper bound of Port range
+               *      pLowerPort  - The lower Bound of Port range
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_OUT_OF_RANGE    - The parameter is out of range
+               *      RT_ERR_INPUT           - Input error
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t sal_filter_portrange_get(uint32 index, rtk_filter_portrange_t *pType, uint32 *pUpperPort, ui
+             -nt32 *pLowerPort)
+              {
+                  rtk_api_ret_t ret;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if((NULL == pType) || (NULL == pUpperPort) || (NULL == pLowerPort))
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(index > RTL8367C_ACLRANGEMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((ret = rtl8367c_getAsicAclPortRange(index, (uint32 *)pType, pUpperPort, pLowerPort)) != RT_ERR_OK)
+                     return ret;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      sal_filter_igrAclPolarity_set
+               * Description:
+               *      Set ACL Goip control palarity
+               * Input:
+               *      polarity - 1: High, 0: Low
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      none
+               */
+              rtk_api_ret_t sal_filter_igrAclPolarity_set(uint32 polarity)
+              {
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(polarity > 1)
+                      return RT_ERR_OUT_OF_RANGE;
+                  return rtl8367c_setAsicAclGpioPolarity(polarity);
+              }
+              /* Function Name:
+C51 COMPILER V9.60.0.0   SALACL                                                            11/02/2026 17:57:08 PAGE 37  
+
+               *      rtk_filter_igrAclPolarity_get
+               * Description:
+               *      Get ACL Goip control palarity
+               * Input:
+               *      pPolarity - 1: High, 0: Low
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      none
+               */
+              rtk_api_ret_t sal_filter_igrAclPolarity_get(uint32* pPolarity)
+              {
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pPolarity)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicAclGpioPolarity(pPolarity);
+              }
+              #endif
+2168          
+2169          
+2170          
+2171          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =  22125    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    501     588
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

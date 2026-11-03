@@ -1,0 +1,69 @@
+C51 COMPILER V9.60.0.0   WEB_HIDDEN                                                        08/20/2025 22:07:55 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_HIDDEN
+OBJECT MODULE PLACED IN .\objects\web_hidden.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\web\web_hidden.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include
+                    -;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\includ
+                    -e\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CL
+                    -K_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\web_hidden.lst) TABS(2) OBJECT(.\objects\web_hidden.o
+                    -bj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <local/config.h>
+   4          
+   5          #include <web/web_api.h>
+   6          #include <web/http_debug.h>
+   7          
+   8          #include "web_hidden.h"
+   9          
+  10          #if WEB_ENABLE
+  11          
+  12          uint8 const far htm_hidden[] = "\
+  13          <html>\n\
+  14          <body>\n\
+  15          </body>\n\
+  16          </html>\n\
+  17          ";
+  18          
+  19          int8 get_hidden(struct http_request_s *pReq)
+  20          {
+  21   1          DBG_LWPS_HTTP_PRINTF(("-------get_hidden()-------\n"));
+  22   1      
+  23   1          WEB_BEGIN(pReq);
+  24   1          
+  25   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  26   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  27   1      
+  28   1          WEB_DATA(pReq, htm_hidden, sizeof(htm_hidden) - 1);
+  29   1          
+  30   1          WEB_END(pReq);
+  31   1      
+  32   1          return SUCCESS;
+  33   1      }
+  34          
+  35          #endif
+  36          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     96    ----
+   CONSTANT SIZE    =     55    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     55    ----
+END OF MODULE INFORMATION.
+
+C51 COMPILER V9.60.0.0   WEB_HIDDEN                                                        08/20/2025 22:07:55 PAGE 2   
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

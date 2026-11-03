@@ -1,0 +1,98 @@
+C51 COMPILER V9.60.0.0   SALRRCPV1                                                         11/02/2026 17:57:02 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALRRCPV1
+OBJECT MODULE PLACED IN .\objects\salrrcpv1.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salrrcpv1.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X10
+                    -00) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common
+                    -\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_
+                    -REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SC
+                    -AN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salrrcpv1.lst) TABS(2) OBJECT(.\objects\salrrcpv1.obj)
+
+line level    source
+
+   1          #include <salrrcp1.h>
+   2          #include <salerror.h>
+   3          
+   4          #define RRCP1SLV_CHIP_ID 0x7001
+   5          
+   6          /* Function Name:
+   7           *      sal_rrcp1Slv_adminPortMask_get
+   8           * Description:
+   9           *      Get the RRCP administration port mask.
+  10           * Input: 
+  11           *      None
+  12           * Output: 
+  13           *      pAdmin_mask - administration port mask
+  14           * Return:
+  15           *      None
+  16           * Note:
+  17           *      None
+  18           */
+  19          int32 sal_rrcp1Slv_adminPortMask_get(sal_pPortmask_t *pAdmin_mask)
+  20          {
+  21   1          pAdmin_mask->bits[0] = 0xFF;
+  22   1          
+  23   1          return SAL_ERR_SUCCESS;
+  24   1      }
+  25          
+  26          /* Function Name:
+  27           *      sal_rrcp1Slv_chipId_get
+  28           * Description:
+  29           *      Get rrcpv1 chip id
+  30           * Input: 
+  31           *      None
+  32           * Output: 
+  33           *      pChipId - Pointer to chip ID
+  34           * Return:
+  35           *      SAL_ERR_SUCCESS
+  36           * Note:
+  37           *      None
+  38           */
+  39          int32 sal_rrcp1Slv_chipId_get(sal_rrcpv1_chipId *chipId)
+  40          {
+  41   1          *chipId = RRCP1SLV_CHIP_ID;
+  42   1      
+  43   1          return SAL_ERR_SUCCESS;
+  44   1      }
+  45          
+  46          /* Function Name:
+  47           *      sal_rrcp1Slv_venderId_get
+  48           * Description:
+  49           *      Get rrcpv1 vender id
+  50           * Input: 
+  51           *      None
+C51 COMPILER V9.60.0.0   SALRRCPV1                                                         11/02/2026 17:57:02 PAGE 2   
+
+  52           * Output: 
+  53           *      pChipId - Pointer to vender ID
+  54           * Return:
+  55           *      SAL_ERR_SUCCESS
+  56           * Note:
+  57           *      None
+  58           */
+  59          int32 sal_rrcp1Slv_venderId_get(sal_rrcpv1_venderId *venderId)
+  60          {
+  61   1          *venderId = 0;
+  62   1      
+  63   1          return SAL_ERR_SUCCESS;
+  64   1      }
+  65          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     43    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,833 @@
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE INIT
+OBJECT MODULE PLACED IN .\objects\init.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\init.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..\includ
+                    -e;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\local;..
+                    -\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_625,FLAS
+                    -H_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\init.lst) TABS(2) OBJECT(.\objects\init.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          #include <local/config.h>
+   3          #include <reg_sfr.h>
+   4          #include <stdio.h>
+   5          
+   6          #include <common.h>
+   7          #include <asicreg.h>
+   8          #include <lwps/pktbuf.h>
+   9          #include <rtk_switch.h>
+  10          
+  11          #include <lib/lib_time.h>
+  12          #include <mem/mem_lib.h>
+  13          
+  14          #include <lwps/lwps_api.h>
+  15          #include <web/httpd.h>
+  16          
+  17          #include <salflash.h>
+  18          #include <salfwug.h>
+  19          #include <salsys.h>
+  20          
+  21          #include <runtime_loader_msg.h>
+  22          
+  23          #include <local/web_config.h>
+  24          #include <handler.h>
+  25          #include <port.h>
+  26          
+  27          extern uint8    xdata *pkt_head;
+  28          extern pktBuf_t xdata pktbuf;
+  29          extern void set_8051RDY() large;
+  30          
+  31          #if defined(FIBER_PORT_4)|| defined (FIBER_PORT_6)
+              void speed_change_reset()
+              {
+                  uint16 tmp;
+                  
+                  //SDS page 0 reg 3 bit 6=1
+                  setReg(0x6601,0x0003);
+                  setReg(0x6600,0x0080);
+                  tmp =getReg(0x6602);
+                  tmp |= 1 << 6;    
+                  setReg(0x6602,tmp);
+                  setReg(0x6601,0x0003);
+                  setReg(0x6600,0x00c0);
+                  
+                  //SDS page 0 reg 3 bit 6=0
+                  setReg(0x6601,0x0003);
+                  setReg(0x6600,0x0080);
+                  tmp =getReg(0x6602);
+                  tmp &= ~(1 << 6);    
+                  setReg(0x6602,tmp);
+                  setReg(0x6601,0x0003);
+                  setReg(0x6600,0x00c0);
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 2   
+
+              
+                  ////CDR reset
+                  //SDS page 0 reg 0 bit 1,0 = 0
+                  setReg(0x6601,0x0000);
+                  setReg(0x6600,0x0080);
+                  tmp =getReg(0x6602);
+                  tmp &= ~(1 << 1);    
+                  tmp &= ~(1 << 0);  
+                  setReg(0x6602,tmp);
+                  setReg(0x6601,0x0000);
+                  setReg(0x6600,0x00c0);
+              
+                  //SDS page 0 reg 0 bit 1,0 = 1
+                  setReg(0x6601,0x0000);
+                  setReg(0x6600,0x0080);
+                  tmp =getReg(0x6602);
+                  tmp |= 1 << 1;       
+                  tmp |= 1 << 0;    
+                  setReg(0x6602,tmp);
+                  setReg(0x6601,0x0000);
+                  setReg(0x6600,0x00c0);
+              }
+              #endif
+  76          
+  77          #if defined(FIBER_PORT_4)
+              void fiber_init()
+              {
+                  uint16 regData;
+                  uint16 tmp;
+              
+                  //port set combo fiber
+                  setReg(0x6602, 0x04D7);
+                  setReg(0x6601, 0x0480);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0xF994);
+                  setReg(0x6601, 0x0481);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x31A2);
+                  setReg(0x6601, 0x0482);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x6960);
+                  setReg(0x6601, 0x0483);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x9728);
+                  setReg(0x6601, 0x0484);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x9D85);
+                  setReg(0x6601, 0x0423);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0xD810);
+                  setReg(0x6601, 0x0424);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x400);
+                  setReg(0x6601, 0x2F);
+                  setReg(0x6600, 0x00C0);
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 3   
+
+              
+              #if 1//// disable ASIC bit error reset and enable down speed
+                  setReg(0x6602, 0x0f20);
+                  setReg(0x6601, 0x0001);
+                  setReg(0x6600, 0x00c0);
+              #endif
+              
+              #if 1 ////  one_giga auto detect auto_force
+                  setReg(0x6601,0x0004);
+                  setReg(0x6600,0x0080);
+                  tmp =getReg(0x6602);
+                  tmp |= 1 << 1;        
+                  tmp |= 1 << 2;
+                  setReg(0x6602,tmp);
+                  setReg(0x6601,0x0004);
+                  setReg(0x6600,0x00c0);
+              #endif
+              
+              #if 1 //MAC 4 change to auto
+                  setReg(0x13eb,0x15b9);
+                  setReg(0x13e7,0x7);
+                  setReg(0x6200,0x1140);
+              #endif
+              
+                  speed_change_reset();
+              }
+              #endif
+ 142          
+ 143          #if defined (FIBER_PORT_6)
+              void fiber_auto_detect()
+              {
+                  uint16 tmp;
+                  
+                  setReg(0x6602, 0x04D7);
+                  setReg(0x6601, 0x0480);
+                  setReg(0x6600, 0x00C0);
+                  
+                  setReg(0x1d11, 0x1740);
+              //    setReg(0x6200,0x1140);
+                  tmp = getReg(0x1d41);
+                  tmp |= 1<< 5;
+                  tmp |= 1<< 7;    
+                  setReg(0x1d41, tmp);
+                  setReg(0x13EB, 0x15BB);
+                  setReg(0x13E7, 0x7);      //release chip top serdes mode(default fiber auto)
+                  setReg(0x6200,0x1140);
+                  speed_change_reset();
+              }
+              
+              void enable_down_speed()
+              {
+                  //  enable  cfg_frc_dwspd
+                  setReg(0x6602, 0x0f20);
+                  setReg(0x6601, 0x0001);
+                  setReg(0x6600, 0x00c0);
+              }
+              
+              void auto_giga_with_linkpartner_force_1G()
+              {
+                  uint16 tmp;
+                  
+                  //  one_giga auto detect auto_force
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 4   
+
+                  setReg(0x6601,0x0004);
+                  setReg(0x6600,0x0080);
+                  tmp =getReg(0x6602);
+                  tmp |= 1 << 1;        
+                  tmp |= 1 << 2;
+                  setReg(0x6602,tmp);
+                  setReg(0x6601,0x0004);
+                  setReg(0x6600,0x00c0);
+              }
+              
+              void fiber_init()
+              {
+                  uint16 tmp;
+                  uint16 regData;
+                  
+                  //port set combo fiber
+                  setReg(0x6602, 0x04D7);
+                  setReg(0x6601, 0x0480);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0xF994);
+                  setReg(0x6601, 0x0481);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x31A2);
+                  setReg(0x6601, 0x0482);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x6960);
+                  setReg(0x6601, 0x0483);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x9728);
+                  setReg(0x6601, 0x0484);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x9D85);
+                  setReg(0x6601, 0x0423);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0xD810);
+                  setReg(0x6601, 0x0424);
+                  setReg(0x6600, 0x00C0);
+              
+                  setReg(0x6602, 0x400);
+                  setReg(0x6601, 0x2F);
+                  setReg(0x6600, 0x00C0);
+              
+                  fiber_auto_detect();
+                  enable_down_speed();
+                  auto_giga_with_linkpartner_force_1G();
+              
+              }
+              #endif
+ 231          
+ 232          #if defined(FIBER_PORT_70MB)
+              int8 setSerdesReg(uint16 sds_index, uint16 sds_reg, uint16 sds_page, uint16 regData)
+              {
+                  uint16 sds_addr = 0, sds_cmd = 0;
+                  uint16 busyFlag,checkCounter;
+                      
+                  sds_addr = (sds_page << 5) | sds_reg;
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 5   
+
+                  sds_cmd  = sds_index | 0x00C0; 
+                  
+                  setReg(0x6602, regData);
+                  setReg(0x6601, sds_addr);
+                  setReg(0x6600, sds_cmd);
+              
+                  checkCounter = 100;
+                while(checkCounter)
+                {
+                    busyFlag = getReg(0x6600);
+                  if(busyFlag & 0x0100U)
+                  {
+                    checkCounter --;
+                    if(0 == checkCounter)
+                              return FAILED;
+                  }
+                  else
+                  {
+                    checkCounter = 0;
+                  }
+                } 
+                  
+                  return SUCCESS;      
+              }
+              
+              void pup_phy()
+              {
+                  
+                  setReg(0x6200, 0x1340);   //power up sds 0
+                  setReg(0x6210, 0x1340);   //power up sds 1
+              
+              }
+              void base_patch() {
+              // patch sds  
+                  //cfg sds mode to reset mode
+                setReg(0x1d92, 0x1f1f); 
+              
+                //REG_RX_OFFSET_AUTO_K force
+                setSerdesReg(1,1,0x21,0xEC91);
+                setSerdesReg(1,5,0x24,0x5825);
+                //setSerdesReg(1,0,2,0x1140);
+                 //patch FIB100 Device Link up/down 3times
+                  setSerdesReg(1,13,0,0x4616);
+                 //enable down speed
+                setSerdesReg(1,1,0,0xf20);
+              
+                //REG_RX_OFFSET_AUTO_K force
+                setSerdesReg(0,0,0x28,0x942c);
+                setSerdesReg(0,0,0x24,0x942c);
+                setSerdesReg(0,5,0x21,0x8dc3);
+                //Patch for Hisgmii
+                setSerdesReg(0,9,0x21,0x3931);
+                //setSerdesReg(0,0,2,0x1140);
+                 //patch FIB100 Device Link up/down 3times
+                  setSerdesReg(0,13,0,0x4616);
+                 //enable down speed
+                setSerdesReg(0,1,0,0xf20);
+              
+                 //enable sds1/0          
+                setReg(0x1d92, 0x707);   
+              }
+              #endif
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 6   
+
+ 301          
+ 302          void uart_init()
+ 303          {
+ 304   1          uint16 tmp;
+ 305   1          uint32 divisor;
+ 306   1      
+ 307   1          IE = 0;
+ 308   1          /* enable global interrupt */
+ 309   1          EA = 1;
+ 310   1          T2CON = 0x34;
+ 311   1          SCON0 = 0x50;
+ 312   1      
+ 313   1          setReg(0x1d32, 0x0004); //Enable 67C UART
+ 314   1          
+ 315   1          tmp = (getReg(0x1336) >> 4) & 0x7;
+ 316   1          switch(tmp)
+ 317   1          {
+ 318   2          case DW8051_RDY_200MHz:
+ 319   2              system_clock = (200000UL * 1000);
+ 320   2              break;
+ 321   2          case DW8051_RDY_125MHz:
+ 322   2              system_clock = (125000UL * 1000);
+ 323   2              break;
+ 324   2          case DW8051_RDY_100MHz:
+ 325   2              system_clock = (100000UL * 1000);
+ 326   2              break;
+ 327   2          case DW8051_RDY_625MHz:
+ 328   2              system_clock = (62500UL * 1000);
+ 329   2              break;
+ 330   2          case DW8051_RDY_20_8MHz:
+ 331   2              system_clock = (20800UL * 1000);
+ 332   2              break;
+ 333   2          default:
+ 334   2              system_clock = (20800UL * 1000);
+ 335   2          }
+ 336   1          divisor = 65536 - system_clock/(32UL * BAUD_RATE);
+ 337   1      
+ 338   1          RCAP2L = divisor & 0xFF;
+ 339   1          RCAP2H = (divisor & 0xFF00) >> 8;
+ 340   1      
+ 341   1          setReg(0x13a0, (RCAP2H << 8) | RCAP2L);
+ 342   1              
+ 343   1          TI = 1;
+ 344   1          RI = 0;
+ 345   1      
+ 346   1          /* enable flash */
+ 347   1          tmp = getReg(0x130c);
+ 348   1          tmp |= 0x1000;
+ 349   1          setReg(0x130c, tmp);
+ 350   1      }
+ 351           
+ 352          
+ 353          void nic_init()
+ 354          {
+ 355   1          uint16 tmp;
+ 356   1       
+ 357   1          rxSeq = 0;
+ 358   1          txSeq = 0;
+ 359   1        
+ 360   1          /* reset nic */
+ 361   1          tmp = getReg(0x1322);
+ 362   1          tmp = tmp | (1 << 5);
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 7   
+
+ 363   1          setReg(0x1322, tmp);
+ 364   1          /* set nic ready */
+ 365   1          tmp = getReg(0x130c);
+ 366   1          tmp |= 0x400;
+ 367   1          setReg(0x130c, tmp);
+ 368   1          /* set rx stop */
+ 369   1          setReg(0x1a46, (RXBUFFERSIZE/8 - 1) & 0xFF);
+ 370   1          setReg(0x1a47, (RXBUFFERSIZE / 8 - 1) >> 8);
+ 371   1          /* set tx stop  */
+ 372   1          setReg(0x1a44, ((RXBUFFERSIZE + TXBUFFERSIZE)/8 - 1) & 0xFF);
+ 373   1          setReg(0x1a45, ((RXBUFFERSIZE + TXBUFFERSIZE)/8 - 1) >> 8);
+ 374   1           /* set rxfst */
+ 375   1          setReg(0x1a48, 4);
+ 376   1       
+ 377   1          /* set mtu */
+ 378   1          setReg(0x1a17, 0x0000);
+ 379   1      
+ 380   1      
+ 381   1        /* set rx drop */
+ 382   1        setReg(0x1a5C, 1);
+ 383   1          // setReg(0x1a5C, 0);
+ 384   1          /*enable TX */
+ 385   1          setReg(NIC_TXCR, 1);
+ 386   1        
+ 387   1          /* enable rx and discard crc err */
+ 388   1          setReg(NIC_RXCR1, 0x03);
+ 389   1         //setReg(NIC_RXCR1, 0x1D);
+ 390   1      
+ 391   1      }
+ 392          
+ 393          void switch_init(void) large{
+ 394   1      
+ 395   1          uint16 i;
+ 396   1          /* Set initial state */
+ 397   1          rtk_switch_init();
+ 398   1      
+ 399   1          i = getReg(0x130C);
+ 400   1          i |= 0x50;
+ 401   1          setReg(0x130C, i);    
+ 402   1          
+ 403   1      }
+ 404          
+ 405          
+ 406          #if 0
+              void clear_ACL(void)
+              {
+                 uint16 i;
+              
+                  /* clear template*/
+                  for(i=0x600;i<=0x613;i++)
+                      setReg(i,0);
+                
+                 
+                /*clear ACL care bit*/
+                for(i=0;i<0x40;i++)
+                {
+                      setReg(0x0501,i);
+                    setReg(0x0510,0);
+                    setReg(0x0511,0);
+                    setReg(0x0512,0);
+                    setReg(0x0513,0);
+                    setReg(0x0514,0);
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 8   
+
+                    setReg(0x0515,0);
+                    setReg(0x0516,0);
+                    setReg(0x0517,0);
+                    setReg(0x0518,0);
+                    setReg(0x0519,0);
+                    setReg(0x0500,0x0009);
+                }
+                  /*clear ACL rules*/
+                for(i=0x40;i<0x80;i++)
+                {
+                      setReg(0x0501,i);
+                    setReg(0x0510,0);
+                    setReg(0x0511,0);
+                    setReg(0x0512,0);
+                    setReg(0x0513,0);
+                    setReg(0x0514,0);
+                    setReg(0x0515,0);
+                    setReg(0x0516,0);
+                    setReg(0x0517,0);
+                    setReg(0x0518,0);
+                    setReg(0x0519,0);
+                    setReg(0x0500,0x0009);
+                }
+              }
+              
+              void cpu_patch()
+              {
+              #define ARP_ETHER_TYPE   (0x0806)
+              #define IP_ETHER_TYPE    (0x0800)
+              #define RTK_ETHER_TYPE   (0x8899)
+              #define DHCP_L4_SRC_PORT (0x0043)
+              #define DHCP_L4_DST_PORT (0x0044)
+                  
+                  uint16 i, tmp;
+              
+                  /* Add cpu port into isoloation output port */
+                  for(i = 0x8a2; i < 0x8a9; i++)
+                      setReg(i,getReg(i)|0x80);
+                 
+                 /* Add cpu port into vlan 1 */
+                 setReg(0x510, 0x80ff);
+                 setReg(0x511, 0);
+                 setReg(0x512, 0xc000);
+                 setReg(0x513, 0x3fff);
+                 setReg(0x501, 1);
+                 setReg(0x500, 0x13);
+                 
+                 /* exclude cpu port from flooding portmask */
+                 setReg(0x890, 0x7F);
+                 setReg(0x891, 0x7F);
+                 setReg(0x892, 0x7F);
+                  /* Add static entry in L2 for cpu port */
+                  //setReg(0x502, 0x1498);
+                setReg(0x510, this_mac[5] | (this_mac[4] << 8)); 
+                setReg(0x511, this_mac[3] | (this_mac[2] << 8)); 
+                setReg(0x512, this_mac[1] | (this_mac[0] << 8));
+                setReg(0x513, 0x2001);
+                setReg(0x514, 0x7f00);
+                setReg(0x515, 0x0020);
+                setReg(0x500, 0x000c);
+                
+              
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 9   
+
+                
+                  /* set ACL enable */
+                  setReg(0x6d5,0xff);
+              
+              
+              
+              
+                 /*set ACL template 0 as DMAC0 DMAC1 DMAC2 ETHERTYPE SMAC0 SMAC1 SMAC2*/
+                setReg(0x0600,0x0201);
+                setReg(0x0601,0x0703);
+                setReg(0x0602,0x0504);
+                setReg(0x0603,0x0006);
+                
+                
+                /* Add ACL rule 0 to fowrard packet with ARP and DA = Switch MAC to cpu port */
+                
+                setReg(0x0501,0x0000);
+                setReg(0x0510,0x80ff);
+                setReg(0x0511,~((this_mac[4] << 8) | this_mac[5])) ;
+                setReg(0x0512, ~((this_mac[2] << 8) | this_mac[3]));
+                setReg(0x0513,~((this_mac[0] << 8) | this_mac[1]));
+                setReg(0x0514,0xf7f9);
+                setReg(0x0515,0x0000);
+                setReg(0x0516,0x0000);
+                setReg(0x0517,0x0000);
+                setReg(0x0518,0x0000);
+                setReg(0x0500,0x0009);
+                
+                setReg(0x0501,0x0040);
+                setReg(0x0510,0x7f00);
+                setReg(0x0511,(this_mac[4] << 8) | this_mac[5]);
+                setReg(0x0512,(this_mac[2] << 8) | this_mac[3]);
+                setReg(0x0513,(this_mac[0] << 8) | this_mac[1]);
+                setReg(0x0514,0x0806);
+                setReg(0x0515,0x0000);
+                setReg(0x0516,0x0000);
+                setReg(0x0517,0x0000);
+                setReg(0x0518,0x0000);
+                setReg(0x0519,0x0001);
+                setReg(0x0500,0x0009);
+                
+                setReg(0x0501,0x0000);
+                setReg(0x0510,0x0000);
+                setReg(0x0511,0x6000);
+                setReg(0x0512,0x0000);
+                setReg(0x0500,0x000a);
+                setReg(0x0614,0x0018);
+                
+                /* Add ACL rule 1 to mirror ARP to 8051 */
+                setReg(0x0501,0x0001);
+                setReg(0x0510,0x80ff);
+                setReg(0x0511,0x0000);
+                setReg(0x0512,0x0000);
+                setReg(0x0513,0x0000);
+                setReg(0x0514,0xf7f9);
+                setReg(0x0515,0x0000);
+                setReg(0x0516,0x0000);
+                setReg(0x0517,0x0000);
+                setReg(0x0518,0x0000);
+                setReg(0x0500,0x0009);
+                
+                setReg(0x0501,0x0041);
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 10  
+
+                setReg(0x0510,0x7f00);
+                setReg(0x0511,0x0000);
+                setReg(0x0512,0x0000);
+                setReg(0x0513,0x0000);
+                setReg(0x0514,0x0806);
+                setReg(0x0515,0x0000);
+                setReg(0x0516,0x0000);
+                setReg(0x0517,0x0000);
+                setReg(0x0518,0x0000);
+                setReg(0x0519,0x0001);
+                setReg(0x0500,0x0009);
+                
+                setReg(0x0614,0x1818);//RULE0+RULE1
+                setReg(0x0501,0x0001);
+                setReg(0x0510,0x0000);
+                setReg(0x0511,0x2002);
+                setReg(0x0512,0x0000);
+                setReg(0x0500,0x000a);
+                
+                
+                
+                
+                
+                /* Add ACL rule 2 to block IP packet with SA equals to switch MAC */ 
+                
+                setReg(0x0501,0x0002);
+                setReg(0x0510,0x80ff);
+                setReg(0x0511,0x0000);
+                setReg(0x0512,0x0000);
+                setReg(0x0513,0x0000);
+                setReg(0x0514,0xf7ff);
+                setReg(0x0515,~((this_mac[4] << 8) | this_mac[5]));
+                setReg(0x0516,~((this_mac[2] << 8) | this_mac[3]));
+                setReg(0x0517,~((this_mac[0] << 8) | this_mac[1]));
+                setReg(0x0518,0x0000);
+                setReg(0x0500,0x0009);
+                
+                setReg(0x0501,0x0042);
+                setReg(0x0510,0x7f00);
+                setReg(0x0511,0x0000);
+                setReg(0x0512,0x0000);
+                setReg(0x0513,0x0000);
+                setReg(0x0514,0x0800);
+                setReg(0x0515,(this_mac[4] << 8) | this_mac[5]);
+                setReg(0x0516,(this_mac[2] << 8) | this_mac[3]);
+                setReg(0x0517,(this_mac[0] << 8) | this_mac[1]);
+                setReg(0x0518,0x0000);
+                setReg(0x0519,0x0001);
+                setReg(0x0500,0x0009);
+                
+                setReg(0x0501,0x0002);
+                setReg(0x0510,0x0000);
+                setReg(0x0511,0x4000);
+                setReg(0x0512,0x0000);
+                setReg(0x0500,0x000a);
+                setReg(0x0615,0x0010);
+              
+              
+              
+              
+                /* set MAC in MAC register */
+                tmp = this_mac[4];
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 11  
+
+                tmp = this_mac[5] | (tmp << 8);
+                setReg(0x1209, tmp);
+                tmp = this_mac[2];
+                tmp = this_mac[3] | (tmp << 8);
+                setReg(0x120A, tmp);
+                tmp = this_mac[0];
+                tmp = this_mac[1] | (tmp << 8);
+                  setReg(0x120B, tmp);
+              
+                  /* When queue number = 4, map priority 6 and priority 7 to queue 3 */
+                  setReg(0x90b, 0x3322);
+              
+                  /* LED setting */
+                  /* Parallel mode, group 0:speed1000/ACT, group 1:speed100(10)/ACT, group 2:off */
+                  setReg(0x1b26, 3);
+                  setReg(0x1B00, 0x14F4);
+                setReg(0x1B03, 0x0096);
+              }
+              #endif
+ 630          
+ 631          void interrupt_init(void)
+ 632          {
+ 633   1          IE  = 0;
+ 634   1          EIE = 0;
+ 635   1          EA  = 1;
+ 636   1      }
+ 637          
+ 638          void timer_init(void)
+ 639          {
+ 640   1          uint16 xdata tmp;
+ 641   1      
+ 642   1          current_time = JAN_1970;
+ 643   1          timeCount = 0;
+ 644   1      
+ 645   1          TMOD = 0x01;                /* enable timer 0 */
+ 646   1          tmp  = (uint16) (system_clock/(12*CONFIG_TIMER_DIVISOR));
+ 647   1          tmp  = 0xFFFF - tmp + 1;
+ 648   1          _th0 = (tmp>> 8)&0xFF;
+ 649   1          _tl0 = (tmp>> 0)&0xFF;
+ 650   1          TH0  = _th0;
+ 651   1          TL0  = _tl0;
+ 652   1      
+ 653   1          tmp += (0x0DU); /* magic number, for Software reload */
+ 654   1          _th0 = (tmp>> 8)&0xFF;
+ 655   1          _tl0 = (tmp>> 0)&0xFF;
+ 656   1      
+ 657   1          //OSAL_PRINTF("Divisor=0x%04x\n", tmp);
+ 658   1      
+ 659   1          TCON  = 0x10;                //enable timer0 and timer 1
+ 660   1          CKCON = CKCON & 0xC7;       //timer clock is system clock/12
+ 661   1      
+ 662   1          ET0   = 1;                    // enable timer0 interrupt
+ 663   1      }
+ 664          
+ 665          void lwps_init(void)
+ 666          {
+ 667   1          eth_init();
+ 668   1          etharp_init();
+ 669   1          ip_init();
+ 670   1          icmp_init();
+ 671   1          tcp_init();
+ 672   1          udp_init();
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 12  
+
+ 673   1          lwps_api_init();
+ 674   1      }
+ 675          
+ 676          void all_init(void)
+ 677          {
+ 678   1          uint32 i;
+ 679   1      
+ 680   1          change_clock(DW8051_CLK);
+ 681   1          CKCON = 0x0; //Stretch value is 0
+ 682   1          DATA_BANK = 0;
+ 683   1          mem_init();
+ 684   1          uart_init();
+ 685   1          nic_init();
+ 686   1          flash_init(); //spi_flash_driver_info();
+ 687   1        
+ 688   1          for(i=0;i<0xffff;i++) //add delay for spi flash to finish initial
+ 689   1              ;
+ 690   1          
+ 691   1          EX1 = 1;
+ 692   1          pkt_head = (p_buffer+TAG_SIZE+FRAME_INFO_SIZE);
+ 693   1      }
+ 694          
+ 695          void loader_init()
+ 696          {
+ 697   1          sal_mac_t   mac;
+ 698   1          sal_fwug_startState_t start_state;
+ 699   1      
+ 700   1          pkt_head = (p_buffer+TAG_SIZE+FRAME_INFO_SIZE);    
+ 701   1      
+ 702   1      #if defined(FIBER_PORT_70MB)
+                  base_patch();
+              #endif
+ 705   1        
+ 706   1          interrupt_init();
+ 707   1        change_clock(DW8051_CLK);  
+ 708   1        uart_init();  
+ 709   1      
+ 710   1          sal_fwug_startState_get(&start_state);
+ 711   1      
+ 712   1          if(SAL_FWUG_STARTSTATE_COLD == start_state)
+ 713   1          {
+ 714   2              switch_init();    
+ 715   2          }
+ 716   1      
+ 717   1        set_8051RDY();
+ 718   1        
+ 719   1      #if defined(FIBER_PORT_70MB)
+                  pup_phy();
+              #endif
+ 722   1          
+ 723   1      #if defined(FIBER_PORT_4)|| defined (FIBER_PORT_6)
+                  fiber_init();
+              #endif
+ 726   1      
+ 727   1        //clear_ACL();
+ 728   1          lwps_init();
+ 729   1        
+ 730   1          httpd_init();
+ 731   1      #if defined(UPGRADE_TFTP)
+                  /* TFTP init */
+                  tftpc_init();
+                  sal_fwug_status_set(SAL_FWUG_STATUS_NORMAL);
+C51 COMPILER V9.60.0.0   INIT                                                              08/20/2025 22:07:53 PAGE 13  
+
+              #endif    
+ 736   1          /* init ip */
+ 737   1          if(SAL_FWUG_STARTSTATE_WARM == start_state)
+ 738   1          {
+ 739   2              runtime_ip_get(this_ip, netmask, default_gateway.addr);
+ 740   2          }
+ 741   1          else
+ 742   1          {
+ 743   2              sal_flash_config_init();
+ 744   2          }
+ 745   1      
+ 746   1      
+ 747   1          /* check whether non-volatile MAC address is valid */
+ 748   1          sal_flash_sysMac_get(&mac);
+ 749   1          
+ 750   1          /* if it is invalid, use non-volatile MAC as MAC address */
+ 751   1          if(mac.octet[0] != 0xFF || mac.octet[1] != 0xFF || mac.octet[2] != 0xFF ||
+ 752   1              mac.octet[3] != 0xFF || mac.octet[4] != 0xFF || mac.octet[5] != 0xFF)
+ 753   1          {
+ 754   2              printf("load MAC from nvcfg\n");
+ 755   2              sal_sys_mac_set(&mac);
+ 756   2          }
+ 757   1          /* else, MAC address will following configuration, so do nothing here */
+ 758   1      
+ 759   1      
+ 760   1          loader_isr_set(TRUE);
+ 761   1          timer_init();  
+ 762   1      
+ 763   1          /* start phy */
+ 764   1        rtk_port_phyEnableAll_set(ENABLED);
+ 765   1        
+ 766   1        handler_init();
+ 767   1      
+ 768   1          printf("  IP:%d.%d.%d.%d\n", (uint16)this_ip[0], (uint16)this_ip[1], (uint16)this_ip[2], (uint16)this_
+             -ip[3]);
+ 769   1          printf("Mask:%d.%d.%d.%d\n", (uint16)netmask[0], (uint16)netmask[1], (uint16)netmask[2], (uint16)netma
+             -sk[3]);
+ 770   1          printf("  GW:%d.%d.%d.%d\n", (uint16)default_gateway.addr[0], (uint16)default_gateway.addr[1], (uint16
+             -)default_gateway.addr[2], (uint16)default_gateway.addr[3]);
+ 771   1          printf(" MAC:%02bX.%02bX.%02bX.%02bX.%02bX.%02bX\n", this_mac[0], this_mac[1], this_mac[2], this_mac[3
+             -], this_mac[4], this_mac[5]);
+ 772   1          
+ 773   1      //    setReg(0x1d3f, 0x0000); //Force deglitch disble
+ 774   1      }
+ 775          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1015    ----
+   CONSTANT SIZE    =    117    ----
+   XDATA SIZE       =   ----      15
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    117    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

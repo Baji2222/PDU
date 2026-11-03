@@ -1,0 +1,928 @@
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_QOS
+OBJECT MODULE PLACED IN .\objects\web_qos.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_qos.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_qos.lst) TABS(2) OBJECT(.\objects\web_qos.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to QoS function
+  10           *
+  11           * Feature : Response the request related to QoS function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          #include <stdlib.h>
+  20          
+  21          #include <ctype.h>
+  22          #include <salqos.h>
+  23          #include <salerror.h>
+  24          #include <saltrunk.h>
+  25          #include <salsys.h>
+  26          
+  27          #include <web/web_api.h>
+  28          #include "web_qos.h"
+  29          #include "web_util.h"
+  30          /*
+  31           * Symbol Definition
+  32           */
+  33          /*
+  34           * Data Declaration
+  35           */
+  36              
+  37          /*
+  38           * Function Declaration
+  39           */
+  40          
+  41          /*
+  42           * Function: get_qos
+  43           * -----------------
+  44           * Placeholder handler for QoS main page.
+  45           * Currently displays simple text response.
+  46           * Can be extended for main QoS configuration.
+  47           */
+  48          int32 get_qos(struct http_request_s *pReq)
+  49          {
+  50   1          WEB_BEGIN(pReq);
+  51   1      
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 2   
+
+  52   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  53   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  54   1      
+  55   1          WEB_PRINTF(pReq, "<html>\n");
+  56   1          WEB_PRINTF(pReq, "This is qos.cgi");
+  57   1          WEB_PRINTF(pReq, "</html>\n");
+  58   1      
+  59   1          WEB_END(pReq);
+  60   1      
+  61   1          return SUCCESS;
+  62   1      }
+  63          
+  64          /*
+  65           * Function: get_qos_portbasedpriority
+  66           * -----------------------------------
+  67           * Displays port-based priority configuration page.
+  68           * Currently placeholder - returns empty HTML.
+  69           * Intended to show port-to-priority mapping settings.
+  70           */
+  71          int32 get_qos_portbasedpriority(struct http_request_s *pReq)
+  72          {
+  73   1          //    sal_qos_pri2queue_t pri2qid;
+  74   1          sal_pri_t pri;
+  75   1          uint8 port = 0;
+  76   1          uint8 logicPortStr[MAX_LOGIC_ID_LEN];
+  77   1          //    uint8       i;
+  78   1          uint8 queue_num;
+  79   1      
+  80   1          WEB_BEGIN(pReq);
+  81   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  82   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  83   1      
+  84   1          WEB_PRINTF(pReq, "<html>\n");
+  85   1          WEB_PRINTF(pReq, "</html>\n");
+  86   1          WEB_END(pReq);
+  87   1      
+  88   1          return SUCCESS;
+  89   1      }
+*** WARNING C280 IN LINE 74 OF ..\src\web\web_qos.c: 'pri': unreferenced local variable
+*** WARNING C280 IN LINE 76 OF ..\src\web\web_qos.c: 'logicPortStr': unreferenced local variable
+*** WARNING C280 IN LINE 78 OF ..\src\web\web_qos.c: 'queue_num': unreferenced local variable
+  90          
+  91          /*
+  92           * Function: get_qos_packetscheduling
+  93           * ----------------------------------
+  94           * Displays packet scheduling configuration page.
+  95           * Shows queue weights and scheduling algorithm settings.
+  96           * Currently placeholder - returns empty HTML.
+  97           */
+  98          int32 get_qos_packetscheduling(struct http_request_s *pReq)
+  99          {
+ 100   1          sal_qos_queue_weights_t qweights;
+ 101   1          uint8 port = 0;
+ 102   1          uint8 queue_num;
+ 103   1          uint8 i;
+ 104   1      
+ 105   1          WEB_BEGIN(pReq);
+ 106   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 107   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 108   1      
+ 109   1          WEB_PRINTF(pReq, "<html>\n");
+ 110   1          
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 3   
+
+ 111   1          WEB_PRINTF(pReq, "</html>\n");
+ 112   1      
+ 113   1          WEB_END(pReq);
+ 114   1      
+ 115   1          return SUCCESS;
+ 116   1      }
+*** WARNING C280 IN LINE 100 OF ..\src\web\web_qos.c: 'qweights': unreferenced local variable
+*** WARNING C280 IN LINE 102 OF ..\src\web\web_qos.c: 'queue_num': unreferenced local variable
+*** WARNING C280 IN LINE 103 OF ..\src\web\web_qos.c: 'i': unreferenced local variable
+ 117          
+ 118          /*
+ 119           * Function: get_qos_internalPriority
+ 120           * ----------------------------------
+ 121           * Displays internal priority selection configuration page.
+ 122           * Shows priority decision order for QoS classification.
+ 123           * Currently placeholder - returns empty HTML.
+ 124           */
+ 125          int32 get_qos_internalPriority(struct http_request_s *pReq)
+ 126          {
+ 127   1          uint16 int_pri_number;
+ 128   1          sal_qos_pri_selet_t int_pri;
+ 129   1      
+ 130   1          WEB_BEGIN(pReq);
+ 131   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 132   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 133   1      
+ 134   1          WEB_PRINTF(pReq, "<html>\n");
+ 135   1          
+ 136   1          WEB_PRINTF(pReq, "</html>\n");
+ 137   1          WEB_END(pReq);
+ 138   1      
+ 139   1          return SUCCESS;
+ 140   1      }
+*** WARNING C280 IN LINE 127 OF ..\src\web\web_qos.c: 'int_pri_number': unreferenced local variable
+*** WARNING C280 IN LINE 128 OF ..\src\web\web_qos.c: 'int_pri': unreferenced local variable
+ 141          
+ 142          /*
+ 143           * Function: get_qos_dscpremapping
+ 144           * -------------------------------
+ 145           * Displays DSCP priority remapping configuration page.
+ 146           * Shows DSCP-to-internal-priority mapping table.
+ 147           * Currently placeholder - returns empty HTML.
+ 148           */
+ 149          int32 get_qos_dscpremapping(struct http_request_s *pReq)
+ 150          {
+ 151   1          uint16 dscp;
+ 152   1          uint8 queue_num, pri;
+ 153   1          sal_dscp_t dscp_val;
+ 154   1          sal_pri_t int_pri;
+ 155   1      
+ 156   1          WEB_BEGIN(pReq);
+ 157   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 158   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 159   1      
+ 160   1          WEB_PRINTF(pReq, "<html>\n");
+ 161   1      
+ 162   1          WEB_PRINTF(pReq, "</html>\n");
+ 163   1          WEB_END(pReq);
+ 164   1      
+ 165   1          return SUCCESS;
+ 166   1      }
+*** WARNING C280 IN LINE 151 OF ..\src\web\web_qos.c: 'dscp': unreferenced local variable
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 4   
+
+*** WARNING C280 IN LINE 152 OF ..\src\web\web_qos.c: 'queue_num': unreferenced local variable
+*** WARNING C280 IN LINE 152 OF ..\src\web\web_qos.c: 'pri': unreferenced local variable
+*** WARNING C280 IN LINE 153 OF ..\src\web\web_qos.c: 'dscp_val': unreferenced local variable
+*** WARNING C280 IN LINE 154 OF ..\src\web\web_qos.c: 'int_pri': unreferenced local variable
+ 167          
+ 168          /*
+ 169           * Function: get_qos_pri2queueid
+ 170           * -----------------------------
+ 171           * Displays priority-to-queue mapping configuration page.
+ 172           * Shows mapping of internal priorities to queue IDs.
+ 173           * Currently placeholder - returns empty HTML.
+ 174           */
+ 175          int32 get_qos_pri2queueid(struct http_request_s *pReq)
+ 176          {
+ 177   1          uint16 pri;
+ 178   1          uint8 queue_num, que;
+ 179   1          sal_qos_pri2queue_t priToQueueMap;
+ 180   1      
+ 181   1          WEB_BEGIN(pReq);
+ 182   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 183   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 184   1      
+ 185   1          WEB_PRINTF(pReq, "<html>\n");
+ 186   1          WEB_PRINTF(pReq, "</html>\n");
+ 187   1          WEB_END(pReq);
+ 188   1      
+ 189   1          return SUCCESS;
+ 190   1      }
+*** WARNING C280 IN LINE 177 OF ..\src\web\web_qos.c: 'pri': unreferenced local variable
+*** WARNING C280 IN LINE 178 OF ..\src\web\web_qos.c: 'queue_num': unreferenced local variable
+*** WARNING C280 IN LINE 178 OF ..\src\web\web_qos.c: 'que': unreferenced local variable
+*** WARNING C280 IN LINE 179 OF ..\src\web\web_qos.c: 'priToQueueMap': unreferenced local variable
+ 191          
+ 192          /*
+ 193           * Function: post_qos_portbasedpriority
+ 194           * ------------------------------------
+ 195           * Processes port-based priority form submission.
+ 196           * Extracts selected ports and priority value from POST data.
+ 197           * Applies priority setting to selected ports via sal_qos_portPri_set().
+ 198           * Refreshes port-based priority page after applying.
+ 199           */
+ 200          int32 post_qos_portbasedpriority(struct http_request_s *pReq)
+ 201          {
+ 202   1          int32 ret;
+ 203   1          int16 i;
+ 204   1          uint8 port[SAL_MAX_LOGIC_COMBO_PORT];
+ 205   1          uint8 *pValue;
+ 206   1          uint8 settingCnt = 0, priority = 0;
+ 207   1      
+ 208   1          WEB_VAR(pReq, "portid", &pValue);
+ 209   1          if (pValue)
+ 210   1          {
+ 211   2              port[settingCnt++] = atoi(pValue);
+ 212   2          }
+ 213   1          while (pValue != NULL)
+ 214   1          {
+ 215   2              WEB_VAR(pReq, NULL, &pValue);
+ 216   2              if (pValue)
+ 217   2              {
+ 218   3                  port[settingCnt++] = atoi(pValue);
+ 219   3              }
+ 220   2          }
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 5   
+
+ 221   1      
+ 222   1          WEB_VAR(pReq, "port_priority", &pValue);
+ 223   1          if (pValue)
+ 224   1          {
+ 225   2              priority = atoi(pValue);
+ 226   2          }
+ 227   1      
+ 228   1          for (i = 0; i < settingCnt; ++i)
+ 229   1          {
+ 230   2      
+ 231   2              if (!(sal_trunk_logicId_exist(port[i])))
+ 232   2              {
+ 233   3                  continue;
+ 234   3              }
+ 235   2      #if 1
+ 236   2      
+ 237   2              if ((ret = sal_qos_portPri_set(port[i], priority)) != SAL_ERR_SUCCESS)
+ 238   2                  return ret;
+ 239   2      #else
+                      if ((ret = sal_qos_port2queue_set(port[i], qid)) != SAL_ERR_SUCCESS)
+                      {
+                          printerr(pReq, ret);
+                          return SUCCESS;
+                      }
+              #endif
+ 246   2          }
+ 247   1      
+ 248   1          get_qos_portbasedpriority(pReq);
+ 249   1          return SUCCESS;
+ 250   1      }
+ 251          
+ 252          /*
+ 253           * Function: post_qos_queueweight
+ 254           * ------------------------------
+ 255           * Processes queue weight configuration form submission.
+ 256           * Extracts queue IDs and weight value from POST data.
+ 257           * Updates WRR weights for selected queues on all ports.
+ 258           * Refreshes packet scheduling page after applying.
+ 259           */
+ 260          int32 post_qos_queueweight(struct http_request_s *pReq)
+ 261          {
+ 262   1          sal_qos_queue_weights_t qweights;
+ 263   1          int32 ret;
+ 264   1          int16 i;
+ 265   1          uint8 port;
+ 266   1          uint8 queueId[SAL_MAX_NUM_OF_QUEUE];
+ 267   1          uint8 *value;
+ 268   1      
+ 269   1          uint8 entryNum, weight;
+ 270   1      
+ 271   1          entryNum = 0;
+ 272   1          weight = 0;
+ 273   1          WEB_VAR(pReq, "queueid", &value);
+ 274   1          if (value)
+ 275   1          {
+ 276   2              queueId[entryNum++] = atoi(value);
+ 277   2          }
+ 278   1          while (value != NULL)
+ 279   1          {
+ 280   2              WEB_VAR(pReq, NULL, &value);
+ 281   2              if (value)
+ 282   2              {
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 6   
+
+ 283   3                  queueId[entryNum++] = atoi(value);
+ 284   3              }
+ 285   2          }
+ 286   1      
+ 287   1          WEB_VAR(pReq, "weight", &value);
+ 288   1          if (value)
+ 289   1          {
+ 290   2              weight = atoi(value);
+ 291   2          }
+ 292   1      
+ 293   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port)
+ 294   1          {
+ 295   2      
+ 296   2              if (!(sal_trunk_logicId_exist(port)))
+ 297   2              {
+ 298   3                  continue;
+ 299   3              }
+ 300   2      
+ 301   2              sal_qos_schedulingQueue_get(port, &qweights);
+ 302   2              for (i = 0; i < entryNum; i++)
+ 303   2              {
+ 304   3                  qweights.weights[queueId[i]] = weight;
+ 305   3              }
+ 306   2              if ((ret = sal_qos_schedulingQueue_set(port, &qweights)) != SAL_ERR_SUCCESS)
+ 307   2              {
+ 308   3                  printerr(pReq, ret);
+ 309   3                  return SUCCESS;
+ 310   3              }
+ 311   2          }
+ 312   1      
+ 313   1          get_qos_packetscheduling(pReq);
+ 314   1          return SUCCESS;
+ 315   1      }
+ 316          
+ 317          /*
+ 318           * Function: post_qos_internalPriority
+ 319           * -----------------------------------
+ 320           * Processes internal priority selection form submission.
+ 321           * Extracts priority source selections and decision value.
+ 322           * Updates priority order for selected sources (port, dot1q, ACL, DSCP, etc.).
+ 323           * Refreshes internal priority page after applying.
+ 324           */
+ 325          int32 post_qos_internalPriority(struct http_request_s *pReq)
+ 326          {
+ 327   1          int32 ret;
+ 328   1          int16 i;
+ 329   1          uint16 priSet[8];
+ 330   1          uint8 *pValue;
+ 331   1          uint8 settingCnt = 0;
+ 332   1          uint16 dec;
+ 333   1          sal_qos_pri_selet_t priDec;
+ 334   1      
+ 335   1          WEB_VAR(pReq, "internalPriority", &pValue);
+ 336   1          if (pValue)
+ 337   1          {
+ 338   2              priSet[settingCnt++] = atoi(pValue);
+ 339   2          }
+ 340   1          while (pValue != NULL)
+ 341   1          {
+ 342   2              WEB_VAR(pReq, NULL, &pValue);
+ 343   2              if (pValue)
+ 344   2              {
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 7   
+
+ 345   3                  priSet[settingCnt++] = atoi(pValue);
+ 346   3              }
+ 347   2          }
+ 348   1      
+ 349   1          WEB_VAR(pReq, "decision", &pValue);
+ 350   1          if (pValue)
+ 351   1          {
+ 352   2              dec = atoi(pValue);
+ 353   2          }
+ 354   1      
+ 355   1          sal_qos_priSel_get(&priDec);
+ 356   1          for (i = 0; i < settingCnt; i++)
+ 357   1          {
+ 358   2              if (priSet[i] == 0)
+ 359   2              {
+ 360   3                  priDec.port_pri = (uint32)dec;
+ 361   3              }
+ 362   2              else if (priSet[i] == 1)
+ 363   2              {
+ 364   3                  priDec.dot1q_pri = (uint32)dec;
+ 365   3              }
+ 366   2              else if (priSet[i] == 2)
+ 367   2              {
+ 368   3                  priDec.acl_pri = (uint32)dec;
+ 369   3              }
+ 370   2              else if (priSet[i] == 3)
+ 371   2              {
+ 372   3                  priDec.dscp_pri = (uint32)dec;
+ 373   3              }
+ 374   2              else if (priSet[i] == 4)
+ 375   2              {
+ 376   3                  priDec.cvlan_pri = dec;
+ 377   3              }
+ 378   2              else if (priSet[i] == 5)
+ 379   2              {
+ 380   3                  priDec.svlan_pri = (uint32)dec;
+ 381   3              }
+ 382   2              else if (priSet[i] == 6)
+ 383   2              {
+ 384   3                  priDec.dmac_pri = (uint32)dec;
+ 385   3              }
+ 386   2              else if (priSet[i] == 7)
+ 387   2              {
+ 388   3                  priDec.smac_pri = (uint32)dec;
+ 389   3              }
+ 390   2              else
+ 391   2              {
+ 392   3                  get_qos_internalPriority(pReq);
+ 393   3                  return SUCCESS;
+ 394   3              }
+ 395   2          }
+ 396   1      
+ 397   1          if ((ret = sal_qos_priSel_set(&priDec)) != SAL_ERR_SUCCESS)
+ 398   1          {
+ 399   2              printerr(pReq, ret);
+ 400   2              return SUCCESS;
+ 401   2          }
+ 402   1          get_qos_internalPriority(pReq);
+ 403   1          return SUCCESS;
+ 404   1      }
+ 405          
+ 406          /*
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 8   
+
+ 407           * Function: post_qos_dscpremapping
+ 408           * --------------------------------
+ 409           * Processes DSCP priority remapping form submission.
+ 410           * Extracts DSCP values and priority to map.
+ 411           * Updates DSCP-to-internal-priority mapping for selected DSCP values.
+ 412           * Refreshes DSCP remapping page after applying.
+ 413           */
+ 414          int32 post_qos_dscpremapping(struct http_request_s *pReq)
+ 415          {
+ 416   1          int32 ret;
+ 417   1          int16 i;
+ 418   1          uint32 j;
+ 419   1          uint32 dscp[SAL_MAX_VALUE_OF_DSCP];
+ 420   1          uint8 priValue;
+ 421   1          uint8 settingCnt = 0, qid = 0;
+ 422   1          uint8 *pValue;
+ 423   1      
+ 424   1          WEB_VAR(pReq, "dscp_value", &pValue);
+ 425   1          if (pValue)
+ 426   1          {
+ 427   2              dscp[settingCnt++] = atoi(pValue);
+ 428   2          }
+ 429   1          while (pValue != NULL)
+ 430   1          {
+ 431   2              WEB_VAR(pReq, NULL, &pValue);
+ 432   2              if (pValue)
+ 433   2              {
+ 434   3                  dscp[settingCnt++] = atoi(pValue);
+ 435   3              }
+ 436   2          }
+ 437   1      
+ 438   1          WEB_VAR(pReq, "dscp_priority", &pValue);
+ 439   1          if (pValue)
+ 440   1          {
+ 441   2              priValue = atoi(pValue);
+ 442   2          }
+ 443   1      
+ 444   1          for (i = 0; i < settingCnt; ++i)
+ 445   1          {
+ 446   2              for (j = 0; j < SAL_MAX_VALUE_OF_DSCP; j++)
+ 447   2              {
+ 448   3                  if (dscp[i] == j)
+ 449   3                  {
+ 450   4                      if ((ret = sal_qos_dscpPriRemap_set(j, priValue)) != SAL_ERR_SUCCESS)
+ 451   4                      {
+ 452   5                          printerr(pReq, ret);
+ 453   5                          return SUCCESS;
+ 454   5                      }
+ 455   4                  }
+ 456   3              }
+ 457   2          }
+ 458   1      
+ 459   1          get_qos_dscpremapping(pReq);
+ 460   1          return SUCCESS;
+ 461   1      }
+ 462          
+ 463          /*
+ 464           * Function: post_qos_pri2queueid
+ 465           * ------------------------------
+ 466           * Processes priority-to-queue mapping form submission.
+ 467           * Extracts priority values and queue ID to map.
+ 468           * Updates priority-to-queue mapping table.
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 9   
+
+ 469           * Refreshes priority-to-queue page after applying.
+ 470           */
+ 471          int32 post_qos_pri2queueid(struct http_request_s *pReq)
+ 472          {
+ 473   1          int32 ret;
+ 474   1          int16 i;
+ 475   1          uint8 j;
+ 476   1          uint16 priority[SAL_MAX_NUM_OF_PRIORITY], tmp;
+ 477   1          uint32 queueid;
+ 478   1          uint8 settingCnt = 0, qid = 0;
+ 479   1          uint8 *pValue;
+ 480   1          uint8 queue_num;
+ 481   1          sal_qos_pri2queue_t priToQue;
+ 482   1      
+ 483   1          WEB_VAR(pReq, "priority_value", &pValue);
+ 484   1          if (pValue)
+ 485   1          {
+ 486   2              tmp = atoi(pValue);
+ 487   2              priority[settingCnt++] = tmp;
+ 488   2          }
+ 489   1          while (pValue != NULL)
+ 490   1          {
+ 491   2              WEB_VAR(pReq, NULL, &pValue);
+ 492   2              if (pValue)
+ 493   2              {
+ 494   3                  priority[settingCnt++] = atoi(pValue);
+ 495   3              }
+ 496   2          }
+ 497   1      
+ 498   1          WEB_VAR(pReq, "priority_to_queueid", &pValue);
+ 499   1          if (pValue)
+ 500   1          {
+ 501   2              queueid = atoi(pValue);
+ 502   2          }
+ 503   1          sal_qos_queueNum_get(0, &queue_num);
+ 504   1          sal_qos_priMap_get(queue_num, &priToQue);
+ 505   1      
+ 506   1          for (i = 0; i < settingCnt; ++i)
+ 507   1          {
+ 508   2              for (j = 0; j < SAL_MAX_NUM_OF_PRIORITY; j++)
+ 509   2              {
+ 510   3                  if (j == priority[i])
+ 511   3                  {
+ 512   4                      priToQue.pri2queue[j] = queueid;
+ 513   4                  }
+ 514   3              }
+ 515   2          }
+ 516   1          if ((ret = sal_qos_priMap_set(queue_num, &priToQue)) != SAL_ERR_SUCCESS)
+ 517   1          {
+ 518   2              printerr(pReq, ret);
+ 519   2              return SUCCESS;
+ 520   2          }
+ 521   1      
+ 522   1          get_qos_pri2queueid(pReq);
+ 523   1          return SUCCESS;
+ 524   1      }
+ 525          
+ 526          
+ 527          
+ 528          int32 get_rtc(struct http_request_s *pReq)
+ 529          {
+ 530   1          WEB_BEGIN(pReq);
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 10  
+
+ 531   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 532   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 533   1          WEB_PUTS(pReq,
+ 654   1          "<html><head><meta name=viewport content=\"width=device-width,initial-scale=1\">"
+ 654   1          "<title>RTC INFO</title>"
+ 654   1          "<style>"
+ 654   1          
+ 654   1          /* Centered Body layout */
+ 654   1          "body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;min-height:100vh;display:flex;justify-c
+             -ontent:center;align-items:center;padding:20px;box-sizing:border-box;color:#1c1f23}"
+ 654   1          
+ 654   1          /* Container matching the Set pages */
+ 654   1          ".container{background:#fff;border-radius:12px;padding:32px;width:100%;max-width:840px;box-shadow:0 4p
+             -x 20px rgba(0,0,0,.1);}"
+ 654   1          "h1{font-size:20px;margin:0 0 24px;padding-bottom:12px;border-bottom:3px solid #0f1a2b;text-transform:
+             -uppercase;letter-spacing:1px;color:#1c1f23;}"
+ 654   1          
+ 654   1          /* Table styling */
+ 654   1          "table{width:100%;border-collapse:collapse;font-size:16px}"
+ 654   1          "th{text-align:left;padding:14px 12px;background:#f1f3f5;color:#6b7280;font-weight:600;font-size:13px;
+             -text-transform:uppercase;letter-spacing:.5px}"
+ 654   1          "th:last-child{text-align:right;padding-right:24px}"
+ 654   1          "td{padding:16px 12px;border-bottom:1px solid #e9ecef;text-transform:uppercase}"
+ 654   1          
+ 654   1          /* COLORS: Make countdown and current time dark blue */
+ 654   1          "td:last-child{text-align:right;font-weight:700;font-size:17px;padding-right:24px;color:#0f1a2b}"
+ 654   1          "#t{color:#0f1a2b;font-weight:700;}" 
+ 654   1          
+ 654   1          "tr:last-child td{border:none}"
+ 654   1          
+ 654   1          /* Tags */
+ 654   1          ".tag{display:inline-block;padding:4px 8px;border-radius:4px;font-size:12px;font-weight:700;margin-lef
+             -t:8px}"
+ 654   1          ".tag.on{background:#d3f9d8;color:#2b8a3e}"
+ 654   1          ".tag.off{background:#ffe3e3;color:#c92a2a}"
+ 654   1          "</style></head><body>"
+ 654   1          
+ 654   1          "<div class=container>"
+ 654   1          "<h1>RTC Time, Date & Alarms</h1>"
+ 654   1          "<table>"
+ 654   1          "<tr><th>Parameter</th><th>Value</th><th style='text-align:right'>Status / Countdown</th></tr>"
+ 654   1          "<tr><td>Current Time</td><td id=t>--:--:--</td><td></td></tr>"
+ 654   1          "<tr><td>Current Date</td><td id=d>--/--/----</td><td></td></tr>"
+ 654   1          "<tr><td>Alarm 1</td><td id=a1>--:--</td><td id=cd1>--</td></tr>"
+ 654   1          "<tr><td>Alarm 2</td><td id=a2>--:--</td><td id=cd2>--</td></tr>"
+ 654   1          "<tr><td>Alarm 3</td><td id=a3>--:--</td><td id=cd3>--</td></tr>"
+ 654   1          "</table>"
+ 654   1          "</div>"
+ 654   1          
+ 654   1          "<script>"
+ 654   1          "async function jget(u){"
+ 654   1          "const r=await fetch(u,{cache:'no-store'});"
+ 654   1          "if(!r.ok)throw new Error(r.status);"
+ 654   1          "return r.json();"
+ 654   1          "}"
+ 654   1          "const p2=n=>String(n).padStart(2,'0');"
+ 654   1          
+ 654   1          "let currH=0, currM=0, currS=0;"
+ 654   1          "let alarms=[null, null, null];"
+ 654   1      
+ 654   1          "function updateUI(){"
+ 654   1          "  currS++;"
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 11  
+
+ 654   1          "  if(currS>=60){currS=0; currM++;}"
+ 654   1          "  if(currM>=60){currM=0; currH++;}"
+ 654   1          "  if(currH>=24){currH=0;}"
+ 654   1          
+ 654   1          "  t.textContent=p2(currH)+':'+p2(currM)+':'+p2(currS);"
+ 654   1          
+ 654   1          "  for(let i=0; i<3; i++){"
+ 654   1          "    if(!alarms[i]) { document.getElementById('cd'+(i+1)).textContent='--'; continue; }"
+ 654   1          "    let a = alarms[i];"
+ 654   1          
+ 654   1          "    let nowTotalMins = (currH * 60) + currM;"
+ 654   1          "    let targetTotalMins = (a.h * 60) + a.m;"
+ 654   1          "    let diff = targetTotalMins - nowTotalMins;"
+ 654   1          "    if(diff < 0) diff += 1440;"
+ 654   1          
+ 654   1          "    let hrs = Math.floor(diff / 60);"
+ 654   1          "    let mins = diff - (hrs * 60);"
+ 654   1          
+ 654   1          "    document.getElementById('cd'+(i+1)).textContent = p2(hrs)+'H '+p2(mins)+'M';"
+ 654   1          "  }"
+ 654   1          "}"
+ 654   1      
+ 654   1          "async function fetchAll(){"
+ 654   1          "  let retryDelay = 30000;"
+ 654   1          "  try{"
+ 654   1          "    const j=await jget('/get_rtc_time');"
+ 654   1          
+ 654   1          "    /* 1. Check if JSON is missing keys */"
+ 654   1          "    if(j.H===undefined || j.A1H===undefined || j.A3H===undefined || j.S3===undefined) {"
+ 654   1          "      throw new Error('Incomplete JSON');"
+ 654   1          "    }"
+ 654   1          
+ 654   1          "    /* 2. Strict Range Validation (Hours 0-23, Mins 0-59, Outlets 1-8, State 0-1) */"
+ 654   1          "    if(j.A1H > 23 || j.A2H > 23 || j.A3H > 23 ||"
+ 654   1          "       j.A1M > 59 || j.A2M > 59 || j.A3M > 59 ||"
+ 654   1          "       j.O1 < 1 || j.O1 > 8 || j.O2 < 1 || j.O2 > 8 || j.O3 < 1 || j.O3 > 8 ||"
+ 654   1          "       j.S1 > 1 || j.S2 > 1 || j.S3 > 1) {"
+ 654   1          "      throw new Error('Invalid Alarm Data Received');"
+ 654   1          "    }"
+ 654   1      
+ 654   1          "    let diff = j.S - currS;"
+ 654   1          "    if (diff < -10) diff += 60;"
+ 654   1          "    if (diff < 0 || diff > 3) { currH = j.H; currM = j.M; currS = j.S; }"
+ 654   1          
+ 654   1          "    d.textContent=p2(j.D)+'/'+p2(j.MO)+'/'+j.Y;"
+ 654   1          
+ 654   1          "    alarms[0] = {h: j.A1H, m: j.A1M, o: j.O1, s: j.S1};"
+ 654   1          "    alarms[1] = {h: j.A2H, m: j.A2M, o: j.O2, s: j.S2};"
+ 654   1          "    alarms[2] = {h: j.A3H, m: j.A3M, o: j.O3, s: j.S3};"
+ 654   1          
+ 654   1          "    for(let i=0; i<3; i++){"
+ 654   1          "      let a = alarms[i];"
+ 654   1          "      let tag = (a.s==1) ? '<span class=\"tag on\">OUT '+a.o+' ON</span>' : '<span class=\"tag off\">
+             -OUT '+a.o+' OFF</span>';"
+ 654   1          "      document.getElementById('a'+(i+1)).innerHTML = p2(a.h)+':'+p2(a.m)+tag;"
+ 654   1          "    }"
+ 654   1          "    updateUI();"
+ 654   1          "  }catch(e){"
+ 654   1          "    console.log('Data error, retrying immediately:', e);"
+ 654   1          "    retryDelay = 1000; /* Retry immediately */"
+ 654   1          "  }"
+ 654   1          "  setTimeout(fetchAll, retryDelay);"
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 12  
+
+ 654   1          "}"
+ 654   1      
+ 654   1          "fetchAll();"
+ 654   1          "setInterval(updateUI, 1000);"
+ 654   1          
+ 654   1          "</script></body></html>");
+ 655   1          WEB_END(pReq);
+ 656   1          return SUCCESS;
+ 657   1      }
+ 658          
+ 659          
+ 660          
+ 661          
+ 662          
+ 663          int32 set_rtc_time_date(struct http_request_s *pReq)
+ 664          {
+ 665   1          WEB_BEGIN(pReq);
+ 666   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 667   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 668   1      
+ 669   1          WEB_PRINTF(pReq, "<html><head><meta name=viewport content=\"width=device-width,initial-scale=1\">");
+ 670   1          WEB_PRINTF(pReq, "<title>Set RTC Time & Date</title>");
+ 671   1          
+ 672   1          WEB_PRINTF(pReq, "<style>");
+ 673   1          WEB_PRINTF(pReq, "body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;min-height:100vh;displ
+             -ay:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box;}");
+ 674   1          
+ 675   1          /* Container styled identically to the Alarm page */
+ 676   1          WEB_PRINTF(pReq, ".container{background:#fff;border-radius:12px;padding:32px;width:100%%;max-width:480
+             -px;box-shadow:0 4px 20px rgba(0,0,0,.1);}");
+ 677   1          WEB_PRINTF(pReq, "h1{font-size:20px;margin:0 0 24px;padding-bottom:12px;border-bottom:3px solid #0f1a2
+             -b;text-transform:uppercase;letter-spacing:1px;color:#1c1f23;}");
+ 678   1          
+ 679   1          WEB_PRINTF(pReq, ".box{border:1px solid #e5e7eb;border-radius:8px;padding:24px;}");
+ 680   1          WEB_PRINTF(pReq, "label{display:block;font-size:12px;font-weight:600;color:#6b7280;margin:12px 0 6px;}
+             -");
+ 681   1          
+ 682   1          WEB_PRINTF(pReq, "input{width:100%%;padding:12px;border:1px solid #d1d5db;border-radius:6px;font-size:
+             -14px;box-sizing:border-box;outline:none;}");
+ 683   1          WEB_PRINTF(pReq, "input:focus{border-color:#00d4ff;box-shadow:0 0 0 2px rgba(0,212,255,0.2);}");
+ 684   1          
+ 685   1          /* Changed button to Blue/Teal theme */
+ 686   1          WEB_PRINTF(pReq, "button{width:100%%;margin-top:24px;padding:14px;background:#0f1a2b;color:#fff;border
+             -:0;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:background 0.2s;}");
+ 687   1          WEB_PRINTF(pReq, "button:hover{background:#1a2f44;}");
+ 688   1          
+ 689   1          WEB_PRINTF(pReq, ".msg{margin-top:16px;font-size:14px;font-weight:600;text-align:center;min-height:20p
+             -x;}");
+ 690   1          WEB_PRINTF(pReq, "</style></head><body>");
+ 691   1      
+ 692   1          WEB_PRINTF(pReq, "<div class=container><h1>Set RTC Time & Date</h1><div class=box>");
+ 693   1      
+ 694   1          WEB_PRINTF(pReq, "<label>Hour (0-23)</label><input id=h type=number min=0 max=23 value=0>");
+ 695   1          WEB_PRINTF(pReq, "<label>Minute (0-59)</label><input id=mi type=number min=0 max=59 value=0>");
+ 696   1          WEB_PRINTF(pReq, "<label>Second (0-59)</label><input id=s type=number min=0 max=59 value=0>");
+ 697   1          WEB_PRINTF(pReq, "<label>Day (1-31)</label><input id=d type=number min=1 max=31 value=1>");
+ 698   1          WEB_PRINTF(pReq, "<label>Month (1-12)</label><input id=mo type=number min=1 max=12 value=1>");
+ 699   1          WEB_PRINTF(pReq, "<label>Year</label><input id=y type=number min=2020 max=2099 value=2026>");
+ 700   1          
+ 701   1          WEB_PRINTF(pReq, "<button type=button onclick=\"f()\">Apply Time & Date</button>");
+ 702   1          WEB_PRINTF(pReq, "<div class=msg id=m></div>");
+ 703   1      
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 13  
+
+ 704   1          WEB_PRINTF(pReq, "</div></div><script>");
+ 705   1      
+ 706   1          WEB_PRINTF(pReq, "async function f(){");
+ 707   1          WEB_PRINTF(pReq, "var m=document.getElementById('m');");
+ 708   1          WEB_PRINTF(pReq, "var h=document.getElementById('h').value;");
+ 709   1          WEB_PRINTF(pReq, "var mi=document.getElementById('mi').value;");
+ 710   1          WEB_PRINTF(pReq, "var s=document.getElementById('s').value;");
+ 711   1          WEB_PRINTF(pReq, "var d=document.getElementById('d').value;");
+ 712   1          WEB_PRINTF(pReq, "var mo=document.getElementById('mo').value;");
+ 713   1          WEB_PRINTF(pReq, "var y=document.getElementById('y').value;");
+ 714   1          
+ 715   1          WEB_PRINTF(pReq, "var u='/set_rtc_time?H='+h+'&M='+mi+'&S='+s+'&D='+d+'&MO='+mo+'&Y='+y;");
+ 716   1          
+ 717   1          WEB_PRINTF(pReq, "try{");
+ 718   1          WEB_PRINTF(pReq, "const r=await fetch(u,{cache:'no-store'});");
+ 719   1          WEB_PRINTF(pReq, "m.textContent=r.ok?'Time & Date Updated':'Failed ('+r.status+')';");
+ 720   1          WEB_PRINTF(pReq, "m.style.color=r.ok?'#0f1a2b':'#e03131';");
+ 721   1          WEB_PRINTF(pReq, "}catch(e){m.textContent='Error: '+e;m.style.color='#e03131';}");
+ 722   1          WEB_PRINTF(pReq, "}");
+ 723   1          
+ 724   1          WEB_PRINTF(pReq, "</script></body></html>");
+ 725   1      
+ 726   1          WEB_END(pReq);
+ 727   1          return SUCCESS;
+ 728   1      }
+ 729          
+ 730          
+ 731          int32 set_rtc_alarm(struct http_request_s *pReq)
+ 732          {
+ 733   1          WEB_BEGIN(pReq);
+ 734   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 735   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 736   1      
+ 737   1          WEB_PRINTF(pReq, "<html><head><meta name=viewport content=\"width=device-width,initial-scale=1\">");
+ 738   1          WEB_PRINTF(pReq, "<title>Set RTC Alarms</title>");
+ 739   1          
+ 740   1          WEB_PRINTF(pReq, "<style>");
+ 741   1          WEB_PRINTF(pReq, "body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;min-height:100vh;displ
+             -ay:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box;}");
+ 742   1          
+ 743   1          WEB_PRINTF(pReq, ".container{background:#fff;border-radius:12px;padding:32px;width:100%%;max-width:480
+             -px;box-shadow:0 4px 20px rgba(0,0,0,.1);}");
+ 744   1          
+ 745   1          /* Changed border-bottom to the Blue theme */
+ 746   1          WEB_PRINTF(pReq, "h1{font-size:20px;margin:0 0 24px;padding-bottom:12px;border-bottom:3px solid #0f1a2
+             -b;text-transform:uppercase;letter-spacing:1px;color:#1c1f23;}");
+ 747   1          
+ 748   1          WEB_PRINTF(pReq, ".box{border:1px solid #e5e7eb;border-radius:8px;padding:24px;}");
+ 749   1          WEB_PRINTF(pReq, "label{display:block;font-size:12px;font-weight:600;color:#6b7280;margin:12px 0 6px;}
+             -");
+ 750   1          
+ 751   1          /* Changed input focus to Cyan */
+ 752   1          WEB_PRINTF(pReq, "input,select{width:100%%;padding:12px;border:1px solid #d1d5db;border-radius:6px;fon
+             -t-size:14px;box-sizing:border-box;outline:none;}");
+ 753   1          WEB_PRINTF(pReq, "input:focus,select:focus{border-color:#00d4ff;box-shadow:0 0 0 2px rgba(0,212,255,0.
+             -2);}");
+ 754   1          
+ 755   1          /* Changed Button to Blue theme */
+ 756   1          WEB_PRINTF(pReq, "button{width:100%%;margin-top:24px;padding:14px;background:#0f1a2b;color:#fff;border
+             -:0;border-radius:6px;font-size:15px;font-weight:700;cursor:pointer;transition:background 0.2s;}");
+ 757   1          WEB_PRINTF(pReq, "button:hover{background:#1a2f44;}");
+ 758   1          
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 14  
+
+ 759   1          WEB_PRINTF(pReq, ".msg{margin-top:16px;font-size:14px;font-weight:600;text-align:center;min-height:20p
+             -x;}");
+ 760   1          WEB_PRINTF(pReq, "</style></head><body>");
+ 761   1      
+ 762   1          WEB_PRINTF(pReq, "<div class=container><h1>Set RTC Alarm</h1><div class=box>");
+ 763   1      
+ 764   1          WEB_PRINTF(pReq, "<label>Select Alarm to Configure</label>");
+ 765   1          WEB_PRINTF(pReq, "<select id=alarmId>");
+ 766   1          WEB_PRINTF(pReq, "<option value=1>Alarm 1</option>");
+ 767   1          WEB_PRINTF(pReq, "<option value=2>Alarm 2</option>");
+ 768   1          WEB_PRINTF(pReq, "<option value=3>Alarm 3</option>");
+ 769   1          WEB_PRINTF(pReq, "</select>");
+ 770   1      
+ 771   1          WEB_PRINTF(pReq, "<label>Hour (0-23)</label><input id=h type=number min=0 max=23 value=0>");
+ 772   1          WEB_PRINTF(pReq, "<label>Minute (0-59)</label><input id=m type=number min=0 max=59 value=0>");
+ 773   1          
+ 774   1          WEB_PRINTF(pReq, "<label>Outlet</label><select id=out>");
+ 775   1          WEB_PRINTF(pReq, "<option value=1>Outlet 1</option><option value=2>Outlet 2</option>");
+ 776   1          WEB_PRINTF(pReq, "<option value=3>Outlet 3</option><option value=4>Outlet 4</option>");
+ 777   1          WEB_PRINTF(pReq, "<option value=5>Outlet 5</option><option value=6>Outlet 6</option>");
+ 778   1          WEB_PRINTF(pReq, "<option value=7>Outlet 7</option><option value=8>Outlet 8</option>");
+ 779   1          WEB_PRINTF(pReq, "</select>");
+ 780   1          
+ 781   1          WEB_PRINTF(pReq, "<label>Action</label><select id=act>");
+ 782   1          WEB_PRINTF(pReq, "<option value=1>ON</option><option value=0>OFF</option>");
+ 783   1          WEB_PRINTF(pReq, "</select>");
+ 784   1      
+ 785   1          WEB_PRINTF(pReq, "<button type=button onclick=\"sendAlarm()\">Apply Alarm Settings</button>");
+ 786   1          WEB_PRINTF(pReq, "<div class=msg id=msg></div>");
+ 787   1      
+ 788   1          WEB_PRINTF(pReq, "</div></div><script>");
+ 789   1      
+ 790   1          WEB_PRINTF(pReq, "function ci(v,lo,hi){");
+ 791   1          WEB_PRINTF(pReq, "var n=parseInt(String(v).replace(/[^0-9]/g,''),10);");
+ 792   1          WEB_PRINTF(pReq, "return (isFinite(n)&&n>=lo&&n<=hi)?n:null;");
+ 793   1          WEB_PRINTF(pReq, "}");
+ 794   1      
+ 795   1          WEB_PRINTF(pReq, "function sendAlarm(){");
+ 796   1          WEB_PRINTF(pReq, "var msg=document.getElementById('msg');");
+ 797   1          
+ 798   1          WEB_PRINTF(pReq, "var id=ci(document.getElementById('alarmId').value,1,3);");
+ 799   1          WEB_PRINTF(pReq, "var h=ci(document.getElementById('h').value,0,23);");
+ 800   1          WEB_PRINTF(pReq, "var m=ci(document.getElementById('m').value,0,59);");
+ 801   1          WEB_PRINTF(pReq, "var out=ci(document.getElementById('out').value,1,8);");
+ 802   1          WEB_PRINTF(pReq, "var act=ci(document.getElementById('act').value,0,1);");
+ 803   1      
+ 804   1          WEB_PRINTF(pReq, "if(id===null||h===null||m===null||out===null||act===null){");
+ 805   1          WEB_PRINTF(pReq, "msg.textContent='Invalid input';msg.style.color='#e03131';return;");
+ 806   1          WEB_PRINTF(pReq, "}");
+ 807   1          
+ 808   1          WEB_PRINTF(pReq, "var url='/set_alarm'+id+'?h='+h+'&m='+m+'&out='+out+'&act='+act;");
+ 809   1          WEB_PRINTF(pReq, "var xhr=new XMLHttpRequest();");
+ 810   1          WEB_PRINTF(pReq, "xhr.open('GET',url,true);");
+ 811   1          WEB_PRINTF(pReq, "xhr.onreadystatechange=function(){");
+ 812   1          WEB_PRINTF(pReq, "if(xhr.readyState==4){");
+ 813   1          WEB_PRINTF(pReq, "if(xhr.status==200){");
+ 814   1          WEB_PRINTF(pReq, "var j=JSON.parse(xhr.responseText);");
+ 815   1          WEB_PRINTF(pReq, "if(j.status==='ok'||j.STATUS==='OK'){");
+ 816   1          WEB_PRINTF(pReq, "msg.textContent='Alarm '+id+' set: '+h+':'+m+' -> Outlet '+out+' '+(act?'ON':'OFF');
+             -");
+ 817   1          WEB_PRINTF(pReq, "msg.style.color='#0f1a2b';");
+ 818   1          WEB_PRINTF(pReq, "}else{");
+C51 COMPILER V9.60.0.0   WEB_QOS                                                           11/02/2026 17:57:36 PAGE 15  
+
+ 819   1          WEB_PRINTF(pReq, "msg.textContent='Failed: '+(j.msg||xhr.status);msg.style.color='#e03131';");
+ 820   1          WEB_PRINTF(pReq, "}}else{");
+ 821   1          WEB_PRINTF(pReq, "msg.textContent='Error: '+xhr.status;msg.style.color='#e03131';");
+ 822   1          WEB_PRINTF(pReq, "}}};");
+ 823   1          WEB_PRINTF(pReq, "xhr.send();");
+ 824   1          WEB_PRINTF(pReq, "}");
+ 825   1          
+ 826   1          WEB_PRINTF(pReq, "</script></body></html>");
+ 827   1      
+ 828   1          WEB_END(pReq);
+ 829   1          return SUCCESS;
+ 830   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5328    ----
+   CONSTANT SIZE    =   8881    ----
+   XDATA SIZE       =   ----     597
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   8881    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  17 WARNING(S),  0 ERROR(S)

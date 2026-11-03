@@ -1,0 +1,959 @@
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE TCP
+OBJECT MODULE PLACED IN .\objects\tcp.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\tcp.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR
+                    -(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\c
+                    -ommon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS
+                    -,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_
+                    -8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\tcp.lst) TABS(2) OBJECT(.\objects\tcp.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3          * Copyright Realtek Semiconductor Corporation, 2008
+   4          * All rights reserved.
+   5          *
+   6          * Program  : Light-weight Protocol Stack
+   7          * Abstract : 
+   8          * Author   : 
+   9          * $Id: $
+  10          */
+  11          
+  12          #include <local/lwps_config.h>
+  13          
+  14          #if LWPS_TCP
+  15          
+  16          /*
+  17           * Include Files
+  18           */
+  19          #include <lwps/lwps.h>
+  20          
+  21          /*
+  22           * Symbol Definition
+  23           */
+  24          
+  25          
+  26          /*
+  27           * Data Declaration
+  28           */
+  29          static tcp_pcb_t     xdata tcp_pcb_entry[TCP_CONNECTION_MAX];
+  30          static tcp_handler_t xdata _TcpHandler;
+  31          static char          xdata tcp_state_str[TCP_MAX_STATES][16] = { \
+  32              "NONE", "LISTEN", "SYN-SENT", "SYN-RECEIVED", \
+  33              "ESTABLISHED", "FIN-WAIT-1", "FIN-WAIT-2", \
+  34              "CLOSE-WAIT", "CLOSING", "LAST-ACK", "TIME-WAIT", \
+  35              "CLOSED" };
+  36          static ip_addr_t xdata ip_addr_empty = { { 0, 0, 0, 0 } };
+  37          
+  38          
+  39          /*
+  40           * Macro Definition
+  41           */
+  42          
+  43          
+  44          /*
+  45           * Function Declaration
+  46           */
+  47          #if DBG_LWPS_TCP_ENABLE
+              //static void tcp_hdr_dump(tcp_hdr_t *pTcpHdr)
+              // TCP Header Dump: Prints formatted TCP header fields for debugging purposes
+              // Displays ports, sequence numbers, flags, window size, checksum, and options
+              void tcp_hdr_dump(tcp_hdr_t *pTcpHdr) large
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 2   
+
+              {
+                  //DBG_LWPS_TCP_PRINTF(("%s():%d pTcpHdr = %p\n", __FILE__, (uint16)__LINE__, pTcpHdr));
+                  OSAL_PRINTF("-- [TCP HDR dump] -----------------------------\n");
+                  OSAL_PRINTF("   Src Port: 0x%04X (%d)\n", (uint16)pTcpHdr->src_port, (uint16)pTcpHdr->src_port);
+                  OSAL_PRINTF("   Dst Port: 0x%04X (%d)\n", (uint16)pTcpHdr->dst_port, (uint16)pTcpHdr->dst_port);
+                  OSAL_PRINTF(" Seq-Number: 0x%08llX\n", pTcpHdr->seq_num);
+                  OSAL_PRINTF(" Ack-Number: 0x%08llX\n", pTcpHdr->ack_num);
+                  OSAL_PRINTF(" DataOffset: 0x%01X (%d * 4 = %d Bytes)\n", (uint16)pTcpHdr->data_offset, \
+                      (uint16)pTcpHdr->data_offset, (uint16)(pTcpHdr->data_offset * 4) );
+                  OSAL_PRINTF("   Reserved: 0x%01X\n", (uint16)pTcpHdr->reserved);
+                  OSAL_PRINTF(" Ctrl-Flags: 0x%02X\n", (uint16)pTcpHdr->ctrl_flags);
+                  OSAL_PRINTF("             [%3s %3s %3s %3s %3s %3s %3s %3s]\n", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_CWR)? "CWR" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_ECE)? "ECE" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_URG)? "URG" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_ACK)? "ACK" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_PSH)? "PSH" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_RST)? "RST" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_SYN)? "SYN" : "   ", \
+                      (pTcpHdr->ctrl_flags & TCP_FLAG_FIN)? "FIN" : "   ");
+                  OSAL_PRINTF(" WindowSize: 0x%04X (%d)\n", (uint16)pTcpHdr->window_size, (uint16)pTcpHdr->window_size);
+                  OSAL_PRINTF("   Checksum: 0x%04X\n", (uint16)pTcpHdr->chksum);
+                  OSAL_PRINTF(" Urgent-Ptr: 0x%04X\n", (uint16)pTcpHdr->urgent_ptr);
+                  if ((pTcpHdr->data_offset * 4) > sizeof(tcp_hdr_t))
+                  {
+                      OSAL_PRINTF(" Option-Len: 0x%01X (%d Bytes)\n", \
+                          (uint16)((pTcpHdr->data_offset * 4) - sizeof(tcp_hdr_t)), \
+                          (uint16)((pTcpHdr->data_offset * 4) - sizeof(tcp_hdr_t)));
+                  }
+                  OSAL_PRINTF("-----------------------------------------------\n");
+              } /* end of tcp_hdr_dump */
+              #endif /* end of DBG_LWPS_TCP_ENABLE */
+  84          
+  85          // TCP State Update: Updates TCP connection state and triggers appropriate callbacks
+  86          // Calls event_connect when entering ESTABLISHED, event_disconnect when leaving
+  87          void tcp_state_update(uint16 pcbId, uint8 state)
+  88          {
+  89   1        DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+  90   1           tcp_pcb_entry[pcbId].prev_state = tcp_pcb_entry[pcbId].state;
+  91   1      
+  92   1        
+  93   1          /* DO NOT check pcbId here */
+  94   1          DBG_LWPS_TCP_PRINTF(("%s():%d TCP-PCB[%02d] L#%d.%d.%d.%d:%d <=> R#%d.%d.%d.%d:%d (Change)\n", \
+  95   1              __FILE__, (uint16)__LINE__, (uint16)pcbId, \
+  96   1              (uint16)tcp_pcb_entry[pcbId].local_ip.addr[0], \
+  97   1              (uint16)tcp_pcb_entry[pcbId].local_ip.addr[1], \
+  98   1              (uint16)tcp_pcb_entry[pcbId].local_ip.addr[2], \
+  99   1              (uint16)tcp_pcb_entry[pcbId].local_ip.addr[3], \
+ 100   1              (uint16)tcp_pcb_entry[pcbId].local_port, \
+ 101   1              (uint16)tcp_pcb_entry[pcbId].remote_ip.addr[0], \
+ 102   1              (uint16)tcp_pcb_entry[pcbId].remote_ip.addr[1], \
+ 103   1              (uint16)tcp_pcb_entry[pcbId].remote_ip.addr[2], \
+ 104   1              (uint16)tcp_pcb_entry[pcbId].remote_ip.addr[3], \
+ 105   1              (uint16)tcp_pcb_entry[pcbId].remote_port));
+ 106   1      
+ 107   1          DBG_LWPS_TCP_PRINTF(("%s():%d tcp_state_update[%d]: %s => %s\n", __FILE__, (uint16)__LINE__, \
+ 108   1              (uint16)pcbId, tcp_state_str[tcp_pcb_entry[pcbId].state], tcp_state_str[state]));
+ 109   1      
+ 110   1          if (tcp_pcb_entry[pcbId].state == state)
+ 111   1              return;
+ 112   1      
+ 113   1          /* Event_Connect : others to ESTABLISHED */
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 3   
+
+ 114   1          if ((tcp_pcb_entry[pcbId].state != TCP_STATE_ESTABLISHED) && (state == TCP_STATE_ESTABLISHED))
+ 115   1          {
+ 116   2            DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 117   2          
+ 118   2              /* callback to handler (even_connect) */
+ 119   2              if (_TcpHandler.event_connect != NULL)
+ 120   2              {
+ 121   3                DBG_LWPS_TCP_PRINTF(("%s():%d, parent_id=%d, pcbId=%d, rport=%d\n", __FILE__, (uint16)__LINE__, \
+ 122   3                    (uint16) (tcp_pcb_entry[pcbId].parent_id), \
+ 123   3                    (uint16) (pcbId), \
+ 124   3                    (uint16) (tcp_pcb_entry[pcbId].remote_port)));
+ 125   3                  _TcpHandler.event_connect(tcp_pcb_entry[pcbId].parent_id, pcbId, tcp_pcb_entry[pcbId].remote_i
+             -p, tcp_pcb_entry[pcbId].remote_port);
+ 126   3              }
+ 127   2          }
+ 128   1          /* Event_Disconnect : ESTABLISHED to others */
+ 129   1          else if ((tcp_pcb_entry[pcbId].state == TCP_STATE_ESTABLISHED) && (state != TCP_STATE_ESTABLISHED))
+ 130   1          {
+ 131   2              /* callback to handler (even_disconnect) */
+ 132   2              if (_TcpHandler.event_disconnect != NULL)
+ 133   2              {
+ 134   3                  _TcpHandler.event_disconnect(pcbId);
+ 135   3              }
+ 136   2          }
+ 137   1      
+ 138   1          /* update state */
+ 139   1          tcp_pcb_entry[pcbId].state = state;
+ 140   1      } /* end of tcp_state_update */
+ 141          
+ 142          // TCP Find PCB: Searches for TCP control block matching local and remote addresses/ports
+ 143          // Returns PCB index if found, -1 if not found
+ 144          static int16 tcp_findPCB(
+ 145              ip_addr_t xdata local_ip,
+ 146              uint16    xdata local_port,
+ 147              ip_addr_t xdata remote_ip,
+ 148              uint16    xdata remote_port)
+ 149          {
+ 150   1          uint16 xdata i;
+ 151   1      
+ 152   1        DBG_LWPS_TCP_PRINTF(("%s():%d, tcp_pcb_entry=0x%04X\n", __FILE__, (uint16)__LINE__, tcp_pcb_entry));
+ 153   1          for (i=0; i<TCP_CONNECTION_MAX; i++)
+ 154   1          {
+ 155   2            DBG_LWPS_TCP_PRINTF(("%s():%d[tcp_pcb_entry[i].state=0x%02X]\n", __FILE__, (uint16)__LINE__, (uint16)
+             -tcp_pcb_entry[i].state));
+ 156   2              DBG_LWPS_TCP_PRINTF(("%s():%d TCP-PCB[%02d] L#%d.%d.%d.%d:%d <=> R#%d.%d.%d.%d:%d (%s)\n", \
+ 157   2                  __FILE__, (uint16)__LINE__, (uint16)i, \
+ 158   2                  (uint16)tcp_pcb_entry[i].local_ip.addr[0], \
+ 159   2                  (uint16)tcp_pcb_entry[i].local_ip.addr[1], \
+ 160   2                  (uint16)tcp_pcb_entry[i].local_ip.addr[2], \
+ 161   2                  (uint16)tcp_pcb_entry[i].local_ip.addr[3], \
+ 162   2                  (uint16)tcp_pcb_entry[i].local_port, \
+ 163   2                  (uint16)tcp_pcb_entry[i].remote_ip.addr[0], \
+ 164   2                  (uint16)tcp_pcb_entry[i].remote_ip.addr[1], \
+ 165   2                  (uint16)tcp_pcb_entry[i].remote_ip.addr[2], \
+ 166   2                  (uint16)tcp_pcb_entry[i].remote_ip.addr[3], \
+ 167   2                  (uint16)tcp_pcb_entry[i].remote_port, \
+ 168   2                  tcp_state_str[tcp_pcb_entry[i].state]));
+ 169   2      
+ 170   2              if (IS_IPADDR_EQUAL(tcp_pcb_entry[i].local_ip.addr, local_ip.addr) &&
+ 171   2                  (tcp_pcb_entry[i].local_port == local_port) &&
+ 172   2                  IS_IPADDR_EQUAL(tcp_pcb_entry[i].remote_ip.addr, remote_ip.addr) &&
+ 173   2                  (tcp_pcb_entry[i].remote_port == remote_port))
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 4   
+
+ 174   2              {
+ 175   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - Match PCB-ID = %d\n", __FILE__, (uint16)__LINE__, (uint16)i));
+ 176   3      
+ 177   3                  return i;
+ 178   3              }
+ 179   2          }
+ 180   1      
+ 181   1          return -1;  /* Not Found */
+ 182   1      }
+ 183          
+ 184          // TCP Delete PCB: Clears and resets a TCP control block entry
+ 185          // Frees all resources associated with the PCB and resets state to NONE
+ 186          static void tcp_delPCB(uint16 idx) large
+ 187          {
+ 188   1          DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 189   1      
+ 190   1          if (idx >= TCP_CONNECTION_MAX)
+ 191   1          {
+ 192   2              DBG_LWPS_TCP_PRINTF(("%s():%d - idx (%lu) error\n", __FILE__, (uint16)__LINE__, idx));
+ 193   2              return;
+ 194   2          }
+ 195   1      
+ 196   1          tcp_pcb_entry[idx].local_ip = ip_addr_empty;
+ 197   1          tcp_pcb_entry[idx].remote_ip = ip_addr_empty;
+ 198   1          tcp_pcb_entry[idx].local_port = 0;
+ 199   1          tcp_pcb_entry[idx].remote_port = 0;
+ 200   1          //tcp_pcb_entry[idx].state = TCP_STATE_NONE;
+ 201   1          DBG_LWPS_TCP_PRINTF(("%s():%d, idx=0x%04X, &idx=0x%04X\n", __FILE__, (uint16)__LINE__, (uint16)idx,  (
+             -uint16)&idx));
+ 202   1          tcp_state_update(idx, TCP_STATE_NONE);
+ 203   1      
+ 204   1          tcp_pcb_entry[idx].local_seq = 0;
+ 205   1          tcp_pcb_entry[idx].remote_seq = 0;
+ 206   1          tcp_pcb_entry[idx].remote_mss = TCP_LOCAL_MSS;
+ 207   1          tcp_pcb_entry[idx].parent_id = idx; /* self */
+ 208   1          tcp_pcb_entry[idx].timer_alive = -1;
+ 209   1          tcp_pcb_entry[idx].timer_rest = -1;
+ 210   1      }
+ 211          
+ 212          // TCP Timer: Periodic timer handler for TCP connection maintenance
+ 213          // Manages connection timeouts and cleans up expired connections
+ 214          void tcp_timer(void) large
+ 215          {
+ 216   1          uint16 xdata i;
+ 217   1      
+ 218   1          //DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 219   1      
+ 220   1          for (i=0; i<TCP_CONNECTION_MAX; i++)
+ 221   1          {
+ 222   2              /* alive_time + 1, if alive >= 0 */
+ 223   2              if (tcp_pcb_entry[i].timer_alive >= 0) {
+ 224   3                  tcp_pcb_entry[i].timer_alive++;
+ 225   3              }
+ 226   2              /* idle_time + 1, if idle >= 0 */
+ 227   2              if (tcp_pcb_entry[i].timer_rest >= 0) {
+ 228   3                  tcp_pcb_entry[i].timer_rest++;
+ 229   3              }
+ 230   2      
+ 231   2              /* timeout? */
+ 232   2              if (tcp_pcb_entry[i].timer_rest > TCP_TIMER_REST_TIMEOUT) {
+ 233   3                  DBG_LWPS_TCP_PRINTF(("%s():%d TCP PCB[%02d] Rest Timeout!\n", __FILE__, (uint16)__LINE__, i));
+ 234   3                  tcp_delPCB(i);
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 5   
+
+ 235   3              }
+ 236   2              else if ((tcp_pcb_entry[i].timer_rest > TCP_TIMER_REST_TIMEOUT_FAST) &&
+ 237   2                       ((tcp_pcb_entry[i].state == TCP_STATE_SYN_RECEIVED) || 
+ 238   2                        (tcp_pcb_entry[i].state == TCP_STATE_FIN_WAIT_1) ||
+ 239   2                        (tcp_pcb_entry[i].state == TCP_STATE_FIN_WAIT_2) ||
+ 240   2                        (tcp_pcb_entry[i].state == TCP_STATE_CLOSE_WAIT) ||
+ 241   2                        (tcp_pcb_entry[i].state == TCP_STATE_TIME_WAIT))) {
+ 242   3                  DBG_LWPS_TCP_PRINTF(("%s():%d TCP PCB[%02d] Rest-Fast Timeout!\n", __FILE__, (uint16)__LINE__,
+             - i));
+ 243   3                  tcp_delPCB(i);
+ 244   3              }
+ 245   2                  
+ 246   2          }
+ 247   1      
+ 248   1          return;
+ 249   1      }
+ 250          
+ 251          // TCP Get PCB: Retrieves pointer to TCP control block by index
+ 252          // Returns LWPS_OK and fills ppTcpPCB with PCB pointer on success
+ 253          int16 tcp_getPCB(uint16 idx, tcp_pcb_t **ppTcpPCB) large
+ 254          {
+ 255   1          if (idx >= TCP_CONNECTION_MAX)
+ 256   1          {
+ 257   2              OSAL_PRINTF("%s():%d - idx (%lu) error\n", __FILE__, (uint16)__LINE__, idx);
+ 258   2      
+ 259   2              return LWPS_ERR;
+ 260   2          }
+ 261   1          if (NULL == ppTcpPCB)
+ 262   1          {
+ 263   2              OSAL_PRINTF("%s():%d - ppTcpPCB is NULL\n", __FILE__, (uint16)__LINE__);
+ 264   2      
+ 265   2              return LWPS_ERR_NULLPOINT;
+ 266   2          }
+ 267   1      
+ 268   1          /* Assign pointer */
+ 269   1          *ppTcpPCB = &tcp_pcb_entry[idx];
+ 270   1      
+ 271   1          return LWPS_OK;
+ 272   1      }
+ 273          
+ 274          // TCP Set Handler: Registers TCP event callback functions
+ 275          // Stores connect, disconnect, and receive handler function pointers
+ 276          int16 tcp_setHandler(tcp_handler_t *pTcpHandler) large
+ 277          {
+ 278   1          if (NULL == pTcpHandler)
+ 279   1          {
+ 280   2              OSAL_PRINTF("%s():%d - pTcpHandler is NULL\n", __FILE__, (uint16)__LINE__);
+ 281   2      
+ 282   2              return LWPS_ERR_NULLPOINT;
+ 283   2          }
+ 284   1      
+ 285   1          _TcpHandler.event_connect = pTcpHandler->event_connect;
+ 286   1          _TcpHandler.event_disconnect = pTcpHandler->event_disconnect;
+ 287   1          _TcpHandler.event_recv = pTcpHandler->event_recv;
+ 288   1      
+ 289   1          return LWPS_OK;
+ 290   1      }
+ 291          
+ 292          // TCP Initialize: Initializes TCP protocol layer and clears all PCB entries
+ 293          // Resets all TCP control blocks and clears handler callbacks
+ 294          int16 tcp_init(void) large
+ 295          {
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 6   
+
+ 296   1          uint16 xdata i;
+ 297   1      
+ 298   1          DBG_LWPS_TCP_PRINTF(("%s():%d, tcp_pcb_entry=0x%04X\n", __FILE__, (uint16)__LINE__, tcp_pcb_entry));
+ 299   1      
+ 300   1          /* Clear handler */
+ 301   1          _TcpHandler.event_connect = NULL;
+ 302   1          _TcpHandler.event_disconnect = NULL;
+ 303   1          _TcpHandler.event_recv = NULL;
+ 304   1          
+ 305   1      
+ 306   1          /* Reset PCB */
+ 307   1          for (i=0; i<TCP_CONNECTION_MAX; i++) {
+ 308   2              tcp_delPCB(i);
+ 309   2          }
+ 310   1      
+ 311   1          return LWPS_OK;
+ 312   1      } /* end of tcp_init */
+ 313          
+ 314          // TCP Transmit: Sends TCP segment with specified data and control flags
+ 315          // Builds TCP header, adds MSS option for SYN, and transmits via IP layer
+ 316          static int16 tcp_xmit(uint16 pcbId, uint8 *pData, uint16 length, uint8 ctrlFlags) large
+ 317          {
+ 318   1          pktBuf_t  xdata pBuf_Xmit;
+ 319   1          tcp_hdr_t xdata *pTcpHdr_Xmit;
+ 320   1          tcp_hdr_opt_mss_t xdata *pTcpHdrMSS;
+ 321   1          uint8 xdata *pTcpSegData;
+ 322   1      
+ 323   1          DBG_LWPS_TCP_PRINTF(("%s():%d pcbId = %d, pData = 0x%04x, length = %d, ctrlFlags = %02x\n", \
+ 324   1              __FILE__, (uint16)__LINE__, (uint16)pcbId, (uint16)pData, (uint16)length, (uint16)ctrlFlags));
+ 325   1      
+ 326   1          memset(&pBuf_Xmit, 0, sizeof(pBuf_Xmit));
+ 327   1      
+ 328   1          /* [WARN] DO NOT check pcbId, because it's vaild likely */
+ 329   1      #if 0
+                  if ((pData == NULL) && (length == 0)) {
+                      return LWPS_ERR_NULLPOINT;
+                  }
+              #endif
+ 334   1      
+ 335   1          /* [FIXME] fix length of pbuf note
+ 336   1           * <IP alignment> ETH (6+6+2) + VLAN (4) + IP (20) + TCP (20 + 4 [MSS])
+ 337   1           * DON'T have to consider RTK tag
+ 338   1           * 
+ 339   1           */
+ 340   1          #define TCP_XMIT_PBUF_SIZE  (14 + 4 + 20 + 24)
+ 341   1      
+ 342   1          if( 0==length && TCP_FLAG_ACK==ctrlFlags) /* for ack, payload==0 */
+ 343   1          {
+ 344   2              pBuf_Xmit.l4   = (uint8*)((&p_tx_buffer[TAG_SIZE+FRAME_INFO_SIZE]) + TCP_XMIT_PBUF_SIZE - (sizeof(
+             -tcp_hdr_t) + 4));    /* Max TCP Hdr size (+4 for MSS) */
+ 345   2          }
+ 346   1          else /* using rx buffer because p_tx_buffer is used by (*pData) */
+ 347   1          {
+ 348   2              /* pointer to L4 hdr */
+ 349   2              pBuf_Xmit.l4   = (uint8*)(pkt_head + TCP_XMIT_PBUF_SIZE - (sizeof(tcp_hdr_t) + 4));    /* Max TCP 
+             -Hdr size (+4 for MSS) */
+ 350   2          }
+ 351   1          pBuf_Xmit.size = 0;
+ 352   1      
+ 353   1          /* Insert TCP HDR */
+ 354   1          pTcpHdr_Xmit = (tcp_hdr_t *)pBuf_Xmit.l4;
+ 355   1          pTcpHdr_Xmit->src_port = tcp_pcb_entry[pcbId].local_port;
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 7   
+
+ 356   1          pTcpHdr_Xmit->dst_port = tcp_pcb_entry[pcbId].remote_port;
+ 357   1          pTcpHdr_Xmit->seq_num = tcp_pcb_entry[pcbId].local_seq;
+ 358   1          pTcpHdr_Xmit->ack_num = tcp_pcb_entry[pcbId].remote_seq;
+ 359   1          pTcpHdr_Xmit->data_offset = sizeof(tcp_hdr_t) / 4;
+ 360   1          pTcpHdr_Xmit->reserved = 0;
+ 361   1          pTcpHdr_Xmit->ctrl_flags = ctrlFlags;
+ 362   1          pTcpHdr_Xmit->window_size = TCP_WINDOW_SIZE;
+ 363   1          pTcpHdr_Xmit->chksum = 0;
+ 364   1          pTcpHdr_Xmit->urgent_ptr = 0;  /* Not used in LwPS */
+ 365   1          pBuf_Xmit.size += sizeof(tcp_hdr_t);
+ 366   1      
+ 367   1          /* MSS will be added when SYN flag */
+ 368   1          if (ctrlFlags & TCP_FLAG_SYN)
+ 369   1          {
+ 370   2              pTcpHdrMSS = (tcp_hdr_opt_mss_t *)(pBuf_Xmit.l4 + sizeof(tcp_hdr_t));
+ 371   2              pTcpHdr_Xmit->data_offset += 1;    /* extend size */
+ 372   2              
+ 373   2              pTcpHdrMSS->opt_kind = TCP_OPT_MSS;
+ 374   2              pTcpHdrMSS->opt_len = 4;
+ 375   2              pTcpHdrMSS->opt_mss = TCP_LOCAL_MSS;
+ 376   2      
+ 377   2              pBuf_Xmit.size += 4;
+ 378   2      
+ 379   2              pTcpSegData = pBuf_Xmit.l4 + sizeof(tcp_hdr_t) + 4;
+ 380   2          } else {
+ 381   2              pTcpSegData = pBuf_Xmit.l4 + sizeof(tcp_hdr_t);
+ 382   2          }
+ 383   1      
+ 384   1          /* TCP segment data */
+ 385   1          if (length > 0) {
+ 386   2              memcpy(pTcpSegData, pData, length);
+ 387   2              pBuf_Xmit.size += length;
+ 388   2          }
+ 389   1      
+ 390   1          //tcp_hdr_dump(pTcpHdr_Xmit);
+ 391   1      
+ 392   1          DBG_LWPS_TCP_PRINTF(("%s:%d, size = %d\n", __FILE__, (uint16)__LINE__, (uint16)pBuf_Xmit.size));
+ 393   1      
+ 394   1          pBuf_Xmit.l4fmt = L4FMT_TCP;
+ 395   1      
+ 396   1          if (LWPS_OK != ip_down(&pBuf_Xmit, &tcp_pcb_entry[pcbId].remote_ip)) {
+ 397   2              OSAL_PRINTF("%s():%d - ip_output failed!\n", __FILE__, (uint16)__LINE__);
+ 398   2              return LWPS_OK;                 /* DO NOT change the PCB entry */
+ 399   2          }
+ 400   1      
+ 401   1          /* update TCP PCB */
+ 402   1          if ((ctrlFlags & TCP_FLAG_SYN) || (ctrlFlags & TCP_FLAG_FIN)) {
+ 403   2              tcp_pcb_entry[pcbId].local_seq += 1;
+ 404   2          } else {
+ 405   2              tcp_pcb_entry[pcbId].local_seq += length;
+ 406   2          }
+ 407   1      
+ 408   1          return LWPS_OK;
+ 409   1      } /* end of tcp_xmit */
+ 410          
+ 411          #ifdef  LWPS_IP
+ 412          // TCP Up Handle IP: Processes incoming TCP packets and manages connection state machine
+ 413          // Handles SYN, ACK, FIN, data reception and state transitions for TCP connections
+ 414          static int16 tcp_up_handle_ip(pktBuf_t *pBuf) large
+ 415          {
+ 416   1          tcp_hdr_t xdata *pTcpHdr = (tcp_hdr_t *)pBuf->l4;
+ 417   1          tcp_hdr_opt_mss_t xdata *pTcpHdrMSS = (tcp_hdr_opt_mss_t *)(pBuf->l4 + sizeof(tcp_hdr_t));
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 8   
+
+ 418   1          ip_hdr_t xdata *pIpHdr = (ip_hdr_t *)pBuf->l3;
+ 419   1          int32 xdata pcbId;
+ 420   1          int32 xdata pcbId_empty;
+ 421   1      
+ 422   1          DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 423   1      
+ 424   1          /* find entry of TCP PCB */
+ 425   1          if ((pcbId = tcp_findPCB(*(ip_addr_t *)(&pIpHdr->dst_ip), pTcpHdr->dst_port, *(ip_addr_t *)(&pIpHdr->s
+             -rc_ip), pTcpHdr->src_port)) < 0)
+ 426   1          {
+ 427   2              DBG_LWPS_TCP_PRINTF(("%s():%d - TCP PCB is NOT found!\n", __FILE__, (uint16)__LINE__));
+ 428   2      
+ 429   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_SYN)
+ 430   2              {
+ 431   3                  /* try to find listening port (if SYN) */
+ 432   3                  if ((pcbId = tcp_findPCB(ip_addr_empty, pTcpHdr->dst_port, ip_addr_empty, 0)) < 0)
+ 433   3                  {
+ 434   4                      DBG_LWPS_TCP_PRINTF(("%s():%d - TCP PCB (LISTEN) is NOT found!\n", __FILE__, (uint16)__LIN
+             -E__));
+ 435   4                  
+ 436   4                      /* [FIXME] reply ICMP to tell remote host no listener */
+ 437   4                      //lwps_pbuf_free(pBuf);
+ 438   4                  
+ 439   4                      return LWPS_OK;
+ 440   4                  }
+ 441   3                  else
+ 442   3                  {
+ 443   4                      /* Check LISTEN State */
+ 444   4                      if (tcp_pcb_entry[pcbId].state == TCP_STATE_LISTEN)
+ 445   4                      {
+ 446   5                          /* create a new connection to wait for handler */
+ 447   5                          pcbId_empty = tcp_findPCB(ip_addr_empty, 0, ip_addr_empty, 0);
+ 448   5                          if (pcbId_empty < 0)
+ 449   5                          {
+ 450   6                              OSAL_PRINTF("%s():%d - All TCP Connection is full!\n", __FILE__, (uint16)__LINE__)
+             -;
+ 451   6                              /* [FIXME] Empty entry is NOT found */
+ 452   6                  
+ 453   6                              return LWPS_OK;
+ 454   6                          }
+ 455   5                          else
+ 456   5                          {
+ 457   6                              DBG_LWPS_TCP_PRINTF(("%s():%d - New TCP Connection, pcbId = %d\n", \
+ 458   6                                  __FILE__, (uint16)__LINE__, pcbId_empty));
+ 459   6                        
+ 460   6                              IPADDR_COPY(tcp_pcb_entry[pcbId_empty].local_ip.addr, pIpHdr->dst_ip);
+ 461   6                              tcp_pcb_entry[pcbId_empty].local_port = pTcpHdr->dst_port;
+ 462   6                              IPADDR_COPY(tcp_pcb_entry[pcbId_empty].remote_ip.addr, pIpHdr->src_ip);
+ 463   6                              tcp_pcb_entry[pcbId_empty].remote_port = pTcpHdr->src_port;
+ 464   6                              //tcp_pcb_entry[pcbId_empty].state = TCP_STATE_LISTEN;
+ 465   6                              tcp_state_update(pcbId_empty, TCP_STATE_LISTEN);
+ 466   6                              tcp_pcb_entry[pcbId_empty].parent_id = pcbId;
+ 467   6                              tcp_pcb_entry[pcbId_empty].timer_alive = 0;
+ 468   6                              tcp_pcb_entry[pcbId_empty].timer_rest = 0;
+ 469   6                  
+ 470   6                              pcbId = pcbId_empty;
+ 471   6                          }
+ 472   5                      }
+ 473   4                      else
+ 474   4                      {
+ 475   5                          /* [FIXME] Connection Not Found */
+ 476   5                          //lwps_pbuf_free(pBuf);
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 9   
+
+ 477   5                  
+ 478   5                          return LWPS_OK;
+ 479   5                      }
+ 480   4                  }
+ 481   3              }
+ 482   2              else
+ 483   2              {
+ 484   3                  /* Connection is not found and FLAG is not SYN */
+ 485   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - <warning> Connection is not found and FLAG is not SYN\n", __FI
+             -LE__, (uint16)__LINE__));
+ 486   3                  //lwps_pbuf_free(pBuf);
+ 487   3      
+ 488   3                  return LWPS_OK;
+ 489   3              }
+ 490   2          }
+ 491   1      
+ 492   1          tcp_pcb_entry[pcbId].timer_rest = 0;
+ 493   1      
+ 494   1          /* find an exist connection */
+ 495   1          switch (tcp_pcb_entry[pcbId].state)
+ 496   1          {
+ 497   2          case TCP_STATE_LISTEN:
+ 498   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_SYN)
+ 499   2              {
+ 500   3                  /* Update State */
+ 501   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_SYN_RECEIVED;
+ 502   3                  tcp_state_update(pcbId, TCP_STATE_SYN_RECEIVED);
+ 503   3      
+ 504   3                  tcp_pcb_entry[pcbId].local_seq = 0x10000000;
+ 505   3                  tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num + 1; /* Relative Ack Number */
+ 506   3      
+ 507   3                  /* Update MSS */
+ 508   3                  /* [FIXME] Only if the first option is mss header */
+ 509   3                  if (((pTcpHdr->data_offset * 4) > sizeof(tcp_hdr_t)) &&
+ 510   3                      (pTcpHdrMSS->opt_kind == TCP_OPT_MSS) &&
+ 511   3                      (pTcpHdrMSS->opt_len == 4))
+ 512   3                  {
+ 513   4                      tcp_pcb_entry[pcbId].remote_mss = pTcpHdrMSS->opt_mss;
+ 514   4                  }
+ 515   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_SYN | TCP_FLAG_ACK);
+ 516   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_SYN | TCP_FLAG_ACK);
+ 517   3              }
+ 518   2              break;
+ 519   2      
+ 520   2          case TCP_STATE_SYN_SENT:
+ 521   2              /* Not Implmented */
+ 522   2              break;
+ 523   2      
+ 524   2          case TCP_STATE_SYN_RECEIVED:
+ 525   2            DBG_LWPS_TCP_PRINTF(("%s():%d, pTcpHdr->ctrl_flags=0x%02x\n", __FILE__, (uint16)__LINE__, (uint16)pTc
+             -pHdr->ctrl_flags));
+ 526   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_ACK)
+ 527   2              {
+ 528   3                //DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 529   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_ESTABLISHED;
+ 530   3                  tcp_state_update(pcbId, TCP_STATE_ESTABLISHED);
+ 531   3                  tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num;
+ 532   3              }
+ 533   2              break;
+ 534   2      
+ 535   2          case TCP_STATE_ESTABLISHED:
+ 536   2              if (tcp_pcb_entry[pcbId].remote_seq == pTcpHdr->seq_num)
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 10  
+
+ 537   2              {
+ 538   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - Update remote_seq, Old = 0x%08llX\n", \
+ 539   3                      __FILE__, (uint16)__LINE__, tcp_pcb_entry[pcbId].remote_seq));
+ 540   3      
+ 541   3                  /* Update remote_seq */
+ 542   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - [size = 0x%04X][offset = 0x%04X]\n", \
+ 543   3                      __FILE__, (uint16)__LINE__, pBuf->size, pTcpHdr->data_offset * 4U));
+ 544   3                  tcp_pcb_entry[pcbId].remote_seq += pBuf->size - (pBuf->l4 - pBuf->l2) - (pTcpHdr->data_offset 
+             -* 4U);
+ 545   3      
+ 546   3                  /* Reply an ACK packet */
+ 547   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
+ 548   3      
+ 549   3                  /* Passive Close? */
+ 550   3                  if (pTcpHdr->ctrl_flags & TCP_FLAG_FIN)
+ 551   3                  {
+ 552   4                      /* Skip CLOSE-WAIT state */
+ 553   4                      tcp_state_update(pcbId, TCP_STATE_LAST_ACK);
+ 554   4                      tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num;
+ 555   4                      tcp_xmit(pcbId, NULL, 0, TCP_FLAG_FIN | TCP_FLAG_ACK);
+ 556   4      
+ 557   4                      return LWPS_OK;
+ 558   4                  }
+ 559   3                  /* Receive Data? */
+ 560   3      
+ 561   3                  if ((pBuf->size - (pTcpHdr->data_offset * 4)) > 0)
+ 562   3                  {
+ 563   4                      if (_TcpHandler.event_recv != NULL)
+ 564   4                      {
+ 565   5                          _TcpHandler.event_recv(pcbId, pBuf->l4 + (pTcpHdr->data_offset * 4), \
+ 566   5                        pBuf->size - (pBuf->l4 - pBuf->l2) - (pTcpHdr->data_offset * 4));
+ 567   5                      }
+ 568   4                  }
+ 569   3      
+ 570   3              }
+ 571   2              else
+ 572   2              {
+ 573   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - pcb->remote_seq (%lu) != pTcpHdr->seq_num (%lu)!\n", \
+ 574   3                      __FILE__, (uint16)__LINE__, tcp_pcb_entry[pcbId].remote_seq, pTcpHdr->seq_num));
+ 575   3      
+ 576   3                  /* Sequence Nubmer is wrong -> reply an ACK packet */
+ 577   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_ACK);
+ 578   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
+ 579   3                  //lwps_pbuf_free(pBuf);
+ 580   3      
+ 581   3                  return LWPS_OK;
+ 582   3              }
+ 583   2              
+ 584   2      
+ 585   2              break;
+ 586   2      
+ 587   2          case TCP_STATE_FIN_WAIT_1:
+ 588   2              if ((pTcpHdr->ctrl_flags & TCP_FLAG_FIN) && (pTcpHdr->ctrl_flags & TCP_FLAG_ACK))
+ 589   2              {
+ 590   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_TIME_WAIT;
+ 591   3                  /* jump to CLOSED state directly */
+ 592   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_CLOSED;
+ 593   3                  tcp_state_update(pcbId, TCP_STATE_CLOSED);
+ 594   3                  tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num + 1;
+ 595   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_ACK);
+ 596   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
+ 597   3                  tcp_delPCB(pcbId);
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 11  
+
+ 598   3                  //lwps_pbuf_free(pBuf);
+ 599   3      
+ 600   3                  return LWPS_OK;
+ 601   3              }
+ 602   2              else if (pTcpHdr->ctrl_flags & TCP_FLAG_FIN)
+ 603   2              {
+ 604   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_CLOSING;
+ 605   3                  /* jump to CLOSED state directly */
+ 606   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_CLOSED;
+ 607   3                  tcp_state_update(pcbId, TCP_STATE_CLOSED);
+ 608   3                  tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num + 1;
+ 609   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_ACK);
+ 610   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
+ 611   3                  tcp_delPCB(pcbId);
+ 612   3                  //lwps_pbuf_free(pBuf);
+ 613   3      
+ 614   3                  return LWPS_OK;
+ 615   3              }
+ 616   2              else if (pTcpHdr->ctrl_flags & TCP_FLAG_ACK)
+ 617   2              {
+ 618   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_FIN_WAIT_2;
+ 619   3                  tcp_state_update(pcbId, TCP_STATE_FIN_WAIT_2);
+ 620   3              }
+ 621   2              break;
+ 622   2      
+ 623   2          case TCP_STATE_FIN_WAIT_2:
+ 624   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_FIN)
+ 625   2              {
+ 626   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_TIME_WAIT;
+ 627   3                  /* jump to CLOSED state directly */
+ 628   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_CLOSED;
+ 629   3                  tcp_state_update(pcbId, TCP_STATE_CLOSED);
+ 630   3                  tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num + 1;
+ 631   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_ACK);
+ 632   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
+ 633   3                  tcp_delPCB(pcbId);
+ 634   3                  //lwps_pbuf_free(pBuf);
+ 635   3      
+ 636   3                  return LWPS_OK;
+ 637   3              }
+ 638   2              break;
+ 639   2      
+ 640   2          case TCP_STATE_CLOSE_WAIT:
+ 641   2              /* skip this state (from ESTABLISHED to LAST_ACK directly) */
+ 642   2              break;
+ 643   2      
+ 644   2          case TCP_STATE_CLOSING:
+ 645   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_ACK)
+ 646   2              {
+ 647   3                  /* Active CLOSE */
+ 648   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_TIME_WAIT;
+ 649   3                  /* jump to CLOSED state directly */
+ 650   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_CLOSED;
+ 651   3                  tcp_state_update(pcbId, TCP_STATE_CLOSED);
+ 652   3                  tcp_delPCB(pcbId);
+ 653   3                  //lwps_pbuf_free(pBuf);
+ 654   3      
+ 655   3                  return LWPS_OK;
+ 656   3              }
+ 657   2              break;
+ 658   2      
+ 659   2          case TCP_STATE_LAST_ACK:
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 12  
+
+ 660   2              if (pTcpHdr->ctrl_flags & TCP_FLAG_ACK)
+ 661   2              {
+ 662   3                  /* Passive CLOSE */
+ 663   3                  //tcp_pcb_entry[pcbId].state = TCP_STATE_CLOSED;
+ 664   3                  tcp_state_update(pcbId, TCP_STATE_CLOSED);
+ 665   3                  tcp_pcb_entry[pcbId].remote_seq = pTcpHdr->seq_num;
+ 666   3                  //tcp_up_handle_ip_reply(pBuf, pcbId, TCP_FLAG_ACK);
+ 667   3                  tcp_xmit(pcbId, NULL, 0, TCP_FLAG_ACK);
+ 668   3                  tcp_delPCB(pcbId);
+ 669   3                  //lwps_pbuf_free(pBuf);
+ 670   3      
+ 671   3                  return LWPS_OK;
+ 672   3              }
+ 673   2              break;
+ 674   2      
+ 675   2          case TCP_STATE_TIME_WAIT:
+ 676   2              break;
+ 677   2      
+ 678   2          case TCP_STATE_CLOSED:
+ 679   2              break;
+ 680   2      
+ 681   2          default:
+ 682   2              break;
+ 683   2          }
+ 684   1      
+ 685   1          //lwps_pbuf_free(pBuf);
+ 686   1      
+ 687   1          return LWPS_OK;
+ 688   1      } /* end of tcp_up_handle_ip */
+ 689          #endif  /* LWPS_IP */
+ 690          
+ 691          // TCP Up: Dispatches incoming TCP packets to the appropriate handler based on L3 format
+ 692          // Routes IP packets to tcp_up_handle_ip for processing
+ 693          int16 tcp_up(pktBuf_t *pBuf) large
+ 694          {
+ 695   1          tcp_hdr_t xdata *pTcpHdr = (tcp_hdr_t *)pBuf->l4;
+ 696   1      
+ 697   1          DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 698   1      
+ 699   1          /* Dispatch */
+ 700   1          switch (pBuf->l3fmt)
+ 701   1          {
+ 702   2      #ifdef  LWPS_IP
+ 703   2          case L3FMT_IP:
+ 704   2              if (LWPS_OK != tcp_up_handle_ip(pBuf))
+ 705   2              {
+ 706   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - tcp_up_handle_ip failed!\n", __FILE__, (uint16)__LINE__));
+ 707   3                  return LWPS_ERR;
+ 708   3              }
+ 709   2              break;
+ 710   2      #endif  /* LWPS_IP */
+ 711   2      
+ 712   2          default:
+ 713   2              DBG_LWPS_TCP_PRINTF(("%s():%d - l3fmt (%d) is NOT supported!\n", __FILE__, (uint16)__LINE__, pBuf-
+             ->l3fmt));
+ 714   2              //lwps_pbuf_free(pBuf);
+ 715   2              break;
+ 716   2          }
+ 717   1      
+ 718   1        DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 719   1          return LWPS_OK;
+ 720   1      } /* end of tcp_up */
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 13  
+
+ 721          
+ 722          // TCP Bind: Binds a TCP PCB to a specific local IP address and port
+ 723          // Associates the connection with local address for listening or outgoing connections
+ 724          int16 tcp_bind(uint16 pcbId, ip_addr_t ip, uint16 port) large
+ 725          {
+ 726   1          DBG_LWPS_TCP_PRINTF(("%s():%d pcbId = %d\n", \
+ 727   1              __FILE__, (uint16)__LINE__, pcbId));
+ 728   1      
+ 729   1          if (pcbId > TCP_CONNECTION_MAX)
+ 730   1          {
+ 731   2              OSAL_PRINTF("%s():%d - pcbId (%d) Error\n", __FILE__, (uint16)__LINE__, pcbId);
+ 732   2      
+ 733   2              return LWPS_ERR;
+ 734   2          }
+ 735   1      
+ 736   1          tcp_pcb_entry[pcbId].local_ip = ip;
+ 737   1          tcp_pcb_entry[pcbId].local_port = port;
+ 738   1      
+ 739   1          return LWPS_OK;
+ 740   1      }
+ 741          
+ 742          // TCP Listen: Places TCP PCB in listening state for incoming connections
+ 743          // Sets state to LISTEN with specified backlog for pending connections
+ 744          int16 tcp_listen(uint16 pcbId, uint16 backlog) large
+ 745          {
+ 746   1          DBG_LWPS_TCP_PRINTF(("%s():%d pcbId = %d, backlog = %d\n", \
+ 747   1              __FILE__, (uint16)__LINE__, pcbId, backlog));
+ 748   1      
+ 749   1          if(backlog){}
+ 750   1      
+ 751   1          if (pcbId > TCP_CONNECTION_MAX)
+ 752   1          {
+ 753   2              DBG_LWPS_TCP_PRINTF(("%s():%d - pcbId (%d) Error\n", __FILE__, (uint16)__LINE__, pcbId));
+ 754   2      
+ 755   2              return LWPS_ERR;
+ 756   2          }
+ 757   1      
+ 758   1          //tcp_pcb_entry[pcbId].state = TCP_STATE_LISTEN;
+ 759   1          tcp_state_update(pcbId, TCP_STATE_LISTEN);
+ 760   1      
+ 761   1          return LWPS_OK;
+ 762   1      }
+ 763          
+ 764          /*
+ 765          int16 tcp_connect(uint16 pcbId, ip_addr_t ip, uint16 port) large
+ 766          {
+ 767              DBG_LWPS_TCP_PRINTF(("%():%d pcbId = %d, host = %d.%d.%d.%d:%d\n", \
+ 768                  __FILE__, (uint16)__LINE__, \
+ 769                  ip.addr[0], ip.addr[1], ip.addr[2], ip.addr[3], port));
+ 770          
+ 771              return LWPS_OK;
+ 772          }
+ 773          */
+ 774          
+ 775          // TCP Send: Transmits data over TCP connection with segmentation based on MSS
+ 776          // Splits data into segments according to remote MSS and sends each segment
+ 777          int16 tcp_send(uint16 pcbId, uint8 *pData, uint16 length) large
+ 778          {
+ 779   1      #if 1
+ 780   1          int32 xdata i;
+ 781   1      
+ 782   1          //DBG_LWPS_TCP_PRINTF("%s():%d MSS=%u\n", __FILE__, (uint16)__LINE__, (tcp_pcb_entry[pcbId].remote_mss
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 14  
+
+             -));
+ 783   1      
+ 784   1          for (i=0; i<length; i+=tcp_pcb_entry[pcbId].remote_mss)
+ 785   1          {
+ 786   2              if (LWPS_OK != tcp_xmit(pcbId, pData + i, ((length - i) >= tcp_pcb_entry[pcbId].remote_mss)? tcp_p
+             -cb_entry[pcbId].remote_mss : (length - i), TCP_FLAG_ACK))
+ 787   2              {
+ 788   3                  return LWPS_ERR;
+ 789   3              }
+ 790   2          }
+ 791   1      
+ 792   1          return LWPS_OK;
+ 793   1      #else
+                  return tcp_xmit(pcbId, pData, length, TCP_FLAG_ACK);
+              #endif
+ 796   1      }
+ 797          
+ 798          // TCP Close: Initiates TCP connection termination with FIN handshake
+ 799          // Sends FIN/ACK and transitions to FIN_WAIT_1 state for graceful shutdown
+ 800          int16 tcp_close(uint16 pcbId) large
+ 801          {
+ 802   1          DBG_LWPS_TCP_PRINTF(("%s():%d pcbId = %d\n", __FILE__, (uint16)__LINE__, pcbId));
+ 803   1      
+ 804   1          if (pcbId > TCP_CONNECTION_MAX)
+ 805   1          {
+ 806   2              DBG_LWPS_TCP_PRINTF(("%s():%d - pcbId (%d) Error\n",  __FILE__, (uint16)__LINE__, pcbId));
+ 807   2              return LWPS_ERR;
+ 808   2          }
+ 809   1      
+ 810   1          if (LWPS_OK != tcp_xmit(pcbId, NULL, 0, TCP_FLAG_FIN | TCP_FLAG_ACK))
+ 811   1          {
+ 812   2              OSAL_PRINTF("%s():%d - tcp_xmit failed\n", __FILE__, (uint16)__LINE__);
+ 813   2              return LWPS_ERR;
+ 814   2          }
+ 815   1      
+ 816   1          //tcp_pcb_entry[pcbId].state = TCP_STATE_FIN_WAIT_1;
+ 817   1          tcp_state_update(pcbId, TCP_STATE_FIN_WAIT_1);
+ 818   1      
+ 819   1      #if 0   /* temporary solution */
+                  /* fix some browser compatible issue */
+                  {
+                      DBG_LWPS_TCP_PRINTF(("%s():%d FORCE CLOSE TCP Connection, pcbId = %d\n", __FILE__, (uint16)__LINE_
+             -_, pcbId));
+                      tcp_delPCB(pcbId);
+                  }
+              #endif
+ 826   1      
+ 827   1          return LWPS_OK;
+ 828   1      }
+ 829          
+ 830          /*
+ 831           * Function to count failed connection attempts (SYN-SENT timeout)
+ 832           * Returns number of PCBs in SYN-SENT state with expired timers
+ 833           */
+ 834          int16 tcp_get_attempt_fails(void) large
+ 835          {
+ 836   1          uint16 i;
+ 837   1          uint16 count = 0;
+ 838   1      
+ 839   1          DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 840   1      
+ 841   1          for (i = 0; i < TCP_CONNECTION_MAX; i++)
+C51 COMPILER V9.60.0.0   TCP                                                               11/02/2026 17:56:58 PAGE 15  
+
+ 842   1          {
+ 843   2              if (tcp_pcb_entry[i].state == TCP_STATE_SYN_SENT && 
+ 844   2                  tcp_pcb_entry[i].timer_rest > TCP_SYN_TIMEOUT)
+ 845   2              {
+ 846   3                  count++;
+ 847   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - Failed attempt at PCB-ID %d\n", 
+ 848   3                      __FILE__, (uint16)__LINE__, (uint16)i));
+ 849   3              }
+ 850   2          }
+ 851   1      
+ 852   1          return count;
+ 853   1      }
+ 854          
+ 855          /*
+ 856           * Function to count resets in established connections
+ 857           * Returns number of RST flags received in ESTABLISHED state
+ 858           */
+ 859          int16 tcp_get_estab_resets(void) large
+ 860          {
+ 861   1          uint16 i;
+ 862   1          uint16 count = 0;
+ 863   1          static uint16 reset_counter = 0;  // Maintains count across calls
+ 864   1      
+ 865   1          DBG_LWPS_TCP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 866   1      
+ 867   1          // This would typically be called from TCP input handler when RST is received
+ 868   1          // in ESTABLISHED state. For demonstration, we'll check current state transitions.
+ 869   1          for (i = 0; i < TCP_CONNECTION_MAX; i++)
+ 870   1          {
+ 871   2              if (tcp_pcb_entry[i].prev_state == TCP_STATE_ESTABLISHED &&
+ 872   2                  tcp_pcb_entry[i].state == TCP_STATE_CLOSED)
+ 873   2              {
+ 874   3                  count++;
+ 875   3                  DBG_LWPS_TCP_PRINTF(("%s():%d - Reset in former ESTABLISHED conn at PCB-ID %d\n", 
+ 876   3                      __FILE__, (uint16)__LINE__, (uint16)i));
+ 877   3              }
+ 878   2          }
+ 879   1      
+ 880   1          reset_counter += count;
+ 881   1          return reset_counter;
+ 882   1      }
+ 883          
+ 884          #endif /* end of LWPS_TCP */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5655    ----
+   CONSTANT SIZE    =    237    ----
+   XDATA SIZE       =   1215     134
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    237    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

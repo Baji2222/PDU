@@ -1,0 +1,1025 @@
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UDP
+OBJECT MODULE PLACED IN .\objects\udp.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\udp.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\
+                    -include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.
+                    -\include\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW
+                    -8051_CLK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\udp.lst) TABS(2) OBJECT(.\objects\udp.obj)
+
+line level    source
+
+   1          
+   2          #pragma STRING (far)
+   3          /*
+   4           * Copyright Realtek Semiconductor Corporation, 2008
+   5           * All rights reserved.
+   6           *
+   7           * Program  : Light-weight Protocol Stack
+   8           * Abstract : 
+   9           * Author   : 
+  10           * $Id: $
+  11           */
+  12          
+  13          #include <local/lwps_config.h>
+  14          
+  15          #if LWPS_UDP
+  16          
+  17          /*  
+  18           * Include Files 
+  19           */
+  20          #include <lwps/lwps.h>
+  21          
+  22          /*
+  23           * Symbol Definition 
+  24           */
+  25          #define UDP_PORT_ANY    (0)
+  26          #define UDP_PORT_BEGIN  (21024)
+  27          #define UDP_PORT_MAX    (65535)
+  28          
+  29          /*
+  30           * Data Declaration 
+  31           */
+  32          static udp_pcb_t     xdata udp_pcb_entry[UDP_MAX_CONNECTION];
+  33          static udp_handler_t xdata _UdpHandler;
+  34          static ip_addr_t     xdata ip_addr_empty = { { 0, 0, 0, 0 } };
+  35          static uint32        xdata udp_datagrams_delivered = 0;    /* Counter for delivered datagrams */
+  36          static uint32        xdata udp_datagrams_no_app = 0;       /* Counter for datagrams with no application */
+  37          static uint32        xdata udp_datagrams_failed_other = 0; /* Counter for datagrams failed for other reaso
+             -ns */
+  38          static uint32        xdata udp_datagrams_sent = 0;         /* Counter for datagrams sent */
+  39          
+  40          /*
+  41           * Macro Definition
+  42           */
+  43          #define IF_TRUE_RET(exp, ret)           do {    \
+  44              if (exp) {                                                                          \
+  45                  OSAL_PRINTF("%s():%d (" #exp ") => return " #ret "\n", __FILE__, (uint16)__LINE__); \
+  46                  return ret;                                                                     \
+  47              }                                                                                   \
+  48          } while (0)
+  49          #define IS_PCBID_INVALID(idx)           (idx < 0 || idx >= UDP_MAX_CONNECTION)
+  50          #define IS_PCB_VALID(idx)               (udp_pcb_entry[idx].valid == TRUE)
+  51          
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 2   
+
+  52          /*
+  53           * Function Declaration 
+  54           */
+  55          #if DBG_LWPS_UDP_ENABLE
+              static void udp_hdr_dump(udp_hdr_t *pUdpHdr) large
+              {
+                  //OSAL_PRINTF("%s():%d pUdpHdr = %p\n", __FILE__, (uint16)__LINE__, pUdpHdr);
+                  OSAL_PRINTF("-- [UDP HDR dump] -----------------------------\n");
+                  OSAL_PRINTF("   Src Port: 0x%04X (%d)\n", pUdpHdr->src_port, pUdpHdr->src_port);
+                  OSAL_PRINTF("   Dst Port: 0x%04X (%d)\n", pUdpHdr->dst_port, pUdpHdr->dst_port);
+                  OSAL_PRINTF("     Length: 0x%04X (%d)\n", pUdpHdr->length, pUdpHdr->length);
+                  OSAL_PRINTF("   Checksum: 0x%04X\n", pUdpHdr->chksum);
+                  OSAL_PRINTF("-----------------------------------------------\n");
+              }
+              #endif /* end of DBG_LWPS_UDP_ENABLE */
+  67          
+  68          static void udp_delPCB(uint16 idx) large
+  69          {
+  70   1          DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+  71   1      
+  72   1          if (idx >= UDP_MAX_CONNECTION)
+  73   1          {
+  74   2              DBG_LWPS_UDP_PRINTF(("%s():%d - idx (%lu) error\n", __FILE__, (uint16)__LINE__, idx));
+  75   2              return;
+  76   2          }
+  77   1      
+  78   1          udp_pcb_entry[idx].local_ip = ip_addr_empty;
+  79   1          udp_pcb_entry[idx].remote_ip = ip_addr_empty;
+  80   1          udp_pcb_entry[idx].local_port = 0;
+  81   1          udp_pcb_entry[idx].remote_port = 0;
+  82   1          udp_pcb_entry[idx].parent_id = idx; /* self */
+  83   1      }
+  84          
+  85          void udp_timer(void) large
+  86          {
+  87   1          return;
+  88   1      }
+  89          
+  90          int16 udp_getPCB(uint16 idx, udp_pcb_t **ppUdpPCB) large
+  91          {
+  92   1          udp_pcb_t *pUdpPCB = (udp_pcb_t *)(*((uint16*)ppUdpPCB));
+  93   1          IF_TRUE_RET(IS_PCBID_INVALID(idx), LWPS_ERR);
+  94   1          IF_TRUE_RET(ppUdpPCB == NULL, LWPS_ERR_NULLPOINT);
+  95   1      
+  96   1          /* Assign pointer */
+  97   1          pUdpPCB = &udp_pcb_entry[idx];
+  98   1      
+  99   1          return LWPS_OK;
+ 100   1      }
+ 101          
+ 102          int16 udp_setHandler(udp_handler_t *pUdpHandler) large
+ 103          {
+ 104   1          IF_TRUE_RET(pUdpHandler == NULL, LWPS_ERR_NULLPOINT);
+ 105   1      
+ 106   1          _UdpHandler.event_connect = pUdpHandler->event_connect;
+ 107   1          _UdpHandler.event_disconnect = pUdpHandler->event_disconnect;
+ 108   1          _UdpHandler.event_recvfrom = pUdpHandler->event_recvfrom;
+ 109   1      
+ 110   1          return LWPS_OK;
+ 111   1      }
+ 112          
+ 113          int16 udp_init(void) large
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 3   
+
+ 114          {
+ 115   1          int32 i;
+ 116   1      
+ 117   1          DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 118   1      
+ 119   1          /* Clear handler */
+ 120   1          _UdpHandler.event_connect = NULL;
+ 121   1          _UdpHandler.event_disconnect = NULL;
+ 122   1          _UdpHandler.event_recvfrom = NULL;
+ 123   1      
+ 124   1          /* Reset PCB */
+ 125   1          for (i=0; i<UDP_MAX_CONNECTION; i++) {
+ 126   2              udp_delPCB(i);
+ 127   2          }
+ 128   1      
+ 129   1          /* Initialize datagram counters */
+ 130   1          udp_datagrams_delivered = 0;
+ 131   1          udp_datagrams_no_app = 0;
+ 132   1          udp_datagrams_failed_other = 0;
+ 133   1          udp_datagrams_sent = 0;
+ 134   1      
+ 135   1          return LWPS_OK;
+ 136   1      }
+ 137          
+ 138          #if (defined(LWS_A_SET) || defined(UPGRADE_TFTP))
+              static int16 udp_localport_check(uint16 pcbId) large
+              {
+                  uint16 lport;
+                  int32 i;
+              
+                  /* find a valid port if local-port is invalid */
+                  if (udp_pcb_entry[pcbId].local_port == UDP_PORT_ANY)
+                  {
+                      for (lport=UDP_PORT_BEGIN; lport<UDP_PORT_MAX; lport++)
+                      {
+                          for (i=0; i<UDP_MAX_CONNECTION; i++)
+                          {
+                              if ((i != pcbId) && (udp_pcb_entry[i].local_port == lport))
+                              {
+                                  break;
+                              }
+                          }
+              
+                          /* is valid port? */
+                          if (udp_pcb_entry[i].local_port != lport)
+                          {
+                              udp_pcb_entry[pcbId].local_port = lport;
+                              break;
+                          }
+                      }
+              
+                      /* not found vaild-port */
+                      if (udp_pcb_entry[pcbId].local_port == UDP_PORT_ANY)
+                      {
+                          OSAL_PRINTF("%s():%d Cannot find a vaild port.\n", __FILE__, (uint16)__LINE__);
+              
+                          return LWPS_ERR;
+                      }
+                  }
+              
+                  return LWPS_OK;
+              }
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 4   
+
+              
+              static int16 udp_xmit_to(uint16 pcbId, uint8 *pData, uint16 length, ip_addr_t ip, uint16 port) large
+              {
+                  pktBuf_t *pBuf_Xmit = &pktbuf;
+                  udp_hdr_t *pUdpHdr_Xmit;
+                  uint8 *pUdpDatagram;
+              
+                  DBG_LWPS_UDP_PRINTF(("%s():%d pcbId = %d, pData = %p, length = %d\n", \
+                      __FILE__, (uint16)__LINE__, pcbId, pData, length));
+              
+                  /* [WARN] DO NOT check pcbId, because it's vaild likely */
+              #if 0
+                  if ((pData == NULL) && (length == 0)) {
+                      return LWPS_ERR_NULLPOINT;
+                  }
+              #endif
+              
+                  /* [FIXME] fix length of pbuf note
+                   * <IP alignment> ETH (6+6+2) + [RTK (8)] + VLAN (4) + IP (20) + UDP (8)
+                   * DON'T have to consider RTK tag
+                   */
+              #define UDP_XMIT_PBUF_SIZE  (14 + 4 + 20 + 8)
+              
+                  /* alloc output pbuf and extend 4B for MSS */
+                  /*
+                  if (LWPS_OK != lwps_pbuf_alloc(UDP_XMIT_PBUF_SIZE + length, 0, &pBuf_Xmit)) {
+                      OSAL_PRINTF("%s():%d - pBuf alloc failed!\n", __FILE__, (uint16)__LINE__);
+                      return LWPS_ERR_OUTOFMEMORY;
+                  }
+                  */
+              
+                  //OSAL_PRINTF("%s():%d - pBuf_Xmit->data = %p\n", __FILE__, (uint16)__LINE__, pBuf_Xmit->data);
+                  //OSAL_PRINTF("%s():%d pBuf_Xmit - h: %p d: %p t: %p e: %p\n", __FILE__, (uint16)__LINE__, pBuf_Xmit->
+             -head, pBuf_Xmit->data, pBuf_Xmit->tail, pBuf_Xmit->end);
+              
+                  /* pointer to L4 hdr */
+                  pBuf_Xmit->l4 = (uint8*)(pkt_head + UDP_XMIT_PBUF_SIZE - sizeof(udp_hdr_t));    /* Max UDP Hdr size */
+                  pBuf_Xmit->size = 0;
+              
+                  /* Insert UDP HDR */
+                  pUdpHdr_Xmit = (udp_hdr_t *)pBuf_Xmit->l4;
+                  pUdpHdr_Xmit->src_port = udp_pcb_entry[pcbId].local_port;
+                  //pUdpHdr_Xmit->dst_port = udp_pcb_entry[pcbId].remote_port;
+                  pUdpHdr_Xmit->dst_port = port;
+                  pUdpHdr_Xmit->length = sizeof(udp_hdr_t) + length;
+                  pUdpHdr_Xmit->chksum = 0;
+                  pBuf_Xmit->size += sizeof(udp_hdr_t);
+              
+                  pUdpDatagram = pBuf_Xmit->l4 + sizeof(udp_hdr_t);
+              
+                  /* UDP segment data */
+                  if (length > 0) {
+                      memcpy(pUdpDatagram, pData, length);
+                      pBuf_Xmit->size += length;
+                  }
+              
+                  //udp_hdr_dump(pUdpHdr_Xmit);
+              
+              #if 0
+                  /* dump packet (data ~ tail) */
+                  {
+                      uint32 i;
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 5   
+
+              
+                      OSAL_PRINTF("-- [udp_xmit_to] --------------------------------------------\n");
+                      for (i=0; i<pBuf_Xmit->length; i++)
+                      {
+                          if ((i & 0xf) == 0x0) OSAL_PRINTF("[%03X] ", i);
+                          OSAL_PRINTF("%02X ", *(pBuf_Xmit->data + i));
+                          if ((i & 0xf) == 0xf) OSAL_PRINTF("\n");
+                      }
+                      OSAL_PRINTF("-------------------------------------------------------------\n");
+                  }
+              #endif
+              
+                  //OSAL_PRINTF("%s():%d - pBuf_Xmit->data = %p, pBuf_Xmit->length = %d\n", __FILE__, (uint16)__LINE__, 
+             -pBuf_Xmit->data, pBuf_Xmit->length);
+              
+                  pBuf_Xmit->l4fmt = L4FMT_UDP;
+                  
+                  //if (LWPS_OK != ip_output(pBuf_Xmit, &udp_pcb_entry[pcbId].remote_ip)) {
+                  if (LWPS_OK != ip_down(pBuf_Xmit, &ip)) {
+                      OSAL_PRINTF("%s():%d - ip_output failed!\n", __FILE__, (uint16)__LINE__);
+                      //lwps_pbuf_free(pBuf_Xmit);
+                      return LWPS_ERR;
+                  }
+              
+                  /* Increment sent counter on successful transmission */
+                  udp_datagrams_sent++;
+                  DBG_LWPS_UDP_PRINTF(("%s():%d Datagram sent, total: %lu\n", __FILE__, (uint16)__LINE__, udp_datagrams_
+             -sent));
+              
+                  return LWPS_OK;
+              }
+              #endif
+ 267          
+ 268          #ifdef LWPS_IP
+ 269          static int16 udp_up_handle_ip(pktBuf_t *pBuf) large
+ 270          {
+ 271   1          udp_hdr_t *pUdpHdr = (udp_hdr_t *)pBuf->l4;
+ 272   1          ip_hdr_t *pIpHdr = (ip_hdr_t *)pBuf->l3;
+ 273   1          ip_addr_t src_ip;
+ 274   1          int32 i;
+ 275   1      
+ 276   1          DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 277   1      
+ 278   1          /* Basic validation: Check if packet size is sufficient for UDP header */
+ 279   1          if (pBuf->size < sizeof(udp_hdr_t))
+ 280   1          {
+ 281   2              udp_datagrams_failed_other++;
+ 282   2              DBG_LWPS_UDP_PRINTF(("%s():%d Invalid UDP packet size, total failed other: %lu\n", 
+ 283   2                  __FILE__, (uint16)__LINE__, udp_datagrams_failed_other));
+ 284   2              //lwps_pbuf_free(pBuf);
+ 285   2              return LWPS_ERR;
+ 286   2          }
+ 287   1      
+ 288   1          /* find the handler */
+ 289   1          for (i=0; i<UDP_MAX_CONNECTION; i++)
+ 290   1          {
+ 291   2              /* make sure it's to us */
+ 292   2              if (udp_pcb_entry[i].local_port == pUdpHdr->dst_port)
+ 293   2              {
+ 294   3                  /* [FIXME] Not support connect, disconnect YET */
+ 295   3                  if (udp_pcb_entry[i].remote_port == UDP_PORT_ANY) {
+ 296   4                      /* Receive Data? */
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 6   
+
+ 297   4                      if ((pBuf->size - sizeof(udp_hdr_t)) > 0)
+ 298   4                      {
+ 299   5                          if (_UdpHandler.event_recvfrom != NULL)
+ 300   5                          {
+ 301   6                              memcpy(src_ip.addr, pIpHdr->src_ip, IP_ADDR_LEN);
+ 302   6                              _UdpHandler.event_recvfrom(i, 
+ 303   6                                  pBuf->l4 + sizeof(udp_hdr_t), 
+ 304   6                                  pUdpHdr->length - sizeof(udp_hdr_t),
+ 305   6                                  src_ip, pUdpHdr->src_port);
+ 306   6                              udp_datagrams_delivered++; /* Increment delivered counter */
+ 307   6                              DBG_LWPS_UDP_PRINTF(("%s():%d Datagram delivered, total: %lu\n", 
+ 308   6                                  __FILE__, (uint16)__LINE__, udp_datagrams_delivered));
+ 309   6                          }
+ 310   5                      }
+ 311   4                  }
+ 312   3                  break;
+ 313   3              }
+ 314   2          }
+ 315   1      
+ 316   1          /* If no matching PCB was found, increment no-app counter */
+ 317   1          if (i == UDP_MAX_CONNECTION)
+ 318   1          {
+ 319   2              udp_datagrams_no_app++;
+ 320   2              DBG_LWPS_UDP_PRINTF(("%s():%d No application for port %d, total undelivered: %lu\n", 
+ 321   2                  __FILE__, (uint16)__LINE__, pUdpHdr->dst_port, udp_datagrams_no_app));
+ 322   2          }
+ 323   1      
+ 324   1          //lwps_pbuf_free(pBuf);
+ 325   1      
+ 326   1          return LWPS_OK;
+ 327   1      }
+ 328          #endif /* LWPS_IP */
+ 329          
+ 330          int16 udp_up(pktBuf_t *pBuf) large
+ 331          {
+ 332   1          udp_hdr_t *pUdpHdr = (udp_hdr_t *)pBuf->l4;
+ 333   1      
+ 334   1          DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 335   1          //printf("%s():%d\n", __FILE__, (uint16)__LINE__);
+ 336   1      
+ 337   1          //udp_hdr_dump(pUdpHdr);
+ 338   1      
+ 339   1          /* Dispatch */
+ 340   1          switch (pBuf->l3fmt)
+ 341   1          {
+ 342   2      #ifdef LWPS_IP
+ 343   2          case L3FMT_IP:
+ 344   2              if (LWPS_OK != udp_up_handle_ip(pBuf))
+ 345   2              {
+ 346   3                  DBG_LWPS_UDP_PRINTF(("%s():%d - udp_up_handle_ip failed!\n", __FILE__, (uint16)__LINE__));
+ 347   3                  udp_datagrams_failed_other++; /* Increment counter for other failures */
+ 348   3                  DBG_LWPS_UDP_PRINTF(("%s():%d Failed in udp_up_handle_ip, total failed other: %lu\n", 
+ 349   3                      __FILE__, (uint16)__LINE__, udp_datagrams_failed_other));
+ 350   3                  return LWPS_ERR;
+ 351   3              }
+ 352   2              break;
+ 353   2      #endif /* LWPS_IP */
+ 354   2      
+ 355   2          default:
+ 356   2              DBG_LWPS_UDP_PRINTF(("%s():%d - l3fmt (%d) is NOT supported!\n", __FILE__, (uint16)__LINE__, pBuf-
+             ->l3fmt));
+ 357   2              udp_datagrams_failed_other++; /* Increment counter for unsupported L3 format */
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 7   
+
+ 358   2              DBG_LWPS_UDP_PRINTF(("%s():%d Unsupported L3 format, total failed other: %lu\n", 
+ 359   2                  __FILE__, (uint16)__LINE__, udp_datagrams_failed_other));
+ 360   2              //lwps_pbuf_free(pBuf);
+ 361   2              break;
+ 362   2          }
+ 363   1      
+ 364   1          return LWPS_OK;
+ 365   1      } /* end of udp_up */
+ 366          
+ 367          int16 udp_bind(uint16 pcbId, ip_addr_t ip, uint16 port) large
+ 368          {
+ 369   1          int32 i;
+ 370   1      
+ 371   1          IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+ 372   1      
+ 373   1          /* check port number is not used */
+ 374   1          for (i=0; i<UDP_MAX_CONNECTION; i++)
+ 375   1          {
+ 376   2              if ((i != pcbId) && udp_pcb_entry[i].local_port == port)
+ 377   2              {
+ 378   3                  /* this port is using */
+ 379   3                  return LWPS_ERR;
+ 380   3              }
+ 381   2          }
+ 382   1      
+ 383   1          udp_pcb_entry[pcbId].local_ip = ip;
+ 384   1          udp_pcb_entry[pcbId].local_port = port;
+ 385   1      
+ 386   1          return LWPS_OK;
+ 387   1      }
+ 388          
+ 389          #if 0
+              int16 udp_from_to(uint16 pcbId, ip_addr_t ip, uint16 port) large
+              {
+                  IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+              
+                  udp_pcb_entry[pcbId].remote_ip = ip;
+                  udp_pcb_entry[pcbId].remote_port = port;
+              
+                  return LWPS_OK;
+              }
+              #endif
+ 400          
+ 401          #if (defined(LWS_A_SET) || defined(UPGRADE_TFTP))
+              int16 udp_sendto(uint16 pcbId, uint8 *pData, uint16 length, ip_addr_t ip, uint16 port) large
+              {
+                  DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+              
+                  IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+                  IF_TRUE_RET(pData == NULL, LWPS_ERR_NULLPOINT);
+              
+                  if (LWPS_OK != udp_localport_check(pcbId))
+                  {
+                      DBG_LWPS_UDP_PRINTF(("%s():%d udp_localport_check failed!\n", __FILE__, (uint16)__LINE__));
+              
+                      return LWPS_ERR;
+                  }
+              
+                  /* transmit packet */
+                  if (LWPS_OK != udp_xmit_to(pcbId, pData, length, ip, port))
+                  {
+                      DBG_LWPS_UDP_PRINTF(("%s():%d udp_xmit failed\n", __FILE__, (uint16)__LINE__));
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 8   
+
+              
+                      return LWPS_ERR;
+                  }
+              
+                  return LWPS_OK;
+              }
+              #endif
+ 427          
+ 428          int16 udp_close(uint16 pcbId) large
+ 429          {
+ 430   1          IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+ 431   1      
+ 432   1          /* delete this entry */
+ 433   1          udp_delPCB(pcbId);
+ 434   1      
+ 435   1          return LWPS_OK;
+ 436   1      }
+ 437          //===============================  Monty Add for UDP snmp oid Start =======================
+ 438          /* 
+ 439           * Function to get the total number of UDP datagrams delivered to users 
+ 440           */
+ 441          uint32 udp_get_datagrams_delivered(void) large
+ 442          {
+ 443   1          DBG_LWPS_UDP_PRINTF(("%s():%d Total UDP datagrams delivered: %lu\n", 
+ 444   1              __FILE__, (uint16)__LINE__, udp_datagrams_delivered));
+ 445   1          return udp_datagrams_delivered;
+ 446   1      }
+ 447          
+ 448          /* 
+ 449           * Function to reset the total number of UDP datagrams delivered 
+ 450           */
+ 451          int16 udp_reset_datagrams_delivered(void) large
+ 452          {
+ 453   1          DBG_LWPS_UDP_PRINTF(("%s():%d Resetting UDP datagrams delivered counter\n", 
+ 454   1              __FILE__, (uint16)__LINE__));
+ 455   1          udp_datagrams_delivered = 0;
+ 456   1          return LWPS_OK;
+ 457   1      }
+ 458          
+ 459          /* 
+ 460           * Function to get the total number of UDP datagrams received with no application at destination port 
+ 461           */
+ 462          uint32 udp_get_datagrams_no_app(void) large
+ 463          {
+ 464   1          DBG_LWPS_UDP_PRINTF(("%s():%d Total UDP datagrams with no application: %lu\n", 
+ 465   1              __FILE__, (uint16)__LINE__, udp_datagrams_no_app));
+ 466   1          return udp_datagrams_no_app;
+ 467   1      }
+ 468          
+ 469          /* 
+ 470           * Function to reset the total number of UDP datagrams received with no application 
+ 471           */
+ 472          int16 udp_reset_datagrams_no_app(void) large
+ 473          {
+ 474   1          DBG_LWPS_UDP_PRINTF(("%s():%d Resetting UDP datagrams no application counter\n", 
+ 475   1              __FILE__, (uint16)__LINE__));
+ 476   1          udp_datagrams_no_app = 0;
+ 477   1          return LWPS_OK;
+ 478   1      }
+ 479          
+ 480          /* 
+ 481           * Function to get the total number of UDP datagrams that failed delivery for reasons other than no applic
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 9   
+
+             -ation 
+ 482           */
+ 483          uint32 udp_get_datagrams_failed_other(void) large
+ 484          {
+ 485   1          DBG_LWPS_UDP_PRINTF(("%s():%d Total UDP datagrams failed for other reasons: %lu\n", 
+ 486   1              __FILE__, (uint16)__LINE__, udp_datagrams_failed_other));
+ 487   1          return udp_datagrams_failed_other;
+ 488   1      }
+ 489          
+ 490          /* 
+ 491           * Function to reset the total number of UDP datagrams failed for other reasons 
+ 492           */
+ 493          int16 udp_reset_datagrams_failed_other(void) large
+ 494          {
+ 495   1          DBG_LWPS_UDP_PRINTF(("%s():%d Resetting UDP datagrams failed other counter\n", 
+ 496   1              __FILE__, (uint16)__LINE__));
+ 497   1          udp_datagrams_failed_other = 0;
+ 498   1          return LWPS_OK;
+ 499   1      }
+ 500          
+ 501          /* 
+ 502           * Function to get the total number of UDP datagrams sent 
+ 503           */
+ 504          uint32 udp_get_datagrams_sent(void) large
+ 505          {
+ 506   1          DBG_LWPS_UDP_PRINTF(("%s():%d Total UDP datagrams sent: %lu\n", 
+ 507   1              __FILE__, (uint16)__LINE__, udp_datagrams_sent));
+ 508   1          return udp_datagrams_sent;
+ 509   1      }
+ 510          
+ 511          /* 
+ 512           * Function to reset the total number of UDP datagrams sent 
+ 513           */
+ 514          int16 udp_reset_datagrams_sent(void) large
+ 515          {
+ 516   1          DBG_LWPS_UDP_PRINTF(("%s():%d Resetting UDP datagrams sent counter\n", 
+ 517   1              __FILE__, (uint16)__LINE__));
+ 518   1          udp_datagrams_sent = 0;
+ 519   1          return LWPS_OK;
+ 520   1      }
+ 521          
+ 522          //===============================  Monty Add for UDP snmp oid End =======================
+ 523          #endif /* end of LWPS_UDP */
+ 524          
+ 525          
+ 526          
+ 527          
+ 528          
+ 529          
+ 530          
+ 531          
+ 532          
+ 533          
+ 534          
+ 535          
+ 536          
+ 537          
+ 538          
+ 539          
+ 540          
+ 541          
+ 542          
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 10  
+
+ 543          
+ 544          
+ 545          
+ 546          
+ 547          
+ 548          
+ 549          
+ 550          //#pragma STRING (far)
+ 551          ///*
+ 552          //* Copyright Realtek Semiconductor Corporation, 2008
+ 553          //* All rights reserved.
+ 554          //*
+ 555          //* Program  : Light-weight Protocol Stack
+ 556          //* Abstract : 
+ 557          //* Author   : 
+ 558          //* $Id: $
+ 559          //*/
+ 560          
+ 561          //#include <local/lwps_config.h>
+ 562          
+ 563          //#if LWPS_UDP
+ 564          
+ 565          ///*  
+ 566          // * Include Files 
+ 567          // */
+ 568          //#include <lwps/lwps.h>
+ 569          
+ 570          
+ 571          ///*
+ 572          // * Symbol Definition 
+ 573          // */
+ 574          //#define UDP_PORT_ANY    (0)
+ 575          //#define UDP_PORT_BEGIN  (21024)
+ 576          //#define UDP_PORT_MAX    (65535)
+ 577          
+ 578          
+ 579          ///*
+ 580          // * Data Declaration 
+ 581          // */
+ 582          //static udp_pcb_t     xdata udp_pcb_entry[UDP_MAX_CONNECTION];
+ 583          //static udp_handler_t xdata _UdpHandler;
+ 584          //static ip_addr_t     xdata ip_addr_empty = { { 0, 0, 0, 0 } };
+ 585          
+ 586          
+ 587          ///*
+ 588          // * Macro Definition
+ 589          // */
+ 590          //#define IF_TRUE_RET(exp, ret)           do {    \
+*** WARNING C329 IN LINE 590 OF ..\..\common\src\lwps\udp.c: single-line comment contains line-continuation
+ 591          //    if (exp) {                                                                          \
+ 592          //        OSAL_PRINTF("%s():%d (" #exp ") => return " #ret "\n", __FILE__, (uint16)__LINE__); \
+ 593          //        return ret;                                                                     \
+ 594          //    }                                                                                   \
+ 595          //} while (0)
+*** WARNING C329 IN LINE 591 OF ..\..\common\src\lwps\udp.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 592 OF ..\..\common\src\lwps\udp.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 593 OF ..\..\common\src\lwps\udp.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 594 OF ..\..\common\src\lwps\udp.c: single-line comment contains line-continuation
+ 596          //#define IS_PCBID_INVALID(idx)           (idx < 0 || idx >= UDP_MAX_CONNECTION)
+ 597          //#define IS_PCB_VALID(idx)               (udp_pcb_entry[idx].valid == TRUE)
+ 598          
+ 599          
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 11  
+
+ 600          ///*
+ 601          // * Function Declaration 
+ 602          // */
+ 603          //#if DBG_LWPS_UDP_ENABLE
+ 604          //static void udp_hdr_dump(udp_hdr_t *pUdpHdr) large
+ 605          //{
+ 606          //    //OSAL_PRINTF("%s():%d pUdpHdr = %p\n", __FILE__, (uint16)__LINE__, pUdpHdr);
+ 607          //    OSAL_PRINTF("-- [UDP HDR dump] -----------------------------\n");
+ 608          //    OSAL_PRINTF("   Src Port: 0x%04X (%d)\n", pUdpHdr->src_port, pUdpHdr->src_port);
+ 609          //    OSAL_PRINTF("   Dst Port: 0x%04X (%d)\n", pUdpHdr->dst_port, pUdpHdr->dst_port);
+ 610          //    OSAL_PRINTF("     Length: 0x%04X (%d)\n", pUdpHdr->length, pUdpHdr->length);
+ 611          //    OSAL_PRINTF("   Checksum: 0x%04X\n", pUdpHdr->chksum);
+ 612          //    OSAL_PRINTF("-----------------------------------------------\n");
+ 613          //}
+ 614          //#endif /* end of DBG_LWPS_UDP_ENABLE */
+ 615          
+ 616          //static void udp_delPCB(uint16 idx) large
+ 617          //{
+ 618          //    DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 619          
+ 620          //    if (idx >= UDP_MAX_CONNECTION)
+ 621          //    {
+ 622          //        DBG_LWPS_UDP_PRINTF(("%s():%d - idx (%lu) error\n", __FILE__, (uint16)__LINE__, idx));
+ 623          //        return;
+ 624          //    }
+ 625          
+ 626          //    udp_pcb_entry[idx].local_ip = ip_addr_empty;
+ 627          //    udp_pcb_entry[idx].remote_ip = ip_addr_empty;
+ 628          //    udp_pcb_entry[idx].local_port = 0;
+ 629          //    udp_pcb_entry[idx].remote_port = 0;
+ 630          //    udp_pcb_entry[idx].parent_id = idx; /* self */
+ 631          //}
+ 632          
+ 633          //void udp_timer(void) large
+ 634          //{
+ 635          //    return;
+ 636          //}
+ 637          
+ 638          //int16 udp_getPCB(uint16 idx, udp_pcb_t **ppUdpPCB) large
+ 639          //{
+ 640          //    udp_pcb_t *pUdpPCB = (udp_pcb_t *)(*((uint16*)ppUdpPCB));
+ 641          //    IF_TRUE_RET(IS_PCBID_INVALID(idx), LWPS_ERR);
+ 642          //    IF_TRUE_RET(ppUdpPCB == NULL, LWPS_ERR_NULLPOINT);
+ 643          
+ 644          //    /* Assign pointer */
+ 645          //    pUdpPCB = &udp_pcb_entry[idx];
+ 646          
+ 647          //    return LWPS_OK;
+ 648          //}
+ 649          
+ 650          //int16 udp_setHandler(udp_handler_t *pUdpHandler) large
+ 651          //{
+ 652          //    IF_TRUE_RET(pUdpHandler == NULL, LWPS_ERR_NULLPOINT);
+ 653          
+ 654          //    _UdpHandler.event_connect = pUdpHandler->event_connect;
+ 655          //    _UdpHandler.event_disconnect = pUdpHandler->event_disconnect;
+ 656          //    _UdpHandler.event_recvfrom = pUdpHandler->event_recvfrom;
+ 657          
+ 658          //    return LWPS_OK;
+ 659          //}
+ 660          
+ 661          //int16 udp_init(void) large
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 12  
+
+ 662          //{
+ 663          //    int32 i;
+ 664          
+ 665          //    DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 666          
+ 667          //    /* Clear handler */
+ 668          //    _UdpHandler.event_connect = NULL;
+ 669          //    _UdpHandler.event_disconnect = NULL;
+ 670          //    _UdpHandler.event_recvfrom = NULL;
+ 671          
+ 672          //    /* Reset PCB */
+ 673          //    for (i=0; i<UDP_MAX_CONNECTION; i++) {
+ 674          //        udp_delPCB(i);
+ 675          //    }
+ 676          
+ 677          //    return LWPS_OK;
+ 678          //}
+ 679          //#if (defined( LWS_A_SET) || defined( UPGRADE_TFTP))
+ 680          //static int16 udp_localport_check(uint16 pcbId) large
+ 681          //{
+ 682          //    uint16 lport;
+ 683          //    int32 i;
+ 684          
+ 685          //    /* find a valid port if local-port is invalid */
+ 686          //    if (udp_pcb_entry[pcbId].local_port == UDP_PORT_ANY)
+ 687          //    {
+ 688          //        for (lport=UDP_PORT_BEGIN; lport<UDP_PORT_MAX; lport++)
+ 689          //        {
+ 690          //            for (i=0; i<UDP_MAX_CONNECTION; i++)
+ 691          //            {
+ 692          //                if ((i != pcbId) && (udp_pcb_entry[i].local_port == lport))
+ 693          //                {
+ 694          //                    break;
+ 695          //                }
+ 696          //            }
+ 697          
+ 698          //            /* is valid port? */
+ 699          //            if (udp_pcb_entry[i].local_port != lport)
+ 700          //            {
+ 701          //                udp_pcb_entry[pcbId].local_port = lport;
+ 702          //                break;
+ 703          //            }
+ 704          //        }
+ 705          
+ 706          //        /* not found vaild-port */
+ 707          //        if (udp_pcb_entry[pcbId].local_port == UDP_PORT_ANY)
+ 708          //        {
+ 709          //            OSAL_PRINTF("%s():%d Cannot find a vaild port.\n", __FILE__, (uint16)__LINE__);
+ 710          
+ 711          //            return LWPS_ERR;
+ 712          //        }
+ 713          //    }
+ 714          
+ 715          //    return LWPS_OK;
+ 716          //}
+ 717          
+ 718          //static int16 udp_xmit_to(uint16 pcbId, uint8 *pData, uint16 length, ip_addr_t ip, uint16 port) large
+ 719          //{
+ 720          //    pktBuf_t *pBuf_Xmit = &pktbuf;
+ 721          //    udp_hdr_t *pUdpHdr_Xmit;
+ 722          //    uint8 *pUdpDatagram;
+ 723          
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 13  
+
+ 724          //    DBG_LWPS_UDP_PRINTF(("%s():%d pcbId = %d, pData = %p, length = %d\n", \
+*** WARNING C329 IN LINE 724 OF ..\..\common\src\lwps\udp.c: single-line comment contains line-continuation
+ 725          //        __FILE__, (uint16)__LINE__, pcbId, pData, length));
+ 726          
+ 727          //    /* [WARN] DO NOT check pcbId, because it's vaild likely */
+ 728          //#if 0
+ 729          //    if ((pData == NULL) && (length == 0)) {
+ 730          //        return LWPS_ERR_NULLPOINT;
+ 731          //    }
+ 732          //#endif
+ 733          
+ 734          //    /* [FIXME] fix length of pbuf note
+ 735          //     * <IP alignment> ETH (6+6+2) + [RTK (8)] + VLAN (4) + IP (20) + UDP (8)
+ 736          //     * DON'T have to consider RTK tag
+ 737          //     * 
+ 738          //     */
+ 739          //#define UDP_XMIT_PBUF_SIZE  (14 + 4 + 20 + 8)
+ 740          
+ 741          //  
+ 742          //    /* alloc output pbuf and extend 4B for MSS */
+ 743          //    /*
+ 744          //    if (LWPS_OK != lwps_pbuf_alloc(UDP_XMIT_PBUF_SIZE + length, 0, &pBuf_Xmit)) {
+ 745          //        OSAL_PRINTF("%s():%d - pBuf alloc failed!\n", __FILE__, (uint16)__LINE__);
+ 746          //        return LWPS_ERR_OUTOFMEMORY;
+ 747          //    }
+ 748          //    */
+ 749          
+ 750          //    //OSAL_PRINTF("%s():%d - pBuf_Xmit->data = %p\n", __FILE__, (uint16)__LINE__, pBuf_Xmit->data);
+ 751          //    //OSAL_PRINTF("%s():%d pBuf_Xmit - h: %p d: %p t: %p e: %p\n", __FILE__, (uint16)__LINE__, pBuf_Xmit
+             -->head, pBuf_Xmit->data, pBuf_Xmit->tail, pBuf_Xmit->end);
+ 752          
+ 753          //    /* pointer to L4 hdr */
+ 754          //    pBuf_Xmit->l4 = (uint8*)(pkt_head + UDP_XMIT_PBUF_SIZE - sizeof(udp_hdr_t));    /* Max UDP Hdr size 
+             -*/
+ 755          //    pBuf_Xmit->size = 0;
+ 756          
+ 757          //    /* Insert UDP HDR */
+ 758          //    pUdpHdr_Xmit = (udp_hdr_t *)pBuf_Xmit->l4;
+ 759          //    pUdpHdr_Xmit->src_port = udp_pcb_entry[pcbId].local_port;
+ 760          //    //pUdpHdr_Xmit->dst_port = udp_pcb_entry[pcbId].remote_port;
+ 761          //    pUdpHdr_Xmit->dst_port = port;
+ 762          //    pUdpHdr_Xmit->length = sizeof(udp_hdr_t) + length;
+ 763          //    pUdpHdr_Xmit->chksum = 0;
+ 764          //    pBuf_Xmit->size += sizeof(udp_hdr_t);
+ 765          
+ 766          //    pUdpDatagram = pBuf_Xmit->l4 + sizeof(udp_hdr_t);
+ 767          
+ 768          //    /* UDP segment data */
+ 769          //    if (length > 0) {
+ 770          //        memcpy(pUdpDatagram, pData, length);
+ 771          //        pBuf_Xmit->size += length;
+ 772          //    }
+ 773          
+ 774          //    //udp_hdr_dump(pUdpHdr_Xmit);
+ 775          
+ 776          //#if 0
+ 777          //    /* dump packet (data ~ tail) */
+ 778          //    {
+ 779          //        uint32 i;
+ 780          
+ 781          //        OSAL_PRINTF("-- [udp_xmit_to] --------------------------------------------\n");
+ 782          //        for (i=0; i<pBuf_Xmit->length; i++)
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 14  
+
+ 783          //        {
+ 784          //            if ((i & 0xf) == 0x0) OSAL_PRINTF("[%03X] ", i);
+ 785          //            OSAL_PRINTF("%02X ", *(pBuf_Xmit->data + i));
+ 786          //            if ((i & 0xf) == 0xf) OSAL_PRINTF("\n");
+ 787          //        }
+ 788          //        OSAL_PRINTF("-------------------------------------------------------------\n");
+ 789          //    }
+ 790          //#endif
+ 791          
+ 792          //    //OSAL_PRINTF("%s():%d - pBuf_Xmit->data = %p, pBuf_Xmit->length = %d\n", __FILE__, (uint16)__LINE__
+             -, pBuf_Xmit->data, pBuf_Xmit->length);
+ 793          
+ 794          //    pBuf_Xmit->l4fmt = L4FMT_UDP;
+ 795          //    
+ 796          //    //if (LWPS_OK != ip_output(pBuf_Xmit, &udp_pcb_entry[pcbId].remote_ip)) {
+ 797          //    if (LWPS_OK != ip_down(pBuf_Xmit, &ip)) {
+ 798          //        OSAL_PRINTF("%s():%d - ip_output failed!\n", __FILE__, (uint16)__LINE__);
+ 799          //        //lwps_pbuf_free(pBuf_Xmit);
+ 800          //    }
+ 801          
+ 802          //    return LWPS_OK;
+ 803          //}
+ 804          //#endif
+ 805          //#ifdef  LWPS_IP
+ 806          //static int16 udp_up_handle_ip(pktBuf_t *pBuf) large
+ 807          //{
+ 808          //    udp_hdr_t *pUdpHdr = (udp_hdr_t *)pBuf->l4;
+ 809          //    ip_hdr_t *pIpHdr = (ip_hdr_t *)pBuf->l3;
+ 810          //    ip_addr_t src_ip;
+ 811          //    int32 i;
+ 812          
+ 813          //    DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 814          
+ 815          //    /* find the handler */
+ 816          //    for (i=0; i<UDP_MAX_CONNECTION; i++)
+ 817          //    {
+ 818          //        /* make sure it's to us */
+ 819          //        if (udp_pcb_entry[i].local_port == pUdpHdr->dst_port)
+ 820          //        {
+ 821          //            /* [FIXME] Not support connect, disconnect YET */
+ 822          //            if (udp_pcb_entry[i].remote_port == UDP_PORT_ANY) {
+ 823          //                /* Receive Data? */
+ 824          //                if ((pBuf->size - sizeof(udp_hdr_t)) > 0)
+ 825          //                {
+ 826          //                    if (_UdpHandler.event_recvfrom != NULL)
+ 827          //                    {
+ 828          //                        memcpy(src_ip.addr, pIpHdr->src_ip, IP_ADDR_LEN);
+ 829          //                        _UdpHandler.event_recvfrom(i, 
+ 830          //                            pBuf->l4 + sizeof(udp_hdr_t), 
+ 831          //                            pUdpHdr->length - sizeof(udp_hdr_t),
+ 832          //                            src_ip, pUdpHdr->src_port);
+ 833          //                    }
+ 834          //                }
+ 835          //            }
+ 836          //            break;
+ 837          //        }
+ 838          //    }
+ 839          
+ 840          //    //lwps_pbuf_free(pBuf);
+ 841          
+ 842          //    return LWPS_OK;
+ 843          //}
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 15  
+
+ 844          //#endif  /* LWPS_IP */
+ 845          
+ 846          //int16 udp_up(pktBuf_t *pBuf) large
+ 847          //{
+ 848          //    udp_hdr_t *pUdpHdr = (udp_hdr_t *)pBuf->l4;
+ 849          
+ 850          //    DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 851          //    //printf("%s():%d\n", __FILE__, (uint16)__LINE__);
+ 852          
+ 853          
+ 854          //    //udp_hdr_dump(pUdpHdr);
+ 855          
+ 856          //    /* Dispatch */
+ 857          //    switch (pBuf->l3fmt)
+ 858          //    {
+ 859          //#ifdef  LWPS_IP
+ 860          //    case L3FMT_IP:
+ 861          //        if (LWPS_OK != udp_up_handle_ip(pBuf))
+ 862          //        {
+ 863          //            DBG_LWPS_UDP_PRINTF(("%s():%d - udp_up_handle_ip failed!\n", __FILE__, (uint16)__LINE__));
+ 864          //            return LWPS_ERR;
+ 865          //        }
+ 866          //        break;
+ 867          //#endif  /* LWPS_IP */
+ 868          
+ 869          //    default:
+ 870          //        DBG_LWPS_UDP_PRINTF(("%s():%d - l3fmt (%d) is NOT supported!\n", __FILE__, (uint16)__LINE__, pBu
+             -f->l3fmt));
+ 871          //        //lwps_pbuf_free(pBuf);
+ 872          //        break;
+ 873          //    }
+ 874          
+ 875          //    return LWPS_OK;
+ 876          //} /* end of udp_up */
+ 877          
+ 878          
+ 879          //int16 udp_bind(uint16 pcbId, ip_addr_t ip, uint16 port) large
+ 880          //{
+ 881          //    int32 i;
+ 882          
+ 883          //    IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+ 884          
+ 885          //    /* check port number is not used */
+ 886          //    for (i=0; i<UDP_MAX_CONNECTION; i++)
+ 887          //    {
+ 888          //        if ((i != pcbId) && udp_pcb_entry[i].local_port == port)
+ 889          //        {
+ 890          //            /* this port is using */
+ 891          //            return LWPS_ERR;
+ 892          //        }
+ 893          //    }
+ 894          
+ 895          //    udp_pcb_entry[pcbId].local_ip = ip;
+ 896          //    udp_pcb_entry[pcbId].local_port = port;
+ 897          
+ 898          //    return LWPS_OK;
+ 899          //}
+ 900          
+ 901          //#if 0
+ 902          //int16 udp_from_to(uint16 pcbId, ip_addr_t ip, uint16 port) large
+ 903          //{
+ 904          //    IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+C51 COMPILER V9.60.0.0   UDP                                                               08/20/2025 22:07:55 PAGE 16  
+
+ 905          
+ 906          //    udp_pcb_entry[pcbId].remote_ip = ip;
+ 907          //    udp_pcb_entry[pcbId].remote_port = port;
+ 908          
+ 909          //    return LWPS_OK;
+ 910          //}
+ 911          //#endif
+ 912          //#if (defined( LWS_A_SET) || defined( UPGRADE_TFTP))
+ 913          //int16 udp_sendto(uint16 pcbId, uint8 *pData, uint16 length, ip_addr_t ip, uint16 port) large
+ 914          //{
+ 915          //    DBG_LWPS_UDP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 916          
+ 917          //    IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+ 918          //    IF_TRUE_RET(pData == NULL, LWPS_ERR_NULLPOINT);
+ 919          
+ 920          //    if (LWPS_OK != udp_localport_check(pcbId))
+ 921          //    {
+ 922          //        DBG_LWPS_UDP_PRINTF(("%s():%d udp_localport_check failed!\n", __FILE__, (uint16)__LINE__));
+ 923          
+ 924          //        return LWPS_ERR;
+ 925          //    }
+ 926          
+ 927          //    /* transmit packet */
+ 928          //    if (LWPS_OK != udp_xmit_to(pcbId, pData, length, ip, port))
+ 929          //    {
+ 930          //        DBG_LWPS_UDP_PRINTF(("%s():%d udp_xmit failed\n", __FILE__, (uint16)__LINE__));
+ 931          
+ 932          //        return LWPS_ERR;
+ 933          //    }
+ 934          
+ 935          //    return LWPS_OK;
+ 936          //}
+ 937          //#endif
+ 938          //int16 udp_close(uint16 pcbId) large
+ 939          //{
+ 940          //    IF_TRUE_RET(IS_PCBID_INVALID(pcbId), LWPS_ERR);
+ 941          
+ 942          //    /* delete this entry */
+ 943          //    udp_delPCB(pcbId);
+ 944          
+ 945          //    return LWPS_OK;
+ 946          //}
+ 947          
+ 948          //#endif /* end of LWPS_UDP */
+ 949          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1654    ----
+   CONSTANT SIZE    =    251    ----
+   XDATA SIZE       =    213      54
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    251    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  6 WARNING(S),  0 ERROR(S)

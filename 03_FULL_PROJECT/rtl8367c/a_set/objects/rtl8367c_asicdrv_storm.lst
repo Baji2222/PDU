@@ -1,0 +1,953 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_STORM
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_storm.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_storm.c LARGE OMF2 OPTIMIZE(8,SIZE) BROW
+                    -SE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common
+                    -\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,
+                    -RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATI
+                    -BLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_storm.lst) TABS(2) OBJECT(.\objects\rtl8
+                    -367c_asicdrv_storm.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Storm control filtering related functions
+  17           *
+  18           */
+  19          
+  20          #include <rtl8367c_asicdrv_storm.h>
+  21          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterBroadcastEnable
+               * Description:
+               *      Set per-port broadcast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      enabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterBroadcastEnable(uint32 port, uint32 enabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_STORM_BCAST_REG, port, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterBroadcastEnable
+               * Description:
+               *      Get per-port broadcast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 2   
+
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterBroadcastEnable(uint32 port, uint32 *pEnabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_STORM_BCAST_REG, port, pEnabled);
+              }
+              #endif
+  69          /* Function Name:
+  70           *      rtl8367c_setAsicStormFilterBroadcastMeter
+  71           * Description:
+  72           *      Set per-port broadcast storm filter meter
+  73           * Input:
+  74           *      port    - Physical port number (0~7)
+  75           *      meter   - meter index (0~31)
+  76           * Output:
+  77           *      None
+  78           * Return:
+  79           *      RT_ERR_OK               - Success
+  80           *      RT_ERR_SMI              - SMI access error
+  81           *      RT_ERR_PORT_ID          - Invalid port number
+  82           *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+  83           * Note:
+  84           *      None
+  85           */
+  86          ret_t rtl8367c_setAsicStormFilterBroadcastMeter(uint32 port, uint32 meter)
+  87          {
+  88   1          if(port >= RTL8367C_PORTNO)
+  89   1              return RT_ERR_PORT_ID;
+  90   1      
+  91   1          if(meter > RTL8367C_METERMAX)
+  92   1              return RT_ERR_FILTER_METER_ID;
+  93   1      
+  94   1          return rtl8367c_setAsicRegBits(RTL8367C_STORM_BCAST_METER_CTRL_REG(port), RTL8367C_STORM_BCAST_METER_C
+             -TRL_MASK(port), meter);
+  95   1      }
+  96          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterBroadcastMeter
+               * Description:
+               *      Get per-port broadcast storm filter meter
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pMeter  - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 3   
+
+               */
+              ret_t rtl8367c_getAsicStormFilterBroadcastMeter(uint32 port, uint32 *pMeter)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_STORM_BCAST_METER_CTRL_REG(port), RTL8367C_STORM_BCAST_METER_C
+             -TRL_MASK(port), pMeter);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterMulticastEnable
+               * Description:
+               *      Set per-port multicast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      enabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterMulticastEnable(uint32 port, uint32 enabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_STORM_MCAST_REG, port, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterMulticastEnable
+               * Description:
+               *      Get per-port multicast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterMulticastEnable(uint32 port, uint32 *pEnabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_STORM_MCAST_REG, port, pEnabled);
+              }
+              #endif
+ 167          /* Function Name:
+ 168           *      rtl8367c_setAsicStormFilterMulticastMeter
+ 169           * Description:
+ 170           *      Set per-port multicast storm filter meter
+ 171           * Input:
+ 172           *      port    - Physical port number (0~7)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 4   
+
+ 173           *      meter   - meter index (0~31)
+ 174           * Output:
+ 175           *      None
+ 176           * Return:
+ 177           *      RT_ERR_OK               - Success
+ 178           *      RT_ERR_SMI              - SMI access error
+ 179           *      RT_ERR_PORT_ID          - Invalid port number
+ 180           *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+ 181           * Note:
+ 182           *      None
+ 183           */
+ 184          ret_t rtl8367c_setAsicStormFilterMulticastMeter(uint32 port, uint32 meter)
+ 185          {
+ 186   1          if(port >= RTL8367C_PORTNO)
+ 187   1              return RT_ERR_PORT_ID;
+ 188   1      
+ 189   1          if(meter > RTL8367C_METERMAX)
+ 190   1              return RT_ERR_FILTER_METER_ID;
+ 191   1      
+ 192   1          return rtl8367c_setAsicRegBits(RTL8367C_STORM_MCAST_METER_CTRL_REG(port), RTL8367C_STORM_MCAST_METER_C
+             -TRL_MASK(port), meter);
+ 193   1      }
+ 194          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterMulticastMeter
+               * Description:
+               *      Get per-port multicast storm filter meter
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pMeter  - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterMulticastMeter(uint32 port, uint32 *pMeter)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_STORM_MCAST_METER_CTRL_REG(port), RTL8367C_STORM_MCAST_METER_C
+             -TRL_MASK(port), pMeter);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterUnknownMulticastEnable
+               * Description:
+               *      Set per-port unknown multicast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      enabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 5   
+
+               */
+              ret_t rtl8367c_setAsicStormFilterUnknownMulticastEnable(uint32 port, uint32 enabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_STORM_UNKNOWN_MCAST_REG, port, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterUnknownMulticastEnable
+               * Description:
+               *      Get per-port unknown multicast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterUnknownMulticastEnable(uint32 port, uint32 *pEnabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_STORM_UNKNOWN_MCAST_REG, port, pEnabled);
+              }
+              #endif
+ 265          /* Function Name:
+ 266           *      rtl8367c_setAsicStormFilterUnknownMulticastMeter
+ 267           * Description:
+ 268           *      Set per-port unknown multicast storm filter meter
+ 269           * Input:
+ 270           *      port    - Physical port number (0~7)
+ 271           *      meter   - meter index (0~31)
+ 272           * Output:
+ 273           *      None
+ 274           * Return:
+ 275           *      RT_ERR_OK               - Success
+ 276           *      RT_ERR_SMI              - SMI access error
+ 277           *      RT_ERR_PORT_ID          - Invalid port number
+ 278           *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+ 279           * Note:
+ 280           *      None
+ 281           */
+ 282          ret_t rtl8367c_setAsicStormFilterUnknownMulticastMeter(uint32 port, uint32 meter)
+ 283          {
+ 284   1          ret_t retVal;
+ 285   1      
+ 286   1          if(port >= RTL8367C_PORTNO)
+ 287   1              return RT_ERR_PORT_ID;
+ 288   1      
+ 289   1          if(meter > RTL8367C_METERMAX)
+ 290   1              return RT_ERR_FILTER_METER_ID;
+ 291   1      
+ 292   1          if(port < 8)
+ 293   1          {
+ 294   2              retVal = rtl8367c_setAsicRegBits(RTL8367C_STORM_UNMC_METER_CTRL_REG(port), RTL8367C_STORM_UNMC_MET
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 6   
+
+             -ER_CTRL_MASK(port), meter);
+ 295   2              if(retVal != RT_ERR_OK)
+ 296   2                  return retVal;
+ 297   2          }
+ 298   1          else
+ 299   1          {
+ 300   2              retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_UNMC_METER_CTRL4 + ((port - 8) >> 1), RTL8367C
+             -_STORM_UNMC_METER_CTRL_MASK(port), meter);
+ 301   2              if(retVal != RT_ERR_OK)
+ 302   2                  return retVal;
+ 303   2          }
+ 304   1      
+ 305   1          return RT_ERR_OK;
+ 306   1      }
+ 307          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterUnknownMulticastMeter
+               * Description:
+               *      Get per-port unknown multicast storm filter meter
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pMeter  - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterUnknownMulticastMeter(uint32 port, uint32 *pMeter)
+              {
+                  ret_t retVal;
+              
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  if(port < 8)
+                  {
+                      retVal = rtl8367c_getAsicRegBits(RTL8367C_STORM_UNMC_METER_CTRL_REG(port), RTL8367C_STORM_UNMC_MET
+             -ER_CTRL_MASK(port), pMeter);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                  }
+                  else
+                  {
+                      retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_UNMC_METER_CTRL4 + ((port - 8) >> 1), RTL8367C
+             -_STORM_UNMC_METER_CTRL_MASK(port), pMeter);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterUnknownUnicastEnable
+               * Description:
+               *      Set per-port unknown unicast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      enabled - 1: enabled, 0: disabled
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 7   
+
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterUnknownUnicastEnable(uint32 port, uint32 enabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_STORM_UNKNOWN_UCAST_REG, port, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterUnknownUnicastEnable
+               * Description:
+               *      get per-port unknown unicast storm filter enable/disable
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterUnknownUnicastEnable(uint32 port, uint32 *pEnabled)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_STORM_UNKNOWN_UCAST_REG, port, pEnabled);
+              }
+              #endif
+ 393          /* Function Name:
+ 394           *      rtl8367c_setAsicStormFilterUnknownUnicastMeter
+ 395           * Description:
+ 396           *      Set per-port unknown unicast storm filter meter
+ 397           * Input:
+ 398           *      port    - Physical port number (0~7)
+ 399           *      meter   - meter index (0~31)
+ 400           * Output:
+ 401           *      None
+ 402           * Return:
+ 403           *      RT_ERR_OK               - Success
+ 404           *      RT_ERR_SMI              - SMI access error
+ 405           *      RT_ERR_PORT_ID          - Invalid port number
+ 406           *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+ 407           * Note:
+ 408           *      None
+ 409           */
+ 410          ret_t rtl8367c_setAsicStormFilterUnknownUnicastMeter(uint32 port, uint32 meter)
+ 411          {
+ 412   1          if(port >= RTL8367C_PORTNO)
+ 413   1              return RT_ERR_PORT_ID;
+ 414   1      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 8   
+
+ 415   1          if(meter > RTL8367C_METERMAX)
+ 416   1              return RT_ERR_FILTER_METER_ID;
+ 417   1      
+ 418   1          return rtl8367c_setAsicRegBits(RTL8367C_STORM_UNDA_METER_CTRL_REG(port), RTL8367C_STORM_UNDA_METER_CTR
+             -L_MASK(port), meter);
+ 419   1      }
+ 420          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterUnknownUnicastMeter
+               * Description:
+               *      Get per-port unknown unicast storm filter meter
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pMeter  - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterUnknownUnicastMeter(uint32 port, uint32 *pMeter)
+              {
+                  if(port >= RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_STORM_UNDA_METER_CTRL_REG(port), RTL8367C_STORM_UNDA_METER_CTR
+             -L_MASK(port), pMeter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtBroadcastMeter
+               * Description:
+               *      Set extension broadcast storm filter meter
+               * Input:
+               *      meter   - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtBroadcastMeter(uint32 meter)
+              {
+                  if(meter > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  return rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG0, RTL8367C_BC_STORM_EXT_METERIDX_MASK
+             -, meter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtBroadcastMeter
+               * Description:
+               *      get extension broadcast storm filter meter
+               * Input:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 9   
+
+               * Output:
+               *      pMeter  - meter index (0~31)
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtBroadcastMeter(uint32 *pMeter)
+              {
+                  if(NULL == pMeter)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG0, RTL8367C_BC_STORM_EXT_METERIDX_MASK
+             -, pMeter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtMulticastMeter
+               * Description:
+               *      Set extension multicast storm filter meter
+               * Input:
+               *      meter   - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtMulticastMeter(uint32 meter)
+              {
+                  if(meter > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  return rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG0, RTL8367C_MC_STORM_EXT_METERIDX_MASK
+             -, meter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtMulticastMeter
+               * Description:
+               *      get extension multicast storm filter meter
+               * Input:
+               *      None
+               * Output:
+               *      pMeter  - meter index (0~31)
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtMulticastMeter(uint32 *pMeter)
+              {
+                  if(NULL == pMeter)
+                      return RT_ERR_NULL_POINTER;
+              
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 10  
+
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG0, RTL8367C_MC_STORM_EXT_METERIDX_MASK
+             -, pMeter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtUnknownMulticastMeter
+               * Description:
+               *      Set extension unknown multicast storm filter meter
+               * Input:
+               *      meter   - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtUnknownMulticastMeter(uint32 meter)
+              {
+                  if(meter > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  return rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG1, RTL8367C_UNMC_STORM_EXT_METERIDX_MA
+             -SK, meter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtUnknownMulticastMeter
+               * Description:
+               *      get extension unknown multicast storm filter meter
+               * Input:
+               *      None
+               * Output:
+               *      pMeter  - meter index (0~31)
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtUnknownMulticastMeter(uint32 *pMeter)
+              {
+                  if(NULL == pMeter)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG1, RTL8367C_UNMC_STORM_EXT_METERIDX_MA
+             -SK, pMeter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtUnknownUnicastMeter
+               * Description:
+               *      Set extension unknown unicast storm filter meter
+               * Input:
+               *      meter   - meter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 11  
+
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtUnknownUnicastMeter(uint32 meter)
+              {
+                  if(meter > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  return rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG1, RTL8367C_UNUC_STORM_EXT_METERIDX_MA
+             -SK, meter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtUnknownUnicastMeter
+               * Description:
+               *      get extension unknown unicast storm filter meter
+               * Input:
+               *      None
+               * Output:
+               *      pMeter  - meter index (0~31)
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Invalid meter index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtUnknownUnicastMeter(uint32 *pMeter)
+              {
+                  if(NULL == pMeter)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_EXT_MTRIDX_CFG1, RTL8367C_UNUC_STORM_EXT_METERIDX_MA
+             -SK, pMeter);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtBroadcastEnable
+               * Description:
+               *      Set extension broadcast storm filter state
+               * Input:
+               *      enabled     - state
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtBroadcastEnable(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_BCAST_EXT_EN_OFFSET, enabled)
+             -;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtBroadcastEnable
+               * Description:
+               *      Get extension broadcast storm filter state
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 12  
+
+               * Input:
+               *      None
+               * Output:
+               *      pEnabled    - state
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Null pointer
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtBroadcastEnable(uint32 *pEnabled)
+              {
+                  if(NULL == pEnabled)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_BCAST_EXT_EN_OFFSET, pEnabled
+             -);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtMulticastEnable
+               * Description:
+               *      Set extension multicast storm filter state
+               * Input:
+               *      enabled     - state
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtMulticastEnable(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_MCAST_EXT_EN_OFFSET, enabled)
+             -;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtMulticastEnable
+               * Description:
+               *      Get extension multicast storm filter state
+               * Input:
+               *      None
+               * Output:
+               *      pEnabled    - state
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Null pointer
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtMulticastEnable(uint32 *pEnabled)
+              {
+                  if(NULL == pEnabled)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_MCAST_EXT_EN_OFFSET, pEnabled
+             -);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 13  
+
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtUnknownMulticastEnable
+               * Description:
+               *      Set extension unknown multicast storm filter state
+               * Input:
+               *      enabled     - state
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtUnknownMulticastEnable(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_UNKNOWN_MCAST_EXT_EN_OFFSET, 
+             -enabled);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtUnknownMulticastEnable
+               * Description:
+               *      Get extension unknown multicast storm filter state
+               * Input:
+               *      None
+               * Output:
+               *      pEnabled    - state
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Null pointer
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtUnknownMulticastEnable(uint32 *pEnabled)
+              {
+                  if(NULL == pEnabled)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_UNKNOWN_MCAST_EXT_EN_OFFSET, 
+             -pEnabled);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtUnknownUnicastEnable
+               * Description:
+               *      Set extension unknown unicast storm filter state
+               * Input:
+               *      enabled     - state
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtUnknownUnicastEnable(uint32 enabled)
+              {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 14  
+
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_UNKNOWN_UCAST_EXT_EN_OFFSET, 
+             -enabled);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtUnknownUnicastEnable
+               * Description:
+               *      Get extension unknown unicast storm filter state
+               * Input:
+               *      None
+               * Output:
+               *      pEnabled    - state
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Null pointer
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtUnknownUnicastEnable(uint32 *pEnabled)
+              {
+                  if(NULL == pEnabled)
+                      return RT_ERR_NULL_POINTER;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_UNKNOWN_UCAST_EXT_EN_OFFSET, 
+             -pEnabled);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicStormFilterExtEnablePortMask
+               * Description:
+               *      Set extension storm filter port mask
+               * Input:
+               *      portmask    - port mask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicStormFilterExtEnablePortMask(uint32 portmask)
+              {
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_EXT_EN_PORTMASK_MASK, port
+             -mask & 0x3FF);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_EXT_EN_PORTMASK_EXT_MASK, 
+             -(portmask >> 10)&1);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicStormFilterExtEnablePortMask
+               * Description:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_STORM                                            11/02/2026 17:57:26 PAGE 15  
+
+               *      Get extension storm filter port mask
+               * Input:
+               *      portmask    - port mask
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_NULL_POINTER     - Null pointer
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicStormFilterExtEnablePortMask(uint32 *pPortmask)
+              {
+                  uint32 tmpPmsk;
+                  ret_t retVal;
+              
+                  if(NULL == pPortmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_EXT_EN_PORTMASK_MASK, &tmp
+             -Pmsk);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+                  *pPortmask = tmpPmsk & 0x3ff;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_STORM_EXT_CFG, RTL8367C_STORM_EXT_EN_PORTMASK_EXT_MASK, 
+             -&tmpPmsk);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+                  *pPortmask |= (tmpPmsk & 1) << 10;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 862          
+ 863          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    806    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      34
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

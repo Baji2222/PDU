@@ -1,0 +1,889 @@
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HTTPD
+OBJECT MODULE PLACED IN .\objects\httpd.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\web\httpd.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTV
+                    -ECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..
+                    -\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API
+                    -_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l
+                    -,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\httpd.lst) TABS(2) OBJECT(.\objects\httpd.obj)
+
+line level    source
+
+   1          /*
+   2           *  Http Daemon for LwPS
+   3           */
+   4          #pragma STRING (far)
+   5          
+   6          
+   7          /*
+   8           * Include Files
+   9           */
+  10          
+  11          #include <common_types.h>
+  12          #include <lwps/lwps_api.h>
+  13          
+  14          #include <common_types.h>
+  15          #include <lwps/lwps_api.h>
+  16          
+  17          #include <web/http_debug.h>
+  18          #include <web/http_types.h>
+  19          #include <web/httpd.h>
+  20          #include <web/rtk_web_ext_api.h>
+  21          #include "Base64.h" 
+  22          #include <html_api.h>
+  23          #include <salsys.h>
+  24          #include <salflash.h>
+  25          #include <web_util.h>
+  26          #include <local/web_config.h>
+  27          #include "syslog/syslogdefs.h"
+  28          
+  29          
+  30          /*
+  31           * Symbol Definition
+  32           */
+  33          typedef struct httpd_client_s {
+  34              int32  socket_id;
+  35              http_request_t request;
+  36          #if  __WEB_UPLOAD__
+  37              int32  upload_offset;
+  38              int32  upload_size;
+  39          #endif
+  40          } httpd_client_t;
+  41          
+  42          #if 0
+              typedef struct http_info_s {
+                  uint8  mothod[16];         /* GET, POST */
+                  uint8  path[128];          /* URL */
+                  uint8  protocol[32];       /* HTTP proto */
+                  uint8  content_type[32];   /* Content-Type */
+                  uint16 bound_len;
+                  uint8  boundary[124];      /* Multipart, form-data */
+                  uint8  cookie[64];         /* Cookie */
+                  uint8  *post_data;
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 2   
+
+                  uint8  host[32];           /* HOST */
+              } http_info_t;
+              #endif
+  55          /*
+  56           * Data Declaration
+  57           */
+  58          httpd_client_t xdata httpd_client_entry[HTTPD_CLIENT_MAX];
+  59          uint8  http_request_buf[HTTPD_REQ_BUF_SIZE + 1]; /* with terminated charator */
+  60          int32  http_request_len;
+  61          int32  http_request_sid;
+  62          uint8  http_variable_value[64];
+  63          uint8  http_bufResponse[HTTPD_RESP_BUF_SIZE];
+  64          uint8 *http_pRespBuf;
+  65          uint8 *http_pRespHeader;
+  66          uint8 *http_pRespBody;
+  67          int32  http_cntRespTimes;
+  68          uint8  http_bufPrintf[HTTPD_RESP_PRTBUF_SIZE];
+  69          int32  http_cntPrintf;
+  70          
+  71          /*
+  72           * Function Declaration
+  73           */
+  74          
+  75          // HTTP Request Parse: Parses HTTP request from raw data into structured format
+  76          // Extracts method, path, headers, and GET/POST variables from HTTP request
+  77          static Tint32 http_request_parse(struct http_request_s *pReq, Tuint8 *pData, Tint32 length)
+  78          {
+  79   1          uint8 *pPos = pData;
+  80   1          int32 i;
+  81   1      
+  82   1          if ((pReq == NULL) || (pData == NULL) || (length <= 0))
+  83   1              return FAILED;
+  84   1      
+  85   1          /* PASS 1 */
+  86   1          pReq->path[0] = '\0';
+  87   1          pReq->Var_Count = 0;
+  88   1      
+  89   1          /* Parsing */
+  90   1          pReq->pMethod = pPos;
+  91   1          for (i=0; i<length; i++) {
+  92   2              if (*pPos == ' ') {
+  93   3                  if (strncmp(pReq->pMethod, "GET", 3) == 0) {
+  94   4                      pReq->method = HTTP_METHOD_GET;
+  95   4                  } else if (strncmp(pReq->pMethod, "POST", 4) == 0) {
+  96   4                      pReq->method = HTTP_METHOD_POST;
+  97   4                  } else {
+  98   4                      pReq->method = -1;  /* Unknown */
+  99   4                      return FAILED;
+ 100   4                  }
+ 101   3                  break;
+ 102   3              }
+ 103   2              pPos++;
+ 104   2          }
+ 105   1      
+ 106   1          pReq->pPath = ++pPos;
+ 107   1          for (; i<length; i++) {
+ 108   2              if (*pPos == '?') {
+ 109   3                  if (pReq->path[0] == '\0') {
+ 110   4                      if ((pPos - pReq->pPath) < sizeof(pReq->path)) {
+ 111   5                          //memset(&pReq->path[0], 0, sizeof(pReq->path));
+ 112   5                          strncpy(pReq->path, pReq->pPath, (pPos - pReq->pPath));
+ 113   5                          pReq->path[(pPos - pReq->pPath)] = '\0';
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 3   
+
+ 114   5                      } else {
+ 115   5                          OSAL_PRINTF("Path is too long (%d)\n", (pPos - pReq->pPath));
+ 116   5                          return FAILED;
+ 117   5                      }
+ 118   4                  }
+ 119   3      
+ 120   3                  /* parse Get variables */
+ 121   3                  pPos++;
+ 122   3                  //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 123   3                  for (; i<length; i++) {
+ 124   4                      if (*pPos == ' ') {
+ 125   5                          //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 126   5                          break;
+ 127   5                      }
+ 128   4      
+ 129   4                      /* has Name */
+ 130   4                      //pReq->Var[pReq->Var_Count].pName = pPos;
+ 131   4                      pReq->Var[pReq->Var_Count].name_offset = (pPos - pReq->pMethod);
+ 132   4                      for (; i<length; i++) {
+ 133   5                          //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 134   5                          if (*pPos == '=') {
+ 135   6                              //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 136   6                              //pReq->Var[pReq->Var_Count].nLen = (pPos - pReq->Var[pReq->Var_Count].pName);
+ 137   6                              break;
+ 138   6                          }
+ 139   5                          pPos++;
+ 140   5                      }
+ 141   4                      //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 142   4                      /* Value */
+ 143   4                      //pReq->Var[pReq->Var_Count].pValue = ++pPos;
+ 144   4                      pReq->Var[pReq->Var_Count].value_offset = (++pPos) - (pReq->pMethod + pReq->Var[pReq->Var_
+             -Count].name_offset);
+ 145   4                      for (; i<length; i++) {
+ 146   5                          //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 147   5                          if (*pPos == '&' || *pPos == ' ') {
+ 148   6                              //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 149   6                              //pReq->Var[pReq->Var_Count].vLen = (pPos - pReq->Var[pReq->Var_Count].pValue);
+ 150   6                              pReq->Var[pReq->Var_Count].value_length = \
+ 151   6                                  (pPos - (pReq->pMethod + pReq->Var[pReq->Var_Count].name_offset + pReq->Var[pR
+             -eq->Var_Count].value_offset));
+ 152   6                              pReq->Var_Count++; /* add var */
+ 153   6                              break;
+ 154   6                          }
+ 155   5                          pPos++;
+ 156   5                      }
+ 157   4      
+ 158   4                      //DBG_PRINT(0, "%s():%d pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 159   4                      if (*pPos == ' ') {
+ 160   5                          break;
+ 161   5                      }
+ 162   4      
+ 163   4                      pPos++;
+ 164   4                  }
+ 165   3                  break;
+ 166   3              } else if (*pPos == ' ') {
+ 167   3                  if (pReq->path[0] == '\0') {
+ 168   4                      if ((pPos - pReq->pPath) < sizeof(pReq->path)) {
+ 169   5                          strncpy(pReq->path, pReq->pPath, (pPos - pReq->pPath));
+ 170   5                          pReq->path[(pPos - pReq->pPath)] = '\0';
+ 171   5                      } else {
+ 172   5                          OSAL_PRINTF("Path is too long (%d)\n", (pPos - pReq->pPath));
+ 173   5                          return FAILED;
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 4   
+
+ 174   5                      }
+ 175   4                  }
+ 176   3                  break;
+ 177   3              }
+ 178   2              pPos++;
+ 179   2          }
+ 180   1      
+ 181   1          pReq->pProtocol = ++pPos;
+ 182   1          for (; i<length; i++) {
+ 183   2              if (*pPos == '\r') {
+ 184   3                  break;
+ 185   3              }
+ 186   2              pPos++;
+ 187   2          }
+ 188   1      
+ 189   1          pReq->pHeader = ++pPos;
+ 190   1          for (; i<length; i++) {
+ 191   2              if (strncmp(pPos - 3, "\r\n\r\n", 4) == 0) {
+ 192   3                  break;
+ 193   3              }
+ 194   2              pPos++;
+ 195   2          }
+ 196   1      
+ 197   1      #if 1
+ 198   1          pReq->pBody = ++pPos;
+ 199   1      
+ 200   1          /* PASS 2: Headers */
+ 201   1          pReq->pHdrAuthorization = NULL;
+ 202   1      #if __WEB_UPLOAD__
+ 203   1          pReq->pHdrContentType = NULL;
+ 204   1      #endif
+ 205   1          pReq->hdrContentLength = 0;
+ 206   1          pReq->hdrIfModifiedSince = 0;
+ 207   1          for (pPos=pReq->pHeader; pPos<pReq->pBody; pPos++)
+ 208   1          {
+ 209   2              if (strncmp(pPos, "Authorization: ", 15) == 0)
+ 210   2              {
+ 211   3                  pReq->pHdrAuthorization = (pPos += 15);
+ 212   3                  while (*pPos != '\n')
+ 213   3                  {
+ 214   4                      pPos++;
+ 215   4                  }
+ 216   3              }
+ 217   2      #if __WEB_UPLOAD__
+ 218   2              else if (strncmp(pPos, "Content-Type: ", 14) == 0)
+ 219   2              {
+ 220   3                  pReq->pHdrContentType = (pPos += 14);
+ 221   3                  while (*pPos != '\n')
+ 222   3                  {
+ 223   4                      pPos++;
+ 224   4                  }
+ 225   3              }
+ 226   2      #endif
+ 227   2              else if (strncmp(pPos, "Content-Length: ", 16) == 0)
+ 228   2              {
+ 229   3                  pPos += 16;
+ 230   3                  while (*pPos != '\n')
+ 231   3                  {
+ 232   4                      if (*pPos != '\r')
+ 233   4                      {
+ 234   5                          pReq->hdrContentLength *= 10;
+ 235   5                          pReq->hdrContentLength += (*pPos - '0');
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 5   
+
+ 236   5                      }
+ 237   4                      pPos++;
+ 238   4                  }
+ 239   3              }
+ 240   2              /* HTTP Caching */
+ 241   2              else if (strncmp(pPos, "If-Modified-Since: ", 19) == 0)
+ 242   2              {
+ 243   3                  pPos += 19;
+ 244   3                  while (*pPos != '\n')
+ 245   3                  {
+ 246   4                      if (*pPos != '\r')
+ 247   4                      {
+ 248   5                          pReq->hdrIfModifiedSince = -1;  /* != 0 */
+ 249   5                      }
+ 250   4                      pPos++;
+ 251   4                  }
+ 252   3              }
+ 253   2          }
+ 254   1      
+ 255   1      #if __WEB_UPLOAD__
+ 256   1          pReq->upload_data = NULL;
+ 257   1          pReq->upload_len = 0;
+ 258   1          if ((pReq->pHdrContentType != NULL) && (strncmp(pReq->pHdrContentType, "multipart", 9) == 0))
+ 259   1          {
+ 260   2              int32 boundary_len = strnstr(pReq->pHdrContentType, "\r\n", (pReq->pBody - pReq->pHdrContentType))
+             - \
+ 261   2                        - strnstr(pReq->pHdrContentType, "boundary=", (pReq->pBody - pReq->pHdrContentType)) - 9
+             -;
+ 262   2                     
+ 263   2              if (HTTPD_MULTIPART_BOUNDARY_MAX <= boundary_len)
+ 264   2              {
+ 265   3                  OSAL_PRINTF("%s():%d - Error: HTTPD_MULTIPART_BOUNDARY_MAX is too small!\n", __FILE__, (uint16
+             -)__LINE__);
+ 266   3              }
+ 267   2              else
+ 268   2              {
+ 269   3                  uint8 *pBegin;
+ 270   3      
+ 271   3                  strncpy(pReq->multipart_boundary_str, strstr(pReq->pHdrContentType, "boundary=") + 9, boundary
+             -_len);
+ 272   3                  pReq->multipart_boundary_str[boundary_len] = '\0';
+ 273   3                  //printf("%s():%d - multipart_boundary_str: %s\n", __FUNCTION__, __LINE__, pReq->multipart_bou
+             -ndary_str);
+ 274   3      
+ 275   3                  if ((pBegin = strnstr(pReq->pBody, pReq->multipart_boundary_str, (pData + length) - pReq->pBod
+             -y)) != NULL)
+ 276   3                  {
+ 277   4                      pBegin += boundary_len;
+ 278   4                      if ((pBegin = strnstr(pReq->pBody, "\r\n\r\n", (pData + length) - pReq->pBody)) != NULL)
+ 279   4                      {
+ 280   5                          pBegin += 4;    /* data begin */
+ 281   5      
+ 282   5                          pReq->upload_data = pBegin;
+ 283   5                          pReq->upload_len = (pData + length) - pBegin;
+ 284   5                          pReq->upload_offset = 0;
+ 285   5                          pReq->upload_size = pReq->hdrContentLength - (pBegin - pReq->pBody);
+ 286   5                      }
+ 287   4                  }
+ 288   3              }
+ 289   2      
+ 290   2              /*printf("%s():%d - @@@ pReq->upload_data = %p, pReq->upload_len = %ld, pReq->upload_offset = %ld,
+             - pReq->upload_size = %ld\n", \
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 6   
+
+ 291   2                  __FILE__, (uint16)__LINE__, pReq->upload_data, pReq->upload_len, pReq->upload_offset, pReq->up
+             -load_size);
+ 292   2              */
+ 293   2          }
+ 294   1      #endif  /* __WEB_UPLOAD__ */
+ 295   1      
+ 296   1      #if __WEB_UPLOAD__
+ 297   1          if ((pReq->method == HTTP_METHOD_POST) && 
+ 298   1              (0 != strncmp(pReq->pHdrContentType, "multipart", 9)))
+ 299   1      #else
+                  if (pReq->method == HTTP_METHOD_POST)
+              #endif
+ 302   1          {
+ 303   2              /* parse Post variables */
+ 304   2              //DBG_PRINT(0, "%s():%d [POST_START] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 305   2              for (; i<length; i++) {
+ 306   3                  //if (*pPos == ' ') {
+ 307   3                  if (*pPos == '\0') {
+ 308   4                      //DBG_PRINT(0, "%s():%d [empty?] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 309   4                      break;
+ 310   4                  }
+ 311   3              
+ 312   3                  /* has Name */
+ 313   3                  //pReq->Var[pReq->Var_Count].pName = pPos;
+ 314   3                  pReq->Var[pReq->Var_Count].name_offset = (pPos - pReq->pMethod);
+ 315   3                  for (; i<length; i++) {
+ 316   4                      //DBG_PRINT(0, "%s():%d [NAME] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 317   4                      if (*pPos == '=') {
+ 318   5                          //DBG_PRINT(0, "%s():%d [NAME] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 319   5                          //pReq->Var[pReq->Var_Count].nLen = (pPos - pReq->Var[pReq->Var_Count].pName);
+ 320   5                          break;
+ 321   5                      }
+ 322   4                      pPos++;
+ 323   4                  }
+ 324   3                  //DBG_PRINT(0, "%s():%d [=?] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 325   3                  /* Value */
+ 326   3                  //pReq->Var[pReq->Var_Count].pValue = ++pPos;
+ 327   3                  pReq->Var[pReq->Var_Count].value_offset = (++pPos) - (pReq->pMethod + pReq->Var[pReq->Var_Coun
+             -t].name_offset);
+ 328   3                  for (; i<length; i++) {
+ 329   4                      //DBG_PRINT(0, "%s():%d [VALUE] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 330   4                      if (*pPos == '&' || (pPos >= (pData + length))) {
+ 331   5                          //DBG_PRINT(0, "%s():%d [VALUE] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 332   5                          //pReq->Var[pReq->Var_Count].vLen = (pPos - pReq->Var[pReq->Var_Count].pValue);
+ 333   5                          pReq->Var[pReq->Var_Count].value_length = \
+ 334   5                              (pPos - (pReq->pMethod + pReq->Var[pReq->Var_Count].name_offset + pReq->Var[pReq->
+             -Var_Count].value_offset));
+ 335   5                          pReq->Var_Count++; /* add var */
+ 336   5                          break;
+ 337   5                      }
+ 338   4                      pPos++;
+ 339   4                  }
+ 340   3              
+ 341   3                  //DBG_PRINT(0, "%s():%d [END?] pPos = '%1c'\n", __FUNCTION__, __LINE__, *pPos);
+ 342   3                  if (pPos >= (pData + length)) {
+ 343   4                      break;
+ 344   4                  }
+ 345   3              
+ 346   3                  pPos++;
+ 347   3              }
+ 348   2          }
+ 349   1      #endif
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 7   
+
+ 350   1      
+ 351   1          //printf("==========================================================\n");
+ 352   1      //    OSAL_PRINTF("##########################################################\n");
+ 353   1          //printf("method: %.40s (%d)\n", (pReq->method == 1)? "GET" : (pReq->method == 2)? "POST" : "Unknown",
+             - pReq->method);
+ 354   1          //printf("path: %.40s\n", pReq->path);
+ 355   1          //printf("----------------------------------------------------------\n");
+ 356   1          //OSAL_PRINTF("pMethod: %.40s\n", pReq->pMethod);
+ 357   1          //OSAL_PRINTF("pPath: %.40s\n", pReq->pPath);
+ 358   1          //OSAL_PRINTF("pProtocol: %.40s\n", pReq->pProtocol);
+ 359   1          //OSAL_PRINTF("pHeader: \n%.40s\n", pReq->pHeader);
+ 360   1          //OSAL_PRINTF("pBody: \n%.40s\n\n", pReq->pBody);
+ 361   1          //OSAL_PRINTF("--[GET/POST VARs]-----------------------------------------\n");
+ 362   1          //OSAL_PRINTF("Var Count: %d\n", pReq->Var_Count);
+ 363   1          for (i=0; i<pReq->Var_Count; i++) {
+ 364   2              uint8 bufName[128];
+ 365   2              uint8 bufValue[128];
+ 366   2      
+ 367   2              //strncpy(bufName, pReq->Var[i].pName, pReq->Var[i].nLen);
+ 368   2              strncpy(bufName, pReq->pMethod + pReq->Var[i].name_offset, (pReq->Var[i].value_offset - 1));
+ 369   2              //bufName[pReq->Var[i].nLen] = '\0';
+ 370   2              bufName[(pReq->Var[i].value_offset - 1)] = '\0';
+ 371   2      
+ 372   2              //strncpy(bufValue, pReq->Var[i].pValue, pReq->Var[i].vLen);
+ 373   2              strncpy(bufValue, pReq->pMethod + pReq->Var[i].name_offset + pReq->Var[i].value_offset, pReq->Var[
+             -i].value_length);
+ 374   2              //bufValue[pReq->Var[i].vLen] = '\0';
+ 375   2              bufValue[pReq->Var[i].value_length] = '\0';
+ 376   2      
+ 377   2              OSAL_PRINTF("%s: %s\n", bufName, bufValue);
+ 378   2          }
+ 379   1          //OSAL_PRINTF("----------------------------------------------------------\n");
+ 380   1      
+ 381   1          return SUCCESS;
+ 382   1      }
+ 383          
+ 384          
+ 385          /*
+ 386           * Function Declaration
+ 387           */
+ 388          
+ 389          // LWPS HTTP Connect: Handles new HTTP client connection requests
+ 390          // Allocates client entry and associates socket with client context
+ 391          void lwps_httpd_connect(int32 parentSocketId, int32 socketId, ip_addr_t ip, uint16 port) reentrant
+ 392          {
+ 393   1          uint32 i;
+ 394   1          if (parentSocketId); // kill compiler warning
+ 395   1          if (ip.addr[0]); // kill compiler warning
+ 396   1          if (port); // kill compiler warning
+ 397   1      
+ 398   1          DBG_LWPS_HTTP_CONNECT(("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, (uint16)socketId));
+ 399   1      
+ 400   1          DBG_LWPS_HTTP_CONNECT(("%s():%d parentSocketId = %d, socketId = %d, remote_host = (%d.%d.%d.%d:%d)\n",
+             - \
+ 401   1              __FILE__, (uint16)__LINE__, (uint16)parentSocketId, (uint16)socketId, \
+ 402   1              (uint16)ip.addr[3], (uint16)ip.addr[2], (uint16)ip.addr[1], (uint16)ip.addr[0], (uint16)port));
+ 403   1          
+ 404   1      
+ 405   1          /* ban the bad host? */
+ 406   1      
+ 407   1          /* Bind user info */
+ 408   1          for (i=0; i<HTTPD_CLIENT_MAX; i++)
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 8   
+
+ 409   1          {
+ 410   2              if (httpd_client_entry[i].socket_id < 0)
+ 411   2              {
+ 412   3                  httpd_client_entry[i].socket_id = socketId;
+ 413   3      #if __WEB_UPLOAD__
+ 414   3                  httpd_client_entry[i].upload_offset = -1;
+ 415   3                  httpd_client_entry[i].upload_size = -1;
+ 416   3      #endif
+ 417   3                  lwps_socket_setCookie(socketId, (void *)&httpd_client_entry[i]);
+ 418   3                  DBG_LWPS_HTTP_CONNECT(("%s():%d lwps_socket_setCookie(socketId = %d, pHttpdUser = %p)\n", \
+ 419   3                      __FILE__, (uint16)__LINE__, (uint16)socketId, &httpd_client_entry[i]));
+ 420   3      
+ 421   3                  return; /* ACCEPT: accept this connection */
+ 422   3              }
+ 423   2          }
+ 424   1          
+ 425   1          printf("%s():%d HTTPD_CLIENT_MAX is too small\n", __FILE__, (uint16)__LINE__);
+ 426   1          /* REJECT: connection is full -> close this session */
+ 427   1          lwps_close(socketId);
+ 428   1      }
+ 429          
+ 430          // LWPS HTTP Disconnect: Handles HTTP client disconnection
+ 431          // Cleans up client entry and releases associated resources
+ 432          void lwps_httpd_disconnect(int32 socketId) reentrant
+ 433          {
+ 434   1          httpd_client_t *pHttpdUser = (httpd_client_t *)lwps_socket_getCookie(socketId);
+ 435   1      
+ 436   1          DBG_LWPS_HTTP_CONNECT(("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, (uint16)socketId));
+ 437   1      
+ 438   1          DBG_LWPS_HTTP_CONNECT(("%s():%d lwps_socket_getCookie(socketId = %d) = pHttpdUser = %p\n", \
+ 439   1              __FILE__, (uint16)__LINE__, (uint16)socketId, pHttpdUser));
+ 440   1      
+ 441   1          /* Clear request buffer */
+ 442   1          if (http_request_sid == socketId)
+ 443   1          {
+ 444   2              http_request_sid = -1;
+ 445   2              http_request_len = 0;
+ 446   2          }
+ 447   1      
+ 448   1          /* Passive CLOSE */
+ 449   1          pHttpdUser->socket_id = -1;
+ 450   1      }
+ 451              
+ 452          // Web Process: Main HTTP request processing entry point
+ 453          // Handles authentication and routes request to appropriate handler
+ 454          int32 web_process(struct http_request_s *pReq)
+ 455          {
+ 456   1          int32 ret = SUCCESS;
+ 457   1      #if WEB_AUTHORIZATION_NEEDED
+ 458   1          Tuint8 *pValue = NULL;
+ 459   1          Tuint8 username[SAL_FLSH_USR_USERNAME_LEN + 1];
+ 460   1          Tuint8 password[SAL_FLSH_USR_PASSWORD_LEN + 1];
+ 461   1          Tuint8 bufAuth[40];
+ 462   1      
+ 463   1          sal_flash_sysAccount_get(username, password);
+ 464   1      
+ 465   1          sprintf(bufAuth, "%s:%s", username, password);
+ 466   1          sprintf(bufAuth, "Basic %s", base64_encode(bufAuth, strlen(bufAuth)));
+ 467   1          
+ 468   1          /* Check Authentication (always check) */
+ 469   1      #if __WEB_UPLOAD__
+ 470   1          if (((pReq->pHdrAuthorization == NULL) || (strncmp(pReq->pHdrAuthorization, bufAuth, strlen(bufAuth)) 
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 9   
+
+             -!= 0)) &&
+ 471   1              (0 != strncmp(pReq->pPath, "/httpupg.cgi", 12)))
+ 472   1      #else
+                  if ((pReq->pHdrAuthorization == NULL) || (strncmp(pReq->pHdrAuthorization, bufAuth, strlen(bufAuth)) !
+             -= 0))
+              #endif    
+ 475   1          {
+ 476   2              /* HTTP/1.1 401 Authorization Required */
+ 477   2              DBG_LWPS_HTTP_AUTH(("Entering Authorization:\n", __FILE__, (uint16)__LINE__));
+ 478   2              DBG_LWPS_HTTP_AUTH(("%s():%d bufAuth = [%s]\n", __FILE__, (uint16)__LINE__, bufAuth));
+ 479   2              DBG_LWPS_HTTP_AUTH(("%s():%d Authori = [%s]\n", __FILE__, (uint16)__LINE__, pReq->pHdrAuthorizatio
+             -n));
+ 480   2              DBG_LWPS_HTTP_AUTH(("%s():%d Len of bufAuth is : %d\n", __FILE__, (uint16)__LINE__, strlen(bufAuth
+             -)));
+ 481   2      
+ 482   2              default_reply_asp_send(pReq, "Unauth");
+ 483   2              
+ 484   2              return SUCCESS;
+ 485   2          }
+ 486   1      #endif
+ 487   1          default_reply_asp_send(pReq, pReq->path);
+ 488   1      
+ 489   1          return SUCCESS;
+ 490   1      }
+ 491          
+ 492          /*  1: incomplete packet
+ 493           *  0: complete packet
+ 494           * -1: error packet
+ 495           */
+ 496          // HTTP Packet Check: Checks if HTTP packet is complete or incomplete
+ 497          // Validates packet structure and content length for proper HTTP framing
+ 498          static int32 http_packet_check(httpd_client_t *pClient, uint8 *pData, uint32 length)
+ 499          {
+ 500   1          uint8 *pBoundary;
+ 501   1          uint8 *pContentType;
+ 502   1          uint8 *pContentLength;
+ 503   1          int32 iContentLength;
+ 504   1          int32 i;
+ 505   1      
+ 506   1          pClient = NULL; // kill compiler warning
+ 507   1          iContentLength = -1;    /* not found yet */
+ 508   1      
+ 509   1          if ((pData == NULL) || (length == 0) || \
+ 510   1              ((pBoundary = strnstr(pData, "\r\n\r\n", length)) == NULL))
+ 511   1          {
+ 512   2              DBG_LWPS_HTTP_PRINTF(("%s():%d - incomplete HTTP packet!\n", __FILE__, (uint16)__LINE__));
+ 513   2              return 1;   /* incomplete */
+ 514   2          }
+ 515   1      
+ 516   1          /* try to find `Content-Type` */
+ 517   1          if ((pContentType = strnstr(pData, "Content-Type: ", pBoundary - pData)) == NULL)
+ 518   1          {
+ 519   2              DBG_LWPS_HTTP_PRINTF(("%s():%d - complete HTTP packet (GOOD).\n", __FILE__, (uint16)__LINE__));
+ 520   2              return 0;   /* complete */
+ 521   2          }
+ 522   1          
+ 523   1          /* try to find `Content-Length` */
+ 524   1          if ((pContentLength = strnstr(pData, "Content-Length: ", pBoundary - pData)) == NULL)
+ 525   1          {
+ 526   2              DBG_LWPS_HTTP_PRINTF(("%s():%d - error packet!\n", __FILE__, (uint16)__LINE__));
+ 527   2              return -1;  /* error */
+ 528   2          }
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 10  
+
+ 529   1      
+ 530   1          pContentLength += 16;   /* jump to digital position */
+ 531   1          iContentLength = 0;
+ 532   1          for (i=0; i<32; i++)
+ 533   1          {
+ 534   2              if (*(pContentLength + i) == '\r')
+ 535   2                  break;
+ 536   2      
+ 537   2              iContentLength *= 10;
+ 538   2              iContentLength += (*(pContentLength + i) - '0');
+ 539   2          }
+ 540   1          DBG_LWPS_HTTP_PRINTF(("%s():%d - pClient->ContentLength = %d\n", __FILE__, (uint16)__LINE__, iContentL
+             -ength));
+ 541   1      
+ 542   1      #if 0
+                  if (iContentLength >= length)
+                  {
+                      DBG_LWPS_HTTP_PRINTF(("%s():%d - error packet!\n", __FILE__, (uint16)__LINE__));
+                      return -1;  /* error */
+                  }
+              #endif
+ 549   1      
+ 550   1          DBG_LWPS_HTTP_PRINTF(("%s():%d - pBoundary = %p, pData = %p, length = %d\n", __FILE__, (uint16)__LINE_
+             -_, pBoundary, pData, length));
+ 551   1      
+ 552   1          if (iContentLength == ((pData + length) - (pBoundary + 4)))
+ 553   1          {
+ 554   2              DBG_LWPS_HTTP_PRINTF(( "%s():%d - complete HTTP packet (GOOD).\n", __FILE__, (uint16)__LINE__));
+ 555   2              return 0;   /* complete */
+ 556   2          }
+ 557   1          else if (iContentLength > ((pData + length) - (pBoundary + 4)))
+ 558   1          {
+ 559   2              DBG_LWPS_HTTP_PRINTF(("%s():%d - incomplete HTTP packet!\n", __FILE__, (uint16)__LINE__));
+ 560   2              return 1;   /* incomplete */
+ 561   2          }
+ 562   1      
+ 563   1          DBG_LWPS_HTTP_PRINTF(("%s():%d - error packet!\n", __FILE__, (uint16)__LINE__));
+ 564   1          return -1;  /* error */
+ 565   1      }
+ 566          
+ 567          // LWPS HTTP Receive: Handles incoming HTTP data from client
+ 568          // Processes packet assembly, parsing, and routing to web_process
+ 569          void lwps_httpd_receive(int32 socketId, uint8 *pData, uint32 length) reentrant
+ 570          {    
+ 571   1          httpd_client_t *pClient = (httpd_client_t *)lwps_socket_getCookie(socketId);
+ 572   1          int32 pkt_check = 0;
+ 573   1          uint32 push_len = 0;
+ 574   1      
+ 575   1          DBG_LWPS_HTTP_PRINTF(("%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, socketId));
+ 576   1      
+ 577   1          DBG_LWPS_HTTP_PRINTF(("%s():%d lwps_socket_getCookie(socketId = %ld) = pClient = %p\n", \
+ 578   1              __FILE__, (uint16)__LINE__, socketId, pClient));
+ 579   1       
+ 580   1          /* complete packet ? */
+ 581   1          if ((socketId != http_request_sid) &&
+ 582   1              (0 == (pkt_check = http_packet_check(pClient, pData, length))))
+ 583   1          {
+ 584   2              DBG_LWPS_HTTP_PRINTF(("%s():%d - debug\n", __FILE__, (uint16)__LINE__));
+ 585   2      
+ 586   2              /* parsing and web_process directly */
+ 587   2              pClient->request.socket_id = socketId;
+ 588   2              if (SUCCESS != http_request_parse(&pClient->request, pData, length))
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 11  
+
+ 589   2              {
+ 590   3                  DBG_LWPS_HTTP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 591   3                  goto _recv_close;
+ 592   3              }
+ 593   2             
+ 594   2              if (SUCCESS != web_process(&pClient->request))
+ 595   2              {
+ 596   3                  OSAL_PRINTF("%s():%d web_process failed!\n", __FILE__, (uint16)__LINE__);
+ 597   3              }
+ 598   2      
+ 599   2              goto _recv_close;
+ 600   2          }
+ 601   1          else if (-1 == pkt_check)
+ 602   1          {   /* error packet */
+ 603   2              DBG_LWPS_HTTP_PRINTF(( "%s():%d - debug (ERROR HTTP PACKET)\n", __FILE__, (uint16)__LINE__));
+ 604   2              goto _recv_close;
+ 605   2          }
+ 606   1          else /* Waiting or incomplete (first) packet */
+ 607   1          {
+ 608   2              DBG_LWPS_HTTP_PRINTF(("%s():%d - debug (Waiting or incomplete packet)\n", __FILE__, (uint16)__LINE
+             -__));
+ 609   2      
+ 610   2              /* try to take http_request_buf ? */
+ 611   2              if (http_request_sid < 0)
+ 612   2              {   /* take http_request_buf (first packet) */
+ 613   3                  DBG_LWPS_HTTP_PRINTF(("%s():%d - take http_request_buf (first packet).\n", __FILE__, (uint16)_
+             -_LINE__));
+ 614   3                  http_request_sid = pClient->socket_id;
+ 615   3                  http_request_len = 0;   /* clear length */
+ 616   3              }
+ 617   2              else if (http_request_sid != socketId)
+ 618   2              {
+ 619   3                  DBG_LWPS_HTTP_PRINTF(("%s():%d - http_request_buf is already used!\n", __FILE__, (uint16)__LIN
+             -E__));
+ 620   3                  goto _recv_close;
+ 621   3              }
+ 622   2      
+ 623   2              /* http_request_buf process */
+ 624   2              if ((http_request_len + length) > HTTPD_REQ_BUF_SIZE)
+ 625   2              {
+ 626   3                  /* push the part of data into the request buffer */
+ 627   3                  push_len = (HTTPD_REQ_BUF_SIZE - http_request_len);
+ 628   3              }
+ 629   2              else
+ 630   2              {   
+ 631   3                  /* push data into the request buffer */
+ 632   3                  push_len = length;
+ 633   3              }
+ 634   2              memcpy(http_request_buf + http_request_len, pData, push_len);
+ 635   2              http_request_len += push_len;
+ 636   2              http_request_buf[http_request_len] = '\0';  /* terminated */
+ 637   2         
+ 638   2              /* to do parsing */
+ 639   2              pkt_check = http_packet_check(pClient, http_request_buf, http_request_len);
+ 640   2              if (-1 == pkt_check)
+ 641   2              {
+ 642   3                  DBG_LWPS_HTTP_PRINTF(("%s():%d - debug (ERROR HTTP PACKET)\n", __FILE__, (uint16)__LINE__));
+ 643   3                  goto _recv_close;
+ 644   3              }
+ 645   2              else if (0 == pkt_check)
+ 646   2              {
+ 647   3                  DBG_LWPS_HTTP_PRINTF(("%s():%d - debug (COMPLETED PACKET)\n", __FILE__, (uint16)__LINE__));
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 12  
+
+ 648   3                  
+ 649   3                  /* parsing and web_process directly */
+ 650   3                  pClient->request.socket_id = socketId;
+ 651   3                  if (SUCCESS != http_request_parse(&pClient->request, http_request_buf, http_request_len))
+ 652   3                  {
+ 653   4                      DBG_LWPS_HTTP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 654   4                      goto _recv_close;
+ 655   4                  }
+ 656   3      
+ 657   3                  if (SUCCESS != web_process(&pClient->request))
+ 658   3                  {
+ 659   4                      OSAL_PRINTF("%s():%d web_process failed!\n", __FILE__, (uint16)__LINE__);
+ 660   4                  }
+ 661   3      
+ 662   3                  http_request_sid = -1;  /* release this buffer */
+ 663   3      
+ 664   3                  goto _recv_close;
+ 665   3              }
+ 666   2              else
+ 667   2              {
+ 668   3      
+ 669   3                 /* keep waiting the next packet (incomplete packet) */
+ 670   3                  DBG_LWPS_HTTP_PRINTF(("%s():%d - debug (keep waiting the next packet)\n", __FILE__, (uint16)__
+             -LINE__));
+ 671   3      
+ 672   3                  /* buffer full? */
+ 673   3                  if (http_request_len == HTTPD_REQ_BUF_SIZE)
+ 674   3                  {
+ 675   4      #if __WEB_UPLOAD__
+ 676   4                      if (pClient->upload_offset < 0)
+ 677   4                      {   /* first time */
+ 678   5      
+ 679   5                          DBG_LWPS_HTTP_PRINTF(("%s():%d pClient->request: upload_data = %p, upload_len = %d, up
+             -load_offset = %d\n", \
+ 680   5                              __FILE__, (uint16)__LINE__, pClient->request.upload_data, pClient->request.upload_
+             -len, pClient->request.upload_offset));
+ 681   5      
+ 682   5                          /* parsing and web_process directly */
+ 683   5                          pClient->request.socket_id = socketId;
+ 684   5                          if (SUCCESS != http_request_parse(&pClient->request, http_request_buf, http_request_le
+             -n))
+ 685   5                          {
+ 686   6                              DBG_LWPS_HTTP_PRINTF(("%s():%d\n", __FILE__, (uint16)__LINE__));
+ 687   6                              goto _recv_close;
+ 688   6                          }
+ 689   5      
+ 690   5                          if (SUCCESS != web_process(&pClient->request))
+ 691   5                          {
+ 692   6                              OSAL_PRINTF("%s():%d web_process failed!\n", __FILE__, (uint16)__LINE__);
+ 693   6                          }
+ 694   5      
+ 695   5                          pClient->upload_offset = pClient->request.upload_len;
+ 696   5                          pClient->upload_size = pClient->request.upload_size;
+ 697   5      
+ 698   5                          /* fragment? */
+ 699   5                          if ((push_len > 0) && (push_len != length))
+ 700   5                          {   /* fragment process */
+ 701   6                              pClient->request.upload_data = pData + push_len;
+ 702   6                              pClient->request.upload_len = length - push_len;
+ 703   6                              pClient->request.upload_offset = pClient->upload_offset;
+ 704   6                              DBG_LWPS_HTTP_PRINTF(("%s():%d pClient->request: upload_data = %p, upload_len = %d
+             -, upload_offset = %d\n", \
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 13  
+
+ 705   6                                  __FILE__, (uint16)__LINE__, pClient->request.upload_data, pClient->request.upl
+             -oad_len, pClient->request.upload_offset));
+ 706   6                              if (SUCCESS != web_process(&pClient->request))
+ 707   6                              {
+ 708   7                                  OSAL_PRINTF("%s():%d web_process failed!\n", __FILE__, (uint16)__LINE__);
+ 709   7                              }
+ 710   6                              
+ 711   6                              pClient->upload_offset = (pClient->request.upload_offset + pClient->request.upload
+             -_len);
+ 712   6                          }
+ 713   5                      }
+ 714   4                      else
+ 715   4                      {   /* non-first time */
+ 716   5                          pClient->request.upload_data = pData;
+ 717   5                          pClient->request.upload_len = length;
+ 718   5                          pClient->request.upload_offset = pClient->upload_offset;
+ 719   5                          pClient->request.upload_size = pClient->upload_size;
+ 720   5                          DBG_LWPS_HTTP_PRINTF(("%s():%d pClient->request: upload_data = %p, upload_len = %d, up
+             -load_offset = %d\n", \
+ 721   5                              __FILE__, (uint16)__LINE__, pClient->request.upload_data, pClient->request.upload_
+             -len, pClient->request.upload_offset));
+ 722   5                          if (SUCCESS != web_process(&pClient->request))
+ 723   5                          {
+ 724   6                              OSAL_PRINTF("%s():%d web_process failed!\n", __FILE__, (uint16)__LINE__);
+ 725   6                          }
+ 726   5                          
+ 727   5                          pClient->upload_offset = (pClient->request.upload_offset + pClient->request.upload_len
+             -);
+ 728   5                      }
+ 729   4      
+ 730   4                      /* goto recv_close when ending */
+ 731   4                      if ((pClient->request.upload_offset + pClient->request.upload_len) >= pClient->request.upl
+             -oad_size)
+ 732   4                      {
+ 733   5                          goto _recv_close;
+ 734   5                      }
+ 735   4      #endif  /* __WEB_UPLOAD__ */
+ 736   4                  }   /* end of `if (http_request_len == HTTPD_REQ_BUF_SIZE)` */
+ 737   3      
+ 738   3                  return;
+ 739   3              }
+ 740   2          }
+ 741   1      
+ 742   1      _recv_close:
+ 743   1          /* Active CLOSE */
+ 744   1          //pClient->socket_id = -1;
+ 745   1          lwps_close(socketId);
+ 746   1         
+ 747   1          return;
+ 748   1      }
+ 749          
+ 750          // HTTP Daemon Init: Initializes HTTP server
+ 751          // Creates socket, binds to port, listens, and prepares for client connections
+ 752          int32 httpd_init(void) large
+ 753          {
+ 754   1          uint32 i;
+ 755   1          int32 socketId;
+ 756   1          lwps_handler_t httpdHandler;
+ 757   1      
+ 758   1          /* Initialize private struct */
+ 759   1          for (i=0; i<HTTPD_CLIENT_MAX; i++)
+ 760   1          {
+C51 COMPILER V9.60.0.0   HTTPD                                                             11/02/2026 17:57:29 PAGE 14  
+
+ 761   2              httpd_client_entry[i].socket_id = -1;
+ 762   2          }
+ 763   1      
+ 764   1          /* Alloc a socket for HTTP daemon */
+ 765   1          httpdHandler.event_connect    = lwps_httpd_connect;
+ 766   1          httpdHandler.event_disconnect = lwps_httpd_disconnect;
+ 767   1          httpdHandler.event_recv    = lwps_httpd_receive;
+ 768   1          
+ 769   1          socketId = lwps_socket(LWPS_L3TYPE_IP, LWPS_L4TYPE_TCP, httpdHandler);
+ 770   1          if (socketId < 0)
+ 771   1          {
+ 772   2              OSAL_PRINTF("httpd: Error - alloc socket failed!\n");
+ 773   2      
+ 774   2              return FAILED;
+ 775   2          }
+ 776   1          
+ 777   1          if (LWPS_OK != lwps_bind(socketId, ip_addr_any, HTTPD_LISTEN_PORT))
+ 778   1          {
+ 779   2              OSAL_PRINTF("httpd: Error - bind failed!\n");
+ 780   2      
+ 781   2              lwps_close(socketId);
+ 782   2              return FAILED;
+ 783   2          }
+ 784   1      
+ 785   1      
+ 786   1          if (LWPS_OK != lwps_listen(socketId, 2))    /* backlog = 2 */
+ 787   1          {
+ 788   2              OSAL_PRINTF("httpd: Error - listen failed!\n");
+ 789   2      
+ 790   2              lwps_close(socketId);
+ 791   2              return FAILED;
+ 792   2          }
+ 793   1      
+ 794   1          http_request_sid = -1;
+ 795   1      
+ 796   1          return SUCCESS;
+ 797   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   8192    ----
+   CONSTANT SIZE    =    430    ----
+   XDATA SIZE       =   8946     412
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    430    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

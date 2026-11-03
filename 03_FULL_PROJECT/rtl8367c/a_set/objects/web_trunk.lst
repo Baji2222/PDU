@@ -1,0 +1,300 @@
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_TRUNK
+OBJECT MODULE PLACED IN .\objects\web_trunk.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_trunk.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X10
+                    -00) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common
+                    -\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_
+                    -REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SC
+                    -AN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_trunk.lst) TABS(2) OBJECT(.\objects\web_trunk.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <stdio.h>
+   4          
+   5          #include <saltrunk.h>
+   6          #include <salflash.h>
+   7          #include <salutil.h>
+   8          #include <local/web_config.h>
+   9          #include <salsys.h>
+  10          
+  11          #include <web/web_api.h>
+  12          #include <web/http_debug.h>
+  13          #include "web_util.h"
+  14          #include "web_trunk.h"
+  15          
+  16          /*
+  17           * Function: get_trunk
+  18           * -------------------
+  19           * Displays trunk configuration page with group settings.
+  20           * Shows form to create/modify trunk groups with port selection.
+  21           * Lists existing trunk groups with delete checkboxes.
+  22           * Includes JavaScript for "Select All" functionality.
+  23           */
+  24          int32 get_trunk(struct http_request_s *pReq)
+  25          {
+  26   1          sal_pPortmask_t portmask;
+  27   1          sal_lPortmask_t lportmask;
+  28   1          int16           i;
+  29   1          uint8           trunkId;
+  30   1          uint8           trunkNum;
+  31   1          uint8           portMaskStr[128];
+  32   1          uint8           logicPortStr[MAX_LOGIC_ID_LEN];
+  33   1      
+  34   1          WEB_BEGIN(pReq);
+  35   1      
+  36   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  37   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  38   1      
+  39   1          WEB_PRINTF(pReq, "<html>\n");
+  40   1          WEB_PRINTF(pReq, "\n");
+  41   1          WEB_PRINTF(pReq, "<head>\n");
+  42   1          WEB_PRINTF(pReq, "<title>Trunking Information</title>\n");
+  43   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  44   1          WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+  45   1          WEB_PRINTF(pReq, "function trunk_selAll(trunkNum)\n");
+  46   1          WEB_PRINTF(pReq, "{\n");
+  47   1          WEB_PRINTF(pReq, "  for ( i = 0; i < trunkNum; i++)\n");
+  48   1          WEB_PRINTF(pReq, "      document.getElementById(\"trunk_\"+i).checked = true;\n");
+  49   1          WEB_PRINTF(pReq, "}\n");
+  50   1          WEB_PRINTF(pReq, "function chkEnable(value)\n");
+  51   1          WEB_PRINTF(pReq, "{\n");
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 2   
+
+  52   1          WEB_PRINTF(pReq, "    if ( value == '1' ) {\n");
+  53   1          WEB_PRINTF(pReq, "        document.getElementById('lacp_mode').value = \"0\";\n");
+  54   1          WEB_PRINTF(pReq, "        document.getElementById('lacp_mode').disabled = false;\n");
+  55   1          WEB_PRINTF(pReq, "    }\n");
+  56   1          WEB_PRINTF(pReq, "    else { \n");
+  57   1          WEB_PRINTF(pReq, "        document.getElementById('lacp_mode').value = \"0\";\n");
+  58   1          WEB_PRINTF(pReq, "        document.getElementById('lacp_mode').disabled = true;\n");
+  59   1          WEB_PRINTF(pReq, "    }\n");
+  60   1          WEB_PRINTF(pReq, "}\n");
+  61   1          WEB_PRINTF(pReq, "</script>\n");
+  62   1          WEB_PRINTF(pReq, "</head>\n");
+  63   1          WEB_PRINTF(pReq, "\n");
+  64   1          WEB_PRINTF(pReq, "<body>\n");
+  65   1          WEB_PRINTF(pReq, "<center>\n");
+  66   1          WEB_PRINTF(pReq, "\n");
+  67   1      
+  68   1          WEB_PRINTF(pReq, "<fieldset>\n");
+  69   1          WEB_PRINTF(pReq, "<legend>Trunk Group Setting</legend>\n");
+  70   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/trunk.cgi?page=group\">\n");
+  71   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+  72   1          WEB_PRINTF(pReq, "    <tr>\n");
+  73   1          WEB_PRINTF(pReq, "      <th>Group ID</th>\n");
+  74   1          WEB_PRINTF(pReq, "      <th>Ports</th>\n");
+  75   1          WEB_PRINTF(pReq, "    </tr>\n");
+  76   1          WEB_PRINTF(pReq, "    <tr>\n");
+  77   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+  78   1          WEB_PRINTF(pReq, "        <select name=\"id\" >\n");
+  79   1      #if defined(LWS_5G)    
+                  WEB_PRINTF(pReq, "          <option value=\"%d\" selected id=trunk_sel1>Trunk%d\n", (uint16)1, (uint16
+             -)1);
+              #elif defined(LWS_5G_1F)    
+                  WEB_PRINTF(pReq, "          <option value=\"%d\" selected id=trunk_sel1>Trunk%d\n", (uint16)1, (uint16
+             -)1);
+                  WEB_PRINTF(pReq, "          <option value=\"%d\" id=trunk_sel2>Trunk%d\n", (uint16)2, (uint16)2);
+              #elif defined(LWS_8G)  
+  85   1          WEB_PRINTF(pReq, "          <option value=\"%d\" selected id=trunk_sel1>Trunk%d\n", (uint16)1, (uint16
+             -)1);
+  86   1          WEB_PRINTF(pReq, "          <option value=\"%d\" id=trunk_sel2>Trunk%d\n", (uint16)2, (uint16)2);
+  87   1      #elif defined(LWS_8G_2F)
+                  WEB_PRINTF(pReq, "          <option value=\"%d\" selected id=trunk_sel1>Trunk%d\n", (uint16)1, (uint16
+             -)1);
+                  WEB_PRINTF(pReq, "          <option value=\"%d\" id=trunk_sel2>Trunk%d\n", (uint16)2, (uint16)2);
+                  WEB_PRINTF(pReq, "          <option value=\"%d\" id=trunk_sel3>Trunk%d\n", (uint16)3, (uint16)3);
+              #else
+              #endif
+  93   1          
+  94   1          WEB_PRINTF(pReq, "        </select>\n");
+  95   1          WEB_PRINTF(pReq, "      </td>\n");
+  96   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+  97   1          WEB_PRINTF(pReq, "        <select name=\"ports\" multiple size=\"6\" id=portsel>\n");
+  98   1          for (i = 0; i < SAL_MAX_PHY_PORT; ++i) {
+  99   2          
+ 100   2              #if 0
+                      if (!(sal_trunk_logicId_exist(i))) {
+                          continue;
+                      }
+                      #endif
+ 105   2              sal_trunk_logicId_toStr(logicPortStr, i);
+ 106   2      #if defined(LWS_8G_2F)
+                      if(i == 8)
+                          WEB_PRINTF(pReq, "          <option value=%d>%s\n", (uint16)16, logicPortStr);
+                      else if(i == 9)
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 3   
+
+                          WEB_PRINTF(pReq, "          <option value=%d>%s\n", (uint16)17, logicPortStr);
+                      else
+                          WEB_PRINTF(pReq, "          <option value=%d>%s\n", i, logicPortStr);
+              #elif defined(LWS_5G_1F)  
+                      if(i == 5)
+                          WEB_PRINTF(pReq, "          <option value=%d>%s\n", (uint16)16, logicPortStr);
+                      else
+                          WEB_PRINTF(pReq, "          <option value=%d>%s\n", i, logicPortStr);
+              #else
+ 119   2              WEB_PRINTF(pReq, "          <option value=%d>%s\n", i, logicPortStr);
+ 120   2      #endif
+ 121   2          }
+ 122   1          WEB_PRINTF(pReq, "        </select>\n");
+ 123   1          WEB_PRINTF(pReq, "      </td>\n");
+ 124   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");    
+ 125   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 126   1          WEB_PRINTF(pReq, "  </table>\n");
+ 127   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 128   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"Add / Modify\">\n"); 
+ 129   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"trunk\">\n");
+ 130   1          WEB_PRINTF(pReq, "</form>\n");
+ 131   1          WEB_PRINTF(pReq, "<hr>\n");
+ 132   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/trunk.cgi?page=group_remove\">\n");
+ 133   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 134   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 135   1          WEB_PRINTF(pReq, "      <th width=\"90\">Group ID</th>\n");
+ 136   1          WEB_PRINTF(pReq, "      <th width=\"200\">Ports</th>\n");
+ 137   1          WEB_PRINTF(pReq, "      <th  width=\"90\">Select</th>\n");
+ 138   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 139   1          trunkNum = 0;
+ 140   1         
+ 141   1          for (trunkId = 0; trunkId < SAL_MAX_STATIC_TRUNK; ++trunkId) {
+ 142   2              sal_trunk_port_get(trunkId, NULL, &portmask, NULL);        
+ 143   2              if (SAL_ERR_SUCCESS == sal_pPortMask_isZero(&portmask)) {
+ 144   3                  continue;
+ 145   3              }
+ 146   2      
+ 147   2              sal_lPortMask_copyPMask(&lportmask, &portmask);
+ 148   2              lmask_to_comma(portMaskStr, &lportmask);
+ 149   2      
+ 150   2              WEB_PRINTF(pReq, "    <tr>\n");
+ 151   2              WEB_PRINTF(pReq, "      <td align=\"center\">Trunk%bd</td>\n", trunkId+1);
+ 152   2      
+ 153   2              WEB_PRINTF(pReq, "      <td align=\"center\" style=\"width:200px;\">%s</td>\n", portMaskStr);
+ 154   2               
+ 155   2              WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"checkbox\" name=\"remove_%bu\" id=trunk
+             -_%bu></td>\n", 
+ 156   2                  trunkId, trunkNum);
+ 157   2              WEB_PRINTF(pReq, "    </tr>\n");
+ 158   2              trunkNum ++;
+ 159   2          }
+ 160   1      
+ 161   1          WEB_PRINTF(pReq, "  </table>\n");
+ 162   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 163   1          WEB_PRINTF(pReq, "  <input type=\"submit\" name=\"Remove\" value=\"    Delete    \">\n");
+ 164   1          WEB_PRINTF(pReq, "  <input type=\"button\" value=\" Select All \" onclick=\"trunk_selAll(%bu)\">\n", t
+             -runkNum);
+ 165   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"group_remove\">\n");
+ 166   1          WEB_PRINTF(pReq, "</form>\n");
+ 167   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 168   1          WEB_PRINTF(pReq, "</center>\n");
+ 169   1          WEB_PRINTF(pReq, "</body>\n");
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 4   
+
+ 170   1          WEB_PRINTF(pReq, "</html>\n");
+ 171   1      
+ 172   1          WEB_END(pReq);
+ 173   1      
+ 174   1          return SUCCESS;
+ 175   1      }
+ 176          
+ 177          /*
+ 178           * Function: post_trunk
+ 179           * --------------------
+ 180           * Processes trunk group creation/modification form submission.
+ 181           * Extracts trunk ID and selected ports from POST data.
+ 182           * Handles both Port and Trunk selections from multiple select.
+ 183           * Calls sal_trunk_port_set() to apply trunk configuration.
+ 184           */
+ 185          int32 post_trunk (struct http_request_s *pReq)
+ 186          {
+ 187   1          sal_pPortmask_t portmask;
+ 188   1          int32           ret;
+ 189   1          uint8           *pValue;
+ 190   1          uint8           trunkId = 0;
+ 191   1          
+ 192   1          sal_pPortMask_delAll(&portmask);
+ 193   1      
+ 194   1          WEB_VAR(pReq, "id", &pValue);
+ 195   1          if (pValue) {
+ 196   2              trunkId = atoi(pValue) - 1 ;
+ 197   2          }
+ 198   1      
+ 199   1          WEB_VAR(pReq, "ports", &pValue);
+ 200   1          if (pValue) {
+ 201   2              sal_pPortMask_addPort(&portmask, atoi(pValue));
+ 202   2          }
+ 203   1      
+ 204   1          while(pValue != NULL)
+ 205   1          {
+ 206   2              WEB_VAR(pReq, NULL, &pValue);
+ 207   2              if (pValue) {
+ 208   3                  sal_pPortMask_addPort(&portmask, atoi(pValue));
+ 209   3              }
+ 210   2          }
+ 211   1      
+ 212   1          if ((ret = sal_trunk_port_set(trunkId, FALSE, &portmask, &portmask)) != SAL_ERR_SUCCESS)
+ 213   1          {
+ 214   2              printerr(pReq, ret);
+ 215   2              return SUCCESS;
+ 216   2          }
+ 217   1      
+ 218   1          
+ 219   1          get_trunk(pReq);
+ 220   1      
+ 221   1          return SUCCESS;
+ 222   1      }
+ 223          
+ 224          /*
+ 225           * Function: post_trunk_remove
+ 226           * ---------------------------
+ 227           * Processes trunk group deletion from form submission.
+ 228           * Scans all trunk IDs for checkbox named "remove_X".
+ 229           * Calls sal_trunk_port_del() for each selected trunk.
+ 230           * Refreshes trunk page after deletion.
+ 231           */
+C51 COMPILER V9.60.0.0   WEB_TRUNK                                                         11/02/2026 17:57:37 PAGE 5   
+
+ 232          int32 post_trunk_remove (struct http_request_s *pReq)
+ 233          {
+ 234   1          int32           ret;
+ 235   1          uint8           trunkId = 0;
+ 236   1          uint8           *pValue;
+ 237   1          uint8           removeStr[32];
+ 238   1      
+ 239   1          for (trunkId = 0; trunkId < SAL_MAX_STATIC_TRUNK; ++trunkId) {
+ 240   2              sprintf(removeStr, "remove_%bu", trunkId);
+ 241   2              WEB_VAR(pReq, removeStr, &pValue);
+ 242   2              if (pValue) {
+ 243   3                  if ((ret = sal_trunk_port_del(trunkId)) != SAL_ERR_SUCCESS)
+ 244   3                  {
+ 245   4                      printerr(pReq, ret);
+ 246   4                      return SUCCESS;
+ 247   4                  }
+ 248   3              }
+ 249   2          }
+ 250   1      
+ 251   1      
+ 252   1          get_trunk(pReq);
+ 253   1      
+ 254   1          return SUCCESS;
+ 255   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2400    ----
+   CONSTANT SIZE    =   1844    ----
+   XDATA SIZE       =   ----     209
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1844    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

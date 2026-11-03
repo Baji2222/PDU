@@ -1,0 +1,1592 @@
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_PORT
+OBJECT MODULE PLACED IN .\objects\web_port.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_port.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_port.lst) TABS(2) OBJECT(.\objects\web_port.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          
+   3          #include <string.h>
+   4          #include <stdio.h>
+   5          
+   6          #include <salport.h>
+   7          #include <salmirror.h>
+   8          #include <salrate.h>
+   9          #include <salmib.h>
+  10          #include <saltrunk.h>
+  11          #include <salutil.h>
+  12          #include <salsys.h>
+  13          
+  14          #include <web/web_api.h>
+  15          #include "web_port.h"
+  16          #include "web_util.h"
+  17          #include <syslog/syslogdefs.h>
+  18          
+  19          #define PORT_STAT_REFRESH_TIME_MAX      2
+  20          
+  21          static uint8      g_portStat_need_refresh = FALSE;  
+  22          static uint8      g_portStat_refresh_cnt  = 0;
+  23          static uint8      showRmonCounters = FALSE;
+  24          static sal_port_t queryPort;
+  25          
+  26          
+  27          static sal_phyAbility_t ability_set[SAL_MAX_LOGIC_COMBO_PORT];
+  28          static uint8   port_set[SAL_MAX_LOGIC_COMBO_PORT];
+  29          static uint8 set_flag = 0;
+  30          static uint8 set_count = 0;
+  31          
+  32          /*
+  33           * Function: check_port_setting
+  34           * ----------------------------
+  35           * Delayed port setting application function.
+  36           * Applies saved port settings after a delay count of 2.
+  37           * Called periodically to handle port configuration updates.
+  38           * Resets counters after applying settings.
+  39           */
+  40          void check_port_setting()
+  41          {
+  42   1          int16 i;
+  43   1          static int16 count = 0;
+  44   1          if(set_flag == 1)
+  45   1              count++;
+  46   1          if(count >1)
+  47   1          {
+  48   2              for(i = 0; i < set_count; i++)
+  49   2              {
+  50   3                  sal_port_phyAbility_set(port_set[i], &ability_set[i]); 
+  51   3              }
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 2   
+
+  52   2              set_count = 0;
+  53   2              set_flag = 0;
+  54   2              count = 0;
+  55   2          }
+  56   1      }
+  57          
+  58          /*
+  59           * Function: get_port
+  60           * ------------------
+  61           * Displays port configuration page with current status.
+  62           * Shows port state, speed/duplex, and flow control settings.
+  63           * Includes form for applying changes to selected ports.
+  64           * Auto-refreshes after port setting changes.
+  65           */
+  66          int32 get_port(struct http_request_s *pReq)
+  67          {
+  68   1          uint8   port;
+  69   1          uint8   logicPortStr[MAX_LOGIC_ID_LEN];
+  70   1      
+  71   1          port = 0;
+  72   1          WEB_BEGIN(pReq);
+  73   1      
+  74   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  75   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  76   1      
+  77   1          WEB_PRINTF(pReq, "<html>\n");
+  78   1          WEB_PRINTF(pReq, "\n");
+  79   1          WEB_PRINTF(pReq, "<head>\n");
+  80   1          WEB_PRINTF(pReq, "<title>Port Setting</title>\n");
+  81   1      
+  82   1          if (g_portStat_need_refresh == TRUE)
+  83   1          {
+  84   2              WEB_PRINTF(pReq, "<meta http-equiv=refresh content=2>\n");
+  85   2      
+  86   2              g_portStat_refresh_cnt++;
+  87   2              if (g_portStat_refresh_cnt == PORT_STAT_REFRESH_TIME_MAX)
+  88   2                  g_portStat_need_refresh = FALSE;
+  89   2          }
+  90   1      
+  91   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  92   1          WEB_PRINTF(pReq, "</head>\n");
+  93   1          WEB_PRINTF(pReq, "\n");
+  94   1          WEB_PRINTF(pReq, "<body>\n");
+  95   1      
+  96   1          WEB_PRINTF(pReq, "<center>\n");
+  97   1          WEB_PRINTF(pReq, "\n");
+  98   1          WEB_PRINTF(pReq, "<fieldset>\n");
+  99   1          WEB_PRINTF(pReq, "<legend>Port Setting</legend>\n");
+ 100   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"port.cgi\">\n");
+ 101   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 102   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 103   1          WEB_PRINTF(pReq, "      <th class=MidSize>Port</th>\n");
+ 104   1          WEB_PRINTF(pReq, "      <th>State</th>\n");
+ 105   1          WEB_PRINTF(pReq, "      <th>Speed/Duplex</th>\n");
+ 106   1          WEB_PRINTF(pReq, "      <th>Flow Control</th>\n");
+ 107   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 108   1      
+ 109   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 110   1      
+ 111   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 112   1          WEB_PRINTF(pReq, "        <select name=\"portid\" multiple size=\"6\" >\n");
+ 113   1      
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 3   
+
+ 114   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 115   2              if (!(sal_trunk_logicId_exist(port))) {
+ 116   3                  continue;
+ 117   3              }
+ 118   2      
+ 119   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 120   2              WEB_PRINTF(pReq, "          <option value=\"%bu\">%s\n", port, logicPortStr);
+ 121   2          }
+ 122   1          WEB_PRINTF(pReq, "      </td>\n");
+ 123   1      
+ 124   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 125   1          WEB_PRINTF(pReq, "        <select name=\"state\" class=MidSize>\n");
+ 126   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Enable\n", (int16)ENABLE);
+ 127   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Disable\n", (int16)DISABLE);
+ 128   1          WEB_PRINTF(pReq, "        </select>\n");
+ 129   1          WEB_PRINTF(pReq, "      </td>\n");
+ 130   1      
+ 131   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 132   1          WEB_PRINTF(pReq, "        <select name=\"speed_duplex\" class=MidSize>\n");
+ 133   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Auto\n", (int16)SAL_PORT_SPEED_DUPLEX_AUTO);
+ 134   1          WEB_PRINTF(pReq, "          <option value=\"%d\">10M/Half\n", (int16)SAL_PORT_SPEED_DUPLEX_10_HALF);
+ 135   1          WEB_PRINTF(pReq, "          <option value=\"%d\">10M/Full\n", (int16)SAL_PORT_SPEED_DUPLEX_10_FULL);
+ 136   1          WEB_PRINTF(pReq, "          <option value=\"%d\">100M/Half\n", (int16)SAL_PORT_SPEED_DUPLEX_100_HALF);
+ 137   1          WEB_PRINTF(pReq, "          <option value=\"%d\">100M/Full\n", (int16)SAL_PORT_SPEED_DUPLEX_100_FULL);
+ 138   1          WEB_PRINTF(pReq, "        </select>\n");
+ 139   1          WEB_PRINTF(pReq, "      </td>\n");
+ 140   1      
+ 141   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 142   1          WEB_PRINTF(pReq, "        <select name=\"flow\" class=MidSize>\n");
+ 143   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Off\n", (int16)SAL_PORT_FLOW_CTRL_DISABLE);
+ 144   1          WEB_PRINTF(pReq, "          <option value=\"%d\">On\n", (int16)SAL_PORT_FLOW_CTRL_ENABLE);
+ 145   1          WEB_PRINTF(pReq, "        </select>\n");
+ 146   1          WEB_PRINTF(pReq, "      </td>\n");
+ 147   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 148   1          WEB_PRINTF(pReq, "  </table>\n");
+ 149   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 150   1          WEB_PRINTF(pReq, "  <input type=\"submit\" name=\"submit\" value=\"   Apply   \">\n");
+ 151   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"port\">\n");
+ 152   1          WEB_PRINTF(pReq, "</form>\n");
+ 153   1          WEB_PRINTF(pReq, "<hr>\n");
+ 154   1          
+ 155   1          get_portcurrstatus(pReq);
+ 156   1          
+ 157   1          WEB_PRINTF(pReq, "</body>\n");
+ 158   1          WEB_PRINTF(pReq, "</html>\n");
+ 159   1      
+ 160   1          WEB_END(pReq);
+ 161   1      
+ 162   1          return SUCCESS;
+ 163   1      }
+ 164          
+ 165          /*
+ 166           * Function: get_portcurrstatus
+ 167           * ----------------------------
+ 168           * Displays current port status table with actual vs configured values.
+ 169           * Shows admin state, configured and actual speed/duplex.
+ 170           * Also shows configured and actual flow control status.
+ 171           * Called from get_port to show real-time port status.
+ 172           */
+ 173          int32 get_portcurrstatus(struct http_request_s *pReq)
+ 174          {
+ 175   1          sal_phyAbility_t        ability;
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 4   
+
+ 176   1          sal_port_macStatus_t    status;
+ 177   1          sal_enable_t            enable;
+ 178   1          uint8                   port;
+ 179   1          uint8                   logicPortStr[MAX_LOGIC_ID_LEN];
+ 180   1      
+ 181   1          enable = SAL_DISABLED;
+ 182   1          port = 0;
+ 183   1          
+ 184   1          WEB_PRINTF(pReq, "<br>\n");
+ 185   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 186   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 187   1          WEB_PRINTF(pReq, "    <th rowspan=\"2\" width=\"90\">Port</th>\n");
+ 188   1          WEB_PRINTF(pReq, "    <th rowspan=\"2\" width=\"90\">State</th>\n");
+ 189   1          WEB_PRINTF(pReq, "    <th colspan=\"2\">Speed/Duplex</th>\n");
+ 190   1          WEB_PRINTF(pReq, "    <th colspan=\"2\">Flow Control</th>\n");
+ 191   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 192   1      
+ 193   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 194   1          WEB_PRINTF(pReq, "    <th width=\"90\">Config</th>\n");
+ 195   1          WEB_PRINTF(pReq, "    <th width=\"90\">Actual</th>\n");
+ 196   1          WEB_PRINTF(pReq, "    <th width=\"90\">Config</th>\n");
+ 197   1          WEB_PRINTF(pReq, "    <th width=\"90\">Actual</th>\n");
+ 198   1      
+ 199   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 200   1      
+ 201   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 202   2              if (!(sal_trunk_logicId_exist(port))) {
+ 203   3                  continue;
+ 204   3              }
+ 205   2      
+ 206   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 207   2              sal_port_adminEnable_get(port, &enable);
+ 208   2              sal_port_phyAbility_get(port, &ability);
+ 209   2              sal_port_macStatus_get(port, &status);
+ 210   2                  
+ 211   2              WEB_PRINTF(pReq, "  <tr>\n");
+ 212   2              WEB_PRINTF(pReq, "    <td>%s</td>\n", logicPortStr);
+ 213   2              WEB_PRINTF(pReq, "    <td>");
+ 214   2              if (enable == SAL_ENABLED) {
+ 215   3                  WEB_PRINTF(pReq, "Enabled");
+ 216   3              }
+ 217   2              else {
+ 218   3                  WEB_PRINTF(pReq, "Disabled");
+ 219   3              }
+ 220   2              WEB_PRINTF(pReq, "</td>\n");
+ 221   2      
+ 222   2              WEB_PRINTF(pReq, "    <td>");
+ 223   2      
+ 224   2              // ability
+ 225   2              /* Full_1000 equals 1 only when AutoNegotiation is enabled */
+ 226   2              if (ability.Full_1000== 1) {
+ 227   3                  WEB_PRINTF(pReq, "Auto");
+ 228   3              }
+ 229   2              else
+ 230   2              {
+ 231   3                  if(ability.Full_100 == 1)
+ 232   3                  {
+ 233   4                      WEB_PRINTF(pReq, "100 Full");
+ 234   4                  }
+ 235   3                  else if(ability.Half_100 == 1)
+ 236   3                  {
+ 237   4                      WEB_PRINTF(pReq, "100 Half");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 5   
+
+ 238   4                  }
+ 239   3                  else if(ability.Full_10==1)
+ 240   3                  {
+ 241   4                      WEB_PRINTF(pReq, "10 Full");
+ 242   4                  }
+ 243   3                  else if(ability.Half_10==1)
+ 244   3                  {
+ 245   4                      WEB_PRINTF(pReq, "10 Half");
+ 246   4                  }
+ 247   3                  else
+ 248   3                      WEB_PRINTF(pReq, "Unknown");
+ 249   3              }
+ 250   2              WEB_PRINTF(pReq, "</td>\n");
+ 251   2              WEB_PRINTF(pReq, "    <td>");
+ 252   2      
+ 253   2              // Status
+ 254   2              if (SAL_DISABLED == status.linkup) {
+ 255   3                  WEB_PRINTF(pReq, "Link Down");
+ 256   3              }
+ 257   2              else {
+ 258   3      
+ 259   3                  if (status.speed == SAL_PORT_SPEED_10) {
+ 260   4                      WEB_PRINTF(pReq, "10");
+ 261   4                  }
+ 262   3                  else if (status.speed == SAL_PORT_SPEED_100) {
+ 263   4                      WEB_PRINTF(pReq, "100");
+ 264   4                  }
+ 265   3                  else if (status.speed == SAL_PORT_SPEED_1000) {
+ 266   4                      WEB_PRINTF(pReq, "1000");
+ 267   4                  }
+ 268   3                  else
+ 269   3                      WEB_PRINTF(pReq, "Unknown");
+ 270   3      
+ 271   3                  if (status.duplex == SAL_PORT_DUPLEX_HALF) {
+ 272   4                      WEB_PRINTF(pReq, "Half");
+ 273   4                  }
+ 274   3                  else if (status.duplex == SAL_PORT_DUPLEX_FULL) {
+ 275   4                      WEB_PRINTF(pReq, "Full");
+ 276   4                  }
+ 277   3              }
+ 278   2      
+ 279   2              WEB_PRINTF(pReq, "</td>\n");
+ 280   2      
+ 281   2              // ability
+ 282   2              WEB_PRINTF(pReq, "    <td>");
+ 283   2              if ((ability.FC & 0x1) == SAL_PORT_FLOW_CTRL_DISABLE) {
+ 284   3                  WEB_PRINTF(pReq, "Off");
+ 285   3              }
+ 286   2              else if ((ability.FC & 0x1 )== SAL_PORT_FLOW_CTRL_ENABLE) {
+ 287   3                  WEB_PRINTF(pReq, "On");
+ 288   3              }
+ 289   2      
+ 290   2              WEB_PRINTF(pReq, "</td>\n");
+ 291   2              WEB_PRINTF(pReq, "    <td>");
+ 292   2      
+ 293   2              // status
+ 294   2              if (status.linkup == ENABLE)
+ 295   2              {
+ 296   3                  if (status.fc == SAL_PORT_FLOW_CTRL_DISABLE) {
+ 297   4                      WEB_PRINTF(pReq, "Off");
+ 298   4                  }
+ 299   3                  else if (status.fc == SAL_PORT_FLOW_CTRL_ENABLE) {
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 6   
+
+ 300   4                      WEB_PRINTF(pReq, "On");
+ 301   4                  }
+ 302   3              }
+ 303   2              else
+ 304   2                  WEB_PRINTF(pReq, "Off");
+ 305   2      
+ 306   2              WEB_PRINTF(pReq, "</td>\n");
+ 307   2      
+ 308   2      
+ 309   2              WEB_PRINTF(pReq, "  </tr>\n");
+ 310   2          }
+ 311   1      
+ 312   1          WEB_PRINTF(pReq, "</table>\n");
+ 313   1          WEB_PRINTF(pReq, "<br>\n");
+ 314   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 315   1          WEB_PRINTF(pReq, "</center>\n");
+ 316   1      
+ 317   1          return SUCCESS;
+ 318   1      }
+ 319          
+ 320          /*
+ 321           * Function: get_bandwidthcontrolstatus
+ 322           * ------------------------------------
+ 323           * Displays current bandwidth control status table.
+ 324           * Shows ingress and egress rates for each port.
+ 325           * Displays "Unlimited" if bandwidth control is disabled.
+ 326           * Called from get_port_bandwidthcontrol to show current settings.
+ 327           */
+ 328          int32 get_bandwidthcontrolstatus (struct http_request_s *pReq)
+ 329          {
+ 330   1          uint8   port = 0;
+ 331   1          uint32  ingress_spd, egress_spd;
+ 332   1          uint8   logicPortStr[MAX_LOGIC_ID_LEN];
+ 333   1      
+ 334   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 335   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 336   1          WEB_PRINTF(pReq, "      <th width=\"90\">Port</th>\n");
+ 337   1          WEB_PRINTF(pReq, "      <th>Ingress Rate (Kbit/sec)</th>\n");
+ 338   1          WEB_PRINTF(pReq, "      <th>Egress Rate (Kbit/sec) </th>\n");
+ 339   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 340   1      
+ 341   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 342   2              if (!(sal_trunk_logicId_exist(port))) {
+ 343   3                  continue;
+ 344   3              }
+ 345   2      
+ 346   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 347   2      
+ 348   2              sal_rate_igrBandwidthCtrl_get(port, &ingress_spd);
+ 349   2              sal_rate_egrBandwidthCtrl_get(port, &egress_spd);
+ 350   2      
+ 351   2              WEB_PRINTF(pReq, "  <tr>\n");
+ 352   2              WEB_PRINTF(pReq, "    <td>%s</td>\n", logicPortStr);
+ 353   2      
+ 354   2              WEB_PRINTF(pReq, "    <td>");
+ 355   2      
+ 356   2      
+ 357   2              if (ingress_spd == BWCTRL_DISABLE_THRES) {
+ 358   3                  WEB_PRINTF(pReq, "Unlimited");
+ 359   3              }
+ 360   2              else{
+ 361   3                  WEB_PRINTF(pReq, "%ld", ingress_spd);
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 7   
+
+ 362   3              }
+ 363   2      
+ 364   2      
+ 365   2              WEB_PRINTF(pReq, "    </td>\n");
+ 366   2              WEB_PRINTF(pReq, "    <td>");
+ 367   2      
+ 368   2      
+ 369   2              if (egress_spd == BWCTRL_DISABLE_THRES) {
+ 370   3                  WEB_PRINTF(pReq, "Unlimited");
+ 371   3              }
+ 372   2              else{
+ 373   3                  WEB_PRINTF(pReq, "%ld", egress_spd);
+ 374   3              }
+ 375   2      
+ 376   2              WEB_PRINTF(pReq, "    </td>\n");
+ 377   2              WEB_PRINTF(pReq, "  </tr>\n");
+ 378   2          }
+ 379   1      
+ 380   1          WEB_PRINTF(pReq, "</table>\n");
+ 381   1          WEB_PRINTF(pReq, "<br>\n");
+ 382   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 383   1          WEB_PRINTF(pReq, "</center>\n");
+ 384   1          return SUCCESS;
+ 385   1      }
+ 386          
+ 387          /*
+ 388           * Function: get_port_bandwidthcontrol
+ 389           * -----------------------------------
+ 390           * Displays bandwidth control configuration page.
+ 391           * Shows form to set ingress/egress rates per port.
+ 392           * Includes enable/disable toggle with JavaScript.
+ 393           * Displays current bandwidth status table below.
+ 394           */
+ 395          int32 get_port_bandwidthcontrol(struct http_request_s *pReq)
+ 396          {
+ 397   1          uint8   port;
+ 398   1          uint8   logicPortStr[MAX_LOGIC_ID_LEN];
+ 399   1      
+ 400   1          port = 0;
+ 401   1      
+ 402   1          WEB_BEGIN(pReq);
+ 403   1      
+ 404   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 405   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 406   1      
+ 407   1          WEB_PRINTF(pReq, "<html>\n");
+ 408   1          WEB_PRINTF(pReq, "\n");
+ 409   1          WEB_PRINTF(pReq, "<head>\n");
+ 410   1          WEB_PRINTF(pReq, "<title>Bandwidth Control Setting</title>\n");
+ 411   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 412   1          WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+ 413   1          WEB_PRINTF(pReq, "  function chkEnable(value)\n");
+ 414   1          WEB_PRINTF(pReq, "  {\n");
+ 415   1          WEB_PRINTF(pReq, "      if ( value == '1' ) {\n");
+ 416   1          WEB_PRINTF(pReq, "          document.getElementById('rate').value = \'\';\n");
+ 417   1          WEB_PRINTF(pReq, "          document.getElementById('rate').disabled = false;\n");
+ 418   1          WEB_PRINTF(pReq, "      }\n");
+ 419   1          WEB_PRINTF(pReq, "      else { \n");
+ 420   1          WEB_PRINTF(pReq, "          document.getElementById('rate').value = \'Unlimited\';\n");
+ 421   1          WEB_PRINTF(pReq, "          document.getElementById('rate').disabled = true;\n");
+ 422   1          WEB_PRINTF(pReq, "      }\n");
+ 423   1          WEB_PRINTF(pReq, "  }\n");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 8   
+
+ 424   1          WEB_PRINTF(pReq, "</script>\n");
+ 425   1          WEB_PRINTF(pReq, "</head>\n");
+ 426   1          WEB_PRINTF(pReq, "\n");
+ 427   1          WEB_PRINTF(pReq, "<body>\n");
+ 428   1      
+ 429   1          WEB_PRINTF(pReq, "<center>\n");
+ 430   1          WEB_PRINTF(pReq, "\n");
+ 431   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 432   1          WEB_PRINTF(pReq, "<legend>Bandwidth Control Setting</legend>\n");
+ 433   1      
+ 434   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/port.cgi?page=bwctrl\">\n");
+ 435   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 436   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 437   1          WEB_PRINTF(pReq, "      <th>Port</th>\n");
+ 438   1          WEB_PRINTF(pReq, "      <th>Type</th>\n");
+ 439   1          WEB_PRINTF(pReq, "      <th>State</th>\n");
+ 440   1          WEB_PRINTF(pReq, "      <th nowrap>Rate(Kbit/sec)</th>\n");
+ 441   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 442   1      
+ 443   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 444   1          WEB_PRINTF(pReq, "      <td>\n");
+ 445   1          WEB_PRINTF(pReq, "        <select name=\"portid\" multiple size=\"6\">\n");
+ 446   1      
+ 447   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 448   2              if (!(sal_trunk_logicId_exist(port))) {
+ 449   3                  continue;
+ 450   3              }
+ 451   2      
+ 452   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 453   2              WEB_PRINTF(pReq, "          <option value=\"%d\">%s\n", (uint16)port, logicPortStr);
+ 454   2          }
+ 455   1          WEB_PRINTF(pReq, "        </select>\n");
+ 456   1          WEB_PRINTF(pReq, "      </td>\n");
+ 457   1      
+ 458   1          WEB_PRINTF(pReq, "      <td>\n");
+ 459   1          WEB_PRINTF(pReq, "        <select name=\"type\">\n");
+ 460   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Ingress\n", (uint16)0);
+ 461   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Egress\n", (uint16)1);
+ 462   1          WEB_PRINTF(pReq, "        </select>\n");
+ 463   1          WEB_PRINTF(pReq, "      </td>\n");
+ 464   1      
+ 465   1          WEB_PRINTF(pReq, "      <td>\n");
+ 466   1          WEB_PRINTF(pReq, "        <select name=\"state\" onload=\"chkEnable(this.value)\" onchange=\"chkEnable
+             -(this.value)\">\n");
+ 467   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Disable\n", (uint16)DISABLE);
+ 468   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Enable\n", (uint16)ENABLE);
+ 469   1          WEB_PRINTF(pReq, "        </select>\n");
+ 470   1          WEB_PRINTF(pReq, "      </td>\n");
+ 471   1      
+ 472   1          WEB_PRINTF(pReq, "      <td><input type=\"text\" size=\"6\" name=\"rate\" id=\"rate\" value=\'Unlimite
+             -d\' disabled = true>"
+ 473   1          "(0-1000000, multiple of 8)</td>\n");
+ 474   1      
+ 475   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 476   1      
+ 477   1          WEB_PRINTF(pReq, "  </table>\n");
+ 478   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 479   1          WEB_PRINTF(pReq, "  <input type=\"submit\" name=\"submit\" value=\"   Apply   \">\n");
+ 480   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"bandwidthcontrol\">\n");
+ 481   1          WEB_PRINTF(pReq, "</form>\n");
+ 482   1          WEB_PRINTF(pReq, "<hr>");
+ 483   1          WEB_PRINTF(pReq, "<br>\n");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 9   
+
+ 484   1          get_bandwidthcontrolstatus(pReq);
+ 485   1          WEB_PRINTF(pReq, "<br>\n");
+ 486   1          WEB_PRINTF(pReq, "</body>\n");
+ 487   1          WEB_PRINTF(pReq, "</html>\n");
+ 488   1      
+ 489   1          WEB_END(pReq);
+ 490   1      
+ 491   1          return SUCCESS;
+ 492   1      }
+ 493          
+ 494          /*
+ 495           * Function: get_port_mirroring
+ 496           * ----------------------------
+ 497           * Displays port mirroring configuration page.
+ 498           * Shows form to set mirror direction, mirroring port, and mirrored ports.
+ 499           * Displays current mirroring configuration table.
+ 500           * Includes delete button to remove mirroring configuration.
+ 501           */
+ 502          int32
+ 503          get_port_mirroring(struct http_request_s *pReq)
+ 504          {
+ 505   1          sal_lPortmask_t portmask;
+ 506   1          sal_port_t      port;
+ 507   1          uint32          mode;
+ 508   1          int16           i;    
+ 509   1          uint8           logicPortStr[MAX_LOGIC_ID_LEN];
+ 510   1          uint8           buf[128];
+ 511   1      
+ 512   1          port = 0;
+ 513   1          mode = PORT_MIRROR_OFF;
+ 514   1      
+ 515   1          sal_lPortMask_delAll(&portmask);
+ 516   1      
+ 517   1          WEB_BEGIN(pReq);
+ 518   1      
+ 519   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 520   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 521   1      
+ 522   1          WEB_PRINTF(pReq, "<html>\n");
+ 523   1          WEB_PRINTF(pReq, "\n");
+ 524   1          WEB_PRINTF(pReq, "<head>\n");
+ 525   1          WEB_PRINTF(pReq, "<title>Port Monitoring Information</title>\n");
+ 526   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 527   1          WEB_PRINTF(pReq, "</head>\n");
+ 528   1          WEB_PRINTF(pReq, "\n");
+ 529   1          WEB_PRINTF(pReq, "<body>\n");
+ 530   1          WEB_PRINTF(pReq, "<center>\n");
+ 531   1          WEB_PRINTF(pReq, "\n");
+ 532   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 533   1          WEB_PRINTF(pReq, "<legend>Port Mirroring Setting</legend>\n");
+ 534   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/port.cgi?page=mirroring\">\n");
+ 535   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 536   1      
+ 537   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 538   1          WEB_PRINTF(pReq, "      <th align=\"center\" >Mirror Direction</th>\n");
+ 539   1          WEB_PRINTF(pReq, "      <th align=\"center\" >Mirroring Port</th>\n");
+ 540   1          WEB_PRINTF(pReq, "      <th align=\"center\" >Mirrored Port List</th>\n");
+ 541   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 542   1      
+ 543   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 544   1      
+ 545   1          WEB_PRINTF(pReq, "      <td align=\"center\" width=\"120\">\n");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 10  
+
+ 546   1          WEB_PRINTF(pReq, "        <select name=\"mirror_direction\">\n");
+ 547   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Disable\n", (uint16)PORT_MIRROR_OFF);
+ 548   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Rx\n", (uint16)PORT_MIRROR_RX);
+ 549   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Tx\n", (uint16)PORT_MIRROR_TX);
+ 550   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Both\n", (uint16)PORT_MIRROR_BOTH);
+ 551   1          WEB_PRINTF(pReq, "        </select>\n");
+ 552   1          WEB_PRINTF(pReq, "      </td>\n");
+ 553   1      
+ 554   1          WEB_PRINTF(pReq, "      </td>\n");
+ 555   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 556   1          WEB_PRINTF(pReq, "        <select name=\"mirroring_port\">\n");
+ 557   1          for (i = 0; i < SAL_PORT_ID_CPU; i++)
+ 558   1          {
+ 559   2              if (!(sal_trunk_logicId_exist(i)))
+ 560   2                  continue;
+ 561   2                  
+ 562   2              sal_trunk_logicId_toStr(logicPortStr, i);
+ 563   2              WEB_PRINTF(pReq, "          <option value=\"%d\">%s\n", (uint16)i, logicPortStr);
+ 564   2          }
+ 565   1          WEB_PRINTF(pReq, "        </select>\n");
+ 566   1          WEB_PRINTF(pReq, "      </td>\n");
+ 567   1      
+ 568   1          WEB_PRINTF(pReq, "      </td>\n");
+ 569   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 570   1          WEB_PRINTF(pReq, "        <select name=\"mirrored_port\">\n");
+ 571   1         
+ 572   1          for (i = 0; i < SAL_PORT_ID_CPU; i++)
+ 573   1          {
+ 574   2              if (!(sal_trunk_logicId_exist(i)))
+ 575   2              {
+ 576   3                  continue;
+ 577   3              }
+ 578   2      
+ 579   2              sal_trunk_logicId_toStr(logicPortStr, i);
+ 580   2              WEB_PRINTF(pReq, "          <option value=\"%s\">%s\n", logicPortStr, logicPortStr);
+ 581   2          }
+ 582   1          WEB_PRINTF(pReq, "        </select>\n");
+ 583   1          WEB_PRINTF(pReq, "      </td>\n");
+ 584   1      
+ 585   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 586   1      
+ 587   1          WEB_PRINTF(pReq, "  </table>\n");
+ 588   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 589   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Apply \">\n");
+ 590   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"mirror\">\n");
+ 591   1          WEB_PRINTF(pReq, "  <br>\n");
+ 592   1          WEB_PRINTF(pReq, "</form>\n");
+ 593   1      
+ 594   1          WEB_PRINTF(pReq, "<hr>\n");
+ 595   1      
+ 596   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/port.cgi?page=delete_mirror\">\n");
+ 597   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 598   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 599   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"120\">Mirror Direction</th>\n");
+ 600   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"120\">Mirroring Port</th>\n");
+ 601   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"200\">Mirrored Port List</th>\n");
+ 602   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 603   1       
+ 604   1          sal_mirror_portMirror_get(0, &mode, &port, &portmask);
+ 605   1      
+ 606   1          DBG_WEB_PRINTF(("Mode : %ld\n", mode));
+ 607   1          if (mode == PORT_MIRROR_BOTH)
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 11  
+
+ 608   1              sprintf(buf, "Both");
+ 609   1          else if(mode == PORT_MIRROR_RX)
+ 610   1              sprintf(buf, "Rx");
+ 611   1          else if(mode == PORT_MIRROR_TX)
+ 612   1              sprintf(buf, "Tx");
+ 613   1          else
+ 614   1              sprintf(buf, "Disabled");
+ 615   1      
+ 616   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 617   1          WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 618   1      
+ 619   1          if (mode != PORT_MIRROR_OFF)
+ 620   1          {
+ 621   2              WEB_PRINTF(pReq, "      <td align=\"center\">%d</td>\n", (uint16)(port + 1));
+ 622   2              lmask_to_comma(buf, &portmask);
+ 623   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 624   2          }
+ 625   1          else
+ 626   1          {
+ 627   2              WEB_PRINTF(pReq, "      <td align=\"center\"> - </td>\n");
+ 628   2              WEB_PRINTF(pReq, "      <td align=\"center\"> - </td>\n");
+ 629   2          }
+ 630   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 631   1       
+ 632   1          WEB_PRINTF(pReq, "  </table>\n");
+ 633   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 634   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Delete \">\n");
+ 635   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"del_mirror\">\n");
+ 636   1          WEB_PRINTF(pReq, "</form>\n");
+ 637   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 638   1          WEB_PRINTF(pReq, "<p>\n");
+ 639   1          WEB_PRINTF(pReq, "\n");
+ 640   1          WEB_PRINTF(pReq, "</center>\n");
+ 641   1          WEB_PRINTF(pReq, "</body>\n");
+ 642   1          WEB_PRINTF(pReq, "</html>\n");
+ 643   1      
+ 644   1          WEB_END(pReq);
+ 645   1      
+ 646   1          return SUCCESS;
+ 647   1      }
+ 648          
+ 649          /*
+ 650           * Function: get_port_isolation
+ 651           * ----------------------------
+ 652           * Displays port isolation configuration page.
+ 653           * Shows form to select port and isolation list.
+ 654           * Displays current isolation settings for all ports.
+ 655           * Allows adding/removing ports from isolation list.
+ 656           */
+ 657          int32 get_port_isolation(struct http_request_s *pReq)
+ 658          {
+ 659   1          sal_lPortmask_t portmask, isomask;
+ 660   1          uint32 i;
+ 661   1          uint8  port;
+ 662   1          uint8  logicPortStr[MAX_LOGIC_ID_LEN];
+ 663   1          uint8  portMaskStr[256];
+ 664   1      
+ 665   1          i = 0;
+ 666   1      
+ 667   1          sal_trunk_logicPort_setAll(&portmask);
+ 668   1      
+ 669   1          WEB_BEGIN(pReq);
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 12  
+
+ 670   1      
+ 671   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 672   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 673   1      
+ 674   1          WEB_PRINTF(pReq, "<html>\n");
+ 675   1          WEB_PRINTF(pReq, "\n");
+ 676   1          WEB_PRINTF(pReq, "<head>\n");
+ 677   1          WEB_PRINTF(pReq, "<title>Port Isolation</title>\n");
+ 678   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 679   1          WEB_PRINTF(pReq, "</head>\n");
+ 680   1          WEB_PRINTF(pReq, "\n");
+ 681   1          WEB_PRINTF(pReq, "<body>\n");
+ 682   1          WEB_PRINTF(pReq, "<center>\n");
+ 683   1          WEB_PRINTF(pReq, "\n");
+ 684   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 685   1          WEB_PRINTF(pReq, "<legend>Port Isolation Setting</legend>\n");
+ 686   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/port.cgi?page=isolation\">\n");
+ 687   1      
+ 688   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 689   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 690   1          WEB_PRINTF(pReq, "    <th align=\"center\">Port</th>\n");
+ 691   1          WEB_PRINTF(pReq, "    <th align=\"center\" width=\"140\">Port Isolation List</th>\n");
+ 692   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 693   1      
+ 694   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 695   1      
+ 696   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 697   1          WEB_PRINTF(pReq, "        <select name=\"port\" multiple size=\"6\">\n");
+ 698   1      
+ 699   1          for (i = 0; i < SAL_PORT_ID_CPU; ++i)
+ 700   1          {
+ 701   2              if (!(sal_trunk_logicId_exist(i)))
+ 702   2              {
+ 703   3                  continue;
+ 704   3              }
+ 705   2      
+ 706   2              sal_trunk_logicId_toStr(logicPortStr, i);
+ 707   2              WEB_PRINTF(pReq, "          <option value=\"%s\">%s\n", logicPortStr, logicPortStr);
+ 708   2          }
+ 709   1      
+ 710   1          WEB_PRINTF(pReq, "        </select>\n");
+ 711   1          WEB_PRINTF(pReq, "      </td>\n");
+ 712   1      
+ 713   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 714   1          WEB_PRINTF(pReq, "        <select name=\"isolationlist\" multiple size=\"6\">\n");
+ 715   1      
+ 716   1          for (i = 0; i < SAL_PORT_ID_CPU; ++i)
+ 717   1          {
+ 718   2              if (!(sal_trunk_logicId_exist(i)))
+ 719   2              {
+ 720   3                  continue;
+ 721   3              }
+ 722   2      
+ 723   2              sal_trunk_logicId_toStr(logicPortStr, i);
+ 724   2              WEB_PRINTF(pReq, "          <option value=\"%s\">%s\n", logicPortStr, logicPortStr);
+ 725   2          }
+ 726   1      
+ 727   1          WEB_PRINTF(pReq, "        </select>\n");
+ 728   1          WEB_PRINTF(pReq, "      </td>\n");
+ 729   1      
+ 730   1      
+ 731   1          WEB_PRINTF(pReq, "  </tr>\n");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 13  
+
+ 732   1      
+ 733   1          WEB_PRINTF(pReq, "</table>\n");
+ 734   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 735   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Apply \">\n");
+ 736   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"portisolation\">\n");
+ 737   1          WEB_PRINTF(pReq, "  <br>\n");
+ 738   1          WEB_PRINTF(pReq, "</form>\n");
+ 739   1      
+ 740   1          WEB_PRINTF(pReq, "<hr>\n");
+ 741   1      
+ 742   1          WEB_PRINTF(pReq, "<br>\n");
+ 743   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 744   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 745   1          WEB_PRINTF(pReq, "    <th align=\"center\" width=\"80\">Port</th>\n");
+ 746   1          WEB_PRINTF(pReq, "    <th align=\"center\" width=\"200\">Port Isolation List</th>\n");
+ 747   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 748   1      
+ 749   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port)
+ 750   1          {
+ 751   2              if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&portmask, port))
+ 752   2              {
+ 753   3                  continue;
+ 754   3              }
+ 755   2      
+ 756   2              strcpy(portMaskStr , "");
+ 757   2              sal_port_isolation_get(port, &isomask);
+ 758   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 759   2              lmask_to_comma(portMaskStr, &isomask);
+ 760   2      
+ 761   2              WEB_PRINTF(pReq, "    <tr>\n");
+ 762   2      
+ 763   2              if(strcmp(portMaskStr, "") == 0 )
+ 764   2              {
+ 765   3                  WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", logicPortStr);
+ 766   3                  WEB_PRINTF(pReq, "      <td align=\"center\">-</td>\n");
+ 767   3              }
+ 768   2              else
+ 769   2              {
+ 770   3                  WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", logicPortStr);
+ 771   3                  WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", portMaskStr);
+ 772   3              }
+ 773   2              WEB_PRINTF(pReq, "    </tr>\n");
+ 774   2          }
+ 775   1      
+ 776   1      
+ 777   1          WEB_PRINTF(pReq, "  </table>\n");
+ 778   1          WEB_PRINTF(pReq, "<br>\n");
+ 779   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 780   1          WEB_PRINTF(pReq, "\n");
+ 781   1      
+ 782   1          WEB_PRINTF(pReq, "</center>\n");
+ 783   1          WEB_PRINTF(pReq, "</body>\n");
+ 784   1          WEB_PRINTF(pReq, "</html>\n");
+ 785   1      
+ 786   1          WEB_END(pReq);
+ 787   1      
+ 788   1          return SUCCESS;
+ 789   1      }
+ 790          
+ 791          /*
+ 792           * Function: get_port_statistics
+ 793           * -----------------------------
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 14  
+
+ 794           * Displays port statistics table with Rx/Tx good/bad packets.
+ 795           * Shows admin state and link status for each port.
+ 796           * Includes clear button to reset all port statistics.
+ 797           * Optionally shows RMON MIB counters when queried.
+ 798           */
+ 799          int32 get_port_statistics(struct http_request_s *pReq)
+ 800          {
+ 801   1      #define RMON_COUNTER_NUM    17
+ 802   1      
+ 803   1          sal_enable_t    enable;
+ 804   1          sal_enable_t    linkup;
+ 805   1          sal_port_t      port;
+ 806   1          uint8           logicPortStr[MAX_LOGIC_ID_LEN];
+ 807   1          uint32          mibHigh;  // it will not displayed
+ 808   1          uint32          rxgood;
+ 809   1          uint32          rxbad;
+ 810   1          uint32          txgood;
+ 811   1          uint32          txbad;
+ 812   1      #if __WEB_RMON_COUNTER_QUERY__    
+                  uint8           i;    
+                  uint32          cntrh, cntrl;
+              #endif    
+ 816   1      
+ 817   1      #if __WEB_RMON_COUNTER_QUERY__
+                  far const sal_stat_port_type_t rmon_cntr[RMON_COUNTER_NUM] = {
+                      SAL_ETHER_STATS_DROP_EVENTS_INDEX,
+                      SAL_ETHER_STATS_OCTETS_INDEX,
+                      SAL_ETHER_STATS_PKTS_INDEX,
+                      SAL_ETHER_STATS_BCAST_PKTS_INDEX,
+                      SAL_ETHER_STATS_MCAST_PKTS_INDEX,
+                      SAL_ETHER_STATS_CRC_ALIGN_ERRORS_INDEX,
+                      SAL_ETHER_STATS_UNDER_SIZE_PKTS_INDEX,
+                      SAL_ETHER_STATS_OVERSIZE_PKTS_INDEX,
+                      SAL_ETHER_STATS_FRAGMENTS_INDEX,
+                      SAL_ETHER_STATS_JABBERS_INDEX,
+                      SAL_ETHER_STATS_COLLISIONS_INDEX,
+                      SAL_ETHER_STATS_PKTS_64OCTETS_INDEX,
+                      SAL_ETHER_STATS_PKTS_65TO127OCTETS_INDEX,
+                      SAL_ETHER_STATS_PKTS_128TO255OCTETS_INDEX,
+                      SAL_ETHER_STATS_PKTS_256TO511OCTETS_INDEX,
+                      SAL_ETHER_STATS_PKTS_512TO1023OCTETS_INDEX,
+                      SAL_ETHER_STATS_PKTS_1024TO1518OCTETS_INDEX
+                  };
+              
+                  uint8* rmon_cntr_name[RMON_COUNTER_NUM];
+              #endif
+ 840   1      
+ 841   1      
+ 842   1          /* init */
+ 843   1          enable  = SAL_DISABLED;
+ 844   1          port    = 0;
+ 845   1          mibHigh = 0;
+ 846   1          rxgood  = 0;
+ 847   1          rxbad   = 0;
+ 848   1          txgood  = 0;
+ 849   1          txbad   = 0;
+ 850   1      
+ 851   1          WEB_BEGIN(pReq);
+ 852   1      
+ 853   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 854   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 855   1          WEB_PRINTF(pReq, "<html>\n");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 15  
+
+ 856   1          WEB_PRINTF(pReq, "\n");
+ 857   1          WEB_PRINTF(pReq, "<head>\n");
+ 858   1          WEB_PRINTF(pReq, "<title>Port Stistics</title>\n");
+ 859   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 860   1          WEB_PRINTF(pReq, "</head>\n");
+ 861   1          WEB_PRINTF(pReq, "\n");
+ 862   1          WEB_PRINTF(pReq, "<body>\n");
+ 863   1          WEB_PRINTF(pReq, "<center>\n");
+ 864   1          WEB_PRINTF(pReq, "\n");
+ 865   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 866   1          WEB_PRINTF(pReq, "<legend>Port Statistics Information</legend>\n");
+ 867   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/port.cgi?page=stats\">\n");
+ 868   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 869   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 870   1          WEB_PRINTF(pReq, "      <th width=\"80\">Port</th>\n");
+ 871   1          WEB_PRINTF(pReq, "      <th width=\"90\">State</th>\n");
+ 872   1          WEB_PRINTF(pReq, "      <th>Link Status</th>\n");
+ 873   1          WEB_PRINTF(pReq, "      <th>TxGoodPkt</th>\n");
+ 874   1          WEB_PRINTF(pReq, "      <th>TxBadPkt</th>\n");
+ 875   1          WEB_PRINTF(pReq, "      <th>RxGoodPkt</th>\n");
+ 876   1          WEB_PRINTF(pReq, "      <th>RxBadPkt</th>\n");
+ 877   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 878   1      
+ 879   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 880   2              if (!(sal_trunk_logicId_exist(port))) {
+ 881   3                  continue;
+ 882   3              }
+ 883   2      
+ 884   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 885   2              sal_port_adminEnable_get(port, &enable);
+ 886   2              sal_port_link_get(port, &linkup);
+ 887   2              sal_mib_rxGoodPkt_get(port, &mibHigh, &rxgood);
+ 888   2              sal_mib_rxBadPkt_get(port, &mibHigh, &rxbad);
+ 889   2              sal_mib_txGoodPkt_get(port, &mibHigh, &txgood);
+ 890   2              sal_mib_txBadPkt_get(port, &mibHigh, &txbad);
+ 891   2      
+ 892   2              WEB_PRINTF(pReq, "    <tr>\n");
+ 893   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", logicPortStr);
+ 894   2              WEB_PRINTF(pReq, "      <td align=\"center\">");
+ 895   2              if (enable == SAL_ENABLED) {
+ 896   3                  WEB_PRINTF(pReq, "Enabled");
+ 897   3              }
+ 898   2              else {
+ 899   3                  WEB_PRINTF(pReq, "Disabled");
+ 900   3              }
+ 901   2              WEB_PRINTF(pReq, "</td>\n");
+ 902   2              WEB_PRINTF(pReq, "      <td align=\"center\">");
+ 903   2              if (SAL_DISABLED == linkup) {
+ 904   3                  WEB_PRINTF(pReq, "Link Down");
+ 905   3              }
+ 906   2              else {
+ 907   3                  WEB_PRINTF(pReq, "Link Up");
+ 908   3              }
+ 909   2              WEB_PRINTF(pReq, "</td>\n");
+ 910   2              WEB_PRINTF(pReq, "      <td align=\"center\">%lu</td>\n", (uint32)txgood);
+ 911   2              WEB_PRINTF(pReq, "      <td align=\"center\">%lu</td>\n", (uint32)txbad);
+ 912   2              WEB_PRINTF(pReq, "      <td align=\"center\">%lu</td>\n", (uint32)rxgood);
+ 913   2              WEB_PRINTF(pReq, "      <td align=\"center\">%lu</td>\n", (uint32)rxbad);
+ 914   2              WEB_PRINTF(pReq, "    </tr>\n");
+ 915   2          }
+ 916   1      
+ 917   1          WEB_PRINTF(pReq, "  </table>\n");
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 16  
+
+ 918   1      
+ 919   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 920   1      
+ 921   1          WEB_PRINTF(pReq, "  <input type=\"submit\" name=\"submit\" value=\"   Clear   \">\n");
+ 922   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"stats\">\n");
+ 923   1          
+ 924   1          WEB_PRINTF(pReq, "</form>\n");
+ 925   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 926   1      
+ 927   1      #if __WEB_RMON_COUNTER_QUERY__
+                  /* port input section to display RMON MIB counters */
+                  WEB_PRINTF(pReq, "<fieldset>\n");
+                  WEB_PRINTF(pReq, "<legend>RMON MIB Counter</legend>\n");
+                  WEB_PRINTF(pReq, "<form method=\"post\" action=\"/port.cgi?page=stat_rmon\">\n");
+                  WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+                  WEB_PRINTF(pReq, "    <tr>\n");
+                  WEB_PRINTF(pReq, "      <th align=\"center\" >Port Number</th>\n");
+                  WEB_PRINTF(pReq, "    </tr>\n");
+                  WEB_PRINTF(pReq, "    <tr>\n");        
+                  WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+                  WEB_PRINTF(pReq, "        <select name=\"rmon_query\">\n");
+                  for (port = 0; port < SAL_MAX_PHY_PORT; port++)
+                  {
+                      WEB_PRINTF(pReq, "          <option value=\"%d\">Port %d\n", (uint16)port, (uint16)(port + 1));
+                  }
+                  WEB_PRINTF(pReq, "        </select>\n");
+                  WEB_PRINTF(pReq, "      </td>\n");
+                  WEB_PRINTF(pReq, "    </tr>\n");
+                  WEB_PRINTF(pReq, "  </table>\n");
+                  WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+                  WEB_PRINTF(pReq, "  <input type=\"submit\" name=\"submit\" value=\"   Query   \">\n");
+                  WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"stat_rmon\">\n");
+              
+                  if(TRUE == showRmonCounters)
+                  {
+                      rmon_cntr_name[0] = "etherStatsDropEvents",
+                      rmon_cntr_name[1] = "etherStatsOctets",
+                      rmon_cntr_name[2] = "etherStatsPkts",
+                      rmon_cntr_name[3] = "etherStatsBroadcastPkts",
+                      rmon_cntr_name[4] = "etherStatsMulticastPkts",
+                      rmon_cntr_name[5] = "etherStatsCRCAlignErrors",
+                      rmon_cntr_name[6] = "etherStatsUndersizePkts",
+                      rmon_cntr_name[7] = "etherStatsOversizePkts",
+                      rmon_cntr_name[8] = "etherStatsFragments",
+                      rmon_cntr_name[9] = "etherStatsJabbers",
+                      rmon_cntr_name[10] = "etherStatsCollisions",
+                      rmon_cntr_name[11] = "etherStatsPkts64Octets",
+                      rmon_cntr_name[12] = "etherStatsPkts65to127Octets",
+                      rmon_cntr_name[13] = "etherStatsPkts128to255Octets",
+                      rmon_cntr_name[14] = "etherStatsPkts256to511Octets",
+                      rmon_cntr_name[15] = "etherStatsPkts512to1023Octets",
+                      rmon_cntr_name[16] = "etherStatsPkts1024to1518Octets",
+              
+                      WEB_PRINTF(pReq, "<table border=\"1\">\n"); 
+                      WEB_PRINTF(pReq, "  <tr><th colspan=2>Port %u</th></tr>\n", (uint16)(queryPort + 1));
+              
+                      for(i = 0; i < RMON_COUNTER_NUM;i++)
+                      {
+                          WEB_PRINTF(pReq, "  <tr>\n");
+                          WEB_PRINTF(pReq, "    <td width=\"300\">%s</td>\n", rmon_cntr_name[i]);            
+                          if(SAL_ERR_SUCCESS == sal_mib_port_get(queryPort, rmon_cntr[i], &cntrh, &cntrl))
+                              WEB_PRINTF(pReq, "    <td width=\"100\">%lu</td>", cntrl);
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 17  
+
+                          else
+                              WEB_PRINTF(pReq, "    <td>0</td>\n");            
+                          WEB_PRINTF(pReq, "  </tr>\n");                                    
+                      }
+                      
+                      WEB_PRINTF(pReq, "</table>\n");
+              
+                      /* disable show RMON counter */
+                      showRmonCounters = FALSE;
+                  }
+                  WEB_PRINTF(pReq, "</fieldset>\n");    
+              #endif
+ 992   1      
+ 993   1          
+ 994   1          WEB_PRINTF(pReq, "</center>\n");
+ 995   1          WEB_PRINTF(pReq, "</body>\n");
+ 996   1          WEB_PRINTF(pReq, "</html>\n");
+ 997   1      
+ 998   1          WEB_END(pReq);
+ 999   1      
+1000   1          return SUCCESS;
+1001   1      }
+1002          
+1003          /*
+1004           * Function: post_port
+1005           * -------------------
+1006           * Processes port configuration form submission.
+1007           * Extracts port list, state, speed/duplex, and flow control settings.
+1008           * Validates and stores settings for delayed application.
+1009           * Triggers auto-refresh to show updated port status.
+1010           */
+1011          int32 post_port(struct http_request_s *pReq)
+1012          {
+1013   1          int32   ret;
+1014   1          int16   i;
+1015   1          uint8  *pValue;   
+1016   1          uint32  settingCnt;     // the total port numbers to set
+1017   1          Tbool   enable;
+1018   1          uint8   duplex_spd;
+1019   1          uint8   flowCtrl;
+1020   1      
+1021   1          settingCnt =0;
+1022   1          enable = DISABLE;
+1023   1          duplex_spd = 0;
+1024   1          flowCtrl = 0;
+1025   1      
+1026   1          WEB_VAR(pReq, "portid", &pValue);
+1027   1          if (pValue) {
+1028   2              port_set[settingCnt++] = atoi(pValue);
+1029   2          }
+1030   1      
+1031   1          while(pValue != NULL)
+1032   1          {
+1033   2              WEB_VAR(pReq, NULL, &pValue);
+1034   2              if (pValue) {
+1035   3                  port_set[settingCnt++] = atoi(pValue);
+1036   3              }
+1037   2          }
+1038   1      
+1039   1          WEB_VAR(pReq, "state", &pValue);
+1040   1          if (pValue) {
+1041   2              enable = atoi(pValue);
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 18  
+
+1042   2          }
+1043   1          
+1044   1          WEB_VAR(pReq, "speed_duplex", &pValue);
+1045   1          if (pValue) {
+1046   2              duplex_spd = atoi(pValue);
+1047   2          }
+1048   1          
+1049   1          WEB_VAR(pReq, "flow", &pValue);
+1050   1          if (pValue) {
+1051   2              flowCtrl = atoi(pValue);
+1052   2          }
+1053   1      
+1054   1          for (i = 0; i < settingCnt; ++i) {
+1055   2              if (!(sal_trunk_logicId_exist(port_set[i]))) {
+1056   3                  continue;
+1057   3              }
+1058   2      
+1059   2              if ((ret = sal_port_adminEnable_set(port_set[i], enable)) != SAL_ERR_SUCCESS)
+1060   2              {
+1061   3                  printerr(pReq, ret);
+1062   3                  return SUCCESS;    
+1063   3              }            
+1064   2      
+1065   2              memset(&ability_set[i], 0, sizeof(sal_phyAbility_t));
+1066   2      
+1067   2      
+1068   2              /* if configured as auto, all ability is set */
+1069   2              if (duplex_spd == SAL_PORT_SPEED_DUPLEX_AUTO)
+1070   2              {
+1071   3                ability_set[i].AutoNegotiation = 1;
+1072   3                  ability_set[i].Full_10   = 1;
+1073   3                  ability_set[i].Half_10   = 1;
+1074   3                  ability_set[i].Full_100  = 1;
+1075   3                  ability_set[i].Half_100  = 1;
+1076   3                  ability_set[i].Full_1000 = 1;
+1077   3      
+1078   3                  if (flowCtrl == 1)
+1079   3                  {
+1080   4                      ability_set[i].FC = 1;
+1081   4                      ability_set[i].AsyFC = 1;
+1082   4                  }
+1083   3              }        
+1084   2              else
+1085   2              {
+1086   3                  if (duplex_spd == SAL_PORT_SPEED_DUPLEX_10_HALF)
+1087   3                  {
+1088   4                      ability_set[i].Half_10 = 1;
+1089   4                  }
+1090   3                  else if (duplex_spd == SAL_PORT_SPEED_DUPLEX_10_FULL)
+1091   3                  {
+1092   4                      ability_set[i].Full_10 = 1;
+1093   4                  }
+1094   3                  else if (duplex_spd == SAL_PORT_SPEED_DUPLEX_100_HALF)
+1095   3                  {
+1096   4                      ability_set[i].Half_100 = 1;
+1097   4                  }
+1098   3                  else if (duplex_spd == SAL_PORT_SPEED_DUPLEX_100_FULL)
+1099   3                  {
+1100   4                      ability_set[i].Full_100 = 1;
+1101   4                  }
+1102   3      
+1103   3                  if (flowCtrl == 1)
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 19  
+
+1104   3                  {
+1105   4                      ability_set[i].FC = 1;
+1106   4                      ability_set[i].AsyFC = 1;
+1107   4                  }
+1108   3              }
+1109   2      
+1110   2              DBG_WEB_PRINTF(("The Port Status setting parameter:\n"));
+1111   2              DBG_WEB_PRINTF(("Port: %bd, Enable: %bd, Auto: %d, Half_10: %d, Full_10: %d, \
+1112   2                  Half_100: %d,\n Full_100: %d, Full_1000: %d, FC: %d\n", \
+1113   2                  (uint8)port_set[i], (uint8)enable, (uint16)ability_set[i].AutoNegotiation, \
+1114   2                  (uint16)ability_set[i].Half_10, (uint16)ability_set[i].Full_10, (uint16)ability_set[i].Half_10
+             -0, \
+1115   2                  (uint16)ability_set[i].Full_100, (uint16)ability_set[i].Full_1000, (uint16)ability_set[i].FC))
+             -;
+1116   2      
+1117   2              set_flag = 1;
+1118   2              g_portStat_need_refresh = TRUE;
+1119   2              set_count = settingCnt;
+1120   2          }
+1121   1          
+1122   1          g_portStat_need_refresh = TRUE;
+1123   1          g_portStat_refresh_cnt  = 0;
+1124   1        syslog_add_new_buf_entry(SYSLOG_MSG_PORT_STATE_CHANGE, 0);
+1125   1      
+1126   1          get_port(pReq);
+1127   1          return SUCCESS;
+1128   1      }
+1129          
+1130          /*
+1131           * Function: post_bandwidthcontrol
+1132           * -------------------------------
+1133           * Processes bandwidth control form submission.
+1134           * Extracts port list, type (ingress/egress), state, and rate.
+1135           * Validates rate range (0-1000000 Kbit/sec).
+1136           * Applies settings to selected ports via API calls.
+1137           */
+1138          int32 post_bandwidthcontrol(struct http_request_s *pReq)
+1139          {
+1140   1          int32   ret;
+1141   1          int16   i;
+1142   1          uint8   *pValue;
+1143   1          uint8   port[SAL_MAX_LOGIC_COMBO_PORT];
+1144   1          uint8   settingCnt;     // the total port numbers to set
+1145   1          uint8   type;
+1146   1          Tbool   enable;
+1147   1          uint32  rate = BWCTRL_DISABLE_THRES;
+1148   1      
+1149   1          settingCnt  = 0;
+1150   1          type    = 0;
+1151   1          enable  = DISABLE;
+1152   1      
+1153   1          WEB_VAR(pReq, "portid", &pValue);
+1154   1          if (pValue) {
+1155   2              port[settingCnt++] = atoi(pValue);
+1156   2          }
+1157   1      
+1158   1          while(pValue != NULL)
+1159   1          {
+1160   2              WEB_VAR(pReq, NULL, &pValue);
+1161   2              if (pValue) {
+1162   3                  port[settingCnt++] = atoi(pValue);
+1163   3              }
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 20  
+
+1164   2          }
+1165   1      
+1166   1          WEB_VAR(pReq, "type", &pValue);
+1167   1          if (pValue) {
+1168   2              type = atoi(pValue);
+1169   2          }
+1170   1          WEB_VAR(pReq, "state", &pValue);
+1171   1          if (pValue) {
+1172   2              enable = atoi(pValue);
+1173   2          }
+1174   1          WEB_VAR(pReq, "rate", &pValue);
+1175   1          if (pValue) {
+1176   2              rate = atol(pValue);
+1177   2      
+1178   2              if (rate < 0 || rate > 1000000UL)
+1179   2              {
+1180   3                  DBG_WEB_PRINTF(("The rate is : %ld\n", rate));
+1181   3                  printmsg(pReq, "Invalid Control rate !!");
+1182   3                  return SUCCESS;
+1183   3              }
+1184   2          }
+1185   1      
+1186   1          for (i = 0; i < settingCnt; ++i) {
+1187   2      
+1188   2              if (!(sal_trunk_logicId_exist(port[i]))) {
+1189   3                  continue;
+1190   3              }
+1191   2              
+1192   2              if ( enable == DISABLE )
+1193   2                  rate = BWCTRL_DISABLE_THRES;
+1194   2          
+1195   2              if ( type == 0 ) /*ingress*/
+1196   2              {
+1197   3                  if ((ret = sal_rate_igrBandwidthCtrl_set(port[i], rate)) != SAL_ERR_SUCCESS) 
+1198   3                  {
+1199   4                      printerr(pReq, ret);
+1200   4                      return SUCCESS;
+1201   4                  }
+1202   3              }
+1203   2              else     /*egress*/
+1204   2              {
+1205   3                  if ((ret = sal_rate_egrBandwidthCtrl_set(port[i], rate)) != SAL_ERR_SUCCESS) 
+1206   3                  {
+1207   4                      printerr(pReq, ret);
+1208   4                      return SUCCESS;
+1209   4                  }
+1210   3              }
+1211   2          }
+1212   1      
+1213   1          get_port_bandwidthcontrol(pReq);
+1214   1          return SUCCESS;
+1215   1      }
+1216          
+1217          /*
+1218           * Function: post_port_isolation
+1219           * -----------------------------
+1220           * Processes port isolation form submission.
+1221           * Extracts selected port and isolation list from POST data.
+1222           * Handles both Port and Trunk selections.
+1223           * Applies isolation mask to selected ports via API.
+1224           */
+1225          int32
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 21  
+
+1226          post_port_isolation(struct http_request_s *pReq)
+1227          {
+1228   1          sal_lPortmask_t isomask;
+1229   1          sal_pPortmask_t portMask1, portMask2;
+1230   1          int32   ret;
+1231   1          uint32  portlist;
+1232   1          int16   i;
+1233   1          uint8   settingPortCnt, port[SAL_MAX_LOGIC_COMBO_PORT];
+1234   1          uint8   settingTrunkCnt, trunk[SAL_MAX_STATIC_COMBO_TRUNK];
+1235   1          uint8   *pValue;
+1236   1          uint8   isolatedPortCnt, isolatedPort[SAL_MAX_LOGIC_COMBO_PORT];
+1237   1          uint8   isolatedTrunkCnt, isolatedTrunk[SAL_MAX_STATIC_COMBO_TRUNK];
+1238   1      
+1239   1          portlist = 0;
+1240   1          settingPortCnt   = 0;
+1241   1          settingTrunkCnt  = 0;
+1242   1          isolatedPortCnt  = 0;
+1243   1          isolatedTrunkCnt = 0;
+1244   1      
+1245   1          memset(port, sizeof(port), 0);
+1246   1          memset(port, sizeof(trunk), 0);    
+1247   1          memset(port, sizeof(isolatedPort), 0);
+1248   1          memset(port, sizeof(isolatedTrunk), 0);    
+1249   1      
+1250   1          WEB_VAR(pReq, "port", &pValue);
+1251   1          if (pValue) {
+1252   2              if (strncmp(pValue, "Port", 4) == 0)
+1253   2              {
+1254   3                  port[settingPortCnt++] = atoi(pValue + 5);
+1255   3              }
+1256   2              else
+1257   2              if (strncmp(pValue, "Trunk", 5) == 0)
+1258   2              {
+1259   3                  trunk[settingTrunkCnt++] = atoi(pValue + 5);
+1260   3              }
+1261   2          }
+1262   1      
+1263   1      
+1264   1          while(pValue != NULL)
+1265   1          {
+1266   2              WEB_VAR(pReq, NULL, &pValue);
+1267   2              if (pValue) {
+1268   3                  if (strncmp(pValue, "Port", 4) == 0)
+1269   3                  {
+1270   4                      port[settingPortCnt++] = atoi(pValue + 5);
+1271   4                  }
+1272   3                  else
+1273   3                  if (strncmp(pValue, "Trunk", 5) == 0)
+1274   3                  {
+1275   4                      trunk[settingTrunkCnt++] = atoi(pValue + 5);
+1276   4                  }
+1277   3              }
+1278   2          }
+1279   1      
+1280   1          WEB_VAR(pReq, "isolationlist", &pValue);
+1281   1          if (pValue) {
+1282   2              if (strncmp(pValue, "Port", 4) == 0)
+1283   2              {
+1284   3                  isolatedPort[isolatedPortCnt++] = atoi(pValue + 5);
+1285   3              }
+1286   2              else
+1287   2              if (strncmp(pValue, "Trunk", 5) == 0)
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 22  
+
+1288   2              {
+1289   3                  isolatedTrunk[isolatedTrunkCnt++] = atoi(pValue + 5);
+1290   3              }
+1291   2          }
+1292   1      
+1293   1      
+1294   1          while(pValue != NULL)
+1295   1          {
+1296   2              WEB_VAR(pReq, NULL, &pValue);
+1297   2              if (pValue) {
+1298   3                  if (strncmp(pValue, "Port", 4) == 0)
+1299   3                  {
+1300   4                      isolatedPort[isolatedPortCnt++] = atoi(pValue + 5);
+1301   4                  }
+1302   3                  else
+1303   3                  if (strncmp(pValue, "Trunk", 5) == 0)
+1304   3                  {
+1305   4                      isolatedTrunk[isolatedTrunkCnt++] = atoi(pValue + 5);
+1306   4                  }
+1307   3              }
+1308   2          }
+1309   1      
+1310   1      
+1311   1          /* Get the port */
+1312   1          /* Get the ports to be set*/
+1313   1          sal_pPortMask_delAll(&portMask2);
+1314   1          for (i = 0; i < settingTrunkCnt; i++)
+1315   1          {
+1316   2              sal_trunk_port_get(trunk[i] - 1, NULL, &portMask1, NULL);
+1317   2              sal_pPortMask_or(&portMask2, &portMask2, &portMask1);
+1318   2          }
+1319   1      
+1320   1          for (i = 0; i < settingPortCnt; i++)
+1321   1          {
+1322   2              sal_pPortMask_addPort(&portMask2, port[i] - 1);
+1323   2          }
+1324   1      
+1325   1          sal_pPortMask_toUL(&portlist, &portMask2);
+1326   1      
+1327   1          /* Get the isolation port mask*/
+1328   1          sal_pPortMask_delAll(&portMask2);
+1329   1          for (i = 0; i < isolatedTrunkCnt; i++)
+1330   1          {
+1331   2              sal_trunk_port_get(isolatedTrunk[i] - 1, NULL, &portMask1, NULL);
+1332   2              sal_pPortMask_or(&portMask2, &portMask2, &portMask1);
+1333   2          }
+1334   1      
+1335   1          for (i = 0; i < isolatedPortCnt; i++)
+1336   1          {
+1337   2              sal_pPortMask_addPort(&portMask2, isolatedPort[i] - 1);
+1338   2          }
+1339   1      
+1340   1          sal_lPortMask_copyPMask(&isomask, &portMask2);
+1341   1      
+1342   1          /* Call API */
+1343   1          FOREACH_PORTINMASK(settingPortCnt, portlist){
+1344   2              DBG_WEB_PRINTF(("Setting port number is: %bd\n", settingPortCnt));
+1345   2              if ((ret = sal_port_isolation_set(settingPortCnt, isomask)) != SAL_ERR_SUCCESS) 
+1346   2              {
+1347   3                  printerr(pReq, ret);
+1348   3                  return SUCCESS;
+1349   3              }
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 23  
+
+1350   2          }
+1351   1      
+1352   1          get_port_isolation(pReq);
+1353   1          
+1354   1          return SUCCESS;
+1355   1      }
+1356          
+1357          /*
+1358           * Function: post_port_mirroring
+1359           * -----------------------------
+1360           * Processes port mirroring configuration form submission.
+1361           * Extracts mirror direction, mirroring port, and mirrored port list.
+1362           * Handles both Port and Trunk selections for mirrored ports.
+1363           * Applies mirroring configuration via sal_mirror_portMirror_set().
+1364           */
+1365          int32
+1366          post_port_mirroring(struct http_request_s *pReq)
+1367          {
+1368   1          sal_lPortmask_t lportmask;
+1369   1          sal_pPortmask_t portmask, tmp;
+1370   1          int32           ret;
+1371   1          uint8           mode = PORT_MIRROR_OFF;
+1372   1          uint8           port = 0, mirrorId = 0;
+1373   1          uint8          *pValue;
+1374   1      
+1375   1          WEB_VAR(pReq, "mirror_direction", &pValue);
+1376   1          if (pValue) {
+1377   2              mode = atoi(pValue);
+1378   2          }
+1379   1      
+1380   1          WEB_VAR(pReq, "mirroring_port", &pValue);
+1381   1          if (pValue) {
+1382   2              port = atoi(pValue);
+1383   2          }
+1384   1          
+1385   1          sal_pPortMask_delAll(&portmask);
+1386   1          sal_pPortMask_delAll(&tmp);
+1387   1      
+1388   1          WEB_VAR(pReq, "mirrored_port", &pValue);
+1389   1          if (pValue) {
+1390   2              if (strncmp(pValue, "Port", 4) == 0)
+1391   2              {
+1392   3                  sal_pPortMask_addPort(&portmask, atoi(pValue + 5) - 1);
+1393   3              }
+1394   2              else
+1395   2              if (strncmp(pValue, "Trunk", 5) == 0)
+1396   2              {
+1397   3                  sal_trunk_port_get(atoi(pValue + 5) - 1, NULL, &portmask, NULL);
+1398   3              }
+1399   2          }
+1400   1      
+1401   1          while(pValue != NULL)
+1402   1          {
+1403   2              WEB_VAR(pReq, NULL, &pValue);
+1404   2              if (pValue) {
+1405   3                  sal_pPortMask_delAll(&tmp);
+1406   3                  if (strncmp(pValue, "Port", 4) == 0)
+1407   3                  {
+1408   4                      sal_pPortMask_addPort(&tmp, atoi(pValue + 5) - 1);
+1409   4                  }
+1410   3                  else
+1411   3                  if (strncmp(pValue, "Trunk", 5) == 0)
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 24  
+
+1412   3                  {
+1413   4                      sal_trunk_port_get(atoi(pValue + 5) - 1, NULL, &tmp, NULL);
+1414   4                  }
+1415   3      
+1416   3                  sal_pPortMask_or(&portmask, &portmask, &tmp);
+1417   3              }
+1418   2          }
+1419   1      
+1420   1          sal_lPortMask_copyPMask(&lportmask, &portmask);
+1421   1          if ((ret = sal_mirror_portMirror_set(mirrorId, mode, port, &lportmask)) != SAL_ERR_SUCCESS) 
+1422   1          {
+1423   2              printerr(pReq, ret);
+1424   2              return SUCCESS;
+1425   2          }
+1426   1      
+1427   1          get_port_mirroring(pReq);
+1428   1          
+1429   1          return SUCCESS;
+1430   1      }
+1431          
+1432          /*
+1433           * Function: post_port_mirroring_delete
+1434           * ------------------------------------
+1435           * Deletes current port mirroring configuration.
+1436           * Calls sal_mirror_portMirror_set with PORT_MIRROR_OFF mode.
+1437           * Refreshes mirroring page after deletion.
+1438           */
+1439          int32
+1440          post_port_mirroring_delete(struct http_request_s *pReq)
+1441          {
+1442   1          sal_lPortmask_t portmask;
+1443   1          int32           ret;
+1444   1          
+1445   1          sal_lPortMask_delAll(&portmask);
+1446   1          
+1447   1          if ((ret =  sal_mirror_portMirror_set(0, PORT_MIRROR_OFF, 0, &portmask)) != SAL_ERR_SUCCESS) 
+1448   1          {
+1449   2              printerr(pReq, ret);
+1450   2              return SUCCESS;
+1451   2          }
+1452   1      
+1453   1          get_port_mirroring(pReq);
+1454   1      
+1455   1          return SUCCESS;
+1456   1      }
+1457          
+1458          /*
+1459           * Function: post_port_statistics_clear
+1460           * ------------------------------------
+1461           * Clears all port statistics counters.
+1462           * Iterates through all ports and calls sal_mib_port_reset().
+1463           * Refreshes statistics page after clearing.
+1464           */
+1465          int32
+1466          post_port_statistics_clear(struct http_request_s *pReq)
+1467          {
+1468   1          sal_lPortmask_t portmask;
+1469   1          uint8           port;
+1470   1              
+1471   1          sal_trunk_logicPort_setAll(&portmask);
+1472   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+1473   2              sal_mib_port_reset(port);
+C51 COMPILER V9.60.0.0   WEB_PORT                                                          11/02/2026 17:57:36 PAGE 25  
+
+1474   2          }
+1475   1      
+1476   1          get_port_statistics(pReq);
+1477   1      
+1478   1          return SUCCESS;
+1479   1      }
+1480          
+1481          #if __WEB_RMON_COUNTER_QUERY__
+              /*
+               * Function: post_port_statistics_rmonQuery
+               * ----------------------------------------
+               * Processes RMON MIB counter query form submission.
+               * Extracts port number from POST data.
+               * Sets flag to display RMON counters on statistics page.
+               * Refreshes statistics page with RMON data.
+               */
+              int32
+              post_port_statistics_rmonQuery(struct http_request_s *pReq)
+              {
+                  uint8          *pValue;
+              
+                  showRmonCounters = TRUE;
+              
+                  WEB_VAR(pReq, "rmon_query", &pValue);
+                  if (pValue) {
+                      queryPort = atoi(pValue);
+                  }
+                  get_port_statistics(pReq);
+              
+                  return SUCCESS;
+              }
+              
+              #endif
+1507          
+1508          
+1509          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =  13519    ----
+   CONSTANT SIZE    =   5207    ----
+   XDATA SIZE       =     30     679
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   5207    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

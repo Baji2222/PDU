@@ -1,0 +1,337 @@
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_CFG
+OBJECT MODULE PLACED IN .\objects\web_cfg.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_cfg.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_cfg.lst) TABS(2) OBJECT(.\objects\web_cfg.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * $Revision$
+   6           * $Date$
+   7           *
+   8           * Purpose : The handler of HTTP request to forwarding function
+   9           *
+  10           * Feature : Response the related request of forwarding function
+  11           *
+  12           */
+  13          #pragma STRING(far)
+  14          #include <string.h>
+  15          #include <stdio.h>
+  16          
+  17          #include <salutil.h>
+  18          #include <salflash.h>
+  19          #include <salsys.h>
+  20          
+  21          #include <web/web_api.h>
+  22          #include "web_util.h"
+  23          
+  24          #if __WEB_CFG_BACKUP__
+  25          /*
+  26           * Symbol Definition
+  27           */
+  28          //#define DBG_HTTP_RESTORE printf
+  29          //#define DBG_HTTP_UPDATE  printf
+  30          #define DBG_HTTP_RESTORE
+  31          #define DBG_HTTP_UPDATE 
+  32          
+  33          
+  34          /*
+  35           * Data Declaration
+  36           */
+  37          static http_image_stat_t g_firm_update_stat = HTTP_IMAGE_IDLE;
+  38          static int32 http_upload_result = 0;    /* for conf_restore */
+  39          static int32 http_upload_last_block = 0;    /* for conf_restore */
+  40          
+  41          uint8 const far htm_config[] = "\
+  42          <html><head><title>Configuration Backup/Restore</title><style>\
+  43          body{font:13px Arial;background:#f9f9f9;margin:0;padding:20px 0;text-align:center}\
+  44          fieldset{width:380px;border:1px solid #ddd;padding:20px;margin:15px auto;background:#fff;border-radius:4px
+             -;box-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  45          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  46          input[type=file]{border:1px solid #ddd;padding:8px;width:80%;margin:5px auto;border-radius:3px}\
+  47          input[type=submit]{background:#1e88e5;color:#fff;border:0;padding:8px 16px;cursor:pointer;border-radius:3p
+             -x;font-weight:bold;margin-top:10px}\
+  48          </style>\
+  49          <script>\
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 2   
+
+  50          function conf_backup(){window.location.href=\"/config_back.cgi?cmd=conf_backup\";}\
+  51          function CfmFwUpg(s){return confirm('It must reboot your device for the upgrade to take effect, continue?'
+             -);}\
+  52          </script></head>\
+  53          <body>\
+  54          <fieldset>\
+  55          <legend>Backup Configuration</legend>\
+  56          <input type=\"submit\" value=\"Backup\" onclick=\"conf_backup();\">\
+  57          </fieldset>\
+  58          <fieldset>\
+  59          <legend>Restore Configuration</legend>\
+  60          <form method=\"post\" enctype=\"multipart/form-data\" action=\"/config_back.cgi?cmd=conf_restore\">\
+  61          <input type=\"file\" name=\"file\" size=\"60\" maxlength=\"128\">\
+  62          <div><input type=\"submit\" value=\"Restore\"></div>\
+  63          </form>\
+  64          </fieldset>\
+  65          </body></html>\n\
+  66          ";
+  67          
+  68          uint8 const far htm_must_reboot[] = "\
+  69          <html><head><title>Configuration Restored</title><style>\
+  70          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+  71          fieldset{width:380px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  72          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  73          .msg{color:#444;margin:10px 0;line-height:1.5}\
+  74          .note{color:#4caf50;font-weight:bold}\
+  75          </style></head>\
+  76          <body>\
+  77          <fieldset>\
+  78          <legend>Configuration Restored</legend>\
+  79          <div class=\"msg\">Configuration has been restored successfully.</div>\
+  80          <div class=\"note\">Please reboot your device for changes to take effect.</div>\
+  81          </fieldset>\
+  82          </body></html>\n\
+  83          ";
+  84          
+  85          uint8 const far htm_conf_restore_failed[] = "\
+  86          <html><head><title>Restore Failed</title><style>\
+  87          body{font:13px Arial;background:#f9f9f9;margin:0;padding:25px 0;text-align:center}\
+  88          fieldset{width:380px;border:1px solid #ddd;padding:20px;margin:0 auto;background:#fff;border-radius:4px;bo
+             -x-shadow:0 1px 4px rgba(0,0,0,0.05)}\
+  89          legend{font:bold 16px Arial;color:#1e88e5;padding:0 10px}\
+  90          .error{color:#f44336;margin:10px 0;font-weight:bold}\
+  91          </style></head>\
+  92          <body>\
+  93          <fieldset>\
+  94          <legend>Restore Failed</legend>\
+  95          <div class=\"error\">Configuration restore failed!</div>\
+  96          <div>The uploaded file may be invalid or corrupted.</div>\
+  97          </fieldset>\
+  98          </body></html>\n\
+  99          ";
+ 100          
+ 101          /*
+ 102           * Function: get_http_config
+ 103           * -------------------------
+ 104           * Handles HTTP requests for configuration backup/restore page.
+ 105           * 
+ 106           * How it works:
+ 107           * - If cmd=conf_backup parameter is present: Sends the entire configuration 
+ 108           *   file (switch_cfg.bin) as a downloadable attachment
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 3   
+
+ 109           * - If no command parameter: Displays the HTML page with Backup/Restore buttons
+ 110           * - If unknown command: Returns HTTP 404 Not Found
+ 111           * 
+ 112           * Key steps:
+ 113           * 1. Reads 'cmd' parameter from request
+ 114           * 2. For backup: Gets config size and address from flash, sets appropriate 
+ 115           *    HTTP headers (Content-Type, Content-Disposition, Content-Length), 
+ 116           *    streams config data
+ 117           * 3. For no command: Serves HTML page with backup/restore UI
+ 118           */
+ 119          int32 get_http_config(http_request_t *pReq)
+ 120          {
+ 121   1          uint8  buf[32];
+ 122   1          uint8  *pValue = NULL;
+ 123   1          uint8  *configPtr;
+ 124   1          uint16 configSize;    
+ 125   1      
+ 126   1          /* check command */
+ 127   1          WEB_VAR(pReq, "cmd", &pValue);
+ 128   1          if (pValue) {
+ 129   2              if (strcmp(pValue, "conf_backup") == 0) {
+ 130   3                  printf("back up\n");
+ 131   3                  WEB_BEGIN(pReq);
+ 132   3                  
+ 133   3                  WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 134   3                  WEB_HEADER(pReq, "Pragma: no-cache");
+ 135   3                  
+ 136   3                  sal_flash_cfgSize_get(&configSize);
+ 137   3                  sprintf(buf, "Content-Length: %d", configSize);
+ 138   3              
+ 139   3                  WEB_HEADER(pReq, buf);
+ 140   3                  WEB_HEADER(pReq, "Content-Type: application/octet-stream; name=switch_cfg.bin");
+ 141   3                  WEB_HEADER(pReq, "Content-Disposition: attachment; filename=switch_cfg.bin");
+ 142   3                  WEB_HEADER(pReq, "Connection: close");
+ 143   3      
+ 144   3                  sal_flash_cfgAddr_get(&configPtr);
+ 145   3                  WEB_DATA(pReq, configPtr, configSize);
+ 146   3      
+ 147   3                  WEB_END(pReq);
+ 148   3              } else {
+ 149   3                  WEB_BEGIN(pReq);
+ 150   3                  
+ 151   3                  WEB_STATUS(pReq, HTTP_STATUS_NOT_FOUND);
+ 152   3                  
+ 153   3                  WEB_END(pReq);
+ 154   3              }
+ 155   2          }
+ 156   1          else
+ 157   1          {
+ 158   2              WEB_BEGIN(pReq);
+ 159   2              
+ 160   2              WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 161   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 162   2              
+ 163   2              WEB_DATA(pReq, htm_config, sizeof(htm_config));
+ 164   2              
+ 165   2              WEB_END(pReq);
+ 166   2          }
+ 167   1      
+ 168   1          return SUCCESS;
+ 169   1      }
+ 170          
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 4   
+
+ 171          /*
+ 172           * Function: post_http_restore
+ 173           * ---------------------------
+ 174           * Handles configuration restore from uploaded file.
+ 175           * 
+ 176           * How it works:
+ 177           * - Receives uploaded configuration file in chunks (multipart upload)
+ 178           * - Validates file signature (checks magic word at beginning)
+ 179           * - Writes data to config cache chunk by chunk
+ 180           * - After last chunk, saves config to flash
+ 181           * 
+ 182           * Key steps:
+ 183           * 1. First block (upload_offset == 0):
+ 184           *    - Validates the config signature using sal_flash_cfgValidity_get()
+ 185           *    - If valid: writes first chunk to cache
+ 186           *    - If invalid: sets error flag and shows failure page
+ 187           * 
+ 188           * 2. Subsequent blocks:
+ 189           *    - Checks if upload is still valid
+ 190           *    - Writes chunk to cache at correct offset
+ 191           *    - Detects last block (when offset + length >= config size)
+ 192           * 
+ 193           * 3. On last block:
+ 194           *    - Calls sal_flash_cfg_save() to write cache to flash
+ 195           *    - Shows success or failure page accordingly
+ 196           * 
+ 197           * 4. Error handling:
+ 198           *    - Wrong signature: http_upload_result = -1
+ 199           *    - Success: http_upload_result = 1
+ 200           *    - Displays appropriate HTML response (success/failure)
+ 201           */
+ 202          int32 post_http_restore(http_request_t *pReq)
+ 203          {
+ 204   1          uint16                      config_size;
+ 205   1          sal_flash_configValidity_t  isValid;
+ 206   1      
+ 207   1          /* write data into flash */
+ 208   1          if (0 == pReq->upload_offset)
+ 209   1          {
+ 210   2              /* first block */
+ 211   2              /* check the mark (do not consider breaking) */
+ 212   2              sal_flash_cfgValidity_get(pReq->upload_data,&isValid);
+ 213   2              if (SAL_FLASH_CONFIG_VALID == isValid)
+ 214   2              {
+ 215   3                  http_upload_result = 0;     /* init: Normal state */
+ 216   3      
+ 217   3                  sal_flash_cfg_set(0, pReq->upload_len, pReq->upload_data);
+ 218   3              }
+ 219   2              else
+ 220   2              {
+ 221   3                  /* error (signature word is wrong) */
+ 222   3                  http_upload_result = -1;   /* WRONG SIGNATURE */
+ 223   3      
+ 224   3                  /*show failed webpage*/
+ 225   3                  WEB_BEGIN(pReq);
+ 226   3                  WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 227   3                  WEB_HEADER(pReq, "Content-Type: text/html");
+ 228   3                  WEB_DATA(pReq, htm_conf_restore_failed, sizeof(htm_conf_restore_failed));
+ 229   3                  WEB_END(pReq);
+ 230   3                  
+ 231   3                  return SUCCESS;
+ 232   3              }
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 5   
+
+ 233   2          }
+ 234   1          else
+ 235   1          {
+ 236   2              if(http_upload_result != -1)
+ 237   2              {
+ 238   3                  if (pReq->upload_offset < sizeof(ConfigCache) && (0 == http_upload_result))
+ 239   3                  {
+ 240   4                      if ((pReq->upload_offset + pReq->upload_len) >= sizeof(ConfigCache)) 
+ 241   4                      {
+ 242   5                          /* last block */
+ 243   5                          http_upload_result = 1;    /* OK */
+ 244   5      
+ 245   5                          sal_flash_cfgSize_get(&config_size);
+ 246   5                          sal_flash_cfg_set(pReq->upload_offset, config_size - pReq->upload_offset, pReq->upload
+             -_data);
+ 247   5                          if(pReq->upload_len > (config_size - pReq->upload_offset))
+ 248   5                          {
+ 249   6                              http_upload_last_block = 1;
+ 250   6                          }
+ 251   5                      }
+ 252   4                      else
+ 253   4                      {
+ 254   5                          sal_flash_cfg_set(pReq->upload_offset, pReq->upload_len, pReq->upload_data);
+ 255   5                      }
+ 256   4                  }
+ 257   3                  else
+ 258   3                  {
+ 259   4                      http_upload_last_block = 1;
+ 260   4                  }
+ 261   3              }
+ 262   2          }
+ 263   1      
+ 264   1          /* show webpage at ending */
+ 265   1          if (http_upload_last_block)
+ 266   1          {
+ 267   2              http_upload_last_block = 0;
+ 268   2      
+ 269   2              WEB_BEGIN(pReq);
+ 270   2                      
+ 271   2              WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 272   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 273   2      
+ 274   2              if (0 < http_upload_result)
+ 275   2              {
+ 276   3                  sal_flash_cfg_save();
+ 277   3                  WEB_DATA(pReq, htm_must_reboot, sizeof(htm_must_reboot));
+ 278   3              }
+ 279   2              else if (0 >= http_upload_result)
+ 280   2              {
+ 281   3                  WEB_DATA(pReq, htm_conf_restore_failed, sizeof(htm_conf_restore_failed));
+ 282   3              }
+ 283   2      
+ 284   2              WEB_END(pReq);
+ 285   2          }
+ 286   1      
+ 287   1          return SUCCESS;
+ 288   1      }
+ 289          
+ 290          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.60.0.0   WEB_CFG                                                           11/02/2026 17:57:31 PAGE 6   
+
+   CODE SIZE        =   1193    ----
+   CONSTANT SIZE    =   2671    ----
+   XDATA SIZE       =      9      49
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   2671    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

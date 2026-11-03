@@ -1,0 +1,153 @@
+C51 COMPILER V9.60.0.0   WEB_FWUG                                                          11/02/2026 17:57:32 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_FWUG
+OBJECT MODULE PLACED IN .\objects\web_fwug.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_fwug.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_fwug.lst) TABS(2) OBJECT(.\objects\web_fwug.obj)
+
+line level    source
+
+   1          
+   2          #pragma STRING (far)
+   3          /*
+   4           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   5           * All rights reserved.
+   6           *
+   7           * $Revision$
+   8           * $Date$
+   9           *
+  10           * Purpose : The handler of HTTP request to TFTP function
+  11           *
+  12           * Feature : Response the request related to TFTP function
+  13           *
+  14           * NOTE: htm_loader + htm_enter_loader (incl. NUL terminators) = 957 bytes,
+  15           *       fitted to a 960 byte code-memory budget. Only 3 bytes of headroom
+  16           *       left; re-check total size before editing either string.
+  17           */
+  18          /*
+  19           * Include Files
+  20           */
+  21          #include <string.h>
+  22          #include <stdio.h>
+  23          #include <salsys.h>
+  24          #include <web/http_types.h>
+  25          #include <web/web_api.h>
+  26          /*
+  27           * Symbol Definition
+  28           */
+  29          /*
+  30           * Data Declaration
+  31           */
+  32          /*
+  33           * Array: htm_loader
+  34           * -----------------
+  35           * HTML page for firmware upgrade loader mode entry.
+  36           * Displays "Enter Loader Mode" button with confirmation.
+  37           * Minimal CSS, widened container, to fit tight code-memory budget.
+  38           */
+  39          uint8 const far htm_loader[] = "\
+  40          <html><head><title>FW</title>\
+  41          <style>\
+  42          body{font:20px Arial;text-align:center;padding-top:30vh}\
+  43          fieldset{width:800px;margin:auto;border:3px solid #364961;padding:20px}\
+  44          .s{background:#0f1a2b;color:#fff;border:0;padding:12px 28px;margin-top:10px}\
+  45          </style>\
+  46          <body>\
+  47          <fieldset><legend>Firmware Upgrade</legend>\
+  48          <form method=post action=fwug.cgi onsubmit=\"return confirm('Enter loader mode to upgrade')\">\
+  49          <div>Enter loader mode to upgrade</div>\
+  50          <input type=submit class=s value=\"Enter Loader Mode\">\
+  51          <input type=hidden name=cmd value=enter_loader>\
+C51 COMPILER V9.60.0.0   WEB_FWUG                                                          11/02/2026 17:57:32 PAGE 2   
+
+  52          </form></fieldset>\
+  53          </body></html>\
+  54          ";
+  55          /*
+  56           * Array: htm_enter_loader
+  57           * -----------------------
+  58           * HTML page shown while entering loader mode.
+  59           * Displays 3-second animated progress bar using CSS keyframes.
+  60           * Auto-refreshes after 3 seconds to trigger loader mode.
+  61           */
+  62          uint8 const far htm_enter_loader[] = "\
+  63          <html><head><title>Loader</title>\
+  64          <style>\
+  65          body{font:20px Arial;text-align:center;padding-top:30vh}\
+  66          fieldset{width:800px;margin:auto;border:3px solid #364961;padding:10px}\
+  67          p{height:25px}\
+  68          b{height:20px;width:0;background:#0f1a2b;display:block;animation:f 3s}\
+  69          @keyframes f{to{width:100%}}\
+  70          </style>\
+  71          <script>setTimeout(\"top.location.reload()\",3000)</script>\
+  72          <body>\
+  73          <fieldset><legend>Loader Mode</legend>\
+  74          <div>Entering Loader Mode</div>\
+  75          <p><b></b></p>\
+  76          </fieldset>\
+  77          </body></html>\
+  78          ";
+  79          /*
+  80           * Function Declaration
+  81           */
+  82          /*
+  83           * Function: get_fwug
+  84           * ------------------
+  85           * Serves the firmware upgrade page (GET request).
+  86           * Displays HTML with "Enter Loader Mode" button.
+  87           * No parameters needed, simply returns the loader page.
+  88           */
+  89          int32 get_fwug(struct http_request_s *pReq)
+  90          {
+  91   1          WEB_BEGIN(pReq);
+  92   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  93   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  94   1          WEB_DATA(pReq, htm_loader, sizeof(htm_loader));
+  95   1          WEB_END(pReq);
+  96   1          return SUCCESS;
+  97   1      }
+  98          /*
+  99           * Function: post_fwug
+ 100           * -------------------
+ 101           * Handles firmware upgrade form submission (POST request).
+ 102           * Shows "Entering Loader Mode" progress page.
+ 103           * Calls sal_sys_loaderMode_set() to switch to bootloader mode.
+ 104           * Device reboots and enters loader mode after this function.
+ 105           */
+ 106          int32 post_fwug(struct http_request_s *pReq)
+ 107          {
+ 108   1          WEB_BEGIN(pReq);
+ 109   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 110   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 111   1          WEB_DATA(pReq, htm_enter_loader, sizeof(htm_enter_loader));
+ 112   1          WEB_END(pReq);
+ 113   1          sal_sys_loaderMode_set();
+C51 COMPILER V9.60.0.0   WEB_FWUG                                                          11/02/2026 17:57:32 PAGE 3   
+
+ 114   1          return SUCCESS;
+ 115   1      }
+ 116          
+ 117          
+ 118          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    203    ----
+   CONSTANT SIZE    =   1043    ----
+   XDATA SIZE       =   ----       6
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1043    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,414 @@
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UTILIES_FLASH
+OBJECT MODULE PLACED IN .\objects\utilies_flash.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\utilies_flash.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X10
+                    -00) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common
+                    -\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_
+                    -REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SC
+                    -AN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\utilies_flash.lst) TABS(2) OBJECT(.\objects\utilies_flash.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          #include <local/config.h>
+   3          #include <reg_sfr.h>
+   4          #include <stdio.h>
+   5          #include <string.h>
+   6          
+   7          #include <salutil.h>
+   8          #include <salsys.h>
+   9          #include <salflash.h>
+  10          
+  11          #include "common.h"
+  12          #include "asicreg.h"
+  13          #include "web_user.h"
+  14          #include <web/web_api.h>
+  15          
+  16          
+  17          /* Extern Functions Declaration */
+  18          extern void send_str_web(uint8* tempData);
+  19          extern void Copy_RTC_DATA(uint8* tempData);
+  20          extern void Copy_Alarm_DATA(uint8* tempData);
+  21          
+  22          extern void update_json_string(const char *new_json);
+  23          extern void Fetching_Set_Response(char* tempData);
+  24          /* Function Declaration */
+  25          void process_uart_string(void);
+  26          
+  27          uint8  far m_u8_uart_str[234];
+  28          uint8 m_u8_temp_cntr = 0;
+  29          
+  30          
+  31          /*
+  32          uint32 xdata s1;
+  33          uint32 xdata s2;
+  34          uint32 xdata s3;
+  35          
+  36          uint32 vic_rand32(void){
+  37            #define TAUSWORTHE(s,a,b,c,d) ((s&c)<<d) ^ (((s <<a) ^ s)>>b)
+  38            s1 = TAUSWORTHE(s1, 13, 19, 4294967294UL, 12);
+  39            s2 = TAUSWORTHE(s2, 2, 25, 4294967288UL, 4);
+  40            s3 = TAUSWORTHE(s3, 3, 11, 4294967280UL, 17);
+  41            
+  42            return ( (s1^s2^s3) );
+  43          }
+  44          
+  45          
+  46          uint8 vic_rand8(void){
+  47            return (vic_rand32()%0xFF);
+  48          }
+  49          
+  50          void print_buf(uint8 *buf, uint32 len, char *msg) large{
+  51            uint16 xdata i;
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 2   
+
+  52            int    xdata line_size = 8;
+  53            
+  54            if( NULL!=msg ){
+  55              OSAL_PRINTF("%s\n", msg);
+  56            }
+  57            OSAL_PRINTF("[Begin:0x%04x_0x0000]    0     1     2     3     4     5     6     7", (uint16)buf);
+  58            for(i=0;i<len;i++, buf++){
+  59              if( 0==(i%8) ){
+  60                OSAL_PRINTF("\n      [0x%04x_0x%04x]:", (uint16)buf, i);
+  61              }
+  62              OSAL_PRINTF("0x%02x  ", (uint16)(*buf));
+  63            }
+  64            OSAL_PRINTF("\n");
+  65          }
+  66          
+  67          void print_fcbuf(uint8 const far *buf, uint32 len, char *msg) large{
+  68            uint16 xdata i;
+  69            int    xdata line_size = 8;
+  70            
+  71            if( NULL!=msg ){
+  72              OSAL_PRINTF("%s\n", msg);
+  73            }
+  74            OSAL_PRINTF("[Begin:0x%04x_0x0000]    0     1     2     3     4     5     6     7", (uint16)buf);
+  75            for(i=0;i<len;i++, buf++){
+  76              if( 0==(i%8) ){
+  77                OSAL_PRINTF("\n      [0x%04x_0x%04x]:", (uint16)buf, i);
+  78              }
+  79              OSAL_PRINTF("0x%02x  ", (uint16)(*buf));
+  80            }
+  81            OSAL_PRINTF("\n");
+  82          }
+  83          */
+  84          
+  85          // Print Menu: Displays the main CLI menu with available commands and project name
+  86          // Shows clear screen, IP, help, loader mode, MAC set, and reboot options
+  87          void print_menu(void) large{
+  88   1        OSAL_PRINTF("\n     ****************    %s    ****************\n", PROJECT_NAME);
+  89   1        OSAL_PRINTF("     %c: Clear Screen\n", CLI_COMMAND_CLEAR);
+  90   1          OSAL_PRINTF("     %c: Print IP\n", CLI_COMMAND_DUMP_IP);
+  91   1        OSAL_PRINTF("     %c: Help Menu\n", CLI_COMMAND_HELP);
+  92   1        OSAL_PRINTF("     %c: Enter Loader Mode\n", CLI_COMMAND_UPDATE);
+  93   1          OSAL_PRINTF("     %c: Set MAC Address\n", CLI_COMMAND_MAC_SET);
+  94   1          OSAL_PRINTF("     %c: Reboot\n", CLI_COMMAND_REBOOT);    
+  95   1        OSAL_PRINTF("     ************************************************\n\n");
+  96   1      }
+  97          
+  98          #if 0
+              static uint8 hex2dec(uint8 value) large{
+                if( ('0'<=value) && ('9'>=value) ){
+                  return (value-'0');
+                }else if( ('a'<=value) && ('f'>=value) ){
+                  return (value - 'a' + 10);
+                }else if( ('A'<=value) && ('F'>=value) ){
+                  return (value - 'A' + 10);
+                }
+              }
+              #endif
+ 109          
+ 110          #if 0 /* function:getAddress */
+              /* NO ERROR CHECK */
+              uint32 getAddress(void) large{
+                uint32 xdata addr;
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 3   
+
+                uint16 xdata i;
+                uint8  xdata input_buf[32];
+                
+                OSAL_PRINTF("target address:");
+                for(i=0;i<32;i++){
+                  input_buf[i] = getchar();
+                  if( '\n'==input_buf[i] || '\r'==input_buf[i] ){
+                    input_buf[i] = '\0';
+                    putchar('\n');
+                    break;
+                  }
+                  putchar(input_buf[i]);
+                }
+                
+                addr = 0;
+                /* NO ERROR CHECK */
+                if( '0'==input_buf[0] && 'x'==input_buf[1] ){
+                  addr = hex2dec(input_buf[2]);
+                  for(i=3;input_buf[i]!='\0';i++){
+                    addr *= 16;
+                    addr += hex2dec(input_buf[i]);
+                  }
+                }else{
+                  addr = input_buf[0] - '0';
+                  for(i=1;input_buf[i]!='\0';i++){
+                    addr *= 10;
+                    addr += input_buf[i];
+                  }
+                }
+                return addr;
+              }
+              #endif /* end of function:getAddress */
+ 146          
+ 147          // Clear Screen: Sends ANSI escape codes to clear terminal and move cursor to home position
+ 148          // Uses ESC[2J to clear and ESC[1;1H to position cursor at top-left
+ 149          void clearScreen(void) large{
+ 150   1        putchar(0x1B);
+ 151   1        putchar('[');
+ 152   1        putchar('2');
+ 153   1        putchar('J');
+ 154   1        putchar(0x1B);
+ 155   1        putchar('[');
+ 156   1        putchar('1');
+ 157   1        putchar(';');
+ 158   1        putchar('1');
+ 159   1        putchar('H');
+ 160   1        putchar(0);
+ 161   1      }
+ 162          
+ 163          // Get MAC Address: Prompts user to input MAC address in XX:XX:XX:XX:XX:XX format
+ 164          // Validates input format and optionally saves to flash if user confirms with 'y'
+ 165          void cliGetMacAddr(void) large{
+ 166   1          uint8      tmp;
+ 167   1          char      buffer[18];
+ 168   1          uint16    ptr;
+ 169   1          uint32    timeout;
+ 170   1          sal_mac_t mac;
+ 171   1      
+ 172   1          ptr = 0;
+ 173   1          timeout = 0xFFFFFFFFUL;
+ 174   1      
+ 175   1          while(1)
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 4   
+
+ 176   1          {
+ 177   2              tmp = getchar_nb();
+ 178   2      
+ 179   2              /* no input, decrease timeout counter */
+ 180   2              if(0xFF == tmp)
+ 181   2              {
+ 182   3                  timeout--;
+ 183   3                  if(0 == timeout)
+ 184   3                  {
+ 185   4                      printf("Input timeout\n");
+ 186   4                  }
+ 187   3              }
+ 188   2              else
+ 189   2              {
+ 190   3                  if(0x0D == tmp)
+ 191   3                  {
+ 192   4                      buffer[17] = 0;
+ 193   4                      buffer[ptr] = 0;
+ 194   4                      if(0 == str_to_mac(mac.octet, buffer))
+*** WARNING C209 IN LINE 194 OF ..\src\utilies_flash.c: '_str_to_mac': too few actual parameters
+ 195   4                      {
+ 196   5                          sal_sys_mac_set(&mac);
+ 197   5                          printf("\nMAC address is set, save to flash?[y/n]: ");
+ 198   5      
+ 199   5                          timeout = 0xFFFFFFFFUL;
+ 200   5                          while(1)
+ 201   5                          {
+ 202   6                              tmp = getchar_nb();
+ 203   6                              if(0xFF == tmp)
+ 204   6                              {
+ 205   7                                  timeout--;
+ 206   7                                  if(0 == timeout)
+ 207   7                                  {
+ 208   8                                      printf("Input timeout, MAC address is not saved to flash\n");
+ 209   8                                      break;
+ 210   8                                  }
+ 211   7                              }
+ 212   6                              else
+ 213   6                              {
+ 214   7                                  printf("%c \n", tmp);
+ 215   7                                  if(tmp == 'y')
+ 216   7                                  {
+ 217   8                                      printf("MAC address is saved to Flash\n");
+ 218   8                                      sal_flash_sysMac_set(&mac);                                
+ 219   8                                      //sal_flash_cfg_save();
+ 220   8                                  }
+ 221   7                                  else
+ 222   7                                  {
+ 223   8                                      printf("MAC address is not saved to Flash\n");
+ 224   8                                  }
+ 225   7                                  break;
+ 226   7                              }
+ 227   6                          }
+ 228   5                      }
+ 229   4                      else
+ 230   4                      {
+ 231   5                          printf("\nError input\n");
+ 232   5                      }
+ 233   4                      
+ 234   4                      break;
+ 235   4                  }
+ 236   3                  else
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 5   
+
+ 237   3                  {
+ 238   4                      printf("%c", tmp);
+ 239   4                      buffer[ptr++] = tmp;
+ 240   4                      timeout = 0xFFFFFFFF;
+ 241   4                  }
+ 242   3              }
+ 243   2          }
+ 244   1      }
+ 245          
+ 246          // Command Select: Reads a single character from UART without blocking
+ 247          // Returns 0xFF if no character available, else returns the command character
+ 248          uint8 cmd_select(void) large
+ 249          {
+ 250   1        uint8 xdata cmd;
+ 251   1        
+ 252   1        //cmd = getchar();
+ 253   1        cmd = getchar_nb();
+ 254   1        return cmd;
+ 255   1      }
+ 256          
+ 257          // Change Clock: Adjusts system clock divider for SPI flash access based on CPU frequency
+ 258          // Sets DW8051_RDY register to control SPI flash access timing and reinitializes UART/timer
+ 259          void change_clock(uint16 xdata value) large{
+ 260   1        volatile uint32 xdata i;
+ 261   1        
+ 262   1        for(i=0;i<0x100;i++);
+ 263   1        if(value < 0x04) //8051 Clock >100Mhz
+ 264   1        {
+ 265   2            //if 8051 Clock >100Mhz, SPI flash access clock is divided to half 8051 Clock
+ 266   2              setReg(DW8051_RDY, (DW8051_RDY_RATE(value)|(1<<8)) );
+ 267   2        }
+ 268   1        else
+ 269   1          {
+ 270   2              //if 8051 Clock < 100Mhz, SPI flash access clock is equal to 8051 Clock
+ 271   2        setReg(DW8051_RDY, (DW8051_RDY_RATE(value)) );
+ 272   2          }
+ 273   1        for(i=0;i<65535;i++);
+ 274   1        uart_init();
+ 275   1        timer_init();
+ 276   1        for(i=0;i<0x100;i++);
+ 277   1      }
+ 278          
+ 279          // Set 8051 Ready: Sets the ready bit in DW8051_RDY register to enable SPI flash access
+ 280          // Reads current register value and sets bit 0 without modifying other bits
+ 281          void set_8051RDY() large{
+ 282   1        volatile uint32 xdata tmp;
+ 283   1        tmp = getReg(DW8051_RDY);
+ 284   1      
+ 285   1        setReg(DW8051_RDY, tmp |0x1);
+ 286   1      }
+ 287          
+ 288          
+ 289          
+ 290          // System UART Command: Processes UART input characters and executes CLI commands
+ 291          // Accumulates characters into buffer and handles commands like help, clear, IP dump, MAC set
+ 292          void sys_uart_cmd()
+ 293          {
+ 294   1          uint8 cmd;
+ 295   1          
+ 296   1          cmd = cmd_select();
+ 297   1        
+ 298   1          if( cmd!=0xFF )
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 6   
+
+ 299   1          {
+ 300   2            
+ 301   2              m_u8_uart_str[m_u8_temp_cntr++] = cmd;
+ 302   2              if(cmd == 0x0A || m_u8_temp_cntr >= 180)
+ 303   2              {
+ 304   3          
+ 305   3                  m_u8_uart_str[m_u8_temp_cntr] = '\0';
+ 306   3                  process_uart_string();
+ 307   3                  m_u8_temp_cntr = 0; 
+ 308   3              }
+ 309   2              
+ 310   2            
+ 311   2      
+ 312   2            switch(cmd)
+ 313   2            {
+ 314   3              case CLI_COMMAND_HELP:
+ 315   3                print_menu();
+ 316   3                break;
+ 317   3              case CLI_COMMAND_CLEAR:
+ 318   3                clearScreen();
+ 319   3                break;
+ 320   3                    case CLI_COMMAND_DUMP_IP:
+ 321   3                  printf("  IP:%d.%d.%d.%d\n", (uint16)this_ip[0], (uint16)this_ip[1], (uint16)this_ip[2], (uint16)thi
+             -s_ip[3]);
+ 322   3                        printf("Mask:%d.%d.%d.%d\n", (uint16)netmask[0], (uint16)netmask[1], (uint16)netmask[2], (uint16)
+             -netmask[3]);
+ 323   3                        printf("  GW:%d.%d.%d.%d\n", (uint16)default_gateway.addr[0], (uint16)default_gateway.addr[1], (u
+             -int16)default_gateway.addr[2], (uint16)default_gateway.addr[3]);
+ 324   3                        printf(" MAC:%02bX.%02bX.%02bX.%02bX.%02bX.%02bX\n", this_mac[0], this_mac[1], this_mac[2], this_
+             -mac[3], this_mac[4], this_mac[5]);
+ 325   3                break;
+ 326   3                    case CLI_COMMAND_MAC_SET:
+ 327   3                        printf("Format: XX:XX:XX:XX:XX:XX, press Enter to submit.\n");
+ 328   3                        printf("input: ");
+ 329   3                        cliGetMacAddr();
+ 330   3                        break;
+ 331   3                    default:
+ 332   3                break;
+ 333   3            };        
+ 334   2          }
+ 335   1      }
+ 336          
+ 337          
+ 338          uint8 m_u8_strlen;
+ 339          
+ 340          
+ 341          // Process UART String: Processes complete UART string by sending to web and checking for JSON format
+ 342          // Detects JSON strings with {A...} format and updates JSON data if pattern matches
+ 343          void process_uart_string(void)
+ 344          {
+ 345   1      
+ 346   1        uint8 temp_var;
+ 347   1        
+ 348   1        m_u8_strlen = strlen(m_u8_uart_str);
+ 349   1        if(m_u8_uart_str[0] == '{' && m_u8_uart_str[2] == 'V')
+ 350   1        {
+ 351   2            send_str_web(m_u8_uart_str);
+ 352   2            update_json_string(m_u8_uart_str);
+ 353   2        }
+ 354   1        
+ 355   1        if(m_u8_uart_str[0] == '{' && m_u8_uart_str[2] == 'H')
+ 356   1        {
+C51 COMPILER V9.60.0.0   UTILIES_FLASH                                                     11/02/2026 17:56:53 PAGE 7   
+
+ 357   2            Copy_RTC_DATA(m_u8_uart_str);
+ 358   2        }
+ 359   1        
+ 360   1        for(temp_var = 0; temp_var < 234 ; temp_var++)
+ 361   1        {
+ 362   2          m_u8_uart_str[temp_var] = '\0';
+ 363   2        }
+ 364   1      }
+ 365          
+ 366          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1297    ----
+   CONSTANT SIZE    =    599    ----
+   XDATA SIZE       =      2      42
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =    234    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    599    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

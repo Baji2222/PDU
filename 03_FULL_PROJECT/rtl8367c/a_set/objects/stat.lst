@@ -1,0 +1,689 @@
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE STAT
+OBJECT MODULE PLACED IN .\objects\stat.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\stat.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) I
+                    -NCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\incl
+                    -ude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLA
+                    -CE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LE
+                    -D_MODE) VARBANKING DEBUG PRINT(.\objects\stat.lst) TABS(2) OBJECT(.\objects\stat.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in MIB module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <stat.h>
+  23          #include <string.h>
+  24          #include <stdio.h>
+  25          
+  26          #include <rtl8367c_asicdrv.h>
+  27          #include <rtl8367c_asicdrv_mib.h>
+  28          #if 0
+              /* Function Name:
+               *      rtk_stat_global_reset
+               * Description:
+               *      Reset global MIB counter.
+               * Input:
+               *      None
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *      Reset MIB counter of ports. API will use global reset while port mask is all-ports.
+               */
+              rtk_api_ret_t rtk_stat_global_reset(void)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((retVal = rtl8367c_setAsicMIBsCounterReset(TRUE,FALSE, 0)) != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 2   
+
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+  57          /* Function Name:
+  58           *      rtk_stat_port_reset
+  59           * Description:
+  60           *      Reset per port MIB counter by port.
+  61           * Input:
+  62           *      port - port id.
+  63           * Output:
+  64           *      None
+  65           * Return:
+  66           *      RT_ERR_OK           - OK
+  67           *      RT_ERR_FAILED       - Failed
+  68           *      RT_ERR_SMI          - SMI access error
+  69           * Note:
+  70           *
+  71           */
+  72          rtk_api_ret_t rtk_stat_port_reset(rtk_port_t port)
+  73          {
+  74   1          rtk_api_ret_t retVal;
+  75   1      
+  76   1          /* Check initialization state */
+  77   1          RTK_CHK_INIT_STATE();
+  78   1      
+  79   1          /* Check port valid */
+  80   1          RTK_CHK_PORT_VALID(port);
+  81   1      
+  82   1          if ((retVal = rtl8367c_setAsicMIBsCounterReset(FALSE,FALSE,1 << rtk_switch_port_L2P_get(port))) != RT_
+             -ERR_OK)
+  83   1              return retVal;
+  84   1      
+  85   1          return RT_ERR_OK;
+  86   1      }
+  87          #if 0//Not used
+              /* Function Name:
+               *      rtk_stat_queueManage_reset
+               * Description:
+               *      Reset queue manage MIB counter.
+               * Input:
+               *      None
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_stat_queueManage_reset(void)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((retVal = rtl8367c_setAsicMIBsCounterReset(FALSE,TRUE,0)) != RT_ERR_OK)
+                      return retVal;
+              
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 3   
+
+                  return RT_ERR_OK;
+              }
+              
+              
+              /* Function Name:
+               *      rtk_stat_global_get
+               * Description:
+               *      Get global MIB counter
+               * Input:
+               *      cntr_idx - global counter index.
+               * Output:
+               *      pCntr - global counter value.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      Get global MIB counter by index definition.
+               */
+              rtk_api_ret_t rtk_stat_global_get(rtk_stat_global_type_t cntr_idx, rtk_stat_counter_t *pCntr)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pCntr)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (cntr_idx!=DOT1D_TP_LEARNED_ENTRY_DISCARDS_INDEX)
+                      return RT_ERR_STAT_INVALID_GLOBAL_CNTR;
+              
+                  if ((retVal = rtl8367c_getAsicMIBsCounter(0, cntr_idx, pCntr)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stat_global_getAll
+               * Description:
+               *      Get all global MIB counter
+               * Input:
+               *      None
+               * Output:
+               *      pGlobal_cntrs - global counter structure.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      Get all global MIB counter by index definition.
+               */
+              rtk_api_ret_t rtk_stat_global_getAll(rtk_stat_global_cntr_t *pGlobal_cntrs)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 4   
+
+                  if(NULL == pGlobal_cntrs)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicMIBsCounter(0,DOT1D_TP_LEARNED_ENTRY_DISCARDS_INDEX, &pGlobal_cntrs->dot
+             -1dTpLearnedEntryDiscards)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              #endif
+ 185          #define MIB_NOT_SUPPORT     (0xFFFF)
+ 186          static rtk_api_ret_t _get_asic_mib_idx(rtk_stat_port_type_t cnt_idx, RTL8367C_MIBCOUNTER *pMib_idx)
+ 187          {
+ 188   1          RTL8367C_MIBCOUNTER mib_asic_idx[STAT_PORT_CNTR_END]=
+ 189   1          {
+ 190   1              ifInOctets,                     /* STAT_IfInOctets */
+ 191   1              dot3StatsFCSErrors,             /* STAT_Dot3StatsFCSErrors */
+ 192   1              dot3StatsSymbolErrors,          /* STAT_Dot3StatsSymbolErrors */
+ 193   1              dot3InPauseFrames,              /* STAT_Dot3InPauseFrames */
+ 194   1              dot3ControlInUnknownOpcodes,    /* STAT_Dot3ControlInUnknownOpcodes */
+ 195   1              etherStatsFragments,            /* STAT_EtherStatsFragments */
+ 196   1              etherStatsJabbers,              /* STAT_EtherStatsJabbers */
+ 197   1              ifInUcastPkts,                  /* STAT_IfInUcastPkts */
+ 198   1              etherStatsDropEvents,           /* STAT_EtherStatsDropEvents */
+ 199   1              etherStatsOctets,               /* STAT_EtherStatsOctets */
+ 200   1              etherStatsUnderSizePkts,        /* STAT_EtherStatsUnderSizePkts */
+ 201   1              etherOversizeStats,             /* STAT_EtherOversizeStats */
+ 202   1              etherStatsPkts64Octets,         /* STAT_EtherStatsPkts64Octets */
+ 203   1              etherStatsPkts65to127Octets,    /* STAT_EtherStatsPkts65to127Octets */
+ 204   1              etherStatsPkts128to255Octets,   /* STAT_EtherStatsPkts128to255Octets */
+ 205   1              etherStatsPkts256to511Octets,   /* STAT_EtherStatsPkts256to511Octets */
+ 206   1              etherStatsPkts512to1023Octets,  /* STAT_EtherStatsPkts512to1023Octets */
+ 207   1              etherStatsPkts1024to1518Octets, /* STAT_EtherStatsPkts1024to1518Octets */
+ 208   1              ifInMulticastPkts,              /* STAT_EtherStatsMulticastPkts */
+ 209   1              ifInBroadcastPkts,              /* STAT_EtherStatsBroadcastPkts */
+ 210   1              ifOutOctets,                    /* STAT_IfOutOctets */
+ 211   1              dot3StatsSingleCollisionFrames, /* STAT_Dot3StatsSingleCollisionFrames */
+ 212   1              dot3StatMultipleCollisionFrames,/* STAT_Dot3StatsMultipleCollisionFrames */
+ 213   1              dot3sDeferredTransmissions,     /* STAT_Dot3StatsDeferredTransmissions */
+ 214   1              dot3StatsLateCollisions,        /* STAT_Dot3StatsLateCollisions */
+ 215   1              etherStatsCollisions,           /* STAT_EtherStatsCollisions */
+ 216   1              dot3StatsExcessiveCollisions,   /* STAT_Dot3StatsExcessiveCollisions */
+ 217   1              dot3OutPauseFrames,             /* STAT_Dot3OutPauseFrames */
+ 218   1              MIB_NOT_SUPPORT,                /* STAT_Dot1dBasePortDelayExceededDiscards */
+ 219   1              dot1dTpPortInDiscards,          /* STAT_Dot1dTpPortInDiscards */
+ 220   1              ifOutUcastPkts,                 /* STAT_IfOutUcastPkts */
+ 221   1              ifOutMulticastPkts,             /* STAT_IfOutMulticastPkts */
+ 222   1              ifOutBroadcastPkts,             /* STAT_IfOutBroadcastPkts */
+ 223   1              outOampduPkts,                  /* STAT_OutOampduPkts */
+ 224   1              inOampduPkts,                   /* STAT_InOampduPkts */
+ 225   1              MIB_NOT_SUPPORT,                /* STAT_PktgenPkts */
+ 226   1              inMldChecksumError,             /* STAT_InMldChecksumError */
+ 227   1              inIgmpChecksumError,            /* STAT_InIgmpChecksumError */
+ 228   1              inMldSpecificQuery,             /* STAT_InMldSpecificQuery */
+ 229   1              inMldGeneralQuery,              /* STAT_InMldGeneralQuery */
+ 230   1              inIgmpSpecificQuery,            /* STAT_InIgmpSpecificQuery */
+ 231   1              inIgmpGeneralQuery,             /* STAT_InIgmpGeneralQuery */
+ 232   1              inMldLeaves,                    /* STAT_InMldLeaves */
+ 233   1              inIgmpLeaves,                   /* STAT_InIgmpInterfaceLeaves */
+ 234   1              inIgmpJoinsSuccess,             /* STAT_InIgmpJoinsSuccess */
+ 235   1              inIgmpJoinsFail,                /* STAT_InIgmpJoinsFail */
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 5   
+
+ 236   1              inMldJoinsSuccess,              /* STAT_InMldJoinsSuccess */
+ 237   1              inMldJoinsFail,                 /* STAT_InMldJoinsFail */
+ 238   1              inReportSuppressionDrop,        /* STAT_InReportSuppressionDrop */
+ 239   1              inLeaveSuppressionDrop,         /* STAT_InLeaveSuppressionDrop */
+ 240   1              outIgmpReports,                 /* STAT_OutIgmpReports */
+ 241   1              outIgmpLeaves,                  /* STAT_OutIgmpLeaves */
+ 242   1              outIgmpGeneralQuery,            /* STAT_OutIgmpGeneralQuery */
+ 243   1              outIgmpSpecificQuery,           /* STAT_OutIgmpSpecificQuery */
+ 244   1              outMldReports,                  /* STAT_OutMldReports */
+ 245   1              outMldLeaves,                   /* STAT_OutMldLeaves */
+ 246   1              outMldGeneralQuery,             /* STAT_OutMldGeneralQuery */
+ 247   1              outMldSpecificQuery,            /* STAT_OutMldSpecificQuery */
+ 248   1              inKnownMulticastPkts,           /* STAT_InKnownMulticastPkts */
+ 249   1              ifInMulticastPkts,              /* STAT_IfInMulticastPkts */
+ 250   1              ifInBroadcastPkts,              /* STAT_IfInBroadcastPkts */
+ 251   1              ifOutDiscards                   /* STAT_IfOutDiscards */
+ 252   1          };
+ 253   1      
+ 254   1          if(cnt_idx >= STAT_PORT_CNTR_END)
+ 255   1              return RT_ERR_STAT_INVALID_PORT_CNTR;
+ 256   1      
+ 257   1          if(mib_asic_idx[cnt_idx] == MIB_NOT_SUPPORT)
+ 258   1              return RT_ERR_CHIP_NOT_SUPPORTED;
+ 259   1      
+ 260   1          *pMib_idx = mib_asic_idx[cnt_idx];
+ 261   1          return RT_ERR_OK;
+ 262   1      }
+ 263          
+ 264          /* Function Name:
+ 265           *      rtk_stat_port_get
+ 266           * Description:
+ 267           *      Get per port MIB counter by index
+ 268           * Input:
+ 269           *      port        - port id.
+ 270           *      cntr_idx    - port counter index.
+ 271           * Output:
+ 272           *      pCntr - MIB retrived counter.
+ 273           * Return:
+ 274           *      RT_ERR_OK           - OK
+ 275           *      RT_ERR_FAILED       - Failed
+ 276           *      RT_ERR_SMI          - SMI access error
+ 277           * Note:
+ 278           *      Get per port MIB counter by index definition.
+ 279           */
+ 280          rtk_api_ret_t rtk_stat_port_get(rtk_port_t port, rtk_stat_port_type_t cntr_idx, rtk_stat_counter_t *pCntrH
+             -, rtk_stat_counter_t *pCntrL) //should modify RTK to 8051 sytle
+ 281          {
+ 282   1          rtk_api_ret_t       retVal;
+ 283   1          RTL8367C_MIBCOUNTER mib_idx;
+ 284   1      //    rtk_stat_counter_t  second_cnt;
+ 285   1      
+ 286   1          /* Check initialization state */
+ 287   1          RTK_CHK_INIT_STATE();
+ 288   1      
+ 289   1          if(NULL == pCntrH || NULL == pCntrL)
+ 290   1              return RT_ERR_NULL_POINTER;
+ 291   1      
+ 292   1          /* Check port valid */
+ 293   1          RTK_CHK_PORT_VALID(port);
+ 294   1      
+ 295   1          if (cntr_idx>=STAT_PORT_CNTR_END)
+ 296   1              return RT_ERR_STAT_INVALID_PORT_CNTR;
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 6   
+
+ 297   1      
+ 298   1          if((retVal = _get_asic_mib_idx(cntr_idx, &mib_idx)) != RT_ERR_OK)
+ 299   1              return retVal;
+ 300   1      
+ 301   1          if(mib_idx == MIB_NOT_SUPPORT)
+ 302   1              return RT_ERR_CHIP_NOT_SUPPORTED;
+ 303   1      
+ 304   1          if ((retVal = rtl8367c_getAsicMIBsCounter(rtk_switch_port_L2P_get(port), mib_idx, pCntrH, pCntrL)) != 
+             -RT_ERR_OK)
+ 305   1              return retVal;
+ 306   1      #if 0
+                  if(cntr_idx == STAT_EtherStatsMulticastPkts)
+                  {
+                      if((retVal = _get_asic_mib_idx(STAT_IfOutMulticastPkts, &mib_idx)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if((retVal = rtl8367c_getAsicMIBsCounter(rtk_switch_port_L2P_get(port), mib_idx, &second_cnt)) != 
+             -RT_ERR_OK)
+                          return retVal;
+              
+                      *pCntr += second_cnt;
+                  }
+              
+                  if(cntr_idx == STAT_EtherStatsBroadcastPkts)
+                  {
+                      if((retVal = _get_asic_mib_idx(STAT_IfOutBroadcastPkts, &mib_idx)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if((retVal = rtl8367c_getAsicMIBsCounter(rtk_switch_port_L2P_get(port), mib_idx, &second_cnt)) != 
+             -RT_ERR_OK)
+                          return retVal;
+              
+                      *pCntr += second_cnt;
+                  }
+              #endif
+ 329   1          return RT_ERR_OK;
+ 330   1      }
+ 331          #if 0//NOT used
+              /* Function Name:
+               *      rtk_stat_port_getAll
+               * Description:
+               *      Get all counters of one specified port in the specified device.
+               * Input:
+               *      port - port id.
+               * Output:
+               *      pPort_cntrs - buffer pointer of counter value.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      Get all MIB counters of one port.
+               */
+              rtk_api_ret_t rtk_stat_port_getAll(rtk_port_t port, rtk_stat_port_cntr_t *pPort_cntrs)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 mibIndex;
+                  uint64 mibCounter;
+                  uint32 *accessPtr;
+                  /* address offset to MIBs counter */
+                  CONST_T uint16 mibLength[STAT_PORT_CNTR_END]= {
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 7   
+
+                      2,1,1,1,1,1,1,1,1,
+                      2,1,1,1,1,1,1,1,1,1,1,
+                      2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
+                      1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pPort_cntrs)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* Check port valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  accessPtr = (uint32*)pPort_cntrs;
+                  for (mibIndex=0;mibIndex<STAT_PORT_CNTR_END;mibIndex++)
+                  {
+                      if ((retVal = rtk_stat_port_get(port, mibIndex, &mibCounter)) != RT_ERR_OK)
+                      {
+                          if (retVal == RT_ERR_CHIP_NOT_SUPPORTED)
+                              mibCounter = 0;
+                          else
+                              return retVal;
+                      }
+              
+                      if (2 == mibLength[mibIndex])
+                          *(uint64*)accessPtr = mibCounter;
+                      else if (1 == mibLength[mibIndex])
+                          *accessPtr = mibCounter;
+                      else
+                          return RT_ERR_FAILED;
+              
+                      accessPtr+=mibLength[mibIndex];
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stat_logging_counterCfg_set
+               * Description:
+               *      Set the type and mode of Logging Counter
+               * Input:
+               *      idx     - The index of Logging Counter. Should be even number only.(0,2,4,6,8.....30)
+               *      mode    - 32 bits or 64 bits mode
+               *      type    - Packet counter or byte counter
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_OUT_OF_RANGE - Out of range.
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      Set the type and mode of Logging Counter.
+               */
+              rtk_api_ret_t rtk_stat_logging_counterCfg_set(uint32 idx, rtk_logging_counter_mode_t mode, rtk_logging_cou
+             -nter_type_t type)
+              {
+                  rtk_api_ret_t retVal;
+              
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 8   
+
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(idx > RTL8367C_MIB_MAX_LOG_CNT_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((idx % 2) == 1)
+                      return RT_ERR_INPUT;
+              
+                  if(mode >= LOGGING_MODE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(type >= LOGGING_TYPE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((retVal = rtl8367c_setAsicMIBsLoggingType((idx / 2), (uint32)type)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_setAsicMIBsLoggingMode((idx / 2), (uint32)mode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stat_logging_counterCfg_get
+               * Description:
+               *      Get the type and mode of Logging Counter
+               * Input:
+               *      idx     - The index of Logging Counter. Should be even number only.(0,2,4,6,8.....30)
+               * Output:
+               *      pMode   - 32 bits or 64 bits mode
+               *      pType   - Packet counter or byte counter
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_OUT_OF_RANGE - Out of range.
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_NULL_POINTER - NULL Pointer
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      Get the type and mode of Logging Counter.
+               */
+              rtk_api_ret_t rtk_stat_logging_counterCfg_get(uint32 idx, rtk_logging_counter_mode_t *pMode, rtk_logging_c
+             -ounter_type_t *pType)
+              {
+                  rtk_api_ret_t   retVal;
+                  uint32      type, mode;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(idx > RTL8367C_MIB_MAX_LOG_CNT_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((idx % 2) == 1)
+                      return RT_ERR_INPUT;
+              
+                  if(pMode == NULL)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(pType == NULL)
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 9   
+
+                      return RT_ERR_NULL_POINTER;
+              
+                  if((retVal = rtl8367c_getAsicMIBsLoggingType((idx / 2), &type)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_getAsicMIBsLoggingMode((idx / 2), &mode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pMode = (rtk_logging_counter_mode_t)mode;
+                  *pType = (rtk_logging_counter_type_t)type;
+              
+                  return RT_ERR_OK;
+              }
+              
+              
+              /* Function Name:
+               *      rtk_stat_logging_counter_reset
+               * Description:
+               *      Reset Logging Counter
+               * Input:
+               *      idx     - The index of Logging Counter. (0~31)
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_OUT_OF_RANGE - Out of range.
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *      Reset Logging Counter.
+               */
+              rtk_api_ret_t rtk_stat_logging_counter_reset(uint32 idx)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(idx > RTL8367C_MIB_MAX_LOG_CNT_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((retVal = rtl8367c_setAsicMIBsResetLoggingCounter(idx)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stat_logging_counter_get
+               * Description:
+               *      Get Logging Counter
+               * Input:
+               *      idx     - The index of Logging Counter. (0~31)
+               * Output:
+               *      pCnt    - Logging counter value
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_OUT_OF_RANGE - Out of range.
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *      Get Logging Counter.
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 10  
+
+               */
+              rtk_api_ret_t rtk_stat_logging_counter_get(uint32 idx, uint32 *pCnt)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pCnt)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(idx > RTL8367C_MIB_MAX_LOG_CNT_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if((retVal = rtl8367c_getAsicMIBsLogCounter(idx, pCnt)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stat_lengthMode_set
+               * Description:
+               *      Set Legnth mode.
+               * Input:
+               *      txMode     - The length counting mode
+               *      rxMode     - The length counting mode
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_INPUT        - Out of range.
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_stat_lengthMode_set(rtk_stat_lengthMode_t txMode, rtk_stat_lengthMode_t rxMode)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(txMode >= LENGTH_MODE_END)
+                      return RT_ERR_INPUT;
+              
+                  if(rxMode >= LENGTH_MODE_END)
+                      return RT_ERR_INPUT;
+              
+                  if((retVal = rtl8367c_setAsicMIBsLength((uint32)txMode, (uint32)rxMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stat_lengthMode_get
+               * Description:
+               *      Get Legnth mode.
+               * Input:
+               *      None.
+C51 COMPILER V9.60.0.0   STAT                                                              11/02/2026 17:57:11 PAGE 11  
+
+               * Output:
+               *      pTxMode       - The length counting mode
+               *      pRxMode       - The length counting mode
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_INPUT        - Out of range.
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               */
+              rtk_api_ret_t rtk_stat_lengthMode_get(rtk_stat_lengthMode_t *pTxMode, rtk_stat_lengthMode_t *pRxMode)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pTxMode)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pRxMode)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if((retVal = rtl8367c_getAsicMIBsLength((uint32 *)pTxMode, (uint32 *)pRxMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    359    ----
+   CONSTANT SIZE    =     62    ----
+   XDATA SIZE       =   ----      76
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

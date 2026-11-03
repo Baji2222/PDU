@@ -1,0 +1,609 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_SCHEDULING
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_scheduling.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_scheduling.c LARGE OMF2 OPTIMIZE(8,SIZE)
+                    - BROWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\c
+                    -ommon\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUP
+                    -PORT,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,CO
+                    -MPATIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_scheduling.lst) TABS(2) OBJECT(.\ob
+                    -jects\rtl8367c_asicdrv_scheduling.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Packet Scheduling related functions
+  17           *
+  18           */
+  19          
+  20          #include <rtl8367c_asicdrv_scheduling.h>
+  21          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicLeakyBucketParameter
+               * Description:
+               *      Set Leaky Bucket Paramters
+               * Input:
+               *      tick    - Tick is used for time slot size unit
+               *      token   - Token is used for adding budget in each time slot
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_TICK     - Invalid TICK
+               *      RT_ERR_TOKEN    - Invalid TOKEN
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicLeakyBucketParameter(uint32 tick, uint32 token)
+              {
+                  ret_t retVal;
+              
+                  if(tick > 0xFF)
+                      return RT_ERR_TICK;
+              
+                  if(token > 0xFF)
+                      return RT_ERR_TOKEN;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_LEAKY_BUCKET_TICK_REG, RTL8367C_LEAKY_BUCKET_TICK_MASK, tick
+             -);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 2   
+
+              
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_LEAKY_BUCKET_TOKEN_REG, RTL8367C_LEAKY_BUCKET_TOKEN_MASK, to
+             -ken);
+              
+                  return retVal;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicLeakyBucketParameter
+               * Description:
+               *      Get Leaky Bucket Paramters
+               * Input:
+               *      tick    - Tick is used for time slot size unit
+               *      token   - Token is used for adding budget in each time slot
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicLeakyBucketParameter(uint32 *tick, uint32 *token)
+              {
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_LEAKY_BUCKET_TICK_REG, RTL8367C_LEAKY_BUCKET_TICK_MASK, tick
+             -);
+              
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_LEAKY_BUCKET_TOKEN_REG, RTL8367C_LEAKY_BUCKET_TOKEN_MASK, to
+             -ken);
+              
+                  return retVal;
+              }
+              #endif
+  87          #if !defined(LWS_LOADER)
+  88          /* Function Name:
+  89           *      rtl8367c_setAsicAprMeter
+  90           * Description:
+  91           *      Set per-port per-queue APR shared meter index
+  92           * Input:
+  93           *      port    - Physical port number (0~10)
+  94           *      qid     - Queue id
+  95           *      apridx  - dedicated shared meter index for APR (0~7)
+  96           * Output:
+  97           *      None
+  98           * Return:
+  99           *      RT_ERR_OK               - Success
+ 100           *      RT_ERR_SMI              - SMI access error
+ 101           *      RT_ERR_PORT_ID          - Invalid port number
+ 102           *      RT_ERR_QUEUE_ID         - Invalid queue id
+ 103           *      RT_ERR_FILTER_METER_ID  - Invalid meter
+ 104           * Note:
+ 105           *      None
+ 106           */
+ 107          ret_t rtl8367c_setAsicAprMeter(uint32 port, uint32 qid, uint32 apridx)
+ 108          {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 3   
+
+ 109   1          ret_t retVal;
+ 110   1          uint32 regAddr;
+ 111   1      
+ 112   1          if(port > RTL8367C_PORTIDMAX)
+ 113   1              return RT_ERR_PORT_ID;
+ 114   1      
+ 115   1          if(qid > RTL8367C_QIDMAX)
+ 116   1              return RT_ERR_QUEUE_ID;
+ 117   1      
+ 118   1          if(apridx > RTL8367C_PORT_QUEUE_METER_INDEX_MAX)
+ 119   1              return RT_ERR_FILTER_METER_ID;
+ 120   1      
+ 121   1          if(port < 8)
+ 122   1              retVal = rtl8367c_setAsicRegBits(RTL8367C_SCHEDULE_PORT_APR_METER_REG(port, qid), RTL8367C_SCHEDUL
+             -E_PORT_APR_METER_MASK(qid), apridx);
+ 123   1          else {
+ 124   2              regAddr = RTL8367C_REG_SCHEDULE_PORT8_APR_METER_CTRL0 + ((port-8) << 1) + (qid / 5);
+ 125   2              retVal = rtl8367c_setAsicRegBits(regAddr, RTL8367C_SCHEDULE_PORT_APR_METER_MASK(qid), apridx);
+ 126   2          }
+ 127   1      
+ 128   1          return retVal;
+ 129   1      }
+ 130          #endif
+ 131          #if 0
+              /* Function Name:
+               *      rtl8367c_getAsicAprMeter
+               * Description:
+               *      Get per-port per-queue APR shared meter index
+               * Input:
+               *      port    - Physical port number (0~10)
+               *      qid     - Queue id
+               *      apridx  - dedicated shared meter index for APR (0~7)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               *      RT_ERR_QUEUE_ID - Invalid queue id
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicAprMeter(uint32 port, uint32 qid, uint32 *apridx)
+              {
+                  ret_t retVal;
+                  uint32 regAddr;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(qid > RTL8367C_QIDMAX)
+                      return RT_ERR_QUEUE_ID;
+              
+                  if(port < 8)
+                      retVal = rtl8367c_getAsicRegBits(RTL8367C_SCHEDULE_PORT_APR_METER_REG(port, qid), RTL8367C_SCHEDUL
+             -E_PORT_APR_METER_MASK(qid), apridx);
+                  else {
+                      regAddr = RTL8367C_REG_SCHEDULE_PORT8_APR_METER_CTRL0 + ((port-8) << 1) + (qid / 5);
+                      retVal = rtl8367c_getAsicRegBits(regAddr, RTL8367C_SCHEDULE_PORT_APR_METER_MASK(qid), apridx);
+                  }
+              
+                  return retVal;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 4   
+
+              }
+              #endif
+ 171          #if !defined(LWS_LOADER)
+ 172          /* Function Name:
+ 173           *      rtl8367c_setAsicAprEnable
+ 174           * Description:
+ 175           *      Set per-port APR enable
+ 176           * Input:
+ 177           *      port        - Physical port number (0~7)
+ 178           *      aprEnable   - APR enable seting 1:enable 0:disable
+ 179           * Output:
+ 180           *      None
+ 181           * Return:
+ 182           *      RT_ERR_OK       - Success
+ 183           *      RT_ERR_SMI      - SMI access error
+ 184           *      RT_ERR_PORT_ID  - Invalid port number
+ 185           * Note:
+ 186           *      None
+ 187           */
+ 188          ret_t rtl8367c_setAsicAprEnable(uint32 port, uint32 aprEnable)
+ 189          {
+ 190   1          ret_t retVal;
+ 191   1      
+ 192   1          if(port > RTL8367C_PORTIDMAX)
+ 193   1              return RT_ERR_PORT_ID;
+ 194   1      
+ 195   1          retVal = rtl8367c_setAsicRegBit(RTL8367C_SCHEDULE_APR_CTRL_REG, RTL8367C_SCHEDULE_APR_CTRL_OFFSET(port
+             -), aprEnable);
+ 196   1      
+ 197   1          return retVal;
+ 198   1      }
+ 199          #endif
+ 200          #if 0
+              /* Function Name:
+               *      rtl8367c_getAsicAprEnable
+               * Description:
+               *      Get per-port APR enable
+               * Input:
+               *      port        - Physical port number (0~7)
+               *      aprEnable   - APR enable seting 1:enable 0:disable
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicAprEnable(uint32 port, uint32 *aprEnable)
+              {
+                  ret_t retVal;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  retVal = rtl8367c_getAsicRegBit(RTL8367C_SCHEDULE_APR_CTRL_REG, RTL8367C_SCHEDULE_APR_CTRL_OFFSET(port
+             -), aprEnable);
+              
+                  return retVal;
+              }
+              #endif
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 5   
+
+ 229          #if !defined(LWS_LOADER)
+ 230          /* Function Name:
+ 231           *      rtl8367c_setAsicWFQWeight
+ 232           * Description:
+ 233           *      Set weight  of a queue
+ 234           * Input:
+ 235           *      port    - Physical port number (0~10)
+ 236           *      qid     - The queue ID wanted to set
+ 237           *      qWeight - The weight value wanted to set (valid:0~127)
+ 238           * Output:
+ 239           *      None
+ 240           * Return:
+ 241           *      RT_ERR_OK               - Success
+ 242           *      RT_ERR_SMI              - SMI access error
+ 243           *      RT_ERR_PORT_ID          - Invalid port number
+ 244           *      RT_ERR_QUEUE_ID         - Invalid queue id
+ 245           *      RT_ERR_QOS_QUEUE_WEIGHT - Invalid queue weight
+ 246           * Note:
+ 247           *      None
+ 248           */
+ 249          ret_t rtl8367c_setAsicWFQWeight(uint32 port, uint32 qid, uint32 qWeight)
+ 250          {
+ 251   1          ret_t retVal;
+ 252   1      
+ 253   1          /* Invalid input parameter */
+ 254   1          if(port > RTL8367C_PORTIDMAX)
+ 255   1              return RT_ERR_PORT_ID;
+ 256   1      
+ 257   1          if(qid > RTL8367C_QIDMAX)
+ 258   1              return RT_ERR_QUEUE_ID;
+ 259   1      
+ 260   1          if(qWeight > RTL8367C_QWEIGHTMAX && qid > 0)
+ 261   1              return RT_ERR_QOS_QUEUE_WEIGHT;
+ 262   1      
+ 263   1          retVal = rtl8367c_setAsicReg(RTL8367C_SCHEDULE_PORT_QUEUE_WFQ_WEIGHT_REG(port, qid), qWeight);
+ 264   1      
+ 265   1          return retVal;
+ 266   1      }
+ 267          /* Function Name:
+ 268           *      rtl8367c_getAsicWFQWeight
+ 269           * Description:
+ 270           *      Get weight  of a queue
+ 271           * Input:
+ 272           *      port    - Physical port number (0~10)
+ 273           *      qid     - The queue ID wanted to set
+ 274           *      qWeight - The weight value wanted to set (valid:0~127)
+ 275           * Output:
+ 276           *      None
+ 277           * Return:
+ 278           *      RT_ERR_OK               - Success
+ 279           *      RT_ERR_SMI              - SMI access error
+ 280           *      RT_ERR_PORT_ID          - Invalid port number
+ 281           *      RT_ERR_QUEUE_ID         - Invalid queue id
+ 282           * Note:
+ 283           *      None
+ 284           */
+ 285          ret_t rtl8367c_getAsicWFQWeight(uint32 port, uint32 qid, uint32 *qWeight)
+ 286          {
+ 287   1          ret_t retVal;
+ 288   1      
+ 289   1      
+ 290   1          /* Invalid input parameter */
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 6   
+
+ 291   1          if(port  > RTL8367C_PORTIDMAX)
+ 292   1              return RT_ERR_PORT_ID;
+ 293   1      
+ 294   1          if(qid > RTL8367C_QIDMAX)
+ 295   1              return RT_ERR_QUEUE_ID;
+ 296   1      
+ 297   1      
+ 298   1          retVal = rtl8367c_getAsicReg(RTL8367C_SCHEDULE_PORT_QUEUE_WFQ_WEIGHT_REG(port, qid), qWeight);
+ 299   1      
+ 300   1          return retVal;
+ 301   1      }
+ 302          #endif
+ 303          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicWFQBurstSize
+               * Description:
+               *      Set WFQ leaky bucket burst size
+               * Input:
+               *      burstsize   - Leaky bucket burst size, unit byte
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicWFQBurstSize(uint32 burstsize)
+              {
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_setAsicReg(RTL8367C_SCHEDULE_WFQ_BURST_SIZE_REG, burstsize);
+              
+                  return retVal;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicWFQBurstSize
+               * Description:
+               *      Get WFQ leaky bucket burst size
+               * Input:
+               *      burstsize   - Leaky bucket burst size, unit byte
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicWFQBurstSize(uint32 *burstsize)
+              {
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_SCHEDULE_WFQ_BURST_SIZE_REG, burstsize);
+              
+                  return retVal;
+              }
+              #endif
+ 349          #if !defined(LWS_LOADER)
+ 350          /* Function Name:
+ 351           *      rtl8367c_setAsicQueueType
+ 352           * Description:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 7   
+
+ 353           *      Set type of a queue
+ 354           * Input:
+ 355           *      port        - Physical port number (0~10)
+ 356           *      qid         - The queue ID wanted to set
+ 357           *      queueType   - The specified queue type. 0b0: Strict priority, 0b1: WFQ
+ 358           * Output:
+ 359           *      None
+ 360           * Return:
+ 361           *      RT_ERR_OK       - Success
+ 362           *      RT_ERR_SMI      - SMI access error
+ 363           *      RT_ERR_PORT_ID  - Invalid port number
+ 364           *      RT_ERR_QUEUE_ID - Invalid queue id
+ 365           * Note:
+ 366           *      None
+ 367           */
+ 368          ret_t rtl8367c_setAsicQueueType(uint32 port, uint32 qid, uint32 queueType)
+ 369          {
+ 370   1          ret_t retVal;
+ 371   1      
+ 372   1          /* Invalid input parameter */
+ 373   1          if(port > RTL8367C_PORTIDMAX)
+ 374   1              return RT_ERR_PORT_ID;
+ 375   1      
+ 376   1          if(qid > RTL8367C_QIDMAX)
+ 377   1              return RT_ERR_QUEUE_ID;
+ 378   1      
+ 379   1          /* Set Related Registers */
+ 380   1          retVal = rtl8367c_setAsicRegBit(RTL8367C_SCHEDULE_QUEUE_TYPE_REG(port), RTL8367C_SCHEDULE_QUEUE_TYPE_O
+             -FFSET(port, qid),queueType);
+ 381   1      
+ 382   1          return retVal;
+ 383   1      }
+ 384          /* Function Name:
+ 385           *      rtl8367c_getAsicQueueType
+ 386           * Description:
+ 387           *      Get type of a queue
+ 388           * Input:
+ 389           *      port        - Physical port number (0~7)
+ 390           *      qid         - The queue ID wanted to set
+ 391           *      queueType   - The specified queue type. 0b0: Strict priority, 0b1: WFQ
+ 392           * Output:
+ 393           *      None
+ 394           * Return:
+ 395           *      RT_ERR_OK       - Success
+ 396           *      RT_ERR_SMI      - SMI access error
+ 397           *      RT_ERR_PORT_ID  - Invalid port number
+ 398           *      RT_ERR_QUEUE_ID - Invalid queue id
+ 399           * Note:
+ 400           *      None
+ 401           */
+ 402          ret_t rtl8367c_getAsicQueueType(uint32 port, uint32 qid, uint32 *queueType)
+ 403          {
+ 404   1          ret_t retVal;
+ 405   1      
+ 406   1          /* Invalid input parameter */
+ 407   1          if(port  > RTL8367C_PORTIDMAX)
+ 408   1              return RT_ERR_PORT_ID;
+ 409   1      
+ 410   1          if(qid > RTL8367C_QIDMAX)
+ 411   1              return RT_ERR_QUEUE_ID;
+ 412   1      
+ 413   1          retVal = rtl8367c_getAsicRegBit(RTL8367C_SCHEDULE_QUEUE_TYPE_REG(port), RTL8367C_SCHEDULE_QUEUE_TYPE_O
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 8   
+
+             -FFSET(port, qid),queueType);
+ 414   1      
+ 415   1          return retVal;
+ 416   1      }
+ 417          #endif
+ 418          /* Function Name:
+ 419           *      rtl8367c_setAsicPortEgressRate
+ 420           * Description:
+ 421           *      Set per-port egress rate
+ 422           * Input:
+ 423           *      port        - Physical port number (0~10)
+ 424           *      rate        - Egress rate
+ 425           * Output:
+ 426           *      None
+ 427           * Return:
+ 428           *      RT_ERR_OK           - Success
+ 429           *      RT_ERR_SMI          - SMI access error
+ 430           *      RT_ERR_PORT_ID      - Invalid port number
+ 431           *      RT_ERR_QOS_EBW_RATE - Invalid bandwidth/rate
+ 432           * Note:
+ 433           *      None
+ 434           */
+ 435          ret_t rtl8367c_setAsicPortEgressRate(uint32 port, uint32 rate)
+ 436          {
+ 437   1          ret_t retVal;
+ 438   1          uint32 regAddr, regData;
+ 439   1      
+ 440   1          if(port > RTL8367C_PORTIDMAX)
+ 441   1              return RT_ERR_PORT_ID;
+ 442   1      
+ 443   1          if(rate > RTL8367C_QOS_GRANULARTY_MAX)
+ 444   1              return RT_ERR_QOS_EBW_RATE;
+ 445   1      
+ 446   1          regAddr = RTL8367C_PORT_EGRESSBW_LSB_REG(port);
+ 447   1          regData = RTL8367C_QOS_GRANULARTY_LSB_MASK & rate;
+ 448   1      
+ 449   1          retVal = rtl8367c_setAsicReg(regAddr, regData);
+ 450   1      
+ 451   1          if(retVal != RT_ERR_OK)
+ 452   1              return retVal;
+ 453   1      
+ 454   1          regAddr = RTL8367C_PORT_EGRESSBW_MSB_REG(port);
+ 455   1          regData = (RTL8367C_QOS_GRANULARTY_MSB_MASK & rate) >> RTL8367C_QOS_GRANULARTY_MSB_OFFSET;
+ 456   1      
+ 457   1          retVal = rtl8367c_setAsicRegBits(regAddr, RTL8367C_PORT6_EGRESSBW_CTRL1_MASK, regData);
+ 458   1      
+ 459   1          return retVal;
+ 460   1      }
+ 461          #if !defined(LWS_LOADER)
+ 462          /* Function Name:
+ 463           *      rtl8367c_getAsicPortEgressRate
+ 464           * Description:
+ 465           *      Get per-port egress rate
+ 466           * Input:
+ 467           *      port        - Physical port number (0~10)
+ 468           *      rate        - Egress rate
+ 469           * Output:
+ 470           *      None
+ 471           * Return:
+ 472           *      RT_ERR_OK           - Success
+ 473           *      RT_ERR_SMI          - SMI access error
+ 474           *      RT_ERR_PORT_ID      - Invalid port number
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 9   
+
+ 475           * Note:
+ 476           *      None
+ 477           */
+ 478          ret_t rtl8367c_getAsicPortEgressRate(uint32 port, uint32 *rate)
+ 479          {
+ 480   1          ret_t retVal;
+ 481   1          uint32 regAddr, regData,regData2;
+ 482   1      
+ 483   1          if(port > RTL8367C_PORTIDMAX)
+ 484   1              return RT_ERR_PORT_ID;
+ 485   1      
+ 486   1          regAddr = RTL8367C_PORT_EGRESSBW_LSB_REG(port);
+ 487   1      
+ 488   1          retVal = rtl8367c_getAsicReg(regAddr, &regData);
+ 489   1          if(retVal != RT_ERR_OK)
+ 490   1              return retVal;
+ 491   1      
+ 492   1          regAddr = RTL8367C_PORT_EGRESSBW_MSB_REG(port);
+ 493   1          retVal = rtl8367c_getAsicRegBits(regAddr, RTL8367C_PORT6_EGRESSBW_CTRL1_MASK, &regData2);
+ 494   1          if(retVal != RT_ERR_OK)
+ 495   1              return retVal;
+ 496   1      
+ 497   1          *rate = regData | (regData2 << RTL8367C_QOS_GRANULARTY_MSB_OFFSET);
+ 498   1      
+ 499   1          return RT_ERR_OK;
+ 500   1      }
+ 501          #endif
+ 502          /* Function Name:
+ 503           *      rtl8367c_setAsicPortEgressRateIfg
+ 504           * Description:
+ 505           *      Set per-port egress rate calculate include/exclude IFG
+ 506           * Input:
+ 507           *      ifg     - 1:include IFG 0:exclude IFG
+ 508           * Output:
+ 509           *      None
+ 510           * Return:
+ 511           *      RT_ERR_OK   - Success
+ 512           *      RT_ERR_SMI  - SMI access error
+ 513           * Note:
+ 514           *      None
+ 515           */
+ 516          ret_t rtl8367c_setAsicPortEgressRateIfg(uint32 ifg)
+ 517          {
+ 518   1          ret_t retVal;
+ 519   1      
+ 520   1          retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_SCHEDULE_WFQ_CTRL, RTL8367C_SCHEDULE_WFQ_CTRL_OFFSET, ifg
+             -);
+ 521   1      
+ 522   1          return retVal;
+ 523   1      }
+ 524          #if !defined(LWS_LOADER)
+ 525          /* Function Name:
+ 526           *      rtl8367c_getAsicPortEgressRateIfg
+ 527           * Description:
+ 528           *      Get per-port egress rate calculate include/exclude IFG
+ 529           * Input:
+ 530           *      ifg     - 1:include IFG 0:exclude IFG
+ 531           * Output:
+ 532           *      None
+ 533           * Return:
+ 534           *      RT_ERR_OK   - Success
+ 535           *      RT_ERR_SMI  - SMI access error
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SCHEDULING                                       11/02/2026 17:57:25 PAGE 10  
+
+ 536           * Note:
+ 537           *      None
+ 538           */
+ 539          ret_t rtl8367c_getAsicPortEgressRateIfg(uint32 *ifg)
+ 540          {
+ 541   1          ret_t retVal;
+ 542   1      
+ 543   1          retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_SCHEDULE_WFQ_CTRL, RTL8367C_SCHEDULE_WFQ_CTRL_OFFSET, ifg
+             -);
+ 544   1      
+ 545   1          return retVal;
+ 546   1      }
+ 547          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1480    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----     110
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

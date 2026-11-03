@@ -1,0 +1,401 @@
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_FILE
+OBJECT MODULE PLACED IN .\objects\web_file.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\web\web_file.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;.
+                    -.\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\
+                    -local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_
+                    -625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\web_file.lst) TABS(2) OBJECT(.\objects\web_file.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <stdio.h>
+   4          
+   5          #include <local/config.h>
+   6          
+   7          #include "web_file.h"
+   8          #include <web/web_api.h>
+   9          #include <web/http_debug.h>
+  10          
+  11          
+  12          #if WEB_ENABLE
+  13          
+  14          uint8 const far file_style_css[] = "\
+  15          .MidSize {width:100px;}\n\
+  16          \n\
+  17          table {\n\
+  18          border-collapse:collapse;\n\
+  19          border-style:solid;\n\
+  20          border-width:1px;\n\
+  21          font-size:12px;\n\
+  22          font-weight:normal;\n\
+  23          line-height:1.6em;\n\
+  24          font-family: Geneva, Arial, Helvetica, sans-serif;\n\
+  25          letter-spacing:.45pt\n\
+  26          }\n\
+  27          \n\
+  28          td {\n\
+  29          text-align:center;\n\
+  30          }\n\
+  31          \n\
+  32          th {\n\
+  33          background: rgb(32,32,255);\n\
+  34          color: rgb(255,255,255);\n\
+  35          }\n\
+  36          \n\
+  37          select, input, legend {\n\
+  38          font-family: Geneva, Arial, Helvetica, sans-serif;\n\
+  39          letter-spacing:.45pt\n\
+  40          }\n\
+  41          \n\
+  42          select {width:100px;}\n\
+  43          ";
+  44          
+  45          uint8 const far file_xp_progress_js[] = "\
+  46          var w3c=(document.getElementById)?true:false;\n\
+  47          var ie=(document.all)?true:false;\n\
+  48          var N=-1;\n\
+  49          \n\
+  50          function createBar(w,h,bgc,brdW,brdC,blkC,speed,blocks,count,action){\n\
+  51          if(ie||w3c){\n\
+  52          var t='<div id=\"_xpbar'+(++N)+'\" style=\"visibility:visible; position:relative; overflow:hidden; width:'
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 2   
+
+             -+w+'px; height:'+h+'px; background-color:'+bgc+'; border-color:'+brdC+'; border-width:'+brdW+'px; border-style:solid; fo
+             -nt-size:1px;\">';\n\
+  53          t+='<span id=\"blocks'+N+'\" style=\"left:-'+(h*2+1)+'px; position:absolute; font-size:1px\">';\n\
+  54          t+='<span id=\"blocks'+N+'\" style=\"left:-'+(h*2+1)+'px; position:absolute; font-size:1px\">';\n\
+  55          for(i=0;i<blocks;i++){\n\
+  56          t+='<span style=\"background-color:'+blkC+'; left:-'+((h*i)+i)+'px; font-size:1px; position:absolute; widt
+             -h:'+h+'px; height:'+h+'px; '\n\
+  57          t+=(ie)?'filter:alpha(opacity='+(100-i*(100/blocks))+')':'-Moz-opacity:'+((100-i*(100/blocks))/100);\n\
+  58          t+='\"></span>';\n\
+  59          }\n\
+  60          t+='</span></div>';\n\
+  61          document.write(t);\n\
+  62          var bA=(ie)?document.all['blocks'+N]:document.getElementById('blocks'+N);\n\
+  63          bA.bar=(ie)?document.all['_xpbar'+N]:document.getElementById('_xpbar'+N);\n\
+  64          bA.blocks=blocks;\n\
+  65          bA.N=N;\n\
+  66          bA.w=w;\n\
+  67          bA.h=h;\n\
+  68          bA.speed=speed;\n\
+  69          bA.ctr=0;\n\
+  70          bA.count=count;\n\
+  71          bA.action=action;\n\
+  72          bA.togglePause=togglePause;\n\
+  73          bA.showBar=function(){\n\
+  74          this.bar.style.visibility=\"visible\";\n\
+  75          }\n\
+  76          bA.hideBar=function(){\n\
+  77          this.bar.style.visibility=\"hidden\";\n\
+  78          }\n\
+  79          bA.tid=setInterval('startBar('+N+')',speed);\n\
+  80          return bA;\n\
+  81          }}\n\
+  82          \n\
+  83          function startBar(bn){\n\
+  84          var t=(ie)?document.all['blocks'+bn]:document.getElementById('blocks'+bn);\n\
+  85          if(parseInt(t.style.left)+t.h+1-(t.blocks*t.h+t.blocks)>t.w){\n\
+  86          t.style.left=-(t.h*2+1)+'px';\n\
+  87          t.ctr++;\n\
+  88          if(t.ctr>=t.count){\n\
+  89          eval(t.action);\n\
+  90          t.ctr=0;\n\
+  91          }}else t.style.left=(parseInt(t.style.left)+t.h+1)+'px';\n\
+  92          }\n\
+  93          \n\
+  94          function togglePause(){\n\
+  95          if(this.tid==0){\n\
+  96          this.tid=setInterval('startBar('+this.N+')',this.speed);\n\
+  97          }else{\n\
+  98          clearInterval(this.tid);\n\
+  99          this.tid=0;\n\
+ 100          }}\n\
+ 101          \n\
+ 102          function togglePause(){\n\
+ 103          if(this.tid==0){\n\
+ 104          this.tid=setInterval('startBar('+this.N+')',this.speed);\n\
+ 105          }else{\n\
+ 106          clearInterval(this.tid);\n\
+ 107          this.tid=0;\n\
+ 108          }}\n\
+ 109          ";
+ 110          
+ 111          uint8 const far file_tree_js[] = "\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 3   
+
+ 112          var iconMap = new Array();\n\
+ 113          var iconList = new Array( iconMap );\n\
+ 114          function Toggle(item)\n\
+ 115          {\n\
+ 116              var idx = -1;\n\
+ 117              for( i = 0; i < iconList.length; i++ )\n\
+ 118              {\n\
+ 119                  if( iconList[i][0] == item )\n\
+ 120                  {\n\
+ 121                      idx = i;\n\
+ 122                      break;\n\
+ 123                  }\n\
+ 124              }\n\
+ 125              if( idx < 0 )\n\
+ 126                  alert( \"Could not find key in Icon List.\" );\n\
+ 127              var div=document.getElementById(\"D\"+item);\n\
+ 128              var visible=(div.style.display!=\"none\");\n\
+ 129              var key=document.getElementById(\"P\"+item);\n\
+ 130              var removeIcon = div.hasChildNodes() == false;\n\
+ 131              if( key != null )\n\
+ 132              {\n\
+ 133                  if( !removeIcon )\n\
+ 134                  {\n\
+ 135                      if (visible)\n\
+ 136                      {\n\
+ 137                          div.style.display=\"none\";\n\
+ 138                          key.innerHTML=\"<img src='/plus.gif' width='16' height='16' hspace='0' vspace='0' border='
+             -0'>\";\n\
+ 139                      }\n\
+ 140                      else\n\
+ 141                      {\n\
+ 142                          div.style.display=\"block\";\n\
+ 143                          key.innerHTML=\"<img src='/minus.gif' width='16' height='16' hspace='0' vspace='0' border=
+             -'0'>\";\n\
+ 144                      }\n\
+ 145                  }\n\
+ 146                  else\n\
+ 147                      key.innerHTML=\"<img src='/transparent.gif' width='16' height='16' hspace='0' vspace='0' borde
+             -r='0'>\";\n\
+ 148              }\n\
+ 149              key=document.getElementById(\"I\"+item);\n\
+ 150              if( key != null )\n\
+ 151              {\n\
+ 152                  if (visible)\n\
+ 153                  {\n\
+ 154                      div.style.display=\"none\";\n\
+ 155                      key.innerHTML=\"<img src='\"+iconList[idx][1]+\"' width='16' height='16' hspace='0' vspace='0'
+             - border='0'>\";\n\
+ 156                  }\n\
+ 157                  else\n\
+ 158                  {\n\
+ 159                      div.style.display=\"block\";\n\
+ 160                      key.innerHTML=\"<img src='\"+iconList[idx][2]+\"' width='16' height='16' hspace='0' vspace='0'
+             - border='0'>\";\n\
+ 161                  }\n\
+ 162              }\n\
+ 163          }\n\
+ 164          function Expand() {\n\
+ 165             divs=document.getElementsByTagName(\"DIV\");\n\
+ 166             for (i=0;i<divs.length;i++) {\n\
+ 167               divs[i].style.display=\"block\";\n\
+ 168               key=document.getElementById(\"x\" + divs[i].id);\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 4   
+
+ 169               key.innerHTML=\"<img src='/textfolder.gif' width='16' height='16' hspace='0' vspace='0' border='0'>\"
+             -;\n\
+ 170             }\n\
+ 171          }\n\
+ 172          function Collapse() {\n\
+ 173             divs=document.getElementsByTagName(\"DIV\");\n\
+ 174             for (i=0;i<divs.length;i++) {\n\
+ 175               divs[i].style.display=\"none\";\n\
+ 176               key=document.getElementById(\"x\" + divs[i].id);\n\
+ 177               key.innerHTML=\"<img src='/folder.gif' width='16' height='16' hspace='0' vspace='0' border='0'>\";\n\
+ 178             }\n\
+ 179          }\n\
+ 180          function AddImage( parent, imgFileName )\n\
+ 181          {\n\
+ 182              img=document.createElement(\"IMG\");\n\
+ 183              img.setAttribute( \"src\", imgFileName );\n\
+ 184              img.setAttribute( \"width\", 16 );\n\
+ 185              img.setAttribute( \"height\", 16 );\n\
+ 186              img.setAttribute( \"hspace\", 0 );\n\
+ 187              img.setAttribute( \"vspace\", 0 );\n\
+ 188              img.setAttribute( \"border\", 0 );\n\
+ 189              parent.appendChild(img);\n\
+ 190          }\n\
+ 191          function CreateUniqueTagName( seed )\n\
+ 192          {\n\
+ 193              var tagName = seed;\n\
+ 194              var attempt = 0;\n\
+ 195              if( tagName == \"\" || tagName == null )\n\
+ 196                  tagName = \"x\";\n\
+ 197              while( document.getElementById(tagName) != null )\n\
+ 198              {\n\
+ 199                  tagName = \"x\" + tagName;\n\
+ 200                  if( attempt++ > 50 )\n\
+ 201                  {\n\
+ 202                      alert( \"Cannot create unique tag name. Giving up. \\nTag = \" + tagName );\n\
+ 203                      break;\n\
+ 204                  }\n\
+ 205              }\n\
+ 206              return tagName;\n\
+ 207          }\n\
+ 208          function CreateTreeItem( parent, img1FileName, img2FileName, nodeName, url, target )\n\
+ 209          {\n\
+ 210              var uniqueId = CreateUniqueTagName( nodeName );\n\
+ 211              for( i=0; i < iconList.length; i++ )\n\
+ 212                  if( iconList[i][0] == uniqueId )\n\
+ 213                  {\n\
+ 214                      alert( \"Non unique ID in Element Map. '\" + uniqueId + \"'\" );\n\
+ 215                  }\n\
+ 216              iconList[iconList.length] = new Array( uniqueId, img1FileName, img2FileName );\n\
+ 217              table = document.createElement(\"TABLE\");\n\
+ 218              if( parent != null )\n\
+ 219                  parent.appendChild( table );\n\
+ 220              table.setAttribute( \"border\", 0 );\n\
+ 221              table.setAttribute( \"cellpadding\", 1 );\n\
+ 222              table.setAttribute( \"cellspacing\", 1 );\n\
+ 223              tablebody = document.createElement(\"TBODY\");\n\
+ 224              table.appendChild(tablebody);\n\
+ 225              row=document.createElement(\"TR\");\n\
+ 226              tablebody.appendChild( row );\n\
+ 227              cell=document.createElement(\"TD\");\n\
+ 228              cell.setAttribute( \"width\", 16 );\n\
+ 229              row.appendChild(cell);\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 5   
+
+ 230              a=document.createElement(\"A\");\n\
+ 231              cell.appendChild( a );\n\
+ 232              a.setAttribute( \"id\", \"P\"+uniqueId );\n\
+ 233              a.setAttribute( \"href\", \"javascript:Toggle(\\\"\"+uniqueId+\"\\\");\" );\n\
+ 234              if (url != null)\n\
+ 235                  AddImage( a, \"/minus.gif\" );\n\
+ 236              else\n\
+ 237                  AddImage( a, \"/plus.gif\" );\n\
+ 238              cell=document.createElement(\"TD\");\n\
+ 239              cell.setAttribute( \"width\", 16 );\n\
+ 240              row.appendChild(cell);\n\
+ 241              a=document.createElement(\"A\");\n\
+ 242              a.setAttribute( \"id\", \"I\"+uniqueId );\n\
+ 243              a.setAttribute( \"href\", \"javascript:Toggle(\\\"\"+uniqueId+\"\\\");\" );\n\
+ 244              cell.appendChild(a);\n\
+ 245              AddImage( a, img1FileName );\n\
+ 246              cell=document.createElement(\"TD\");\n\
+ 247              cell.noWrap = true;\n\
+ 248              a=document.createElement(\"A\");\n\
+ 249              a.setAttribute( \"id\", uniqueId );\n\
+ 250              cell.appendChild( a );\n\
+ 251              if( url != null )\n\
+ 252              {\n\
+ 253                  a.setAttribute( \"href\", url );\n\
+ 254                  if( target != null )\n\
+ 255                      a.setAttribute( \"target\", target );\n\
+ 256                  else\n\
+ 257                      a.setAttribute( \"target\", \"_blank\" );\n\
+ 258                  text=document.createTextNode( nodeName );\n\
+ 259                  a.appendChild(text);\n\
+ 260              }\n\
+ 261              else\n\
+ 262              {\n\
+ 263                  text=document.createTextNode( nodeName );\n\
+ 264                  cell.appendChild(text);\n\
+ 265              }\n\
+ 266              row.appendChild(cell);\n\
+ 267              return CreateDiv( parent, uniqueId );\n\
+ 268          }\n\
+ 269          function CreateDiv( parent, id )\n\
+ 270          {\n\
+ 271              div=document.createElement(\"DIV\");\n\
+ 272              if( parent != null )\n\
+ 273                  parent.appendChild( div );\n\
+ 274              div.setAttribute( \"id\", \"D\"+id );\n\
+ 275              div.style.display  = \"none\";\n\
+ 276              div.style.marginLeft = \"1.5em\";\n\
+ 277              return div;\n\
+ 278          }\n\
+ 279          var rootCell = null;\n\
+ 280          function Initialise()\n\
+ 281          {\n\
+ 282              body = document.getElementsByTagName(\"body\").item(0);\n\
+ 283              body.setAttribute( \"leftmargin\", 1.5 );\n\
+ 284              body.setAttribute( \"topmargin\", 0 );\n\
+ 285              body.setAttribute( \"marginwidth\", 0 );\n\
+ 286              body.setAttribute( \"marginheight\", 0 );\n\
+ 287              table = document.createElement(\"TABLE\");\n\
+ 288              body.appendChild( table );\n\
+ 289              table.setAttribute( \"border\", 0 );\n\
+ 290              table.setAttribute( \"cellpadding\", 1 );\n\
+ 291              table.setAttribute( \"cellspacing\", 1 );\n\
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 6   
+
+ 292              tablebody = document.createElement(\"TBODY\");\n\
+ 293              table.appendChild(tablebody);\n\
+ 294              row=document.createElement(\"TR\");\n\
+ 295              tablebody.appendChild(row);\n\
+ 296              cell=document.createElement(\"TD\");\n\
+ 297              row.appendChild(cell);\n\
+ 298              rootCell = cell;\n\
+ 299          }\n\
+ 300          ";
+ 301          
+ 302          
+ 303          /*
+ 304           * Function Declaration
+ 305           */
+ 306          int8 get_file(struct http_request_s *pReq, int32 file_idx)
+ 307          {
+ 308   1          uint8 buf[32];
+ 309   1      
+ 310   1          if ((file_idx <= WEB_FILE_NONE) || (file_idx >= WEB_FILE_MAX))
+ 311   1              return FAILED;
+ 312   1      
+ 313   1          WEB_BEGIN(pReq);
+ 314   1      
+ 315   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 316   1      
+ 317   1          switch (file_idx)
+ 318   1          {
+ 319   2          case WEB_FILE_STYLE_CSS:
+ 320   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 321   2              sprintf(buf, "Content-Length: %u", (uint16)sizeof(file_style_css));
+ 322   2              WEB_HEADER(pReq, buf);
+ 323   2              WEB_DATA(pReq, file_style_css, sizeof(file_style_css) - 1);
+ 324   2              break;
+ 325   2      
+ 326   2          case WEB_FILE_XP_PROGRESS_JS:
+ 327   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 328   2              sprintf(buf, "Content-Length: %u", (uint16)sizeof(file_xp_progress_js));
+ 329   2              WEB_HEADER(pReq, buf);
+ 330   2              WEB_DATA(pReq, file_xp_progress_js, sizeof(file_xp_progress_js) - 1);
+ 331   2              break;
+ 332   2      
+ 333   2          case WEB_FILE_TREE_JS:
+ 334   2              WEB_HEADER(pReq, "Content-Type: text/html");
+ 335   2              sprintf(buf, "Content-Length: %u", (uint16)sizeof(file_tree_js));
+ 336   2              WEB_HEADER(pReq, buf);
+ 337   2              WEB_DATA(pReq, file_tree_js, sizeof(file_tree_js) - 1);
+ 338   2              break;
+ 339   2      
+ 340   2          default:
+ 341   2              printf("%s():%d Error: Web file (%d) is not exist!\n", __FILE__, (uint16)__LINE__);
+ 342   2              break;
+ 343   2          }
+ 344   1      
+ 345   1          WEB_END(pReq);
+ 346   1      
+ 347   1          return SUCCESS;
+ 348   1      }
+ 349          
+ 350          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.60.0.0   WEB_FILE                                                          08/20/2025 22:07:55 PAGE 7   
+
+   CODE SIZE        =    442    ----
+   CONSTANT SIZE    =   8561    ----
+   XDATA SIZE       =   ----      39
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   8561    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,161 @@
+C51 COMPILER V9.60.0.0   HTML_API                                                          08/20/2025 22:07:55 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HTML_API
+OBJECT MODULE PLACED IN .\objects\html_api.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\web\html_api.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;.
+                    -.\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\
+                    -local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_
+                    -625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\html_api.lst) TABS(2) OBJECT(.\objects\html_api.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          /*
+   4          * Copyright c                  Realtek Semiconductor Corporation, 2009  
+   5          * All rights reserved.
+   6          * 
+   7          * Abstract : 
+   8          *$Id: 
+   9          */
+  10          #include <string.h>
+  11          #include <stdio.h>
+  12          #include <web/web_api.h>
+  13          #include "web_tftp.h"
+  14          #include "web_hidden.h"
+  15          #include "web_index.h"
+  16          #include "web_info.h"
+  17          #include "web_menu.h"
+  18          #include "web_file.h"
+  19          #include "web_http.h"
+  20          #include "web_reload.h"
+  21          #include "web_image.h"
+  22          #include "web_sys.h"
+  23          
+  24          #include <salfwug.h>
+  25          
+  26          int8 default_reply_asp_send(struct http_request_s *pReq, uint8  *pPath)  
+  27          {
+  28   1          if (pReq == NULL || pPath == NULL)
+  29   1              return FAILED;
+  30   1      
+  31   1          switch(pReq->method)
+  32   1          {
+  33   2          case HTTP_METHOD_GET:
+  34   2              if (WEB_STRCMP(pReq->path, "/") == 0)
+  35   2              {
+  36   3                 return get_menu(pReq);
+  37   3              }
+  38   2              else if(WEB_STRCMP(pReq->path, "/hidden.cgi") == 0)
+  39   2              {
+  40   3                 return get_hidden(pReq);
+  41   3              }
+  42   2              else if (WEB_STRCMP(pReq->path, "/panel.cgi") == 0)
+  43   2              {
+  44   3                  return get_hidden(pReq);
+  45   3              }
+  46   2              else if (WEB_STRCMP(pReq->path, "/info.cgi") == 0)
+  47   2              {
+  48   3                  return get_info(pReq);
+  49   3              }
+  50   2              else if(WEB_STRCMP(pReq->path, "/menu.cgi") == 0)
+  51   2              {
+  52   3                  return get_menu(pReq);
+C51 COMPILER V9.60.0.0   HTML_API                                                          08/20/2025 22:07:55 PAGE 2   
+
+  53   3              }
+  54   2              else if (WEB_STRCMP(pReq->path, "/tree.js") == 0)
+  55   2              {
+  56   3                  return get_file(pReq, WEB_FILE_TREE_JS);
+  57   3              }
+  58   2              else if (WEB_STRCMP(pReq->path, "/style.css") == 0)
+  59   2              {
+  60   3                 return get_file(pReq, WEB_FILE_STYLE_CSS);
+  61   3              }
+  62   2      #if defined(UPGRADE_TFTP)        
+                      else if(WEB_STRCMP(pReq->path, "/tftpug.cgi") == 0)
+                      {
+                          return get_tftp(pReq);
+                      }
+              #endif        
+  68   2              else if(WEB_STRCMP(pReq->path, "/httpug.cgi") == 0)
+  69   2              {
+  70   3                  return get_httpupg(pReq);
+  71   3              }
+  72   2              else if (WEB_STRCMP(pReq->path, "/document.gif") == 0)
+  73   2              {
+  74   3                  return get_image(pReq, WEB_IMAGE_DOCUMENT_GIF);
+  75   3              }
+  76   2              else if (WEB_STRCMP(pReq->path, "/folder_opened.gif") == 0)
+  77   2              {
+  78   3                  return get_image(pReq, WEB_IMAGE_FOLDER_OPENED_GIF);
+  79   3              }
+  80   2              else if (WEB_STRCMP(pReq->path, "/folder_closed.gif") == 0)
+  81   2              {
+  82   3                  return get_image(pReq, WEB_IMAGE_FOLDER_CLOSED_GIF);
+  83   3              }
+  84   2              else if (WEB_STRCMP(pReq->path, "/plus.gif") == 0)
+  85   2              {
+  86   3                  return get_image(pReq, WEB_IMAGE_PLUS_GIF);
+  87   3              }
+  88   2              else if (WEB_STRCMP(pReq->path, "/minus.gif") == 0)
+  89   2              {
+  90   3                  return get_image(pReq, WEB_IMAGE_MINUS_GIF);
+  91   3              }
+  92   2              else if (WEB_STRCMP(pReq->path, "/reboot.cgi") == 0)
+  93   2              {
+  94   3                   return get_reboot(pReq);
+  95   3              }
+  96   2              else
+  97   2              {
+  98   3                  return get_info(pReq);        
+  99   3              }
+ 100   2          case HTTP_METHOD_POST:
+ 101   2      #if defined(UPGRADE_TFTP)    
+                      if (WEB_STRCMP(pReq->path, "/tftpug.cgi") == 0)
+                      {
+                         return post_tftp_fwupg(pReq);
+                      }
+                      else 
+              #endif        
+ 108   2              if (WEB_STRCMP(pReq->path, "/httpupg.cgi") == 0)
+ 109   2              {
+ 110   3                 return post_http_firmupdate(pReq);
+ 111   3              }
+ 112   2              /* reboot.cgi */
+ 113   2              else if (WEB_STRCMP(pReq->path, "/reboot.cgi") == 0)
+ 114   2              {
+C51 COMPILER V9.60.0.0   HTML_API                                                          08/20/2025 22:07:55 PAGE 3   
+
+ 115   3                   return post_reboot(pReq);
+ 116   3              }
+ 117   2          default:
+ 118   2              WEB_BEGIN(pReq);
+ 119   2              WEB_STATUS(pReq, HTTP_STATUS_NOT_IMPLEMENTED);
+ 120   2              WEB_HEADER(pReq, "");
+ 121   2              WEB_END(pReq);
+ 122   2              break;
+ 123   2          }
+ 124   1      
+ 125   1        return  SUCCESS;
+ 126   1      }
+ 127          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    986    ----
+   CONSTANT SIZE    =    176    ----
+   XDATA SIZE       =   ----       6
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    176    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

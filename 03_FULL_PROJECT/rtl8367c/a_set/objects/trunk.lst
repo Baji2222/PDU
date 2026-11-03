@@ -1,0 +1,667 @@
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE TRUNK
+OBJECT MODULE PLACED IN .\objects\trunk.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\trunk.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) 
+                    -INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\inc
+                    -lude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPL
+                    -ACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_L
+                    -ED_MODE) VARBANKING DEBUG PRINT(.\objects\trunk.lst) TABS(2) OBJECT(.\objects\trunk.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in Trunk module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <trunk.h>
+  23          #include <string.h>
+  24          
+  25          #include <rtl8367c_asicdrv.h>
+  26          #include <rtl8367c_asicdrv_trunking.h>
+  27          
+  28          /* Function Name:
+  29           *      rtk_trunk_port_set
+  30           * Description:
+  31           *      Set trunking group available port mask
+  32           * Input:
+  33           *      trk_gid                 - trunk group id
+  34           *      pTrunk_member_portmask  - Logic trunking member port mask
+  35           * Output:
+  36           *      None
+  37           * Return:
+  38           *      RT_ERR_OK           - OK
+  39           *      RT_ERR_FAILED       - Failed
+  40           *      RT_ERR_SMI          - SMI access error
+  41           *      RT_ERR_LA_TRUNK_ID  - Invalid trunking group
+  42           *      RT_ERR_PORT_MASK    - Invalid portmask.
+  43           * Note:
+  44           *      The API can set port trunking group port mask. Each port trunking group has max 4 ports.
+  45           *      If enabled port mask has less than 2 ports available setting, then this trunking group function is
+             - disabled.
+  46           */
+  47          rtk_api_ret_t rtk_trunk_port_set(rtk_trunk_group_t trk_gid, rtk_portmask_t *pTrunk_member_portmask)
+  48          {
+  49   1          rtk_api_ret_t retVal;
+  50   1          uint32 pmsk;
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 2   
+
+  51   1          uint32 regValue, type, tmp;
+  52   1      
+  53   1      
+  54   1          if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0249)) != RT_ERR_OK)
+  55   1              return retVal;
+  56   1      
+  57   1          if((retVal = rtl8367c_getAsicReg(0x1300, &regValue)) != RT_ERR_OK)
+  58   1              return retVal;
+  59   1      
+  60   1          if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0000)) != RT_ERR_OK)
+  61   1              return retVal;
+  62   1      
+  63   1          switch (regValue)
+  64   1          {
+  65   2              case 0x0276:
+  66   2              case 0x0597:
+  67   2              case 0x6367:
+  68   2                  type = 0;
+  69   2                  break;
+  70   2              case 0x0652:
+  71   2              case 0x6368:
+  72   2                  type = 1;
+  73   2                  break;
+  74   2              case 0x0801:
+  75   2              case 0x6511:
+  76   2                  type = 2;
+  77   2                  break;
+  78   2              default:
+  79   2                  return RT_ERR_FAILED;
+  80   2          }
+  81   1      
+  82   1          /* Check initialization state */
+  83   1          RTK_CHK_INIT_STATE();
+  84   1      
+  85   1          /* Check Trunk Group Valid */
+  86   1          RTK_CHK_TRUNK_GROUP_VALID(trk_gid);
+  87   1      
+  88   1          if(NULL == pTrunk_member_portmask)
+  89   1              return RT_ERR_NULL_POINTER;
+  90   1      
+  91   1          RTK_CHK_PORTMASK_VALID(pTrunk_member_portmask);
+  92   1      
+  93   1          if((retVal = rtk_switch_portmask_L2P_get(pTrunk_member_portmask, &pmsk)) != RT_ERR_OK)
+  94   1              return retVal;
+  95   1      
+  96   1          if((type == 0) || (type == 1))
+  97   1          {
+  98   2              if ((pmsk | RTL8367C_PORT_TRUNK_GROUP_MASK_MASK(trk_gid)) != (uint32)RTL8367C_PORT_TRUNK_GROUP_MAS
+             -K_MASK(trk_gid))
+  99   2                  return RT_ERR_PORT_MASK;
+ 100   2      
+ 101   2              pmsk = (pmsk & RTL8367C_PORT_TRUNK_GROUP_MASK_MASK(trk_gid)) >> RTL8367C_PORT_TRUNK_GROUP_MASK_OFF
+             -SET(trk_gid);
+ 102   2          }
+ 103   1          else if(type == 2)
+ 104   1          {
+ 105   2              tmp = 0;
+ 106   2      
+ 107   2              if(pmsk & 0x2)
+ 108   2                  tmp |= 1;
+ 109   2              if(pmsk & 0x8)
+ 110   2                  tmp |=2;
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 3   
+
+ 111   2              if(pmsk & 0x80)
+ 112   2                  tmp |=8;
+ 113   2      
+ 114   2              pmsk = tmp;
+ 115   2          }
+ 116   1      
+ 117   1          if ((retVal = rtl8367c_setAsicTrunkingGroup(trk_gid, pmsk)) != RT_ERR_OK)
+ 118   1              return retVal;
+ 119   1      
+ 120   1          return RT_ERR_OK;
+ 121   1      }
+ 122          
+ 123          /* Function Name:
+ 124           *      rtk_trunk_port_get
+ 125           * Description:
+ 126           *      Get trunking group available port mask
+ 127           * Input:
+ 128           *      trk_gid - trunk group id
+ 129           * Output:
+ 130           *      pTrunk_member_portmask - Logic trunking member port mask
+ 131           * Return:
+ 132           *      RT_ERR_OK           - OK
+ 133           *      RT_ERR_FAILED       - Failed
+ 134           *      RT_ERR_SMI          - SMI access error
+ 135           *      RT_ERR_LA_TRUNK_ID  - Invalid trunking group
+ 136           * Note:
+ 137           *      The API can get 2 port trunking group.
+ 138           */
+ 139          rtk_api_ret_t rtk_trunk_port_get(rtk_trunk_group_t trk_gid, rtk_portmask_t *pTrunk_member_portmask)
+ 140          {
+ 141   1          rtk_api_ret_t retVal;
+ 142   1          uint32 pmsk;
+ 143   1      
+ 144   1          /* Check initialization state */
+ 145   1          RTK_CHK_INIT_STATE();
+ 146   1      
+ 147   1          /* Check Trunk Group Valid */
+ 148   1          RTK_CHK_TRUNK_GROUP_VALID(trk_gid);
+ 149   1      
+ 150   1          if ((retVal = rtl8367c_getAsicTrunkingGroup(trk_gid, &pmsk)) != RT_ERR_OK)
+ 151   1              return retVal;
+ 152   1      
+ 153   1          pmsk = pmsk << RTL8367C_PORT_TRUNK_GROUP_MASK_OFFSET(trk_gid);
+ 154   1      
+ 155   1          if((retVal = rtk_switch_portmask_P2L_get(pmsk, pTrunk_member_portmask)) != RT_ERR_OK)
+ 156   1              return retVal;
+ 157   1      
+ 158   1          return RT_ERR_OK;
+ 159   1      }
+ 160          
+ 161          /* Function Name:
+ 162           *      rtk_trunk_distributionAlgorithm_set
+ 163           * Description:
+ 164           *      Set port trunking hash select sources
+ 165           * Input:
+ 166           *      trk_gid         - trunk group id
+ 167           *      algo_bitmask   - Bitmask of the distribution algorithm
+ 168           * Output:
+ 169           *      None
+ 170           * Return:
+ 171           *      RT_ERR_OK           - OK
+ 172           *      RT_ERR_FAILED       - Failed
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 4   
+
+ 173           *      RT_ERR_SMI          - SMI access error
+ 174           *      RT_ERR_LA_TRUNK_ID  - Invalid trunking group
+ 175           *      RT_ERR_LA_HASHMASK  - Hash algorithm selection error.
+ 176           *      RT_ERR_PORT_MASK    - Invalid portmask.
+ 177           * Note:
+ 178           *      The API can set port trunking hash algorithm sources.
+ 179           *      7 bits mask for link aggregation group0 hash parameter selection {DIP, SIP, DMAC, SMAC, SPA}
+ 180           *      - 0b0000001: SPA
+ 181           *      - 0b0000010: SMAC
+ 182           *      - 0b0000100: DMAC
+ 183           *      - 0b0001000: SIP
+ 184           *      - 0b0010000: DIP
+ 185           *      - 0b0100000: TCP/UDP Source Port
+ 186           *      - 0b1000000: TCP/UDP Destination Port
+ 187           *      Example:
+ 188           *      - 0b0000011: SMAC & SPA
+ 189           *      - Note that it could be an arbitrary combination or independent set
+ 190           */
+ 191          rtk_api_ret_t rtk_trunk_distributionAlgorithm_set(rtk_trunk_group_t trk_gid, uint32 algo_bitmask)
+ 192          {
+ 193   1          rtk_api_ret_t retVal;
+ 194   1      
+ 195   1          /* Check initialization state */
+ 196   1          RTK_CHK_INIT_STATE();
+ 197   1      
+ 198   1          if (trk_gid != RTK_WHOLE_SYSTEM)
+ 199   1              return RT_ERR_LA_TRUNK_ID;
+ 200   1      
+ 201   1          if (algo_bitmask >= 128)
+ 202   1              return RT_ERR_LA_HASHMASK;
+ 203   1      
+ 204   1          if ((retVal = rtl8367c_setAsicTrunkingHashSelect(algo_bitmask)) != RT_ERR_OK)
+ 205   1              return retVal;
+ 206   1      
+ 207   1          return RT_ERR_OK;
+ 208   1      }
+ 209          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_trunk_distributionAlgorithm_get
+               * Description:
+               *      Get port trunking hash select sources
+               * Input:
+               *      trk_gid - trunk group id
+               * Output:
+               *      pAlgo_bitmask -  Bitmask of the distribution algorithm
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_LA_TRUNK_ID  - Invalid trunking group
+               * Note:
+               *      The API can get port trunking hash algorithm sources.
+               */
+              rtk_api_ret_t rtk_trunk_distributionAlgorithm_get(rtk_trunk_group_t trk_gid, uint32 *pAlgo_bitmask)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (trk_gid != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_LA_TRUNK_ID;
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 5   
+
+              
+                  if(NULL == pAlgo_bitmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicTrunkingHashSelect((uint32 *)pAlgo_bitmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_trafficSeparate_set
+               * Description:
+               *      Set the traffic separation setting of a trunk group from the specified device.
+               * Input:
+               *      trk_gid      - trunk group id
+               *      separateType     - traffic separation setting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_UNIT_ID     - invalid unit id
+               *      RT_ERR_LA_TRUNK_ID - invalid trunk ID
+               *      RT_ERR_LA_HASHMASK - invalid hash mask
+               * Note:
+               *      SEPARATE_NONE: disable traffic separation
+               *      SEPARATE_FLOOD: trunk MSB link up port is dedicated to TX flooding (L2 lookup miss) traffic
+               */
+              rtk_api_ret_t rtk_trunk_trafficSeparate_set(rtk_trunk_group_t trk_gid, rtk_trunk_separateType_t separateTy
+             -pe)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 enabled;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (trk_gid != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_LA_TRUNK_ID;
+              
+                  if(separateType >= SEPARATE_END)
+                      return RT_ERR_INPUT;
+              
+                  enabled = (separateType == SEPARATE_FLOOD) ? ENABLED : DISABLED;
+                  if ((retVal = rtl8367c_setAsicTrunkingFlood(enabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_trafficSeparate_get
+               * Description:
+               *      Get the traffic separation setting of a trunk group from the specified device.
+               * Input:
+               *      trk_gid        - trunk group id
+               * Output:
+               *      pSeparateType   - pointer separated traffic type
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 6   
+
+               *      RT_ERR_UNIT_ID      - invalid unit id
+               *      RT_ERR_LA_TRUNK_ID  - invalid trunk ID
+               *      RT_ERR_NULL_POINTER - input parameter may be null pointer
+               * Note:
+               *      SEPARATE_NONE: disable traffic separation
+               *      SEPARATE_FLOOD: trunk MSB link up port is dedicated to TX flooding (L2 lookup miss) traffic
+               */
+              rtk_api_ret_t rtk_trunk_trafficSeparate_get(rtk_trunk_group_t trk_gid, rtk_trunk_separateType_t *pSeparate
+             -Type)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 enabled;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (trk_gid != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_LA_TRUNK_ID;
+              
+                  if(NULL == pSeparateType)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicTrunkingFlood(&enabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pSeparateType = (enabled == ENABLED) ? SEPARATE_FLOOD : SEPARATE_NONE;
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_mode_set
+               * Description:
+               *      Set the trunk mode to the specified device.
+               * Input:
+               *      mode - trunk mode
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_INPUT   - invalid input parameter
+               * Note:
+               *      The enum of the trunk mode as following
+               *      - TRUNK_MODE_NORMAL
+               *      - TRUNK_MODE_DUMB
+               */
+              rtk_api_ret_t rtk_trunk_mode_set(rtk_trunk_mode_t mode)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(mode >= TRUNK_MODE_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicTrunkingMode((uint32)mode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 7   
+
+              /* Function Name:
+               *      rtk_trunk_mode_get
+               * Description:
+               *      Get the trunk mode from the specified device.
+               * Input:
+               *      None
+               * Output:
+               *      pMode - pointer buffer of trunk mode
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_NULL_POINTER - input parameter may be null pointer
+               * Note:
+               *      The enum of the trunk mode as following
+               *      - TRUNK_MODE_NORMAL
+               *      - TRUNK_MODE_DUMB
+               */
+              rtk_api_ret_t rtk_trunk_mode_get(rtk_trunk_mode_t *pMode)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pMode)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicTrunkingMode((uint32 *)pMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_trafficPause_set
+               * Description:
+               *      Set the traffic pause setting of a trunk group.
+               * Input:
+               *      trk_gid      - trunk group id
+               *      enable       - traffic pause state
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_LA_TRUNK_ID - invalid trunk ID
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_trunk_trafficPause_set(rtk_trunk_group_t trk_gid, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Trunk Group Valid */
+                  RTK_CHK_TRUNK_GROUP_VALID(trk_gid);
+              
+                  if(enable >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 8   
+
+                  if ((retVal = rtl8367c_setAsicTrunkingFc((uint32)trk_gid, (uint32)enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_trafficPause_get
+               * Description:
+               *      Get the traffic pause setting of a trunk group.
+               * Input:
+               *      trk_gid        - trunk group id
+               * Output:
+               *      pEnable        - pointer of traffic pause state.
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_LA_TRUNK_ID  - invalid trunk ID
+               *      RT_ERR_NULL_POINTER - input parameter may be null pointer
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_trunk_trafficPause_get(rtk_trunk_group_t trk_gid, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Trunk Group Valid */
+                  RTK_CHK_TRUNK_GROUP_VALID(trk_gid);
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicTrunkingFc((uint32)trk_gid, (uint32 *)pEnable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_hashMappingTable_set
+               * Description:
+               *      Set hash value to port array in the trunk group id from the specified device.
+               * Input:
+               *      trk_gid          - trunk group id
+               *      pHash2Port_array - ports associate with the hash value
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_UNIT_ID            - invalid unit id
+               *      RT_ERR_LA_TRUNK_ID        - invalid trunk ID
+               *      RT_ERR_NULL_POINTER       - input parameter may be null pointer
+               *      RT_ERR_LA_TRUNK_NOT_EXIST - the trunk doesn't exist
+               *      RT_ERR_LA_NOT_MEMBER_PORT - the port is not a member port of the trunk
+               *      RT_ERR_LA_CPUPORT         - CPU port can not be aggregated port
+               * Note:
+               *      Trunk group 0 & 1 shares the same hash mapping table.
+               *      Trunk group 2 uses a independent table.
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 9   
+
+               */
+              rtk_api_ret_t rtk_trunk_hashMappingTable_set(rtk_trunk_group_t trk_gid, rtk_trunk_hashVal2Port_t *pHash2Po
+             -rt_array)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 hashValue;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Trunk Group Valid */
+                  RTK_CHK_TRUNK_GROUP_VALID(trk_gid);
+              
+                  if(NULL == pHash2Port_array)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(trk_gid <= TRUNK_GROUP1)
+                  {
+                      for(hashValue = 0; hashValue < RTK_MAX_NUM_OF_TRUNK_HASH_VAL; hashValue++)
+                      {
+                          if ((retVal = rtl8367c_setAsicTrunkingHashTable(hashValue, pHash2Port_array->value[hashValue])
+             -) != RT_ERR_OK)
+                              return retVal;
+                      }
+                  }
+                  else
+                  {
+                      for(hashValue = 0; hashValue < RTK_MAX_NUM_OF_TRUNK_HASH_VAL; hashValue++)
+                      {
+                          if ((retVal = rtl8367c_setAsicTrunkingHashTable1(hashValue, pHash2Port_array->value[hashValue]
+             -)) != RT_ERR_OK)
+                              return retVal;
+                      }
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_hashMappingTable_get
+               * Description:
+               *      Get hash value to port array in the trunk group id from the specified device.
+               * Input:
+               *      trk_gid          - trunk group id
+               * Output:
+               *      pHash2Port_array - pointer buffer of ports associate with the hash value
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_UNIT_ID      - invalid unit id
+               *      RT_ERR_LA_TRUNK_ID  - invalid trunk ID
+               *      RT_ERR_NULL_POINTER - input parameter may be null pointer
+               * Note:
+               *      Trunk group 0 & 1 shares the same hash mapping table.
+               *      Trunk group 2 uses a independent table.
+               */
+              rtk_api_ret_t rtk_trunk_hashMappingTable_get(rtk_trunk_group_t trk_gid, rtk_trunk_hashVal2Port_t *pHash2Po
+             -rt_array)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 hashValue;
+                  uint32 hashPort;
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 10  
+
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Trunk Group Valid */
+                  RTK_CHK_TRUNK_GROUP_VALID(trk_gid);
+              
+                  if(NULL == pHash2Port_array)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(trk_gid <= TRUNK_GROUP1)
+                  {
+                      for(hashValue = 0; hashValue < RTK_MAX_NUM_OF_TRUNK_HASH_VAL; hashValue++)
+                      {
+                          if ((retVal = rtl8367c_getAsicTrunkingHashTable(hashValue, &hashPort)) != RT_ERR_OK)
+                              return retVal;
+              
+                          pHash2Port_array->value[hashValue] = hashPort;
+                      }
+                  }
+                  else
+                  {
+                      for(hashValue = 0; hashValue < RTK_MAX_NUM_OF_TRUNK_HASH_VAL; hashValue++)
+                      {
+                          if ((retVal = rtl8367c_getAsicTrunkingHashTable1(hashValue, &hashPort)) != RT_ERR_OK)
+                              return retVal;
+              
+                          pHash2Port_array->value[hashValue] = hashPort;
+                      }
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_trunk_portQueueEmpty_get
+               * Description:
+               *      Get the port mask which all queues are empty.
+               * Input:
+               *      None.
+               * Output:
+               *      pEmpty_portmask   - pointer empty port mask
+               * Return:
+               *      RT_ERR_OK
+               *      RT_ERR_FAILED
+               *      RT_ERR_NULL_POINTER - input parameter may be null pointer
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_trunk_portQueueEmpty_get(rtk_portmask_t *pEmpty_portmask)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 pmask;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pEmpty_portmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicQeueuEmptyStatus(&pmask)) != RT_ERR_OK)
+                      return retVal;
+C51 COMPILER V9.60.0.0   TRUNK                                                             11/02/2026 17:57:11 PAGE 11  
+
+              
+                  if ((retVal = rtk_switch_portmask_P2L_get(pmask, pEmpty_portmask)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    898    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      35
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

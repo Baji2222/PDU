@@ -1,0 +1,743 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_RLDP
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_rldp.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_rldp.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWS
+                    -E INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\
+                    -sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,R
+                    -TK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIB
+                    -LE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_rldp.lst) TABS(2) OBJECT(.\objects\rtl836
+                    -7c_asicdrv_rldp.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 42321 $
+  13           * $Date: 2013-08-26 13:51:29 +0800 (?±ä?, 26 ?«æ? 2013) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : RLDP related functions
+  17           *
+  18           */
+  19          
+  20          #include <rtl8367c_asicdrv_rldp.h>
+  21          /* Function Name:
+  22           *      rtl8367c_setAsicRldp
+  23           * Description:
+  24           *      Set RLDP function enable/disable
+  25           * Input:
+  26           *      enabled     - 1: enabled, 0: disabled
+  27           * Output:
+  28           *      None
+  29           * Return:
+  30           *      RT_ERR_OK   - Success
+  31           *      RT_ERR_SMI  - SMI access error
+  32           * Note:
+  33           *      None
+  34           */
+  35          ret_t rtl8367c_setAsicRldp(uint32 enabled)
+  36          {
+  37   1          return rtl8367c_setAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_ENABLE_OFFSET, enabled);
+  38   1      }
+  39          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicRldp
+               * Description:
+               *      Get RLDP function enable/disable
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 2   
+
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldp(uint32 *pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_ENABLE_OFFSET, pEnabled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpEnable8051
+               * Description:
+               *      Set RLDP function handled by ASIC or 8051
+               * Input:
+               *      enabled     - 1: enabled 8051, 0: disabled 8051 (RLDP is handled by ASIC)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpEnable8051(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_8051_ENABLE_OFFSET, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldrtl8367c_getAsicRldpEnable8051pEnable8051
+               * Description:
+               *      Get RLDP function handled by ASIC or 8051
+               * Input:
+               *      pEnabled    - 1: enabled 8051, 0: disabled 8051 (RLDP is handled by ASIC)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpEnable8051(uint32 *pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_8051_ENABLE_OFFSET, pEnabled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpCompareRandomNumber
+               * Description:
+               *      Set enable compare the random number field and seed field of RLDP frame
+               * Input:
+               *      enabled     - 1: enabled comparing random number, 0: disabled comparing random number
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpCompareRandomNumber(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_COMP_ID_OFFSET, enabled);
+              }
+              /* Function Name:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 3   
+
+               *      rtl8367c_getAsicRldpCompareRandomNumber
+               * Description:
+               *      Get enable compare the random number field and seed field of RLDP frame
+               * Input:
+               *      pEnabled    - 1: enabled comparing random number, 0: disabled comparing random number
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpCompareRandomNumber(uint32 *pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_COMP_ID_OFFSET, pEnabled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpIndicatorSource
+               * Description:
+               *      Set buzzer and LED source when detecting a loop
+               * Input:
+               *      src     - 0: ASIC, 1: 8051
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpIndicatorSource(uint32 src)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_INDICATOR_SOURCE_OFFSET, src);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpIndicatorSource
+               * Description:
+               *      Get buzzer and LED source when detecting a loop
+               * Input:
+               *      pSrc    - 0: ASIC, 1: 8051
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpIndicatorSource(uint32 *pSrc)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_INDICATOR_SOURCE_OFFSET, pSrc);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpCheckingStatePara
+               * Description:
+               *      Set retry count and retry period of checking state
+               * Input:
+               *      retryCount  - 0~0xFF (times)
+               *      retryPeriod - 0~0xFFFF (ms)
+               * Output:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 4   
+
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_OUT_OF_RANGE - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpCheckingStatePara(uint32 retryCount, uint32 retryPeriod)
+              {
+                  ret_t retVal;
+              
+                  if(retryCount > 0xFF)
+                      return RT_ERR_OUT_OF_RANGE;
+                  if(retryPeriod > RTL8367C_REGDATAMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_RLDP_RETRY_COUNT_REG, RTL8367C_RLDP_RETRY_COUNT_CHKSTATE_MAS
+             -K, retryCount);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_setAsicReg(RTL8367C_RLDP_RETRY_PERIOD_CHKSTATE_REG, retryPeriod);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpCheckingStatePara
+               * Description:
+               *      Get retry count and retry period of checking state
+               * Input:
+               *      pRetryCount     - 0~0xFF (times)
+               *      pRetryPeriod    - 0~0xFFFF (ms)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_OUT_OF_RANGE - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpCheckingStatePara(uint32 *pRetryCount, uint32 *pRetryPeriod)
+              {
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_RLDP_RETRY_COUNT_REG, RTL8367C_RLDP_RETRY_COUNT_CHKSTATE_MAS
+             -K, pRetryCount);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_getAsicReg(RTL8367C_RLDP_RETRY_PERIOD_CHKSTATE_REG, pRetryPeriod);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpLoopStatePara
+               * Description:
+               *      Set retry count and retry period of loop state
+               * Input:
+               *      retryCount  - 0~0xFF (times)
+               *      retryPeriod - 0~0xFFFF (ms)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 5   
+
+               *      RT_ERR_OUT_OF_RANGE - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpLoopStatePara(uint32 retryCount, uint32 retryPeriod)
+              {
+                  ret_t retVal;
+              
+                  if(retryCount > 0xFF)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(retryPeriod > RTL8367C_REGDATAMAX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_RLDP_RETRY_COUNT_REG, RTL8367C_RLDP_RETRY_COUNT_LOOPSTATE_MA
+             -SK, retryCount);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_setAsicReg(RTL8367C_RLDP_RETRY_PERIOD_LOOPSTATE_REG, retryPeriod);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpLoopStatePara
+               * Description:
+               *      Get retry count and retry period of loop state
+               * Input:
+               *      pRetryCount     - 0~0xFF (times)
+               *      pRetryPeriod    - 0~0xFFFF (ms)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_OUT_OF_RANGE - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpLoopStatePara(uint32 *pRetryCount, uint32 *pRetryPeriod)
+              {
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_RLDP_RETRY_COUNT_REG, RTL8367C_RLDP_RETRY_COUNT_LOOPSTATE_MA
+             -SK, pRetryCount);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_getAsicReg(RTL8367C_RLDP_RETRY_PERIOD_LOOPSTATE_REG, pRetryPeriod);
+              }
+              #endif
+ 282          /* Function Name:
+ 283           *      rtl8367c_setAsicRldpTxPortmask
+ 284           * Description:
+ 285           *      Set portmask that send/forward RLDP frame
+ 286           * Input:
+ 287           *      portmask    - 0~0xFF
+ 288           * Output:
+ 289           *      None
+ 290           * Return:
+ 291           *      RT_ERR_OK           - Success
+ 292           *      RT_ERR_SMI          - SMI access error
+ 293           *      RT_ERR_PORT_MASK    - Invalid portmask
+ 294           * Note:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 6   
+
+ 295           *      None
+ 296           */
+ 297          ret_t rtl8367c_setAsicRldpTxPortmask(uint32 portmask)
+ 298          {
+ 299   1          if(portmask > RTL8367C_PORTMASK)
+ 300   1              return RT_ERR_PORT_MASK;
+ 301   1      
+ 302   1          return rtl8367c_setAsicReg(RTL8367C_RLDP_TX_PMSK_REG, portmask);
+ 303   1      }
+ 304          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicRldpTxPortmask
+               * Description:
+               *      Get portmask that send/forward RLDP frame
+               * Input:
+               *      pPortmask   - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpTxPortmask(uint32 *pPortmask)
+              {
+                  return rtl8367c_getAsicReg(RTL8367C_RLDP_TX_PMSK_REG, pPortmask);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpMagicNum
+               * Description:
+               *      Set Random seed of RLDP
+               * Input:
+               *      seed    - MAC
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpMagicNum(ether_addr_t seed)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+                  uint16 *accessPtr;
+                  uint32 i;
+              
+                  accessPtr = (uint16*)&seed;
+              
+                  for (i = 0; i < 3; i++)
+                  {
+                      regData = *accessPtr;
+                      retVal = rtl8367c_setAsicReg(RTL8367C_RLDP_MAGIC_NUM_REG_BASE + i, regData);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+              
+                      accessPtr++;
+                  }
+              
+                  return retVal;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 7   
+
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpMagicNum
+               * Description:
+               *      Get Random seed of RLDP
+               * Input:
+               *      pSeed   - MAC
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpMagicNum(ether_addr_t *pSeed)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+                  uint16 *accessPtr;
+                  uint32 i;
+              
+                  accessPtr = (uint16*)pSeed;
+              
+                  for(i = 0; i < 3; i++)
+                  {
+                      retVal = rtl8367c_getAsicReg(RTL8367C_RLDP_MAGIC_NUM_REG_BASE + i, &regData);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+              
+                      *accessPtr = regData;
+                      accessPtr++;
+                  }
+              
+                  return retVal;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicRldpLoopedPortmask
+               * Description:
+               *      Get looped portmask
+               * Input:
+               *      pPortmask   - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpLoopedPortmask(uint32 *pPortmask)
+              {
+                  return rtl8367c_getAsicReg(RTL8367C_RLDP_LOOP_PMSK_REG, pPortmask);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpRandomNumber
+               * Description:
+               *      Get Random number of RLDP
+               * Input:
+               *      pRandNumber     - MAC
+               * Output:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 8   
+
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpRandomNumber(ether_addr_t *pRandNumber)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+                  int16 accessPtr[3];
+                  uint32 i;
+              
+                  for(i = 0; i < 3; i++)
+                  {
+                      retVal = rtl8367c_getAsicReg(RTL8367C_RLDP_RAND_NUM_REG_BASE+ i, &regData);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+              
+                      accessPtr[i] = regData;
+                  }
+              
+                  memcpy(pRandNumber, accessPtr, 6);
+                  return retVal;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpLoopedPortmask
+               * Description:
+               *      Get port number of looped pair
+               * Input:
+               *      port        - Physical port number (0~7)
+               *      pLoopedPair     - port (0~7)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpLoopedPortPair(uint32 port, uint32 *pLoopedPair)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(port < 8)
+                      return rtl8367c_getAsicRegBits(RTL8367C_RLDP_LOOP_PORT_REG(port), RTL8367C_RLDP_LOOP_PORT_MASK(por
+             -t), pLoopedPair);
+                  else
+                      return rtl8367c_getAsicRegBits(RTL8367C_REG_RLDP_LOOP_PORT_REG4 + ((port - 8) >> 1), RTL8367C_RLDP
+             -_LOOP_PORT_MASK(port), pLoopedPair);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRlppTrap8051
+               * Description:
+               *      Set trap RLPP packet to 8051
+               * Input:
+               *      enabled     - 1: enabled, 0: disabled
+               * Output:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 9   
+
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRlppTrap8051(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLPP_8051_TRAP_OFFSET, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRlppTrap8051
+               * Description:
+               *      Get trap RLPP packet to 8051
+               * Input:
+               *      pEnabled    - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRlppTrap8051(uint32 *pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLPP_8051_TRAP_OFFSET, pEnabled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpLeaveLoopedPortmask
+               * Description:
+               *      Clear leaved looped portmask
+               * Input:
+               *      portmask    - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpLeaveLoopedPortmask(uint32 portmask)
+              {
+                  return rtl8367c_setAsicReg(RTL8367C_REG_RLDP_RELEASED_INDICATOR, portmask);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpLeaveLoopedPortmask
+               * Description:
+               *      Get leaved looped portmask
+               * Input:
+               *      pPortmask   - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpLeaveLoopedPortmask(uint32 *pPortmask)
+              {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 10  
+
+                  return rtl8367c_getAsicReg(RTL8367C_REG_RLDP_RELEASED_INDICATOR, pPortmask);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicRldpEnterLoopedPortmask
+               * Description:
+               *      Clear enter loop portmask
+               * Input:
+               *      portmask    - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpEnterLoopedPortmask(uint32 portmask)
+              {
+                  return rtl8367c_setAsicReg(RTL8367C_REG_RLDP_LOOPED_INDICATOR, portmask);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpEnterLoopedPortmask
+               * Description:
+               *      Get enter loop portmask
+               * Input:
+               *      pPortmask   - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpEnterLoopedPortmask(uint32 *pPortmask)
+              {
+                  return rtl8367c_getAsicReg(RTL8367C_REG_RLDP_LOOPED_INDICATOR, pPortmask);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicRldpTriggerMode
+               * Description:
+               *      Set trigger RLDP mode
+               * Input:
+               *      mode    - 1: Periodically, 0: SA moving
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldpTriggerMode(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_TRIGGER_MODE_OFFSET, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldpTriggerMode
+               * Description:
+               *      Get trigger RLDP mode
+               * Input:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 11  
+
+               *      pMode   - - 1: Periodically, 0: SA moving
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldpTriggerMode(uint32 *pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_RLDP_CTRL0, RTL8367C_RLDP_TRIGGER_MODE_OFFSET, pEnabled);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicRldp8051Portmask
+               * Description:
+               *      Set 8051/CPU configured looped portmask
+               * Input:
+               *      portmask    - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_MASK    - Invalid portmask
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRldp8051Portmask(uint32 portmask)
+              {
+                  ret_t retVal;
+                  if(portmask > RTL8367C_PORTMASK)
+                      return RT_ERR_PORT_MASK;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_RLDP_CTRL0_REG,RTL8367C_RLDP_8051_LOOP_PORTMSK_MASK,portmask
+             - & 0xff);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_RLDP_CTRL5,RTL8367C_RLDP_CTRL5_MASK,(portmask >> 8) & 7)
+             -;
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRldp8051Portmask
+               * Description:
+               *      Get 8051/CPU configured looped portmask
+               * Input:
+               *      pPortmask   - 0~0xFF
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK   - Success
+               *      RT_ERR_SMI  - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRldp8051Portmask(uint32 *pPortmask)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RLDP                                             11/02/2026 17:57:24 PAGE 12  
+
+              {
+                  uint32 tmpPmsk;
+                  ret_t retVal;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_RLDP_CTRL0_REG,RTL8367C_RLDP_8051_LOOP_PORTMSK_MASK,&tmpPmsk
+             -);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+                  *pPortmask = tmpPmsk & 0xff;
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_RLDP_CTRL5,RTL8367C_RLDP_CTRL5_MASK,&tmpPmsk);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+                  *pPortmask |= (tmpPmsk & 7) <<8;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 680          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     92    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

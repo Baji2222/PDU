@@ -1,0 +1,176 @@
+C51 COMPILER V9.60.0.0   ICMP                                                              11/02/2026 17:56:58 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE ICMP
+OBJECT MODULE PLACED IN .\objects\icmp.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\icmp.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTO
+                    -R(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\
+                    -common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWP
+                    -S,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS
+                    -_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\icmp.lst) TABS(2) OBJECT(.\objects\icmp.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          /*
+   3          * Copyright Realtek Semiconductor Corporation, 2008
+   4          * All rights reserved.
+   5          *
+   6          * Program  : ICMP (Internet Control Message Protocol) of Light-weight Protocol Stack
+   7          * Abstract : 
+   8          * Author   : 
+   9          * $Id: $
+  10          */
+  11          
+  12          #include <local/lwps_config.h>
+  13          
+  14          #if LWPS_ICMP
+  15          
+  16          /*
+  17           * Include Files
+  18           */
+  19          
+  20          #include <lwps/lwps.h>
+  21          #include <stdio.h>
+  22          #include <string.h>
+  23          
+  24          #include <local/sal_config.h>
+  25          
+  26          /*
+  27           * Symbol Definition
+  28           */
+  29          
+  30          
+  31          
+  32          /*
+  33           * Function Declaration
+  34           */
+  35          #if DBG_LWPS_ICMP_ENABLE
+              // ICMP Header Dump: Prints formatted ICMP header fields for debugging purposes
+              // Displays type, code, checksum, identifier, and sequence number fields
+              static void icmp_hdr_dump(icmp_hdr_t *pIcmpHdr) large
+              {
+                  DBG_LWPS_ICMP_PRINTF("-- [ICMP HDR dump] ----------------------------\n");
+                  DBG_LWPS_ICMP_PRINTF("       Type: 0x%02X (%d)\n", (uint16)pIcmpHdr->type, (uint16)pIcmpHdr->type);
+                  DBG_LWPS_ICMP_PRINTF("       Code: 0x%02X (%d)\n", (uint16)pIcmpHdr->cod, (uint16)pIcmpHdr->cod);
+                  DBG_LWPS_ICMP_PRINTF("   Checksum: 0x%04X\n", (uint16)pIcmpHdr->chksum);
+                  DBG_LWPS_ICMP_PRINTF(" Identifier: 0x%04X\n", (uint16)pIcmpHdr->identifier);
+                  DBG_LWPS_ICMP_PRINTF(" Seq-Number: 0x%04X (%d)\n", (uint16)pIcmpHdr->seq_number, (uint16)pIcmpHdr->seq
+             -_number);
+                  DBG_LWPS_ICMP_PRINTF("-----------------------------------------------\n");
+              }
+              #endif /* end of DBG_LWPS_ICMP_ENABLE */
+  49          
+  50          // ICMP Initialize: Initializes the ICMP protocol layer
+C51 COMPILER V9.60.0.0   ICMP                                                              11/02/2026 17:56:58 PAGE 2   
+
+  51          // Returns LWPS_OK on successful initialization
+  52          int32 icmp_init(void) large
+  53          {
+  54   1          DBG_LWPS_ICMP_PRINTF("%s():%d\n", __FILE__, (uint16)__LINE__);
+  55   1      
+  56   1          return LWPS_OK;
+  57   1      }
+  58          
+  59          // ICMP Up Handle Echo Request: Processes ICMP echo request (ping) and sends echo reply
+  60          // Swaps IP addresses, sets reply type, and transmits response back to sender
+  61          static int32 icmp_up_handle_echo_request(pktBuf_t xdata *pBuf) large
+  62          {
+  63   1          ip_hdr_t   xdata *pIpHdr         = (ip_hdr_t *)pBuf->l3;  /* IP only */
+  64   1          icmp_hdr_t xdata *pIcmpHdr       = (icmp_hdr_t *)pBuf->l4;
+  65   1          ip_addr_t  xdata DstIpAddr;
+  66   1          pktBuf_t   xdata *pBuf_Reply     = pBuf;
+  67   1          icmp_hdr_t xdata *pIcmpHdr_Reply = (icmp_hdr_t *)pBuf->l4;
+  68   1      
+  69   1          DBG_LWPS_ICMP_PRINTF("%s():%d\n", __FILE__, (uint16)__LINE__);
+  70   1      
+  71   1          /* ICMP HDR setting */
+  72   1          pIcmpHdr_Reply->type = ICMP_TYPE_ECHOREPLY;
+  73   1          pIcmpHdr_Reply->cod = 0;
+  74   1          pIcmpHdr_Reply->chksum = 0;
+  75   1          pIcmpHdr_Reply->identifier = pIcmpHdr->identifier;
+  76   1          pIcmpHdr_Reply->seq_number = pIcmpHdr->seq_number;
+  77   1      
+  78   1          //icmp_hdr_dump(pIcmpHdr_Reply);
+  79   1      
+  80   1          /* IP information */
+  81   1          IPADDR_COPY( (DstIpAddr.addr), pIpHdr->src_ip);
+  82   1          /* Reply the padding */
+  83   1                 
+  84   1          //pBuf_Reply->length += (pBuf->length - sizeof(icmp_hdr_t));
+  85   1      
+  86   1      
+  87   1          pBuf_Reply->l4fmt = L4FMT_ICMP;
+  88   1        pBuf_Reply->size -= sizeof(eth_hdr_t);//pre-subtract
+  89   1      
+  90   1          if (LWPS_OK != ip_down(pBuf_Reply, &DstIpAddr)) {
+  91   2              OSAL_PRINTF("%s():%d - ip_output failed!\n", __FILE__, (uint16)__LINE__);
+  92   2          }
+  93   1          
+  94   1          //icmp_hdr_dump(pIcmpHdr_Reply);
+  95   1      
+  96   1          return LWPS_OK;
+  97   1      }
+  98          
+  99          // ICMP Up Handle Echo Reply: Handles incoming ICMP echo reply packets
+ 100          // Currently placeholder for processing ping responses (not fully implemented)
+ 101          static int32 icmp_up_handle_echo_reply(pktBuf_t *pBuf) large
+ 102          {
+ 103   1        /* kill compiler warning message */
+ 104   1        uint8 xdata tmp = pBuf->l2fmt;
+ 105   1      
+ 106   1          DBG_LWPS_ICMP_PRINTF("%s():%d - [FIXME] ECHO reply \n", __FILE__, (uint16)__LINE__);
+ 107   1      
+ 108   1          return LWPS_OK;
+ 109   1      }
+ 110          
+ 111          // ICMP Up: Dispatches incoming ICMP packets to appropriate handlers
+ 112          // Routes echo requests to reply handler and echo replies to reply handler
+C51 COMPILER V9.60.0.0   ICMP                                                              11/02/2026 17:56:58 PAGE 3   
+
+ 113          int32 icmp_up(pktBuf_t *pBuf) large
+ 114          {
+ 115   1          icmp_hdr_t xdata *pIcmpHdr = (icmp_hdr_t *)pBuf->l4;
+ 116   1      
+ 117   1          DBG_LWPS_ICMP_PRINTF("%s():%d\n", __FILE__, (uint16)__LINE__);
+ 118   1      
+ 119   1          //icmp_hdr_dump(pIcmpHdr);
+ 120   1      
+ 121   1          switch (pIcmpHdr->type) {
+ 122   2          case ICMP_TYPE_ECHO: 
+ 123   2              return icmp_up_handle_echo_request(pBuf);
+ 124   2              break;
+ 125   2      
+ 126   2          case ICMP_TYPE_ECHOREPLY:
+ 127   2              return icmp_up_handle_echo_reply(pBuf);
+ 128   2              break;
+ 129   2      
+ 130   2          default:
+ 131   2              DBG_LWPS_ICMP_PRINTF("icmp_up() - Not support icmp type %d \n", pIcmpHdr->type);
+ 132   2              //lwps_pbuf_free(pBuf);
+ 133   2              break;
+ 134   2          }
+ 135   1      
+ 136   1        
+ 137   1          return LWPS_OK;
+ 138   1      }
+ 139          
+ 140          #endif /* end of LWPS_ICMP */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    397    ----
+   CONSTANT SIZE    =    137    ----
+   XDATA SIZE       =   ----      14
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    137    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

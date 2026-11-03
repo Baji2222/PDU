@@ -1,0 +1,226 @@
+C51 COMPILER V9.60.0.0   NIC                                                               11/02/2026 17:56:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE NIC
+OBJECT MODULE PLACED IN .\objects\nic.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\drivers\nic.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\nic.lst) TABS(2) OBJECT(.\objects\nic.obj)
+
+line level    source
+
+   1          #include "common.h"
+   2          #include "asicreg.h"
+   3          #include "nic.h"
+   4          #include "l2.h"
+   5          
+   6          #include <reg_sfr.h>
+   7          #include <string.h>
+   8          #include <stdio.h>
+   9          
+  10              
+  11          /* The following two MACRO should be multiple of 8 */
+  12          #define PEDMA_DIRECTION(x)            ((x)<<7)
+  13          #define PEDMA_PKTBUF_TO_XSRAM     (0)
+  14          #define PEDMA_XSRAM_TO_PKTBUF     (1)
+  15          
+  16          // Has Receive Packet: Checks if there are any packets waiting in the RX buffer
+  17          // Returns TRUE if RX read descriptor pointers indicate pending packet, FALSE otherwise
+  18          uint8 hasRxPkt()
+  19          {
+  20   1        if (getReg(NIC_RXRDL) != 0 || getReg(NIC_RXRDH) !=0)
+  21   1          return TRUE;
+  22   1        else
+  23   1          return FALSE;
+  24   1      }
+  25          
+  26          // Receive Packet: Reads a packet from NIC RX buffer into system memory
+  27          // Copies packet data via PEDMA, validates CRC status, and advances RX pointers
+  28          int8 rxPkt(uint8 *buf, uint16 len)
+  29          {
+  30   1          uint16 xdata curRxPnt;      //current RX pkt start pointer.
+  31   1        uint8  cnt = 0;
+  32   1      
+  33   1          curRxPnt = (getReg(NIC_CRXCPRL) | (getReg(NIC_CRXCPRH) << 8)) * 8;
+  34   1      
+  35   1        buf += TAG_SIZE;
+  36   1      
+  37   1          PEDMA_E_ADDR0 = ((uint16)buf & 0xff);
+  38   1        PEDMA_E_ADDR1 = ((uint16)buf & 0xff00) >> 8;
+  39   1        PEDMA_P_ADDR0 = curRxPnt & 0xFF;
+  40   1        PEDMA_P_ADDR1 = (curRxPnt & 0xFF00) >> 8;
+  41   1        
+  42   1        PEDMA_LEN = 1;
+  43   1      
+  44   1          while(0 != PEDMA_LEN )
+  45   1              ;
+  46   1      
+  47   1          pktInfo.pktHdr.length = (buf[6] << 8) | buf[7];
+  48   1          
+  49   1          if ( pktInfo.pktHdr.length > ((uint16)len) )
+  50   1          {
+  51   2              printf("buffer too small\n");
+C51 COMPILER V9.60.0.0   NIC                                                               11/02/2026 17:56:57 PAGE 2   
+
+  52   2              return FAILED;
+  53   2          }
+  54   1      
+  55   1          pktInfo.pktHdr.status = (uint32)buf[0] 
+  56   1                               | ((uint32)buf[1] << 8) 
+  57   1                               | ((uint32)buf[2] << 16) 
+  58   1                               | ((uint32)buf[3] << 24);
+  59   1        
+  60   1      
+  61   1         /* drop RX CRC */
+  62   1        if (pktInfo.pktHdr.status & RXCRCE)
+  63   1          {
+  64   2              rxSeq++;
+  65   2              setReg(NIC_RXCMD, 1);
+  66   2          printf("nic rec rx err\n");
+  67   2              return FAILED;
+  68   2          }
+  69   1          rxSeq++;
+  70   1      
+  71   1          curRxPnt = (curRxPnt + 8) % RXBUFFERSIZE;
+  72   1          
+  73   1        PEDMA_E_ADDR0 = ((uint16)(buf + 8) & 0xff);
+  74   1        PEDMA_E_ADDR1 = ((uint16)(buf + 8) & 0xff00) >> 8;
+  75   1        PEDMA_P_ADDR0 = curRxPnt & 0xFF;
+  76   1        PEDMA_P_ADDR1 = (curRxPnt & 0xFF00) >> 8;
+  77   1        
+  78   1        PEDMA_LEN = (pktInfo.pktHdr.length + 7) >> 3;
+  79   1         
+  80   1          while(0 != PEDMA_LEN );
+  81   1          
+  82   1          setReg(NIC_RXCMD, 1);
+  83   1        /*no packet*/
+  84   1        if(getReg(NIC_RXRDL)==0 && getReg(NIC_RXRDH)==0)
+  85   1        {
+  86   2            EX1=1;
+  87   2        }
+  88   1        
+  89   1          return SUCCESS;
+  90   1      }
+  91          
+  92          //void txPkt(uint32 flag, uint16 len, uint8 *buf)
+  93          // Transmit Packet: Sends a packet from system memory to the NIC TX buffer
+  94          // Inserts CPU tag if needed, sets up PEDMA transfer, and triggers transmission
+  95          void txPkt(pktBuf_t *pBuf)
+  96          { 
+  97   1          uint16 xdata txstart;
+  98   1          pkt_hdr_t xdata pktHdr;
+  99   1          uint16 xdata freeSpace;
+ 100   1          uint32 xdata flag;
+ 101   1          uint8 xdata *buf;
+ 102   1          uint16 xdata len;
+ 103   1          uint8 xdata i;
+ 104   1        uint8 xdata off;
+ 105   1          static uint16 old_tmp56 = 0, flag1=0;
+ 106   1          uint16 tmp56=0;
+ 107   1      
+ 108   1        if(flag1!=0)
+ 109   1          {
+ 110   2              while(old_tmp56 == tmp56)
+ 111   2              {
+ 112   3                  tmp56 = getReg(0x1a56);
+ 113   3              }
+C51 COMPILER V9.60.0.0   NIC                                                               11/02/2026 17:56:57 PAGE 3   
+
+ 114   2          }
+ 115   1          flag1 = 1;
+ 116   1      
+ 117   1          flag = TXL4CSRE | TXL3CSRE | TXCRCRE;
+ 118   1      
+ 119   1          pBuf->pkt_head = pBuf->l2;
+ 120   1      
+ 121   1          off = 0;
+ 122   1          if(TX_DPORT_ASSIGN_PMSK == pBuf->tx_dport_mode)
+ 123   1          {
+ 124   2              if( (MAC_ADDR_LEN * 2)!=(pBuf->pkt_cputag - pBuf->pkt_head)){
+ 125   3                for( i = 0; i < MAC_ADDR_LEN * 2; i++)
+ 126   3                  {
+ 127   4                      *(pBuf->pkt_head + i - CPU_TAG_SIZE) = *(pBuf->pkt_head + i);
+ 128   4                  }
+ 129   3            pBuf->pkt_head -= CPU_TAG_SIZE;
+ 130   3            pBuf->size += CPU_TAG_SIZE;
+ 131   3            }
+ 132   2      
+ 133   2              /* insert CPU tag */
+ 134   2              *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 0) = 0x88;
+ 135   2              *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 1) = 0x99;
+ 136   2              *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 2) = 0x04;
+ 137   2          *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 3) = 0x00;
+ 138   2          *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 4) = 0x00;    
+ 139   2          *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 5) = 0x20;    
+ 140   2              *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 6) = (pBuf->tx_dst_pmsk >> 8) & 0xFF;
+ 141   2              *(pBuf->pkt_head + MAC_ADDR_LEN * 2 + 7) = pBuf->tx_dst_pmsk & 0xFF;
+ 142   2          }
+ 143   1      
+ 144   1          len = pBuf->size;
+ 145   1          buf = pBuf->pkt_head - FRAME_INFO_SIZE;
+ 146   1      
+ 147   1          //set TX pkt header
+ 148   1          pktHdr.status = (flag & 0x0001FF00) + txSeq;
+ 149   1          pktHdr.length = len;
+ 150   1      
+ 151   1          txSeq++;
+ 152   1          //check buffer size
+ 153   1          while (1)
+ 154   1          {
+ 155   2              freeSpace = ((getReg(NIC_TXASRL) | (getReg(NIC_TXASRH) << 8))) << 3;
+ 156   2              if (freeSpace >= (len + 8))     //8 byte alignment
+ 157   2                  break;
+ 158   2              //OSAL_PRINTF("in tx wait loop\n");
+ 159   2          }
+ 160   1      
+ 161   1          txstart = getReg(NIC_CTXCPRL) | (getReg(NIC_CTXCPRH) << 8);
+ 162   1          
+ 163   1      
+ 164   1          //write packet header to packet buffer
+ 165   1          buf[0] = (pktHdr.status) & 0xFF;
+ 166   1          buf[1] = (pktHdr.status >> 8) & 0xFF;
+ 167   1          buf[2] = (pktHdr.status >> 16)& 0xFF;
+ 168   1          buf[3] = (pktHdr.status >> 24)& 0xFF;
+ 169   1          buf[6] = (pktHdr.length >> 8) & 0xFF;
+ 170   1          buf[7] = (pktHdr.length) & 0xFF;
+ 171   1      
+ 172   1        PEDMA_E_ADDR0 = (uint16)buf & 0xff;
+ 173   1        PEDMA_E_ADDR1 = ((uint16)buf & 0xff00) >> 8;
+ 174   1        PEDMA_P_ADDR0 = (txstart * 8) & 0xFF;
+ 175   1        PEDMA_P_ADDR1 = (((txstart * 8) & 0xFF00) >> 8) | 0x80;
+C51 COMPILER V9.60.0.0   NIC                                                               11/02/2026 17:56:57 PAGE 4   
+
+ 176   1        
+ 177   1        PEDMA_LEN = (pktHdr.length + 7 + 8) >> 3;
+ 178   1        
+ 179   1        while(0 != PEDMA_LEN );
+ 180   1      
+ 181   1        old_tmp56 =getReg(0x1a56);
+ 182   1      
+ 183   1          setReg(NIC_TXCMD, 1);
+ 184   1      
+ 185   1          /* TX buf initial */
+ 186   1          pBuf->tx_dport_mode    = TX_DPORT_DEFAULT;
+ 187   1          pBuf->tx_trunk_support = TX_TRUNK_IGNORE;
+ 188   1        pBuf->pkt_cputag       = NULL;
+ 189   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1566    ----
+   CONSTANT SIZE    =     34    ----
+   XDATA SIZE       =      4      29
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

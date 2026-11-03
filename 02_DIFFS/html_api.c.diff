@@ -1,0 +1,26 @@
+--- /home/claude/orig/rtl8367c/src/web/html_api.c	2026-11-02 11:29:21.446537053 +0000
++++ rtl8367c/src/web/html_api.c	2026-11-02 11:29:51.591278653 +0000
+@@ -63,6 +63,8 @@
+ //extern int32 set_port8(struct http_request_s *pReq);
+ extern int32 set_port(struct http_request_s *pReq);
+ extern int32 get_pdu_status(struct http_request_s *pReq);
++extern int32 get_pdu_names(struct http_request_s *pReq);   /* FIX: route was missing */
++extern int32 set_pdu_name(struct http_request_s *pReq);    /* FIX: route was missing */
+ extern int32 get_pdu(struct http_request_s *pReq);
+ extern int32 get_mac_setup(struct http_request_s *pReq);
+ extern int32 get_rtc_data(struct http_request_s *pReq);
+@@ -328,6 +330,14 @@
+         {
+             return get_pdu_status(pReq);
+         }
++        else if (strcmp(pReq->path, "/get_pdu_names") == 0)
++        {
++            return get_pdu_names(pReq);
++        }
++        else if (strcmp(pReq->path, "/set_pdu_name") == 0)
++        {
++            return set_pdu_name(pReq);
++        }
+ 				
+         else if (strcmp(pReq->path, "/set_port1") == 0)
+         {

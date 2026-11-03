@@ -1,0 +1,2259 @@
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE VLAN
+OBJECT MODULE PLACED IN .\objects\vlan.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\vlan.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) I
+                    -NCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\incl
+                    -ude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLA
+                    -CE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LE
+                    -D_MODE) VARBANKING DEBUG PRINT(.\objects\vlan.lst) TABS(2) OBJECT(.\objects\vlan.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in VLAN module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <vlan.h>
+  23          #include <rate.h>
+  24          #include <string.h>
+  25          #include <stdio.h>
+  26          #include <rtl8367c_asicdrv.h>
+  27          #include <rtl8367c_asicdrv_vlan.h>
+  28          #include <rtl8367c_asicdrv_dot1x.h>
+  29          
+  30          typedef enum vlan_mbrCfgType_e
+  31          {
+  32              MBRCFG_UNUSED = 0,
+  33              MBRCFG_USED_BY_VLAN,
+  34              MBRCFG_END
+  35          }vlan_mbrCfgType_t;
+  36          
+  37          static rtk_vlan_t           vlan_mbrCfgVid[RTL8367C_CVIDXNO];
+  38          static vlan_mbrCfgType_t    vlan_mbrCfgUsage[RTL8367C_CVIDXNO];
+  39          
+  40          /* Function Name:
+  41           *      rtk_vlan_init
+  42           * Description:
+  43           *      Initialize VLAN.
+  44           * Input:
+  45           *      None
+  46           * Output:
+  47           *      None
+  48           * Return:
+  49           *      RT_ERR_OK           - OK
+  50           *      RT_ERR_FAILED       - Failed
+  51           *      RT_ERR_SMI          - SMI access error
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 2   
+
+  52           * Note:
+  53           *      VLAN is disabled by default. User has to call this API to enable VLAN before
+  54           *      using it. And It will set a default VLAN(vid 1) including all ports and set
+  55           *      all ports PVID to the default VLAN.
+  56           */
+  57          rtk_api_ret_t rtk_vlan_init(void)
+  58          {
+  59   1          rtk_api_ret_t retVal;
+  60   1          uint32 i;
+  61   1          rtl8367c_user_vlan4kentry vlan4K;
+  62   1          rtl8367c_vlanconfiguser vlanMC;
+  63   1      
+  64   1          /* Check initialization state */
+  65   1          RTK_CHK_INIT_STATE();
+  66   1      
+  67   1          /* Clean Database */
+  68   1          memset(vlan_mbrCfgVid, 0x00, sizeof(rtk_vlan_t) * RTL8367C_CVIDXNO);
+  69   1          memset(vlan_mbrCfgUsage, 0x00, sizeof(vlan_mbrCfgType_t) * RTL8367C_CVIDXNO);
+  70   1      
+  71   1          /* clean 32 VLAN member configuration */
+  72   1          for (i = 0; i <= RTL8367C_CVIDXMAX; i++)
+  73   1          {
+  74   2              vlanMC.evid = 0;
+  75   2              vlanMC.mbr = 0;
+  76   2              vlanMC.fid_msti = 0;
+  77   2              vlanMC.envlanpol = 0;
+  78   2              vlanMC.meteridx = 0;
+  79   2              vlanMC.vbpen = 0;
+  80   2              vlanMC.vbpri = 0;
+  81   2              if ((retVal = rtl8367c_setAsicVlanMemberConfig(i, &vlanMC)) != RT_ERR_OK)
+  82   2                  return retVal;
+  83   2          }
+  84   1      
+  85   1          /* Set a default VLAN with vid 1 to 4K table for all ports */
+  86   1          memset(&vlan4K, 0, sizeof(rtl8367c_user_vlan4kentry));
+  87   1          vlan4K.vid = 1;
+  88   1          vlan4K.mbr = RTK_PHY_PORTMASK_ALL;
+  89   1          vlan4K.untag = RTK_PHY_PORTMASK_ALL;
+  90   1          vlan4K.fid_msti = 0;
+  91   1          if ((retVal = rtl8367c_setAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+  92   1              return retVal;
+  93   1      
+  94   1          /* Also set the default VLAN to 32 member configuration index 0 */
+  95   1          memset(&vlanMC, 0, sizeof(rtl8367c_vlanconfiguser));
+  96   1          vlanMC.evid = 1;
+  97   1          vlanMC.mbr = RTK_PHY_PORTMASK_ALL;
+  98   1          vlanMC.fid_msti = 0;
+  99   1          if ((retVal = rtl8367c_setAsicVlanMemberConfig(0, &vlanMC)) != RT_ERR_OK)
+ 100   1                  return retVal;
+ 101   1      
+ 102   1          /* Set all ports PVID to default VLAN and tag-mode to original */
+ 103   1          RTK_SCAN_ALL_PHY_PORTMASK(i)
+ 104   1          {
+ 105   2              if ((retVal = rtl8367c_setAsicVlanPortBasedVID(i, 0, 0)) != RT_ERR_OK)
+ 106   2                  return retVal;
+ 107   2              if ((retVal = rtl8367c_setAsicVlanEgressTagMode(i, EG_TAG_MODE_ORI)) != RT_ERR_OK)
+ 108   2                  return retVal;
+ 109   2          }
+ 110   1      
+ 111   1          /* Updata Databse */
+ 112   1          vlan_mbrCfgUsage[0] = MBRCFG_USED_BY_VLAN;
+ 113   1          vlan_mbrCfgVid[0] = 1;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 3   
+
+ 114   1      
+ 115   1          /* Enable Ingress filter */
+ 116   1          RTK_SCAN_ALL_PHY_PORTMASK(i)
+ 117   1          {
+ 118   2              if ((retVal = rtl8367c_setAsicVlanIngressFilter(i, ENABLED)) != RT_ERR_OK)
+ 119   2                  return retVal;
+ 120   2          }
+ 121   1      
+ 122   1          /* enable VLAN */
+ 123   1          if ((retVal = rtl8367c_setAsicVlanFilter(ENABLED)) != RT_ERR_OK)
+ 124   1              return retVal;
+ 125   1      
+ 126   1          return RT_ERR_OK;
+ 127   1      }
+ 128          
+ 129          /* Function Name:
+ 130           *      rtk_vlan_set
+ 131           * Description:
+ 132           *      Set a VLAN entry.
+ 133           * Input:
+ 134           *      vid - VLAN ID to configure.
+ 135           *      pVlanCfg - VLAN Configuration
+ 136           * Output:
+ 137           *      None
+ 138           * Return:
+ 139           *      RT_ERR_OK                   - OK
+ 140           *      RT_ERR_FAILED               - Failed
+ 141           *      RT_ERR_SMI                  - SMI access error
+ 142           *      RT_ERR_INPUT                - Invalid input parameters.
+ 143           *      RT_ERR_L2_FID               - Invalid FID.
+ 144           *      RT_ERR_VLAN_PORT_MBR_EXIST  - Invalid member port mask.
+ 145           *      RT_ERR_VLAN_VID             - Invalid VID parameter.
+ 146           * Note:
+ 147           *
+ 148           */
+ 149          rtk_api_ret_t rtk_vlan_set(rtk_vlan_t vid, rtk_vlan_cfg_t *pVlanCfg)
+ 150          {
+ 151   1          rtk_api_ret_t retVal;
+ 152   1          uint32 phyMbrPmask;
+ 153   1          uint32 phyUntagPmask;
+ 154   1          rtl8367c_user_vlan4kentry vlan4K;
+ 155   1          rtl8367c_vlanconfiguser vlanMC;
+ 156   1          uint32 idx;
+ 157   1          uint32 empty_index = 0xffff;
+ 158   1          uint32 update_evid = 0;
+ 159   1      
+ 160   1          /* Check initialization state */
+ 161   1          RTK_CHK_INIT_STATE();
+ 162   1      
+ 163   1          /* vid must be 0~8191 */
+ 164   1          if (vid > RTL8367C_EVIDMAX)
+ 165   1              return RT_ERR_VLAN_VID;
+ 166   1      
+ 167   1          /* Null pointer check */
+ 168   1          if(NULL == pVlanCfg)
+ 169   1              return RT_ERR_NULL_POINTER;
+ 170   1      
+ 171   1          /* Check port mask valid */
+ 172   1          RTK_CHK_PORTMASK_VALID(&(pVlanCfg->mbr));
+ 173   1      
+ 174   1          if (vid <= RTL8367C_VIDMAX)
+ 175   1          {
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 4   
+
+ 176   2              /* Check untag port mask valid */
+ 177   2              RTK_CHK_PORTMASK_VALID(&(pVlanCfg->untag));
+ 178   2          }
+ 179   1      
+ 180   1          /* IVL_EN */
+ 181   1          if(pVlanCfg->ivl_en >= RTK_ENABLE_END)
+ 182   1              return RT_ERR_ENABLE;
+ 183   1      
+ 184   1          /* fid must be 0~15 */
+ 185   1          if(pVlanCfg->fid_msti > RTL8367C_FIDMAX)
+ 186   1              return RT_ERR_L2_FID;
+ 187   1      
+ 188   1          /* Policing */
+ 189   1          if(pVlanCfg->envlanpol >= RTK_ENABLE_END)
+ 190   1              return RT_ERR_ENABLE;
+ 191   1      
+ 192   1          /* Meter ID */
+ 193   1          if(pVlanCfg->meteridx > RTK_MAX_METER_ID)
+ 194   1              return RT_ERR_INPUT;
+ 195   1      
+ 196   1          /* VLAN based priority */
+ 197   1          if(pVlanCfg->vbpen >= RTK_ENABLE_END)
+ 198   1              return RT_ERR_ENABLE;
+ 199   1      
+ 200   1          /* Priority */
+ 201   1          if(pVlanCfg->vbpri > RTL8367C_PRIMAX)
+ 202   1              return RT_ERR_INPUT;
+ 203   1      
+ 204   1          /* Get physical port mask */
+ 205   1          if(rtk_switch_portmask_L2P_get(&(pVlanCfg->mbr), &phyMbrPmask) != RT_ERR_OK)
+ 206   1              return RT_ERR_FAILED;
+ 207   1      
+ 208   1          if(rtk_switch_portmask_L2P_get(&(pVlanCfg->untag), &phyUntagPmask) != RT_ERR_OK)
+ 209   1              return RT_ERR_FAILED;
+ 210   1      
+ 211   1          if (vid <= RTL8367C_VIDMAX)
+ 212   1          {
+ 213   2              /* update 4K table */
+ 214   2              memset(&vlan4K, 0, sizeof(rtl8367c_user_vlan4kentry));
+ 215   2              vlan4K.vid = vid;
+ 216   2      
+ 217   2              vlan4K.mbr    = (phyMbrPmask & 0xFFFF);
+ 218   2              vlan4K.untag  = (phyUntagPmask & 0xFFFF);
+ 219   2      
+ 220   2              vlan4K.ivl_svl      = pVlanCfg->ivl_en;
+ 221   2              vlan4K.fid_msti     = pVlanCfg->fid_msti;
+ 222   2              vlan4K.envlanpol    = pVlanCfg->envlanpol;
+ 223   2              vlan4K.meteridx     = pVlanCfg->meteridx;
+ 224   2              vlan4K.vbpen        = pVlanCfg->vbpen;
+ 225   2              vlan4K.vbpri        = pVlanCfg->vbpri;
+ 226   2      
+ 227   2              if ((retVal = rtl8367c_setAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+ 228   2                  return retVal;
+ 229   2      
+ 230   2              /* Update Member configuration if exist */
+ 231   2              for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+ 232   2              {
+ 233   3                  if(vlan_mbrCfgUsage[idx] == MBRCFG_USED_BY_VLAN)
+ 234   3                  {
+ 235   4                      if(vlan_mbrCfgVid[idx] == vid)
+ 236   4                      {
+ 237   5                          /* Found! Update */
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 5   
+
+ 238   5                          if(phyMbrPmask == 0x00)
+ 239   5                          {
+ 240   6                              /* Member port = 0x00, delete this VLAN from Member Configuration */
+ 241   6                              memset(&vlanMC, 0x00, sizeof(rtl8367c_vlanconfiguser));
+ 242   6                              if ((retVal = rtl8367c_setAsicVlanMemberConfig(idx, &vlanMC)) != RT_ERR_OK)
+ 243   6                                  return retVal;
+ 244   6      
+ 245   6                              /* Clear Database */
+ 246   6                              vlan_mbrCfgUsage[idx] = MBRCFG_UNUSED;
+ 247   6                              vlan_mbrCfgVid[idx]   = 0;
+ 248   6                          }
+ 249   5                          else
+ 250   5                          {
+ 251   6                              /* Normal VLAN config, update to member configuration */
+ 252   6                              vlanMC.evid = vid;
+ 253   6                              vlanMC.mbr = vlan4K.mbr;
+ 254   6                              vlanMC.fid_msti = vlan4K.fid_msti;
+ 255   6                              vlanMC.meteridx = vlan4K.meteridx;
+ 256   6                              vlanMC.envlanpol= vlan4K.envlanpol;
+ 257   6                              vlanMC.vbpen = vlan4K.vbpen;
+ 258   6                              vlanMC.vbpri = vlan4K.vbpri;
+ 259   6                              if ((retVal = rtl8367c_setAsicVlanMemberConfig(idx, &vlanMC)) != RT_ERR_OK)
+ 260   6                                  return retVal;
+ 261   6                          }
+ 262   5      
+ 263   5                          break;
+ 264   5                      }
+ 265   4                  }
+ 266   3              }
+ 267   2          }
+ 268   1          else
+ 269   1          {
+ 270   2              /* vid > 4095 */
+ 271   2              for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+ 272   2              {
+ 273   3                  if(vlan_mbrCfgUsage[idx] == MBRCFG_USED_BY_VLAN)
+ 274   3                  {
+ 275   4                      if(vlan_mbrCfgVid[idx] == vid)
+ 276   4                      {
+ 277   5                          /* Found! Update */
+ 278   5                          if(phyMbrPmask == 0x00)
+ 279   5                          {
+ 280   6                              /* Member port = 0x00, delete this VLAN from Member Configuration */
+ 281   6                              memset(&vlanMC, 0x00, sizeof(rtl8367c_vlanconfiguser));
+ 282   6                              if ((retVal = rtl8367c_setAsicVlanMemberConfig(idx, &vlanMC)) != RT_ERR_OK)
+ 283   6                                  return retVal;
+ 284   6      
+ 285   6                              /* Clear Database */
+ 286   6                              vlan_mbrCfgUsage[idx] = MBRCFG_UNUSED;
+ 287   6                              vlan_mbrCfgVid[idx]   = 0;
+ 288   6                          }
+ 289   5                          else
+ 290   5                          {
+ 291   6                              /* Normal VLAN config, update to member configuration */
+ 292   6                              vlanMC.evid = vid;
+ 293   6                              vlanMC.mbr = phyMbrPmask;
+ 294   6                              vlanMC.fid_msti = pVlanCfg->fid_msti;
+ 295   6                              vlanMC.meteridx = pVlanCfg->meteridx;
+ 296   6                              vlanMC.envlanpol= pVlanCfg->envlanpol;
+ 297   6                              vlanMC.vbpen = pVlanCfg->vbpen;
+ 298   6                              vlanMC.vbpri = pVlanCfg->vbpri;
+ 299   6                              if ((retVal = rtl8367c_setAsicVlanMemberConfig(idx, &vlanMC)) != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 6   
+
+ 300   6                                  return retVal;
+ 301   6      
+ 302   6                              break;
+ 303   6                          }
+ 304   5      
+ 305   5                          update_evid = 1;
+ 306   5                      }
+ 307   4                  }
+ 308   3      
+ 309   3                  if(vlan_mbrCfgUsage[idx] == MBRCFG_UNUSED)
+ 310   3                  {
+ 311   4                      if(0xffff == empty_index)
+ 312   4                          empty_index = idx;
+ 313   4                  }
+ 314   3              }
+ 315   2      
+ 316   2              /* doesn't find out same EVID entry and there is empty index in member configuration */
+ 317   2              if( (phyMbrPmask != 0x00) && (update_evid == 0) && (empty_index != 0xFFFF) )
+ 318   2              {
+ 319   3                  vlanMC.evid = vid;
+ 320   3                  vlanMC.mbr = phyMbrPmask;
+ 321   3                  vlanMC.fid_msti = pVlanCfg->fid_msti;
+ 322   3                  vlanMC.meteridx = pVlanCfg->meteridx;
+ 323   3                  vlanMC.envlanpol= pVlanCfg->envlanpol;
+ 324   3                  vlanMC.vbpen = pVlanCfg->vbpen;
+ 325   3                  vlanMC.vbpri = pVlanCfg->vbpri;
+ 326   3                  if ((retVal = rtl8367c_setAsicVlanMemberConfig(empty_index, &vlanMC)) != RT_ERR_OK)
+ 327   3                      return retVal;
+ 328   3      
+ 329   3                  vlan_mbrCfgUsage[empty_index] = MBRCFG_USED_BY_VLAN;
+ 330   3                  vlan_mbrCfgVid[empty_index] = vid;
+ 331   3      
+ 332   3              }
+ 333   2          }
+ 334   1      
+ 335   1          return RT_ERR_OK;
+ 336   1      }
+ 337          
+ 338          /* Function Name:
+ 339           *      rtk_vlan_get
+ 340           * Description:
+ 341           *      Get a VLAN entry.
+ 342           * Input:
+ 343           *      vid - VLAN ID to configure.
+ 344           * Output:
+ 345           *      pVlanCfg - VLAN Configuration
+ 346           * Return:
+ 347           *      RT_ERR_OK           - OK
+ 348           *      RT_ERR_FAILED       - Failed
+ 349           *      RT_ERR_SMI          - SMI access error
+ 350           *      RT_ERR_INPUT        - Invalid input parameters.
+ 351           *      RT_ERR_VLAN_VID     - Invalid VID parameter.
+ 352           * Note:
+ 353           *
+ 354           */
+ 355          rtk_api_ret_t rtk_vlan_get(rtk_vlan_t vid, rtk_vlan_cfg_t *pVlanCfg)
+ 356          {
+ 357   1          rtk_api_ret_t retVal;
+ 358   1          uint32 phyMbrPmask;
+ 359   1          uint32 phyUntagPmask;
+ 360   1          rtl8367c_user_vlan4kentry vlan4K;
+ 361   1          rtl8367c_vlanconfiguser vlanMC;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 7   
+
+ 362   1          uint32 idx;
+ 363   1      
+ 364   1          /* Check initialization state */
+ 365   1          RTK_CHK_INIT_STATE();
+ 366   1      
+ 367   1          /* vid must be 0~8191 */
+ 368   1          if (vid > RTL8367C_EVIDMAX)
+ 369   1              return RT_ERR_VLAN_VID;
+ 370   1      
+ 371   1          /* Null pointer check */
+ 372   1          if(NULL == pVlanCfg)
+ 373   1              return RT_ERR_NULL_POINTER;
+ 374   1      
+ 375   1          if (vid <= RTL8367C_VIDMAX)
+ 376   1          {
+ 377   2              vlan4K.vid = vid;
+ 378   2      
+ 379   2              if ((retVal = rtl8367c_getAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+ 380   2                  return retVal;
+ 381   2      
+ 382   2              phyMbrPmask   = vlan4K.mbr;
+ 383   2              phyUntagPmask = vlan4K.untag;
+ 384   2              if(rtk_switch_portmask_P2L_get(phyMbrPmask, &(pVlanCfg->mbr)) != RT_ERR_OK)
+ 385   2                  return RT_ERR_FAILED;
+ 386   2      
+ 387   2              if(rtk_switch_portmask_P2L_get(phyUntagPmask, &(pVlanCfg->untag)) != RT_ERR_OK)
+ 388   2                  return RT_ERR_FAILED;
+ 389   2      
+ 390   2              pVlanCfg->ivl_en    = vlan4K.ivl_svl;
+ 391   2              pVlanCfg->fid_msti  = vlan4K.fid_msti;
+ 392   2              pVlanCfg->envlanpol = vlan4K.envlanpol;
+ 393   2              pVlanCfg->meteridx  = vlan4K.meteridx;
+ 394   2              pVlanCfg->vbpen     = vlan4K.vbpen;
+ 395   2              pVlanCfg->vbpri     = vlan4K.vbpri;
+ 396   2          }
+ 397   1          else
+ 398   1          {
+ 399   2              for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+ 400   2              {
+ 401   3                  if(vlan_mbrCfgUsage[idx] == MBRCFG_USED_BY_VLAN)
+ 402   3                  {
+ 403   4                      if(vlan_mbrCfgVid[idx] == vid)
+ 404   4                      {
+ 405   5                          if ((retVal = rtl8367c_getAsicVlanMemberConfig(idx, &vlanMC)) != RT_ERR_OK)
+ 406   5                              return retVal;
+ 407   5      
+ 408   5                          phyMbrPmask   = vlanMC.mbr;
+ 409   5                          if(rtk_switch_portmask_P2L_get(phyMbrPmask, &(pVlanCfg->mbr)) != RT_ERR_OK)
+ 410   5                              return RT_ERR_FAILED;
+ 411   5      
+ 412   5                          pVlanCfg->untag.bits[0] = 0;
+ 413   5                          pVlanCfg->ivl_en    = 0;
+ 414   5                          pVlanCfg->fid_msti  = vlanMC.fid_msti;
+ 415   5                          pVlanCfg->envlanpol = vlanMC.envlanpol;
+ 416   5                          pVlanCfg->meteridx  = vlanMC.meteridx;
+ 417   5                          pVlanCfg->vbpen     = vlanMC.vbpen;
+ 418   5                          pVlanCfg->vbpri     = vlanMC.vbpri;
+ 419   5                      }
+ 420   4                  }
+ 421   3              }
+ 422   2          }
+ 423   1      
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 8   
+
+ 424   1          return RT_ERR_OK;
+ 425   1      }
+ 426          #if 0//Not used
+              /* Function Name:
+               *      rtk_vlan_egrFilterEnable_set
+               * Description:
+               *      Set VLAN egress filter.
+               * Input:
+               *      egrFilter - Egress filtering
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_ENABLE       - Invalid input parameters.
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_egrFilterEnable_set(rtk_enable_t egrFilter)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(egrFilter >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  /* enable VLAN */
+                  if ((retVal = rtl8367c_setAsicVlanFilter((uint32)egrFilter)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_egrFilterEnable_get
+               * Description:
+               *      Get VLAN egress filter.
+               * Input:
+               *      pEgrFilter - Egress filtering
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_NULL_POINTER - NULL Pointer.
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_egrFilterEnable_get(rtk_enable_t *pEgrFilter)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 state;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pEgrFilter)
+                      return RT_ERR_NULL_POINTER;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 9   
+
+              
+                  /* enable VLAN */
+                  if ((retVal = rtl8367c_getAsicVlanFilter(&state)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pEgrFilter = (rtk_enable_t)state;
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_mbrCfg_set
+               * Description:
+               *      Set a VLAN Member Configuration entry by index.
+               * Input:
+               *      idx     - Index of VLAN Member Configuration.
+               *      pMbrcfg - VLAN member Configuration.
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_VLAN_VID     - Invalid VID parameter.
+               * Note:
+               *     Set a VLAN Member Configuration entry by index.
+               */
+              rtk_api_ret_t rtk_vlan_mbrCfg_set(uint32 idx, rtk_vlan_mbrcfg_t *pMbrcfg)
+              {
+                  rtk_api_ret_t           retVal;
+                  uint32              phyMbrPmask;
+                  rtl8367c_vlanconfiguser mbrCfg;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error check */
+                  if(pMbrcfg == NULL)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(idx > RTL8367C_CVIDXMAX)
+                      return RT_ERR_INPUT;
+              
+                  if(pMbrcfg->evid > RTL8367C_EVIDMAX)
+                      return RT_ERR_INPUT;
+              
+                  if(pMbrcfg->fid_msti > RTL8367C_FIDMAX)
+                      return RT_ERR_L2_FID;
+              
+                  if(pMbrcfg->envlanpol >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if(pMbrcfg->meteridx > RTK_MAX_METER_ID)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(pMbrcfg->vbpen >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if(pMbrcfg->vbpri > RTL8367C_PRIMAX)
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  /* Check port mask valid */
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 10  
+
+                  RTK_CHK_PORTMASK_VALID(&(pMbrcfg->mbr));
+              
+                  mbrCfg.evid         = pMbrcfg->evid;
+                  mbrCfg.fid_msti     = pMbrcfg->fid_msti;
+                  mbrCfg.envlanpol    = pMbrcfg->envlanpol;
+                  mbrCfg.meteridx     = pMbrcfg->meteridx;
+                  mbrCfg.vbpen        = pMbrcfg->vbpen;
+                  mbrCfg.vbpri        = pMbrcfg->vbpri;
+              
+                  if(rtk_switch_portmask_L2P_get(&(pMbrcfg->mbr), &phyMbrPmask) != RT_ERR_OK)
+                      return RT_ERR_FAILED;
+              
+                  mbrCfg.mbr = phyMbrPmask;
+              
+                  if ((retVal = rtl8367c_setAsicVlanMemberConfig(idx, &mbrCfg)) != RT_ERR_OK)
+                      return retVal;
+              
+                  /* Update Database */
+                  if( (mbrCfg.evid == 0) && (mbrCfg.mbr == 0) )
+                  {
+                      vlan_mbrCfgUsage[idx] = MBRCFG_UNUSED;
+                      vlan_mbrCfgVid[idx] = 0;
+                  }
+                  else
+                  {
+                      vlan_mbrCfgUsage[idx] = MBRCFG_USED_BY_VLAN;
+                      vlan_mbrCfgVid[idx] = mbrCfg.evid;
+                  }
+              
+                  return RT_ERR_OK;
+              
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_mbrCfg_get
+               * Description:
+               *      Get a VLAN Member Configuration entry by index.
+               * Input:
+               *      idx - Index of VLAN Member Configuration.
+               * Output:
+               *      pMbrcfg - VLAN member Configuration.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_VLAN_VID     - Invalid VID parameter.
+               * Note:
+               *     Get a VLAN Member Configuration entry by index.
+               */
+              rtk_api_ret_t rtk_vlan_mbrCfg_get(uint32 idx, rtk_vlan_mbrcfg_t *pMbrcfg)
+              {
+                  rtk_api_ret_t           retVal;
+                  uint32              phyMbrPmask;
+                  rtl8367c_vlanconfiguser mbrCfg;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Error check */
+                  if(pMbrcfg == NULL)
+                      return RT_ERR_NULL_POINTER;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 11  
+
+              
+                  if(idx > RTL8367C_CVIDXMAX)
+                      return RT_ERR_INPUT;
+              
+                  memset(&mbrCfg, 0x00, sizeof(rtl8367c_vlanconfiguser));
+                  if ((retVal = rtl8367c_getAsicVlanMemberConfig(idx, &mbrCfg)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pMbrcfg->evid       = mbrCfg.evid;
+                  pMbrcfg->fid_msti   = mbrCfg.fid_msti;
+                  pMbrcfg->envlanpol  = mbrCfg.envlanpol;
+                  pMbrcfg->meteridx   = mbrCfg.meteridx;
+                  pMbrcfg->vbpen      = mbrCfg.vbpen;
+                  pMbrcfg->vbpri      = mbrCfg.vbpri;
+              
+                  phyMbrPmask = mbrCfg.mbr;
+                  if(rtk_switch_portmask_P2L_get(phyMbrPmask, &(pMbrcfg->mbr)) != RT_ERR_OK)
+                      return RT_ERR_FAILED;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 632          /* Function Name:
+ 633           *     rtk_vlan_portPvid_set
+ 634           * Description:
+ 635           *      Set port to specified VLAN ID(PVID).
+ 636           * Input:
+ 637           *      port - Port id.
+ 638           *      pvid - Specified VLAN ID.
+ 639           *      priority - 802.1p priority for the PVID.
+ 640           * Output:
+ 641           *      None
+ 642           * Return:
+ 643           *      RT_ERR_OK                   - OK
+ 644           *      RT_ERR_FAILED               - Failed
+ 645           *      RT_ERR_SMI                  - SMI access error
+ 646           *      RT_ERR_PORT_ID              - Invalid port number.
+ 647           *      RT_ERR_VLAN_PRIORITY        - Invalid priority.
+ 648           *      RT_ERR_VLAN_ENTRY_NOT_FOUND - VLAN entry not found.
+ 649           *      RT_ERR_VLAN_VID             - Invalid VID parameter.
+ 650           * Note:
+ 651           *       The API is used for Port-based VLAN. The untagged frame received from the
+ 652           *       port will be classified to the specified VLAN and assigned to the specified priority.
+ 653           */
+ 654          rtk_api_ret_t rtk_vlan_portPvid_set(rtk_port_t port, rtk_vlan_t pvid, rtk_pri_t priority)
+ 655          {
+ 656   1          rtk_api_ret_t retVal;
+ 657   1          uint32 index;
+ 658   1      
+ 659   1          /* Check initialization state */
+ 660   1          RTK_CHK_INIT_STATE();
+ 661   1      
+ 662   1          /* Check Port Valid */
+ 663   1          RTK_CHK_PORT_VALID(port);
+ 664   1      
+ 665   1          /* vid must be 0~8191 */
+ 666   1          if (pvid > RTL8367C_EVIDMAX)
+ 667   1              return RT_ERR_VLAN_VID;
+ 668   1      
+ 669   1          /* priority must be 0~7 */
+ 670   1          if (priority > RTL8367C_PRIMAX)
+ 671   1              return RT_ERR_VLAN_PRIORITY;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 12  
+
+ 672   1      
+ 673   1          if((retVal = rtk_vlan_checkAndCreateMbr(pvid, &index)) != RT_ERR_OK)
+ 674   1              return retVal;
+ 675   1      
+ 676   1          if ((retVal = rtl8367c_setAsicVlanPortBasedVID(rtk_switch_port_L2P_get(port), index, priority)) != RT_
+             -ERR_OK)
+ 677   1              return retVal;
+ 678   1      
+ 679   1          return RT_ERR_OK;
+ 680   1      }
+ 681          
+ 682          /* Function Name:
+ 683           *      rtk_vlan_portPvid_get
+ 684           * Description:
+ 685           *      Get VLAN ID(PVID) on specified port.
+ 686           * Input:
+ 687           *      port - Port id.
+ 688           * Output:
+ 689           *      pPvid - Specified VLAN ID.
+ 690           *      pPriority - 802.1p priority for the PVID.
+ 691           * Return:
+ 692           *      RT_ERR_OK           - OK
+ 693           *      RT_ERR_FAILED       - Failed
+ 694           *      RT_ERR_SMI          - SMI access error
+ 695           *      RT_ERR_INPUT        - Invalid input parameters.
+ 696           *      RT_ERR_PORT_ID      - Invalid port number.
+ 697           * Note:
+ 698           *     The API can get the PVID and 802.1p priority for the PVID of Port-based VLAN.
+ 699           */
+ 700          rtk_api_ret_t rtk_vlan_portPvid_get(rtk_port_t port, rtk_vlan_t *pPvid, rtk_pri_t *pPriority)
+ 701          {
+ 702   1          rtk_api_ret_t retVal;
+ 703   1          uint32 index, pri;
+ 704   1          rtl8367c_vlanconfiguser mbrCfg;
+ 705   1      
+ 706   1          /* Check initialization state */
+ 707   1          RTK_CHK_INIT_STATE();
+ 708   1      
+ 709   1          /* Check Port Valid */
+ 710   1          RTK_CHK_PORT_VALID(port);
+ 711   1      
+ 712   1          if(NULL == pPvid)
+ 713   1              return RT_ERR_NULL_POINTER;
+ 714   1      
+ 715   1          if(NULL == pPriority)
+ 716   1              return RT_ERR_NULL_POINTER;
+ 717   1      
+ 718   1          if ((retVal = rtl8367c_getAsicVlanPortBasedVID(rtk_switch_port_L2P_get(port), &index, &pri)) != RT_ERR
+             -_OK)
+ 719   1              return retVal;
+ 720   1      
+ 721   1          memset(&mbrCfg, 0x00, sizeof(rtl8367c_vlanconfiguser));
+ 722   1          if ((retVal = rtl8367c_getAsicVlanMemberConfig(index, &mbrCfg)) != RT_ERR_OK)
+ 723   1              return retVal;
+ 724   1      
+ 725   1          *pPvid = mbrCfg.evid;
+ 726   1          *pPriority = pri;
+ 727   1      
+ 728   1          return RT_ERR_OK;
+ 729   1      }
+ 730          #if 0//Not used
+              /* Function Name:
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 13  
+
+               *      rtk_vlan_portIgrFilterEnable_set
+               * Description:
+               *      Set VLAN ingress for each port.
+               * Input:
+               *      port - Port id.
+               *      igr_filter - VLAN ingress function enable status.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number
+               *      RT_ERR_ENABLE       - Invalid enable input
+               * Note:
+               *      The status of vlan ingress filter is as following:
+               *      - DISABLED
+               *      - ENABLED
+               *      While VLAN function is enabled, ASIC will decide VLAN ID for each received frame and get belonged 
+             -member
+               *      ports from VLAN table. If received port is not belonged to VLAN member ports, ASIC will drop recei
+             -ved frame if VLAN ingress function is enabled.
+               */
+              rtk_api_ret_t rtk_vlan_portIgrFilterEnable_set(rtk_port_t port, rtk_enable_t igr_filter)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (igr_filter >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if ((retVal = rtl8367c_setAsicVlanIngressFilter(rtk_switch_port_L2P_get(port), igr_filter)) != RT_ERR_
+             -OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_portIgrFilterEnable_get
+               * Description:
+               *      Get VLAN Ingress Filter
+               * Input:
+               *      port        - Port id.
+               * Output:
+               *      pIgr_filter - VLAN ingress function enable status.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *     The API can Get the VLAN ingress filter status.
+               *     The status of vlan ingress filter is as following:
+               *     - DISABLED
+               *     - ENABLED
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 14  
+
+               */
+              rtk_api_ret_t rtk_vlan_portIgrFilterEnable_get(rtk_port_t port, rtk_enable_t *pIgr_filter)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pIgr_filter)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicVlanIngressFilter(rtk_switch_port_L2P_get(port), pIgr_filter)) != RT_ERR
+             -_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 811          /* Function Name:
+ 812           *      rtk_vlan_portAcceptFrameType_set
+ 813           * Description:
+ 814           *      Set VLAN accept_frame_type
+ 815           * Input:
+ 816           *      port                - Port id.
+ 817           *      accept_frame_type   - accept frame type
+ 818           * Output:
+ 819           *      None
+ 820           * Return:
+ 821           *      RT_ERR_OK                       - OK
+ 822           *      RT_ERR_FAILED                   - Failed
+ 823           *      RT_ERR_SMI                      - SMI access error
+ 824           *      RT_ERR_PORT_ID                  - Invalid port number.
+ 825           *      RT_ERR_VLAN_ACCEPT_FRAME_TYPE   - Invalid frame type.
+ 826           * Note:
+ 827           *      The API is used for checking 802.1Q tagged frames.
+ 828           *      The accept frame type as following:
+ 829           *      - ACCEPT_FRAME_TYPE_ALL
+ 830           *      - ACCEPT_FRAME_TYPE_TAG_ONLY
+ 831           *      - ACCEPT_FRAME_TYPE_UNTAG_ONLY
+ 832           */
+ 833          rtk_api_ret_t rtk_vlan_portAcceptFrameType_set(rtk_port_t port, rtk_vlan_acceptFrameType_t accept_frame_ty
+             -pe)
+ 834          {
+ 835   1          rtk_api_ret_t retVal;
+ 836   1      
+ 837   1          /* Check initialization state */
+ 838   1          RTK_CHK_INIT_STATE();
+ 839   1      
+ 840   1          /* Check Port Valid */
+ 841   1          RTK_CHK_PORT_VALID(port);
+ 842   1      
+ 843   1          if (accept_frame_type >= ACCEPT_FRAME_TYPE_END)
+ 844   1              return RT_ERR_VLAN_ACCEPT_FRAME_TYPE;
+ 845   1      
+ 846   1          if ((retVal = rtl8367c_setAsicVlanAccpetFrameType(rtk_switch_port_L2P_get(port), (rtl8367c_accframetyp
+             -e)accept_frame_type)) != RT_ERR_OK)
+ 847   1              return retVal;
+ 848   1      
+ 849   1          return RT_ERR_OK;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 15  
+
+ 850   1      }
+ 851          
+ 852          /* Function Name:
+ 853           *      rtk_vlan_portAcceptFrameType_get
+ 854           * Description:
+ 855           *      Get VLAN accept_frame_type
+ 856           * Input:
+ 857           *      port - Port id.
+ 858           * Output:
+ 859           *      pAccept_frame_type - accept frame type
+ 860           * Return:
+ 861           *      RT_ERR_OK           - OK
+ 862           *      RT_ERR_FAILED       - Failed
+ 863           *      RT_ERR_SMI          - SMI access error
+ 864           *      RT_ERR_INPUT        - Invalid input parameters.
+ 865           *      RT_ERR_PORT_ID      - Invalid port number.
+ 866           * Note:
+ 867           *     The API can Get the VLAN ingress filter.
+ 868           *     The accept frame type as following:
+ 869           *     - ACCEPT_FRAME_TYPE_ALL
+ 870           *     - ACCEPT_FRAME_TYPE_TAG_ONLY
+ 871           *     - ACCEPT_FRAME_TYPE_UNTAG_ONLY
+ 872           */
+ 873          rtk_api_ret_t rtk_vlan_portAcceptFrameType_get(rtk_port_t port, rtk_vlan_acceptFrameType_t *pAccept_frame_
+             -type)
+ 874          {
+ 875   1          rtk_api_ret_t retVal;
+ 876   1          rtl8367c_accframetype   acc_frm_type;
+ 877   1      
+ 878   1          /* Check initialization state */
+ 879   1          RTK_CHK_INIT_STATE();
+ 880   1      
+ 881   1          /* Check Port Valid */
+ 882   1          RTK_CHK_PORT_VALID(port);
+ 883   1      
+ 884   1          if(NULL == pAccept_frame_type)
+ 885   1              return RT_ERR_NULL_POINTER;
+ 886   1      
+ 887   1          if ((retVal = rtl8367c_getAsicVlanAccpetFrameType(rtk_switch_port_L2P_get(port), &acc_frm_type)) != RT
+             -_ERR_OK)
+ 888   1              return retVal;
+ 889   1      
+ 890   1          *pAccept_frame_type = (rtk_vlan_acceptFrameType_t)acc_frm_type;
+ 891   1      
+ 892   1          return RT_ERR_OK;
+ 893   1      }
+ 894          #if 0//Not used
+              /* Function Name:
+               *      rtk_vlan_protoAndPortBasedVlan_add
+               * Description:
+               *      Add the protocol-and-port-based vlan to the specified port of device.
+               * Input:
+               *      port  - Port id.
+               *      pInfo - Protocol and port based VLAN configuration information.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_VLAN_VID         - Invalid VID parameter.
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 16  
+
+               *      RT_ERR_VLAN_PRIORITY    - Invalid priority.
+               *      RT_ERR_TBL_FULL         - Table is full.
+               *      RT_ERR_OUT_OF_RANGE     - input out of range.
+               * Note:
+               *      The incoming packet which match the protocol-and-port-based vlan will use the configure vid for in
+             -gress pipeline
+               *      The frame type is shown in the following:
+               *      - FRAME_TYPE_ETHERNET
+               *      - FRAME_TYPE_RFC1042
+               *      - FRAME_TYPE_LLCOTHER
+               */
+              rtk_api_ret_t rtk_vlan_protoAndPortBasedVlan_add(rtk_port_t port, rtk_vlan_protoAndPortInfo_t *pInfo)
+              {
+                  rtk_api_ret_t retVal, i;
+                  uint32 exist, empty, used, index;
+                  rtl8367c_protocolgdatacfg ppb_data_cfg;
+                  rtl8367c_protocolvlancfg ppb_vlan_cfg;
+                  rtl8367c_provlan_frametype tmp;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pInfo)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (pInfo->proto_type > RTK_MAX_NUM_OF_PROTO_TYPE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if (pInfo->frame_type >= FRAME_TYPE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if (pInfo->cvid > RTL8367C_VIDMAX)
+                      return RT_ERR_VLAN_VID;
+              
+                  if (pInfo->cpri > RTL8367C_PRIMAX)
+                      return RT_ERR_VLAN_PRIORITY;
+              
+                  exist = 0xFF;
+                  empty = 0xFF;
+                  for (i = RTL8367C_PROTOVLAN_GIDX_MAX; i >= 0; i--)
+                  {
+                      if ((retVal = rtl8367c_getAsicVlanProtocolBasedGroupData(i, &ppb_data_cfg)) != RT_ERR_OK)
+                          return retVal;
+                      tmp = pInfo->frame_type;
+                      if (ppb_data_cfg.etherType == pInfo->proto_type && ppb_data_cfg.frameType == tmp)
+                      {
+                          /*Already exist*/
+                          exist = i;
+                          break;
+                      }
+                      else if (ppb_data_cfg.etherType == 0 && ppb_data_cfg.frameType == 0)
+                      {
+                          /*find empty index*/
+                          empty = i;
+                      }
+                  }
+              
+                  used = 0xFF;
+                  /*No empty and exist index*/
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 17  
+
+                  if (0xFF == exist && 0xFF == empty)
+                      return RT_ERR_TBL_FULL;
+                  else if (exist<RTL8367C_PROTOVLAN_GROUPNO)
+                  {
+                     /*exist index*/
+                     used = exist;
+                  }
+                  else if (empty<RTL8367C_PROTOVLAN_GROUPNO)
+                  {
+                      /*No exist index, but have empty index*/
+                      ppb_data_cfg.frameType = pInfo->frame_type;
+                      ppb_data_cfg.etherType = pInfo->proto_type;
+                      if ((retVal = rtl8367c_setAsicVlanProtocolBasedGroupData(empty, &ppb_data_cfg)) != RT_ERR_OK)
+                          return retVal;
+                      used = empty;
+                  }
+                  else
+                      return RT_ERR_FAILED;
+              
+                  if((retVal = rtk_vlan_checkAndCreateMbr(pInfo->cvid, &index)) != RT_ERR_OK)
+                      return retVal;
+              
+                  ppb_vlan_cfg.vlan_idx = index;
+                  ppb_vlan_cfg.valid = TRUE;
+                  ppb_vlan_cfg.priority = pInfo->cpri;
+                  if ((retVal = rtl8367c_setAsicVlanPortAndProtocolBased(rtk_switch_port_L2P_get(port), used, &ppb_vlan_
+             -cfg)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_protoAndPortBasedVlan_get
+               * Description:
+               *      Get the protocol-and-port-based vlan to the specified port of device.
+               * Input:
+               *      port - Port id.
+               *      proto_type - protocol-and-port-based vlan protocol type.
+               *      frame_type - protocol-and-port-based vlan frame type.
+               * Output:
+               *      pInfo - Protocol and port based VLAN configuration information.
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_OUT_OF_RANGE     - input out of range.
+               *      RT_ERR_TBL_FULL         - Table is full.
+               * Note:
+               *     The incoming packet which match the protocol-and-port-based vlan will use the configure vid for ing
+             -ress pipeline
+               *     The frame type is shown in the following:
+               *      - FRAME_TYPE_ETHERNET
+               *      - FRAME_TYPE_RFC1042
+               *      - FRAME_TYPE_LLCOTHER
+               */
+              rtk_api_ret_t rtk_vlan_protoAndPortBasedVlan_get(rtk_port_t port, rtk_vlan_proto_type_t proto_type, rtk_vl
+             -an_protoVlan_frameType_t frame_type, rtk_vlan_protoAndPortInfo_t *pInfo)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 i;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 18  
+
+                  uint32 ppb_idx;
+                  rtl8367c_protocolgdatacfg ppb_data_cfg;
+                  rtl8367c_protocolvlancfg ppb_vlan_cfg;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (proto_type > RTK_MAX_NUM_OF_PROTO_TYPE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if (frame_type >= FRAME_TYPE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                 ppb_idx = 0;
+              
+                  for (i = 0; i<= RTL8367C_PROTOVLAN_GIDX_MAX; i++)
+                  {
+                      if ((retVal = rtl8367c_getAsicVlanProtocolBasedGroupData(i, &ppb_data_cfg)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ( (ppb_data_cfg.frameType == (rtl8367c_provlan_frametype)frame_type) && (ppb_data_cfg.etherType
+             - == proto_type) )
+                      {
+                          ppb_idx = i;
+                          break;
+                      }
+                      else if (RTL8367C_PROTOVLAN_GIDX_MAX == i)
+                          return RT_ERR_TBL_FULL;
+                  }
+              
+                  if ((retVal = rtl8367c_getAsicVlanPortAndProtocolBased(rtk_switch_port_L2P_get(port), ppb_idx, &ppb_vl
+             -an_cfg)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if (FALSE == ppb_vlan_cfg.valid)
+                      return RT_ERR_FAILED;
+              
+                  pInfo->frame_type = frame_type;
+                  pInfo->proto_type = proto_type;
+                  pInfo->cvid = vlan_mbrCfgVid[ppb_vlan_cfg.vlan_idx];
+                  pInfo->cpri = ppb_vlan_cfg.priority;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_protoAndPortBasedVlan_del
+               * Description:
+               *      Delete the protocol-and-port-based vlan from the specified port of device.
+               * Input:
+               *      port        - Port id.
+               *      proto_type  - protocol-and-port-based vlan protocol type.
+               *      frame_type  - protocol-and-port-based vlan frame type.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 19  
+
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_OUT_OF_RANGE     - input out of range.
+               *      RT_ERR_TBL_FULL         - Table is full.
+               * Note:
+               *     The incoming packet which match the protocol-and-port-based vlan will use the configure vid for ing
+             -ress pipeline
+               *     The frame type is shown in the following:
+               *      - FRAME_TYPE_ETHERNET
+               *      - FRAME_TYPE_RFC1042
+               *      - FRAME_TYPE_LLCOTHER
+               */
+              rtk_api_ret_t rtk_vlan_protoAndPortBasedVlan_del(rtk_port_t port, rtk_vlan_proto_type_t proto_type, rtk_vl
+             -an_protoVlan_frameType_t frame_type)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 i, bUsed;
+                  uint32 ppb_idx;
+                  rtl8367c_protocolgdatacfg ppb_data_cfg;
+                  rtl8367c_protocolvlancfg ppb_vlan_cfg;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (proto_type > RTK_MAX_NUM_OF_PROTO_TYPE)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if (frame_type >= FRAME_TYPE_END)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                 ppb_idx = 0;
+              
+                  for (i = 0; i<= RTL8367C_PROTOVLAN_GIDX_MAX; i++)
+                  {
+                      if ((retVal = rtl8367c_getAsicVlanProtocolBasedGroupData(i, &ppb_data_cfg)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ( (ppb_data_cfg.frameType == (rtl8367c_provlan_frametype)frame_type) && (ppb_data_cfg.etherType
+             - == proto_type) )
+                      {
+                          ppb_idx = i;
+                          ppb_vlan_cfg.valid = FALSE;
+                          ppb_vlan_cfg.vlan_idx = 0;
+                          ppb_vlan_cfg.priority = 0;
+                          if ((retVal = rtl8367c_setAsicVlanPortAndProtocolBased(rtk_switch_port_L2P_get(port), ppb_idx,
+             - &ppb_vlan_cfg)) != RT_ERR_OK)
+                              return retVal;
+                      }
+                  }
+              
+                  bUsed = FALSE;
+                  RTK_SCAN_ALL_PHY_PORTMASK(i)
+                  {
+                      if ((retVal = rtl8367c_getAsicVlanPortAndProtocolBased(i, ppb_idx, &ppb_vlan_cfg)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if (TRUE == ppb_vlan_cfg.valid)
+                      {
+                          bUsed = TRUE;
+                              break;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 20  
+
+                      }
+                  }
+              
+                  if (FALSE == bUsed) /*No Port use this PPB Index, Delete it*/
+                  {
+                      ppb_data_cfg.etherType=0;
+                      ppb_data_cfg.frameType=0;
+                      if ((retVal = rtl8367c_setAsicVlanProtocolBasedGroupData(ppb_idx, &ppb_data_cfg)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_protoAndPortBasedVlan_delAll
+               * Description:
+               *     Delete all protocol-and-port-based vlans from the specified port of device.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_OUT_OF_RANGE     - input out of range.
+               * Note:
+               *     The incoming packet which match the protocol-and-port-based vlan will use the configure vid for ing
+             -ress pipeline
+               *     Delete all flow table protocol-and-port-based vlan entries.
+               */
+              rtk_api_ret_t rtk_vlan_protoAndPortBasedVlan_delAll(rtk_port_t port)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 i, j, bUsed[4];
+                  rtl8367c_protocolgdatacfg ppb_data_cfg;
+                  rtl8367c_protocolvlancfg ppb_vlan_cfg;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  for (i = 0; i<= RTL8367C_PROTOVLAN_GIDX_MAX; i++)
+                  {
+                      ppb_vlan_cfg.valid = FALSE;
+                      ppb_vlan_cfg.vlan_idx = 0;
+                      ppb_vlan_cfg.priority = 0;
+                      if ((retVal = rtl8367c_setAsicVlanPortAndProtocolBased(rtk_switch_port_L2P_get(port), i, &ppb_vlan
+             -_cfg)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  bUsed[0] = FALSE;
+                  bUsed[1] = FALSE;
+                  bUsed[2] = FALSE;
+                  bUsed[3] = FALSE;
+                  RTK_SCAN_ALL_PHY_PORTMASK(i)
+                  {
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 21  
+
+                      for (j = 0; j <= RTL8367C_PROTOVLAN_GIDX_MAX; j++)
+                      {
+                          if ((retVal = rtl8367c_getAsicVlanPortAndProtocolBased(i,j, &ppb_vlan_cfg)) != RT_ERR_OK)
+                              return retVal;
+              
+                          if (TRUE == ppb_vlan_cfg.valid)
+                          {
+                              bUsed[j] = TRUE;
+                          }
+                      }
+                  }
+              
+                  for (i = 0; i<= RTL8367C_PROTOVLAN_GIDX_MAX; i++)
+                  {
+                      if (FALSE == bUsed[i]) /*No Port use this PPB Index, Delete it*/
+                      {
+                          ppb_data_cfg.etherType=0;
+                          ppb_data_cfg.frameType=0;
+                          if ((retVal = rtl8367c_setAsicVlanProtocolBasedGroupData(i, &ppb_data_cfg)) != RT_ERR_OK)
+                              return retVal;
+                      }
+                  }
+              
+              
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1236          /* Function Name:
+1237           *      rtk_vlan_tagMode_set
+1238           * Description:
+1239           *      Set CVLAN egress tag mode
+1240           * Input:
+1241           *      port        - Port id.
+1242           *      tag_mode    - The egress tag mode.
+1243           * Output:
+1244           *      None
+1245           * Return:
+1246           *      RT_ERR_OK           - OK
+1247           *      RT_ERR_FAILED       - Failed
+1248           *      RT_ERR_SMI          - SMI access error
+1249           *      RT_ERR_PORT_ID      - Invalid port number.
+1250           *      RT_ERR_INPUT        - Invalid input parameter.
+1251           *      RT_ERR_ENABLE       - Invalid enable input.
+1252           * Note:
+1253           *      The API can set Egress tag mode. There are 4 mode for egress tag:
+1254           *      - VLAN_TAG_MODE_ORIGINAL,
+1255           *      - VLAN_TAG_MODE_KEEP_FORMAT,
+1256           *      - VLAN_TAG_MODE_PRI.
+1257           *      - VLAN_TAG_MODE_REAL_KEEP_FORMAT,
+1258           */
+1259          rtk_api_ret_t rtk_vlan_tagMode_set(rtk_port_t port, rtk_vlan_tagMode_t tag_mode)
+1260          {
+1261   1          rtk_api_ret_t retVal;
+1262   1      
+1263   1          /* Check initialization state */
+1264   1          RTK_CHK_INIT_STATE();
+1265   1      
+1266   1          /* Check Port Valid */
+1267   1          RTK_CHK_PORT_VALID(port);
+1268   1      
+1269   1          if (tag_mode >= VLAN_TAG_MODE_END)
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 22  
+
+1270   1              return RT_ERR_PORT_ID;
+1271   1      
+1272   1          if ((retVal = rtl8367c_setAsicVlanEgressTagMode(rtk_switch_port_L2P_get(port), tag_mode)) != RT_ERR_OK
+             -)
+1273   1              return retVal;
+1274   1      
+1275   1          return RT_ERR_OK;
+1276   1      }
+1277          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_vlan_tagMode_get
+               * Description:
+               *      Get CVLAN egress tag mode
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pTag_mode - The egress tag mode.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      The API can get Egress tag mode. There are 4 mode for egress tag:
+               *      - VLAN_TAG_MODE_ORIGINAL,
+               *      - VLAN_TAG_MODE_KEEP_FORMAT,
+               *      - VLAN_TAG_MODE_PRI.
+               *      - VLAN_TAG_MODE_REAL_KEEP_FORMAT,
+               */
+              rtk_api_ret_t rtk_vlan_tagMode_get(rtk_port_t port, rtk_vlan_tagMode_t *pTag_mode)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_egtagmode  mode;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pTag_mode)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicVlanEgressTagMode(rtk_switch_port_L2P_get(port), &mode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pTag_mode = (rtk_vlan_tagMode_t)mode;
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_transparent_set
+               * Description:
+               *      Set VLAN transparent mode
+               * Input:
+               *      egr_port        - Egress Port id.
+               *      pIgr_pmask      - Ingress Port Mask.
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 23  
+
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_vlan_transparent_set(rtk_port_t egr_port, rtk_portmask_t *pIgr_pmask)
+              {
+                   rtk_api_ret_t retVal;
+                   uint32    pmask;
+              
+                   /* Check initialization state */
+                   RTK_CHK_INIT_STATE();
+              
+                   /* Check Port Valid */
+                   RTK_CHK_PORT_VALID(egr_port);
+              
+                   if(NULL == pIgr_pmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                   RTK_CHK_PORTMASK_VALID(pIgr_pmask);
+              
+                   if(rtk_switch_portmask_L2P_get(pIgr_pmask, &pmask) != RT_ERR_OK)
+                      return RT_ERR_FAILED;
+              
+                   if ((retVal = rtl8367c_setAsicVlanTransparent(rtk_switch_port_L2P_get(egr_port), pmask)) != RT_ERR_OK
+             -)
+                       return retVal;
+              
+                   return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_transparent_get
+               * Description:
+               *      Get VLAN transparent mode
+               * Input:
+               *      egr_port        - Egress Port id.
+               * Output:
+               *      pIgr_pmask      - Ingress Port Mask
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_vlan_transparent_get(rtk_port_t egr_port, rtk_portmask_t *pIgr_pmask)
+              {
+                   rtk_api_ret_t retVal;
+                   uint32    pmask;
+              
+                   /* Check initialization state */
+                   RTK_CHK_INIT_STATE();
+              
+                   /* Check Port Valid */
+                   RTK_CHK_PORT_VALID(egr_port);
+              
+                   if(NULL == pIgr_pmask)
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 24  
+
+                      return RT_ERR_NULL_POINTER;
+              
+                   if ((retVal = rtl8367c_getAsicVlanTransparent(rtk_switch_port_L2P_get(egr_port), &pmask)) != RT_ERR_O
+             -K)
+                       return retVal;
+              
+                   if(rtk_switch_portmask_P2L_get(pmask, pIgr_pmask) != RT_ERR_OK)
+                      return RT_ERR_FAILED;
+              
+                   return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_keep_set
+               * Description:
+               *      Set VLAN egress keep mode
+               * Input:
+               *      egr_port        - Egress Port id.
+               *      pIgr_pmask      - Ingress Port Mask.
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_vlan_keep_set(rtk_port_t egr_port, rtk_portmask_t *pIgr_pmask)
+              {
+                   rtk_api_ret_t retVal;
+                   uint32    pmask;
+              
+                   /* Check initialization state */
+                   RTK_CHK_INIT_STATE();
+              
+                   /* Check Port Valid */
+                   RTK_CHK_PORT_VALID(egr_port);
+              
+                   if(NULL == pIgr_pmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                   RTK_CHK_PORTMASK_VALID(pIgr_pmask);
+              
+                   if(rtk_switch_portmask_L2P_get(pIgr_pmask, &pmask) != RT_ERR_OK)
+                      return RT_ERR_FAILED;
+              
+                   if ((retVal = rtl8367c_setAsicVlanEgressKeep(rtk_switch_port_L2P_get(egr_port), pmask)) != RT_ERR_OK)
+                       return retVal;
+              
+                   return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_keep_get
+               * Description:
+               *      Get VLAN egress keep mode
+               * Input:
+               *      egr_port        - Egress Port id.
+               * Output:
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 25  
+
+               *      pIgr_pmask      - Ingress Port Mask
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_vlan_keep_get(rtk_port_t egr_port, rtk_portmask_t *pIgr_pmask)
+              {
+                   rtk_api_ret_t retVal;
+                   uint32    pmask;
+              
+                   /* Check initialization state */
+                   RTK_CHK_INIT_STATE();
+              
+                   /* Check Port Valid */
+                   RTK_CHK_PORT_VALID(egr_port);
+              
+                   if(NULL == pIgr_pmask)
+                      return RT_ERR_NULL_POINTER;
+              
+                   if ((retVal = rtl8367c_getAsicVlanEgressKeep(rtk_switch_port_L2P_get(egr_port), &pmask)) != RT_ERR_OK
+             -)
+                       return retVal;
+              
+                   if(rtk_switch_portmask_P2L_get(pmask, pIgr_pmask) != RT_ERR_OK)
+                      return RT_ERR_FAILED;
+              
+                   return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_stg_set
+               * Description:
+               *      Set spanning tree group instance of the vlan to the specified device
+               * Input:
+               *      vid - Specified VLAN ID.
+               *      stg - spanning tree group instance.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_MSTI         - Invalid msti parameter
+               *      RT_ERR_INPUT        - Invalid input parameter.
+               *      RT_ERR_VLAN_VID     - Invalid VID parameter.
+               * Note:
+               *      The API can set spanning tree group instance of the vlan to the specified device.
+               */
+              rtk_api_ret_t rtk_vlan_stg_set(rtk_vlan_t vid, rtk_stp_msti_id_t stg)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_user_vlan4kentry vlan4K;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* vid must be 0~4095 */
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 26  
+
+                  if (vid > RTL8367C_VIDMAX)
+                      return RT_ERR_VLAN_VID;
+              
+                  /* priority must be 0~15 */
+                  if (stg > RTL8367C_MSTIMAX)
+                      return RT_ERR_MSTI;
+              
+                  /* update 4K table */
+                  vlan4K.vid = vid;
+                  if ((retVal = rtl8367c_getAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+                      return retVal;
+              
+                  vlan4K.fid_msti= stg;
+                  if ((retVal = rtl8367c_setAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_stg_get
+               * Description:
+               *      Get spanning tree group instance of the vlan to the specified device
+               * Input:
+               *      vid - Specified VLAN ID.
+               * Output:
+               *      pStg - spanning tree group instance.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               *      RT_ERR_VLAN_VID     - Invalid VID parameter.
+               * Note:
+               *      The API can get spanning tree group instance of the vlan to the specified device.
+               */
+              rtk_api_ret_t rtk_vlan_stg_get(rtk_vlan_t vid, rtk_stp_msti_id_t *pStg)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_user_vlan4kentry vlan4K;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* vid must be 0~4095 */
+                  if (vid > RTL8367C_VIDMAX)
+                      return RT_ERR_VLAN_VID;
+              
+                  if(NULL == pStg)
+                      return RT_ERR_NULL_POINTER;
+              
+                  /* update 4K table */
+                  vlan4K.vid = vid;
+                  if ((retVal = rtl8367c_getAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pStg = vlan4K.fid_msti;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 27  
+
+               *      rtk_vlan_portFid_set
+               * Description:
+               *      Set port-based filtering database
+               * Input:
+               *      port - Port id.
+               *      enable - ebable port-based FID
+               *      fid - Specified filtering database.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_L2_FID - Invalid fid.
+               *      RT_ERR_INPUT - Invalid input parameter.
+               *      RT_ERR_PORT_ID - Invalid port ID.
+               * Note:
+               *      The API can set port-based filtering database. If the function is enabled, all input
+               *      packets will be assigned to the port-based fid regardless vlan tag.
+               */
+              rtk_api_ret_t rtk_vlan_portFid_set(rtk_port_t port, rtk_enable_t enable, rtk_fid_t fid)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (enable>=RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  /* fid must be 0~4095 */
+                  if (fid > RTK_FID_MAX)
+                      return RT_ERR_L2_FID;
+              
+                  if ((retVal = rtl8367c_setAsicPortBasedFidEn(rtk_switch_port_L2P_get(port), enable))!=RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_setAsicPortBasedFid(rtk_switch_port_L2P_get(port), fid))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_portFid_get
+               * Description:
+               *      Get port-based filtering database
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - ebable port-based FID
+               *      pFid - Specified filtering database.
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_INPUT - Invalid input parameters.
+               *      RT_ERR_PORT_ID - Invalid port ID.
+               * Note:
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 28  
+
+               *      The API can get port-based filtering database status. If the function is enabled, all input
+               *      packets will be assigned to the port-based fid regardless vlan tag.
+               */
+              rtk_api_ret_t rtk_vlan_portFid_get(rtk_port_t port, rtk_enable_t *pEnable, rtk_fid_t *pFid)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pFid)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortBasedFidEn(rtk_switch_port_L2P_get(port), pEnable))!=RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_getAsicPortBasedFid(rtk_switch_port_L2P_get(port), pFid))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_UntagDscpPriorityEnable_set
+               * Description:
+               *      Set Untag DSCP priority assign
+               * Input:
+               *      enable - state of Untag DSCP priority assign
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_ENABLE          - Invalid input parameters.
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_UntagDscpPriorityEnable_set(rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(enable >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if ((retVal = rtl8367c_setAsicVlanUntagDscpPriorityEn((uint32)enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_UntagDscpPriorityEnable_get
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 29  
+
+               * Description:
+               *      Get Untag DSCP priority assign
+               * Input:
+               *      None
+               * Output:
+               *      pEnable - state of Untag DSCP priority assign
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_NULL_POINTER    - Null pointer
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_UntagDscpPriorityEnable_get(rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32  value;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicVlanUntagDscpPriorityEn(&value)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pEnable = (rtk_enable_t)value;
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stp_mstpState_set
+               * Description:
+               *      Configure spanning tree state per each port.
+               * Input:
+               *      port - Port id
+               *      msti - Multiple spanning tree instance.
+               *      stp_state - Spanning tree state for msti
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_MSTI         - Invalid msti parameter.
+               *      RT_ERR_MSTP_STATE   - Invalid STP state.
+               * Note:
+               *      System supports per-port multiple spanning tree state for each msti.
+               *      There are four states supported by ASIC.
+               *      - STP_STATE_DISABLED
+               *      - STP_STATE_BLOCKING
+               *      - STP_STATE_LEARNING
+               *      - STP_STATE_FORWARDING
+               */
+              rtk_api_ret_t rtk_stp_mstpState_set(rtk_stp_msti_id_t msti, rtk_port_t port, rtk_stp_state_t stp_state)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 30  
+
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (msti > RTK_MAX_NUM_OF_MSTI)
+                      return RT_ERR_MSTI;
+              
+                  if (stp_state >= STP_STATE_END)
+                      return RT_ERR_MSTP_STATE;
+              
+                  if ((retVal = rtl8367c_setAsicSpanningTreeStatus(rtk_switch_port_L2P_get(port), msti, stp_state)) != R
+             -T_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_stp_mstpState_get
+               * Description:
+               *      Get spanning tree state per each port.
+               * Input:
+               *      port - Port id.
+               *      msti - Multiple spanning tree instance.
+               * Output:
+               *      pStp_state - Spanning tree state for msti
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_MSTI         - Invalid msti parameter.
+               * Note:
+               *      System supports per-port multiple spanning tree state for each msti.
+               *      There are four states supported by ASIC.
+               *      - STP_STATE_DISABLED
+               *      - STP_STATE_BLOCKING
+               *      - STP_STATE_LEARNING
+               *      - STP_STATE_FORWARDING
+               */
+              rtk_api_ret_t rtk_stp_mstpState_get(rtk_stp_msti_id_t msti, rtk_port_t port, rtk_stp_state_t *pStp_state)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if (msti > RTK_MAX_NUM_OF_MSTI)
+                      return RT_ERR_MSTI;
+              
+                  if(NULL == pStp_state)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicSpanningTreeStatus(rtk_switch_port_L2P_get(port), msti, pStp_state)) != 
+             -RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 31  
+
+              }
+              #endif
+1824          /* Function Name:
+1825           *      rtk_vlan_checkAndCreateMbr
+1826           * Description:
+1827           *      Check and create Member configuration and return index
+1828           * Input:
+1829           *      vid  - VLAN id.
+1830           * Output:
+1831           *      pIndex  - Member configuration index
+1832           * Return:
+1833           *      RT_ERR_OK           - OK
+1834           *      RT_ERR_FAILED       - Failed
+1835           *      RT_ERR_SMI          - SMI access error
+1836           *      RT_ERR_VLAN_VID     - Invalid VLAN ID.
+1837           *      RT_ERR_VLAN_ENTRY_NOT_FOUND - VLAN not found
+1838           *      RT_ERR_TBL_FULL     - Member Configuration table full
+1839           * Note:
+1840           *
+1841           */
+1842          rtk_api_ret_t rtk_vlan_checkAndCreateMbr(rtk_vlan_t vid, uint32 *pIndex)
+1843          {
+1844   1          rtk_api_ret_t retVal;
+1845   1          rtl8367c_user_vlan4kentry vlan4K;
+1846   1          rtl8367c_vlanconfiguser vlanMC;
+1847   1          uint32 idx;
+1848   1          uint32 empty_idx = 0xFFFF;
+1849   1      
+1850   1          /* Check initialization state */
+1851   1          RTK_CHK_INIT_STATE();
+1852   1      
+1853   1          /* vid must be 0~8191 */
+1854   1          if (vid > RTL8367C_EVIDMAX)
+1855   1              return RT_ERR_VLAN_VID;
+1856   1      
+1857   1          /* Null pointer check */
+1858   1          if(NULL == pIndex)
+1859   1              return RT_ERR_NULL_POINTER;
+1860   1      
+1861   1          /* Get 4K VLAN */
+1862   1          if (vid <= RTL8367C_VIDMAX)
+1863   1          {
+1864   2              memset(&vlan4K, 0x00, sizeof(rtl8367c_user_vlan4kentry));
+1865   2              vlan4K.vid = (uint16)(vid & 0xffff);
+1866   2              if ((retVal = rtl8367c_getAsicVlan4kEntry(&vlan4K)) != RT_ERR_OK)
+1867   2                  return retVal;
+1868   2          }
+1869   1      
+1870   1          /* Search exist entry */
+1871   1          for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+1872   1          {
+1873   2              if(vlan_mbrCfgUsage[idx] == MBRCFG_USED_BY_VLAN)
+1874   2              {
+1875   3                  if(vlan_mbrCfgVid[idx] == vid)
+1876   3                  {
+1877   4                      /* Found! return index */
+1878   4                      *pIndex = idx;
+1879   4                      return RT_ERR_OK;
+1880   4                  }
+1881   3              }
+1882   2          }
+1883   1      
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 32  
+
+1884   1          /* Not found, Read H/W Member Configuration table to update database */
+1885   1          for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+1886   1          {
+1887   2              if ((retVal = rtl8367c_getAsicVlanMemberConfig(idx, &vlanMC)) != RT_ERR_OK)
+1888   2                  return retVal;
+1889   2      
+1890   2              if( (vlanMC.evid == 0) && (vlanMC.mbr == 0x00))
+1891   2              {
+1892   3                  vlan_mbrCfgUsage[idx]   = MBRCFG_UNUSED;
+1893   3                  vlan_mbrCfgVid[idx]     = 0;
+1894   3              }
+1895   2              else
+1896   2              {
+1897   3                  vlan_mbrCfgUsage[idx]   = MBRCFG_USED_BY_VLAN;
+1898   3                  vlan_mbrCfgVid[idx]     = vlanMC.evid;
+1899   3              }
+1900   2          }
+1901   1      
+1902   1          /* Search exist entry again */
+1903   1          for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+1904   1          {
+1905   2              if(vlan_mbrCfgUsage[idx] == MBRCFG_USED_BY_VLAN)
+1906   2              {
+1907   3                  if(vlan_mbrCfgVid[idx] == vid)
+1908   3                  {
+1909   4                      /* Found! return index */
+1910   4                      *pIndex = idx;
+1911   4                      return RT_ERR_OK;
+1912   4                  }
+1913   3              }
+1914   2          }
+1915   1      
+1916   1          /* try to look up an empty index */
+1917   1          for (idx = 0; idx <= RTL8367C_CVIDXMAX; idx++)
+1918   1          {
+1919   2              if(vlan_mbrCfgUsage[idx] == MBRCFG_UNUSED)
+1920   2              {
+1921   3                  empty_idx = idx;
+1922   3                  break;
+1923   3              }
+1924   2          }
+1925   1      
+1926   1          if(empty_idx == 0xFFFF)
+1927   1          {
+1928   2              /* No empty index */
+1929   2              return RT_ERR_TBL_FULL;
+1930   2          }
+1931   1      
+1932   1          if (vid > RTL8367C_VIDMAX)
+1933   1          {
+1934   2              /* > 4K, there is no 4K entry, create on member configuration directly */
+1935   2              memset(&vlanMC, 0x00, sizeof(rtl8367c_vlanconfiguser));
+1936   2              vlanMC.evid = vid;
+1937   2              if ((retVal = rtl8367c_setAsicVlanMemberConfig(empty_idx, &vlanMC)) != RT_ERR_OK)
+1938   2                  return retVal;
+1939   2          }
+1940   1          else
+1941   1          {
+1942   2              /* Copy from 4K table */
+1943   2              vlanMC.evid = vid;
+1944   2              vlanMC.mbr = vlan4K.mbr;
+1945   2              vlanMC.fid_msti = vlan4K.fid_msti;
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 33  
+
+1946   2              vlanMC.meteridx= vlan4K.meteridx;
+1947   2              vlanMC.envlanpol= vlan4K.envlanpol;
+1948   2              vlanMC.vbpen = vlan4K.vbpen;
+1949   2              vlanMC.vbpri = vlan4K.vbpri;
+1950   2              if ((retVal = rtl8367c_setAsicVlanMemberConfig(empty_idx, &vlanMC)) != RT_ERR_OK)
+1951   2                  return retVal;
+1952   2          }
+1953   1      
+1954   1          /* Update Database */
+1955   1          vlan_mbrCfgUsage[empty_idx] = MBRCFG_USED_BY_VLAN;
+1956   1          vlan_mbrCfgVid[empty_idx] = vid;
+1957   1      
+1958   1          *pIndex = empty_idx;
+1959   1          return RT_ERR_OK;
+1960   1      }
+1961          #if 0//Not used
+              /* Function Name:
+               *      rtk_vlan_reservedVidAction_set
+               * Description:
+               *      Set Action of VLAN ID = 0 & 4095 tagged packet
+               * Input:
+               *      action_vid0     - Action for VID 0.
+               *      action_vid4095  - Action for VID 4095.
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Error Input
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_reservedVidAction_set(rtk_vlan_resVidAction_t action_vid0, rtk_vlan_resVidAction_t 
+             -action_vid4095)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(action_vid0 >= RESVID_ACTION_END)
+                      return RT_ERR_INPUT;
+              
+                  if(action_vid4095 >= RESVID_ACTION_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setReservedVidAction((uint32)action_vid0, (uint32)action_vid4095)) != RT_ERR_OK
+             -)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_reservedVidAction_get
+               * Description:
+               *      Get Action of VLAN ID = 0 & 4095 tagged packet
+               * Input:
+               *      pAction_vid0     - Action for VID 0.
+               *      pAction_vid4095  - Action for VID 4095.
+               * Output:
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 34  
+
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_NULL_POINTER - NULL Pointer
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_reservedVidAction_get(rtk_vlan_resVidAction_t *pAction_vid0, rtk_vlan_resVidAction_
+             -t *pAction_vid4095)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(pAction_vid0 == NULL)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(pAction_vid4095 == NULL)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getReservedVidAction((uint32 *)pAction_vid0, (uint32 *)pAction_vid4095)) != RT_
+             -ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_realKeepRemarkEnable_set
+               * Description:
+               *      Set Real keep 1p remarking feature
+               * Input:
+               *      enabled     - State of 1p remarking at real keep packet
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Error Input
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_realKeepRemarkEnable_set(rtk_enable_t enabled)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(enabled >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setRealKeepRemarkEn((uint32)enabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 35  
+
+              /* Function Name:
+               *      rtk_vlan_realKeepRemarkEnable_get
+               * Description:
+               *      Get Real keep 1p remarking feature
+               * Input:
+               *      None.
+               * Output:
+               *      pEnabled     - State of 1p remarking at real keep packet
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Error Input
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_realKeepRemarkEnable_get(rtk_enable_t *pEnabled)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pEnabled)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getRealKeepRemarkEn((uint32 *)pEnabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_vlan_reset
+               * Description:
+               *      Reset VLAN
+               * Input:
+               *      None.
+               * Output:
+               *      pEnabled     - State of 1p remarking at real keep packet
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Error Input
+               * Note:
+               *
+               */
+              rtk_api_ret_t rtk_vlan_reset(void)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if ((retVal = rtl8367c_resetVlan()) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+
+C51 COMPILER V9.60.0.0   VLAN                                                              11/02/2026 17:57:13 PAGE 36  
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   4766    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    160     252
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

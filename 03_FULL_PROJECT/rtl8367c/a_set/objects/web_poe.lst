@@ -1,0 +1,294 @@
+C51 COMPILER V9.60.0.0   WEB_POE                                                           02/23/2025 18:03:11 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_POE
+OBJECT MODULE PLACED IN .\objects\web_poe.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE web_poe.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) INCDIR(.\
+                    -include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;
+                    -.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLACE,LWS_A
+                    -_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LED_MODE) 
+                    -VARBANKING DEBUG PRINT(.\objects\web_poe.lst) TABS(2) OBJECT(.\objects\web_poe.obj)
+
+line level    source
+
+   1          //#include <string.h>
+   2          //#include <stdio.h>
+   3          
+   4          //#include <salflash.h>
+   5          //#include <salsys.h>
+   6          
+   7          //#include <web/web_api.h>
+   8          //#include <syslog/syslogdefs.h>
+   9          
+  10          //int32 get_poe(struct http_request_s *pReq)
+  11          //{
+  12          //   uint8 username[SAL_FLSH_USR_USERNAME_LEN + 1];
+  13          //    uint8 password[SAL_FLSH_USR_PASSWORD_LEN + 1];
+  14          
+  15          //    sal_flash_sysAccount_get(username, password);
+  16          
+  17          //    WEB_BEGIN(pReq);
+  18          
+  19          //    WEB_STATUS(pReq, HTTP_STATUS_OK);
+  20          //    WEB_HEADER(pReq, "Content-Type: text/html");
+  21          //WEB_PRINTF(pReq, "<html lang=\"en\">\n");
+  22          //WEB_PRINTF(pReq, "<head>\n");
+  23          //WEB_PRINTF(pReq, "<meta charset=\"UTF-8\">\n");
+  24          //WEB_PRINTF(pReq, "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+  25          //WEB_PRINTF(pReq, "<title>POE NEW</title>\n");
+  26          //WEB_PRINTF(pReq, "</head>\n");
+  27          //WEB_PRINTF(pReq, "<script>\n");
+  28          //WEB_PRINTF(pReq, "let fetchFlag=true;\n");
+  29          //WEB_PRINTF(pReq, "let fetchInterval;\n");
+  30          //WEB_PRINTF(pReq, "const ip = window.location.hostname;\n");
+  31          //WEB_PRINTF(pReq, "async function getPoeData() {\n");
+  32          //WEB_PRINTF(pReq, "try {\n");
+  33          //WEB_PRINTF(pReq, "let response = await fetch(`http://${ip}:80/get_poe_status`);\n");
+  34          //WEB_PRINTF(pReq, "let res1 = await response.json();\n");
+  35          //WEB_PRINTF(pReq, "let res = { \"ac\": res1.A, \"battery\": res1.B, \"batteryPercentage\": res1.C, \"mode
+             -\": res1.D, \"voltage\": res1.E };\n");
+  36          //WEB_PRINTF(pReq, "const acLight = document.getElementById('ac-light');\n");
+  37          //WEB_PRINTF(pReq, "if (res.ac === 1) {\n");
+  38          //WEB_PRINTF(pReq, "acLight.style.backgroundColor = 'green';\n");
+  39          //WEB_PRINTF(pReq, "} else {\n");
+  40          //WEB_PRINTF(pReq, "acLight.style.backgroundColor = 'red';\n");
+  41          //WEB_PRINTF(pReq, "}\n");
+  42          //WEB_PRINTF(pReq, "const batteryLight = document.getElementById('battery-light');\n");
+  43          //WEB_PRINTF(pReq, "if (res.battery === 1) {\n");
+  44          //WEB_PRINTF(pReq, "batteryLight.style.backgroundColor = 'green';\n");
+  45          //WEB_PRINTF(pReq, "} else {\n");
+  46          //WEB_PRINTF(pReq, "batteryLight.style.backgroundColor = 'red';\n");
+  47          //WEB_PRINTF(pReq, "}\n");
+  48          //WEB_PRINTF(pReq, "const batteryParts = document.querySelectorAll('.battery-part');\n");
+  49          //WEB_PRINTF(pReq, "const batteryPercentage = res.batteryPercentage || 0;\n");
+  50          //WEB_PRINTF(pReq, "const segmentsToFill = Math.floor(batteryPercentage / 25);\n");
+C51 COMPILER V9.60.0.0   WEB_POE                                                           02/23/2025 18:03:11 PAGE 2   
+
+  51          //WEB_PRINTF(pReq, "batteryParts.forEach((part, index) => {\n");
+  52          //WEB_PRINTF(pReq, "if (index < segmentsToFill) {\n");
+  53          //WEB_PRINTF(pReq, "part.style.backgroundColor = 'green';\n");
+  54          //WEB_PRINTF(pReq, "} else { part.style.backgroundColor = '#e0e0e0';}\n");
+  55          //WEB_PRINTF(pReq, "});\n");
+  56          //WEB_PRINTF(pReq, "if (batteryPercentage === 25) {\n");
+  57          //WEB_PRINTF(pReq, "batteryParts[0].style.backgroundColor = 'yellow';\n");
+  58          //WEB_PRINTF(pReq, "}\n");
+  59          //WEB_PRINTF(pReq, "const mode = {0: \"Low\",1: \"Normal\",2: \"High\"};\n");
+  60          //WEB_PRINTF(pReq, "const inputField = document.querySelector('.ac-supply input');\n");
+  61          //WEB_PRINTF(pReq, "if (inputField && res.mode !== undefined) {\n");
+  62          //WEB_PRINTF(pReq, "inputField.value = mode[res.mode] || \"Unknown\";\n");
+  63          //WEB_PRINTF(pReq, "}\n");
+  64          //WEB_PRINTF(pReq, "const voltageCheckboxes = document.querySelectorAll('.checkbox-group input[type=\"chec
+             -kbox\"]');\n");
+  65          //WEB_PRINTF(pReq, "voltageCheckboxes.forEach((checkbox) => {\n");
+  66          //WEB_PRINTF(pReq, "if (checkbox.value === `${res.voltage}V`) {\n");
+  67          //WEB_PRINTF(pReq, "checkbox.checked = true;\n");
+  68          //WEB_PRINTF(pReq, "checkbox.nextElementSibling.style.backgroundColor = 'green';\n");
+  69          //WEB_PRINTF(pReq, "} else {\n");
+  70          //WEB_PRINTF(pReq, "checkbox.checked = false;\n");
+  71          //WEB_PRINTF(pReq, "checkbox.nextElementSibling.style.backgroundColor = 'white';\n");
+  72          //WEB_PRINTF(pReq, "}\n");
+  73          //WEB_PRINTF(pReq, "});\n");
+  74          //WEB_PRINTF(pReq, "} catch (error) {\n");
+  75          //WEB_PRINTF(pReq, "console.log(\"Error fetching data:\", error);\n");
+  76          //WEB_PRINTF(pReq, "}\n");
+  77          //WEB_PRINTF(pReq, "}\n");
+  78          //WEB_PRINTF(pReq, "function handleVoltageSelection(event) {\n");
+  79          //WEB_PRINTF(pReq, "const checkboxes = document.querySelectorAll('.checkbox-group input[type=\"checkbox\"]
+             -');\n");
+  80          //WEB_PRINTF(pReq, "checkboxes.forEach(checkbox => {\n");
+  81          //WEB_PRINTF(pReq, "if (checkbox !== event.target) {\n");
+  82          //WEB_PRINTF(pReq, "checkbox.checked = false;\n");
+  83          //WEB_PRINTF(pReq, "checkbox.nextElementSibling.style.backgroundColor = 'white';\n");
+  84          //WEB_PRINTF(pReq, "}\n");
+  85          //WEB_PRINTF(pReq, "});\n");
+  86          //WEB_PRINTF(pReq, "}\n");
+  87          //WEB_PRINTF(pReq, "function toggleCheckbox(checkbox) {\n");
+  88          //WEB_PRINTF(pReq, "console.log(\"toggleCheckbox\");\n");
+  89          //WEB_PRINTF(pReq, "fetchFlag=false;\n");
+  90          //WEB_PRINTF(pReq, "setTimeout(()=>{fetchFlag=true}, 6000);\n");
+  91          //WEB_PRINTF(pReq, "const box = checkbox.nextElementSibling;\n");
+  92          //WEB_PRINTF(pReq, "if (checkbox.checked) {\n");
+  93          //WEB_PRINTF(pReq, "box.style.backgroundColor = 'green'; // green when checked\n");
+  94          //WEB_PRINTF(pReq, "} else {\n");
+  95          //WEB_PRINTF(pReq, "box.style.backgroundColor = 'white';\n");
+  96          //WEB_PRINTF(pReq, "}\n");
+  97          //WEB_PRINTF(pReq, "}\n");
+  98          //WEB_PRINTF(pReq, "async function applyVoltage() {\n");
+  99          //WEB_PRINTF(pReq, "const selectedVoltage = document.querySelector('.checkbox-group input[type=\"checkbox\
+             -"]:checked');\n");
+ 100          //WEB_PRINTF(pReq, "if (selectedVoltage) {\n");
+ 101          //WEB_PRINTF(pReq, "try {\n");
+ 102          //WEB_PRINTF(pReq, "const buttonHtml = document.getElementById('applyButton');\n");
+ 103          //WEB_PRINTF(pReq, "buttonHtml.disabled = true;\n");
+ 104          //WEB_PRINTF(pReq, "buttonHtml.style.backgroundColor = 'gray';\n");
+ 105          //WEB_PRINTF(pReq, "buttonHtml.innerHTML = 'Loading...';\n");
+ 106          //WEB_PRINTF(pReq, "let response;\n");
+ 107          //WEB_PRINTF(pReq, "if (selectedVoltage.value === '24V') {\n");
+ 108          //WEB_PRINTF(pReq, "response = await fetch(`http://${ip}/set_24`);\n");
+ 109          //WEB_PRINTF(pReq, "} else if (selectedVoltage.value === '30V') {\n");
+C51 COMPILER V9.60.0.0   WEB_POE                                                           02/23/2025 18:03:11 PAGE 3   
+
+ 110          //WEB_PRINTF(pReq, "response = await fetch(`http://${ip}/set_30`);\n");
+ 111          //WEB_PRINTF(pReq, "} else if (selectedVoltage.value === '48V') {\n");
+ 112          //WEB_PRINTF(pReq, "response = await fetch(`http://${ip}/set_48`);\n");
+ 113          //WEB_PRINTF(pReq, "} else if (selectedVoltage.value === '56V') {\n");
+ 114          //WEB_PRINTF(pReq, "response = await fetch(`http://${ip}/set_56`);\n");
+ 115          //WEB_PRINTF(pReq, "}\n");
+ 116          //WEB_PRINTF(pReq, "buttonHtml.disabled = false;\n");
+ 117          //WEB_PRINTF(pReq, "buttonHtml.style.backgroundColor = 'blue';\n");
+ 118          //WEB_PRINTF(pReq, "buttonHtml.innerHTML = 'Apply';\n");
+ 119          //WEB_PRINTF(pReq, "if (response.ok) {\n");
+ 120          //WEB_PRINTF(pReq, "alert(`Voltage set successfully to ${selectedVoltage.value}`);\n");
+ 121          //WEB_PRINTF(pReq, "}\n");
+ 122          //WEB_PRINTF(pReq, "} catch (error) {\n");
+ 123          //WEB_PRINTF(pReq, "console.error(\"Error setting voltage:\", error);\n");
+ 124          //WEB_PRINTF(pReq, "alert(`Failed to set voltage due to a network error: ${error.message}`);\n");
+ 125          //WEB_PRINTF(pReq, "}\n");
+ 126          //WEB_PRINTF(pReq, "} else {\n");
+ 127          //WEB_PRINTF(pReq, "alert('Please select a voltage option.');\n");
+ 128          //WEB_PRINTF(pReq, "}\n");
+ 129          //WEB_PRINTF(pReq, "}\n");
+ 130          //WEB_PRINTF(pReq, "async function startTimer(){\n");
+ 131          //WEB_PRINTF(pReq, "fetchInterval = setInterval(()=>{\n");
+ 132          //WEB_PRINTF(pReq, "if(fetchFlag){ getPoeData();}}, 7000);\n");
+ 133          //WEB_PRINTF(pReq, "}\n");
+ 134          //WEB_PRINTF(pReq, "getPoeData();\n");
+ 135          //WEB_PRINTF(pReq, "setTimeout(getPoeData, 1800);\n");
+ 136          //WEB_PRINTF(pReq, "setTimeout(getPoeData, 1800);\n");
+ 137          //WEB_PRINTF(pReq, "setTimeout(getPoeData, 1800);\n");
+ 138          //WEB_PRINTF(pReq, "setTimeout(getPoeData, 1800);\n");
+ 139          //WEB_PRINTF(pReq, "startTimer();\n");
+ 140          //WEB_PRINTF(pReq, "</script>\n");
+ 141          //WEB_PRINTF(pReq, "<body>\n");
+ 142          //WEB_PRINTF(pReq, "<div style=\"margin: auto 10px; font-family: Arial, sans-serif;  \">\n");
+ 143          //WEB_PRINTF(pReq, "<h1 style=\"text-align: center; margin: 20px auto; font-size: 24px; color: #333;\">POE
+             -</h1>\n");
+ 144          //WEB_PRINTF(pReq, "<div\n");
+ 145          //WEB_PRINTF(pReq, "style=\"display: flex; flex-direction: row; justify-content: space-between; align-item
+             -s: center; width: 500px; margin: 50px auto; padding: 30px; background-color: rgb(208, 215, 177); border-radius: 10px; bo
+             -x-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);\">\n");
+ 146          //WEB_PRINTF(pReq, "<div style=\"display: flex; flex-direction: column; gap: 10px;\">\n");
+ 147          //WEB_PRINTF(pReq, "<div class=\"checkbox-group\">\n");
+ 148          //WEB_PRINTF(pReq, "<label style=\"margin-right: 10px; font-size: 16px;\">\n");
+ 149          //WEB_PRINTF(pReq, "<input type=\"checkbox\" value=\"56V\" style=\"display: none;\"\n");
+ 150          //WEB_PRINTF(pReq, "onclick=\"handleVoltageSelection(event); toggleCheckbox(this)\">\n");
+ 151          //WEB_PRINTF(pReq, "<div\n");
+ 152          //WEB_PRINTF(pReq, "style=\"width: 20px; height: 20px; border-radius: 5px; background-color: white; transi
+             -tion: background-color 0.3s; cursor: pointer;\">\n");
+ 153          //WEB_PRINTF(pReq, "</div> 56V\n");
+ 154          //WEB_PRINTF(pReq, "</label>\n");
+ 155          //WEB_PRINTF(pReq, "<label style=\"margin-right: 10px; font-size: 16px;\">\n");
+ 156          //WEB_PRINTF(pReq, "<input type=\"checkbox\" value=\"48V\" style=\"display: none;\"\n");
+ 157          //WEB_PRINTF(pReq, "onclick=\"handleVoltageSelection(event); toggleCheckbox(this)\">\n");
+ 158          //WEB_PRINTF(pReq, "<div\n");
+ 159          //WEB_PRINTF(pReq, "style=\"width: 20px; height: 20px; border-radius: 5px; background-color: white; transi
+             -tion: background-color 0.3s; cursor: pointer;\">\n");
+ 160          //WEB_PRINTF(pReq, "</div> 48V\n");
+ 161          //WEB_PRINTF(pReq, "</label>\n");
+ 162          //WEB_PRINTF(pReq, "<label style=\"margin-right: 10px; font-size: 16px;\">\n");
+ 163          //WEB_PRINTF(pReq, "<input type=\"checkbox\" value=\"30V\" style=\"display: none;\"\n");
+ 164          //WEB_PRINTF(pReq, "onclick=\"handleVoltageSelection(event); toggleCheckbox(this)\">\n");
+ 165          //WEB_PRINTF(pReq, "<div\n");
+ 166          //WEB_PRINTF(pReq, "style=\"width: 20px; height: 20px; border-radius: 5px; background-color: white; transi
+C51 COMPILER V9.60.0.0   WEB_POE                                                           02/23/2025 18:03:11 PAGE 4   
+
+             -tion: background-color 0.3s; cursor: pointer;\">\n");
+ 167          //WEB_PRINTF(pReq, "</div> 30V\n");
+ 168          //WEB_PRINTF(pReq, "</label>\n");
+ 169          //WEB_PRINTF(pReq, "<label style=\"margin-right: 10px; font-size: 16px;\">\n");
+ 170          //WEB_PRINTF(pReq, "<input type=\"checkbox\" value=\"24V\" style=\"display: none;\"\n");
+ 171          //WEB_PRINTF(pReq, "onclick=\"handleVoltageSelection(event); toggleCheckbox(this)\">\n");
+ 172          //WEB_PRINTF(pReq, "<div\n");
+ 173          //WEB_PRINTF(pReq, "style=\"width: 20px; height: 20px; border-radius: 5px; background-color: white; transi
+             -tion: background-color 0.3s; cursor: pointer;\">\n");
+ 174          //WEB_PRINTF(pReq, "</div> 24V\n");
+ 175          //WEB_PRINTF(pReq, "</label>\n");
+ 176          //WEB_PRINTF(pReq, "</div>\n");
+ 177          //WEB_PRINTF(pReq, "<button id=\"applyButton\" onclick=\"applyVoltage()\"\n");
+ 178          //WEB_PRINTF(pReq, "style=\"background-color: #0056b3; color: white; padding: 5px 10px; border: none; bord
+             -er-radius: 5px; cursor: pointer;\">Apply</button>\n");
+ 179          //WEB_PRINTF(pReq, "</div>\n");
+ 180          //WEB_PRINTF(pReq, "<div style=\"display: flex; flex-direction: column; gap: 10px;\">\n");
+ 181          //WEB_PRINTF(pReq, "<div style=\"display: flex; gap: 10px; justify-content: start; align-items: center;\">
+             -\n");
+ 182          //WEB_PRINTF(pReq, "<div id=\"ac-light\"\n");
+ 183          //WEB_PRINTF(pReq, "style=\"width: 15px; height: 15px; border-radius: 50%; background-color: green; box-sh
+             -adow: 0 0 10px rgba(0, 0, 0, 0.2);\">\n");
+ 184          //WEB_PRINTF(pReq, "</div>\n");
+ 185          //WEB_PRINTF(pReq, "<div>AC</div>\n");
+ 186          //WEB_PRINTF(pReq, "</div>\n");
+ 187          //WEB_PRINTF(pReq, "<div style=\"display: flex; gap: 10px; justify-content: start; align-items: center;\">
+             -\n");
+ 188          //WEB_PRINTF(pReq, "<div id=\" -light\"\n");
+ 189          //WEB_PRINTF(pReq, "style=\"width: 15px; height: 15px; border-radius: 50%; background-color: green; box-sh
+             -adow: 0 0 10px rgba(0, 0, 0, 0.2);\">\n");
+ 190          //WEB_PRINTF(pReq, "</div>\n");
+ 191          //WEB_PRINTF(pReq, "<div>Battery</div>\n");
+ 192          //WEB_PRINTF(pReq, "<div\n");
+ 193          //WEB_PRINTF(pReq, "style=\"display: flex; width: 100px; height: 30px; border: 2px solid #333; border-radi
+             -us: 5px; background-color: #fff; position: relative;\">\n");
+ 194          //WEB_PRINTF(pReq, "<div class=\"battery-part\" style=\"width: 25%; background-color: #e0e0e0; border-righ
+             -t: 2px solid #333;\">\n");
+ 195          //WEB_PRINTF(pReq, "</div>\n");
+ 196          //WEB_PRINTF(pReq, "<div class=\"battery-part\" style=\"width: 25%; background-color: #e0e0e0; border-righ
+             -t: 2px solid #333;\">\n");
+ 197          //WEB_PRINTF(pReq, "</div>\n");
+ 198          //WEB_PRINTF(pReq, "<div class=\"battery-part\" style=\"width: 25%; background-color: #e0e0e0; border-righ
+             -t: 2px solid #333;\">\n");
+ 199          //WEB_PRINTF(pReq, "</div>\n");
+ 200          //WEB_PRINTF(pReq, "<div class=\"battery-part\" style=\"width: 25%;  background-color: #e0e0e0;\"></div>\n
+             -");
+ 201          //WEB_PRINTF(pReq, "<div\n");
+ 202          //WEB_PRINTF(pReq, "style=\"width: 10px; height: 10px; background-color: #333; position: absolute; right: 
+             --12px; top: 10%; transform: translateY(-50%); border-radius: 3px;\">\n");
+ 203          //WEB_PRINTF(pReq, "</div>\n");
+ 204          //WEB_PRINTF(pReq, "<div\n");
+ 205          //WEB_PRINTF(pReq, "style=\"position: absolute; top: 10%; left: 20%; transform: translate(-50%, -50%); fon
+             -t-size: 14px; color: #333;\">\n");
+ 206          //WEB_PRINTF(pReq, "Battery</div>\n");
+ 207          //WEB_PRINTF(pReq, "</div>\n");
+ 208          //WEB_PRINTF(pReq, "</div>\n");
+ 209          //WEB_PRINTF(pReq, "<div style=\"display: flex; justify-content: flex-start; align-items: center; gap: 10p
+             -x; margin-top: 10px;\"\n");
+ 210          //WEB_PRINTF(pReq, "class=\"ac-supply\">\n");
+ 211          //WEB_PRINTF(pReq, "<p>AC Supply:</p>\n");
+ 212          //WEB_PRINTF(pReq, "<input type=\"text\" readonly\n");
+ 213          //WEB_PRINTF(pReq, "style=\"height: 20px; width: 100px; border: 1px solid white; border-radius: 5px; paddi
+C51 COMPILER V9.60.0.0   WEB_POE                                                           02/23/2025 18:03:11 PAGE 5   
+
+             -ng: 2px 5px; text-align: center; font-size: 14px;\">\n");
+ 214          //WEB_PRINTF(pReq, "</div>\n");
+ 215          //WEB_PRINTF(pReq, "</div>\n");
+ 216          //WEB_PRINTF(pReq, "</div>\n");
+ 217          //WEB_PRINTF(pReq, "</div>\n");
+ 218          //WEB_PRINTF(pReq, "</body>\n");
+ 219          //WEB_PRINTF(pReq, "</html>\n");
+ 220          // 
+ 221          //    WEB_END(pReq);
+ 222          
+ 223          //  return SUCCESS;
+ 224          //}
+ 225          
+ 226          
+ 227          
+ 228          
+ 229          
+ 230          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   ----    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

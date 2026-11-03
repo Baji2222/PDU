@@ -1,0 +1,134 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/02/2026 17:57:25 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_SPECIALCONGEST
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_specialCongest.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_specialCongest.c LARGE OMF2 OPTIMIZE(8,S
+                    -IZE) BROWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\
+                    -..\common\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED
+                    -_SUPPORT,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORIT
+                    -Y,COMPATIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_specialCongest.lst) TABS(2) OBJ
+                    -ECT(.\objects\rtl8367c_asicdrv_specialCongest.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 38651 $
+  13           * $Date: 2013-04-17 14:32:56 +0800 (?Ÿæ?ä¸? 17 ?›æ? 2013) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Special congestion related functions
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_specialCongest.h>
+  20          /* Function Name:
+  21           *      rtl8367c_setAsicSpecialCongestModeConfig
+  22           * Description:
+  23           *      Set ASIC special congest mode configuration
+  24           * Input:
+  25           *      port  - Physical port number (0~7)
+  26           *      sustain - sustain timer (0-15)
+  27           * Output:
+  28           *      None
+  29           * Return:
+  30           *      RT_ERR_OK       - Success
+  31           *      RT_ERR_SMI      - SMI access error
+  32           *      RT_ERR_PORT_ID    - Invalid port number
+  33           *      RT_ERR_OUT_OF_RANGE - Input parameter out of range
+  34           * Note:
+  35           *      None
+  36           */
+  37          ret_t rtl8367c_setAsicSpecialCongestModeConfig(uint32 port, uint32 sustain)
+  38          {
+  39   1        if(port >= RTL8367C_PORTNO)
+  40   1          return RT_ERR_PORT_ID;
+  41   1      
+  42   1          if(sustain > RTL8367C_SPECIALCONGEST_SUSTAIN_TIMERMAX)
+  43   1              return RT_ERR_OUT_OF_RANGE;
+  44   1      
+  45   1        return rtl8367c_setAsicRegBits(RTL8367C_PORT_MISC_CFG_REG(port), RTL8367C_SPECIALCONGEST_SUSTAIN_TIMER_MA
+             -SK, sustain);
+  46   1      }
+  47          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicSpecialCongestModeConfig
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/02/2026 17:57:25 PAGE 2   
+
+               * Description:
+               *      Get ASIC special congest mode configuration
+               * Input:
+               *      port  - Physical port number (0~7)
+               *      pSustain - sustain timer (0-15)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID    - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicSpecialCongestModeConfig(uint32 port, uint32 *pSustain)
+              {
+                if(port >= RTL8367C_PORTNO)
+                  return RT_ERR_PORT_ID;
+              
+                return rtl8367c_getAsicRegBits(RTL8367C_PORT_MISC_CFG_REG(port), RTL8367C_SPECIALCONGEST_SUSTAIN_TIMER_MA
+             -SK, pSustain);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicSpecialCongestModeTimer
+               * Description:
+               *      Get ASIC special congest mode timer
+               * Input:
+               *      port  - Physical port number (0~7)
+               *      pTimer  - time (0-15)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID    - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicSpecialCongestModeTimer(uint32 port, uint32* pTimer)
+              {
+                  if(port > RTL8367C_PORTNO)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_PORT_SPECIAL_CONGEST_MODE_TIMER_REG(port), RTL8367C_PKTGEN_POR
+             -T0_TIMER_TIMER_MASK, pTimer);
+              }
+              #endif
+  95          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    120    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_SPECIALCONGEST                                   11/02/2026 17:57:25 PAGE 3   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

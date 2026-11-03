@@ -1,0 +1,1226 @@
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE IGMP_GROUP_DB
+OBJECT MODULE PLACED IN .\objects\igmp_group_db.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\lwps\igmp_group_db.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE
+                    - INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\s
+                    -al;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RT
+                    -K_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBL
+                    -E_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\igmp_group_db.lst) TABS(2) OBJECT(.\objects\igmp_group_db.o
+                    -bj)
+
+line level    source
+
+   1          /*
+   2           * Copyright Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * Program  : IGMP snooping Database
+   6           * Abstract : 
+   7           * Author   : 
+   8           * $Id: $
+   9           */
+  10          
+  11          #pragma STRING (far)
+  12          
+  13          /*
+  14           * Include Files
+  15           */
+  16          #include <local/lwps_config.h>
+  17          
+  18          #if LWPS_IGMP
+  19          
+  20          #include <common.h>
+  21          #include <common_types.h>
+  22          #include <lwps/lwps.h>
+  23          #include <lwps/igmp_snooping.h>
+  24          #include <lwps/igmp_group_db.h>
+  25          #include <saligmp.h>
+  26          #include <saltrunk.h>
+  27          #include <salutil.h>
+  28          
+  29          
+  30          /*
+  31           * Symbol Definition
+  32           */
+  33          typedef struct igmpdb_group_s{
+  34              ipaddr_group_list_t *iter;
+  35              ipaddr_group_list_t *iter_last;
+  36          }ipaddr_group_t;
+  37          
+  38          /*
+  39           * Data Declaration
+  40           */
+  41          igmp_snoopingRouters_t xdata igmpRouter;
+  42          ipaddr_group_head_t    xdata igmpGroupHead;
+  43          ipaddr_group_head_t    xdata igmpGroupFreeHead;
+  44          ipaddr_group_list_t    xdata igmpGroupPool[MAX_GROUP_SIZE];
+  45          portmask_type          xdata igmpFastLeavePort;
+  46          
+  47          /*
+  48           * Macro Definition
+  49           */
+  50          #if   CONFIG_IGMP_MLD_ENABLE
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 2   
+
+              
+              #define IGMP_CHECK_GROUP(addr1, addr2, cuur_mode, target_mode) \
+                  (IS_IPADDR_EQUAL((addr1),(addr2)) && ((target_mode)==(cuur_mode)))
+              
+              #define IGMP_MLD_CALLING( inst, callv4, callv6 )               \
+              do{                                                            \
+                  if( IGMP_GRP_DB_IPV4==inst->ipvn )                         \
+                  {                                                          \
+                      (callv4); /* No SIP */                                   \
+                  }                                                          \
+                  else if( IGMP_GRP_DB_IPV6==inst->ipvn )                    \
+                  {                                                          \
+                      (callv6); /* No SIP */                                   \
+                  }                                                          \
+              }while(0)
+              
+              #else /* else of CONFIG_IGMP_MLD_ENABLE */
+  68          
+  69          #define IGMP_CHECK_GROUP(addr1, addr2, cuur_mode, target_mode) \
+  70              ( IS_IPADDR_EQUAL((addr1),(addr2)) )
+  71          
+  72          #define IGMP_MLD_CALLING( inst, callv4, callv6 )               \
+  73          do{                                                            \
+  74              (callv4);                                                    \
+  75          }while(0)
+  76              
+  77          #endif /* end of else of CONFIG_IGMP_MLD_ENABLE */
+  78          
+  79          
+  80          /*
+  81           * Function Declaration
+  82           */
+  83          #if DBG_LWPS_IGMP_ENABLE
+              // Print IGMP All: Debug function to display all IGMP group members and router ports
+              // Prints group member information and router port mask for debugging purposes
+              void print_igmp_all( igmp_print_type_t type)
+              {
+                  uint16 group_number;
+                  uint16 i;
+                  ipaddr_group_list_t *iter_group;
+              
+                  group_number = igmpGroupHead.listNumber;
+                  iter_group = igmpGroupHead.item;
+              
+                  OSAL_PRINTF("--print_igmp_all--------------------------------\n");
+              
+                  if ( type&IGMP_PRINT_TYPE_GROUP_MEMBER )
+                  {
+                      OSAL_PRINTF("   [Group_Member]:\n");
+                      for (i=0; i<group_number; i++, iter_group=iter_group->next)
+                      {
+                          OSAL_PRINTF("                  [%d:%d:%d:%d]:0x%04X", \
+                                  (uint16)iter_group->groupAddr.addr[0], \ 
+                                  (uint16)iter_group->groupAddr.addr[1], \
+                                  (uint16)iter_group->groupAddr.addr[2], \
+                                  (uint16)iter_group->groupAddr.addr[3], \
+                                  (uint16)iter_group->fwdPortMask[0]);
+                          OSAL_PRINTF("(%d)", (uint16)iter_group->ipvn);
+                          OSAL_PRINTF("\n");
+                      }
+                  }
+              
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 3   
+
+                  if ( type&IGMP_PRINT_TYPE_ROUTER )
+                  {
+                      OSAL_PRINTF("  [Router_Member]:\n");
+                      OSAL_PRINTF("                  0x%08lX\n", igmpRouter.router_portMask);
+                  }
+              
+                  OSAL_PRINTF("------------------------------------------------\n");
+              }
+              #endif /* end of DBG_LWPS_IGMP_ENABLE */
+ 122          
+ 123          #if LWPS_IGMP_TRUNK_SUPPORT
+ 124          /* FIXME, Move those functions to SAL */
+ 125          // Get Trunk Portmask: Retrieves port mask for a specific trunk group
+ 126          // Returns the port mask of all ports in the specified trunk group
+ 127          static portmask_type get_trunk_portmask(uint8 tid){
+ 128   1          sal_pPortmask_t trunk_portmask;
+ 129   1      
+ 130   1          if ( SUCCESS==sal_trunk_port_get(tid, NULL, &trunk_portmask, NULL) )
+ 131   1          {
+ 132   2              return (trunk_portmask.bits[0]);
+ 133   2          }
+ 134   1          else
+ 135   1          {
+ 136   2              return 0;
+ 137   2          }
+ 138   1      }
+ 139          
+ 140          // Check Trunk Portmask: Checks if a port mask contains any trunk group ports
+ 141          // Returns the trunk portmask if found, otherwise 0
+ 142          portmask_type check_trunk_portmask(portmask_type portmask){
+ 143   1          portmask_type trunk_portmask;
+ 144   1          uint8 i;
+ 145   1      
+ 146   1          for(i=0; i<MAX_TRK_PORT; i++)
+ 147   1          {
+ 148   2              trunk_portmask = get_trunk_portmask(i);
+ 149   2              if ( 0!=(portmask&trunk_portmask) )
+ 150   2              {
+ 151   3                  return (trunk_portmask);
+ 152   3              }
+ 153   2          }
+ 154   1      
+ 155   1          return 0;
+ 156   1      }
+ 157          
+ 158          #define IGMP_SET_DEFAULT_PORT(x, y)  ((x) = (y))
+ 159          
+ 160          // IGMP Add Group Member by Trunk: Adds trunk group ports to multicast group
+ 161          // Handles trunk port membership and updates hardware forwarding entries
+ 162          static uint8 igmp_add_groupMember_byTrunk(ipaddr_group_list_t *inst, portmask_type portmask)
+ 163          {
+ 164   1          portmask_type   trk_pm;
+ 165   1          uint8           hit = 0;
+ 166   1          uint8           pn, pn2;
+ 167   1        sal_ipaddr_t    groupAddr;
+ 168   1        sal_lPortmask_t grp_pm;
+ 169   1          portmask_type   router_pm;
+ 170   1          sal_enable_t    linkup;
+ 171   1      
+ 172   1          FOREACH_PORTINMASK(pn, portmask)
+ 173   1          {
+ 174   2              hit = 1;
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 4   
+
+ 175   2              /* trk_pm will be zero if pn is not in any trunking group */
+ 176   2              trk_pm = check_trunk_portmask(1UL<<pn);
+ 177   2              FOREACH_PORTINMASK(pn2, trk_pm)
+ 178   2              {
+ 179   3                  /* Remove un-linkup ports in trunking group */
+ 180   3                  sal_port_link_get(pn2, &linkup);
+ 181   3                  if(SAL_ENABLED != linkup)
+ 182   3                  {
+ 183   4                      trk_pm &= ~(1UL<<pn2);
+ 184   4                  }
+ 185   3              }
+ 186   2              inst->fwdPortMask[0] |= (trk_pm | portmask);
+ 187   2      
+ 188   2              /* Force update HW record */
+ 189   2              groupAddr = ((uint32)inst->groupAddr.addr[0] << 24) |
+ 190   2                         ((uint32)inst->groupAddr.addr[1] << 16) |
+ 191   2                         ((uint32)inst->groupAddr.addr[2] <<  8) |               
+ 192   2                         ((uint32)inst->groupAddr.addr[3]);
+ 193   2              grp_pm.bits[0] = inst->fwdPortMask[0];
+ 194   2      
+ 195   2              /* Get and Add router ports to hardware port mask */
+ 196   2              igmp_group_get_queryPort(&router_pm);
+ 197   2              grp_pm.bits[0] |= router_pm;
+ 198   2              sal_igmp_ipAddrEntry_add(groupAddr, 0, inst->vid, &grp_pm);
+ 199   2      
+ 200   2      
+ 201   2              /* Update all trunk ports' timer */
+ 202   2              FOREACH_PORTINMASK(pn2, (trk_pm | portmask))
+ 203   2              {
+ 204   3                  inst->portTimer[pn2] = IGMP_GROUP_MEM_INTERVAL;
+ 205   3              }
+ 206   2          }
+ 207   1      
+ 208   1          return hit;
+ 209   1      }
+ 210          
+ 211          // IGMP Delete Group Member by Trunk: Removes trunk group ports from multicast group
+ 212          // Handles fast leave and timer expiration for trunk port memberships
+ 213          static uint8 igmp_delete_groupMember_byTrunk(ipaddr_group_list_t *inst, portmask_type portmask)
+ 214          {
+ 215   1          portmask_type   trk_pm;
+ 216   1          uint8           pn, pn2;
+ 217   1          uint8           hit = 0;
+ 218   1        sal_ipaddr_t    groupAddr;
+ 219   1        sal_lPortmask_t grp_pm;
+ 220   1          portmask_type router_pm;
+ 221   1      
+ 222   1          FOREACH_PORTINMASK(pn, portmask)
+ 223   1          {
+ 224   2              hit = 1;
+ 225   2              trk_pm = check_trunk_portmask(1UL<<pn);
+ 226   2              if ( trk_pm&igmpFastLeavePort ) /* if one port is fast leave, all trunk ports are fast leave */
+ 227   2              {
+ 228   3                  inst->fwdPortMask[0] &= ~(trk_pm);    /* Max Supported Port Number == 32 */
+ 229   3                  FOREACH_PORTINMASK(pn2, portmask)
+ 230   3                  {
+ 231   4                      inst->portTimer[pn2] = 0;
+ 232   4                  }
+ 233   3              }
+ 234   2              else
+ 235   2              {
+ 236   3                  if( (1UL<<pn)&&igmpFastLeavePort )
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 5   
+
+ 237   3                  {
+ 238   4                      inst->fwdPortMask[0] &= ~(1UL<<pn);
+ 239   4                      inst->portTimer[pn] = 0;
+ 240   4                  }
+ 241   3                  else
+ 242   3                  {
+ 243   4                      inst->portTimer[pn] = IGMP_LEAVE_TIME;
+ 244   4                  }
+ 245   3              }
+ 246   2      
+ 247   2              /* only left router port in group->delete this group */
+ 248   2              if ( inst->fwdPortMask[0] == 0UL )
+ 249   2              {
+ 250   3                  IGMP_MLD_CALLING( inst, \
+ 251   3                      (igmp_group_del_group( &(inst->groupAddr), inst->vid, NULL )), \
+ 252   3                      (mld_group_del_group( &(inst->groupAddr), inst->vid, NULL ))   \
+ 253   3                  );
+ 254   3              }
+ 255   2              else
+ 256   2              {
+ 257   3              groupAddr = ((uint32)inst->groupAddr.addr[0] << 24) | \
+ 258   3                              ((uint32)inst->groupAddr.addr[1] << 16) | \
+ 259   3                              ((uint32)inst->groupAddr.addr[2] << 8) | \
+ 260   3                              ((uint32)inst->groupAddr.addr[3]);
+ 261   3                  grp_pm.bits[0] = inst->fwdPortMask[0];
+ 262   3                  /* Get and Add router ports to hardward port mask */
+ 263   3                  igmp_group_get_queryPort(&router_pm);
+ 264   3                  grp_pm.bits[0] |= router_pm;
+ 265   3      
+ 266   3                  IGMP_MLD_CALLING( inst, \
+ 267   3              (sal_igmp_ipAddrEntry_add(groupAddr, 0, inst->vid, &grp_pm)),    \
+ 268   3                      (sal_igmp_ipv6AddrEntry_add(groupAddr, 0, inst->vid, &grp_pm))    \
+ 269   3                  );
+ 270   3              }
+ 271   2          }
+ 272   1          return hit;
+ 273   1      }
+ 274          
+ 275          #else /* else of LWPS_IGMP_TRUNK_SUPPORT */
+                #define IGMP_SET_DEFAULT_PORT(x, y)
+                #define check_trunk_portmask(x)               (0)
+                #define igmp_delete_groupMember_byTrunk(x, y) (0)
+              #endif /* end of else of LWPS_IGMP_TRUNK_SUPPORT */
+ 280          
+ 281          #if   SAL_ENABLE
+ 282          #else /* else of SAL_ENABLE */
+              // U32 Mask to Num: Converts a 32-bit port mask to a single port number
+              // Returns port number if mask has exactly one bit set, otherwise -1
+              int8 u32_mask_to_num(uint32 pm)
+              {
+                  int8 i;
+                  int8  pn;
+                  uint8 hit = FALSE;
+              
+                  if( 0==pm )
+                  {
+                      return (-1);
+                  }
+                  
+                  for (i=0; i<SAL_PORT_ID_CPU; i++)
+                  {
+                      if( FALSE==hit )
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 6   
+
+                      {
+                          if( pm&0x01 )
+                          {
+                              hit = TRUE;
+                              pn = i;
+                          }
+                      }
+                      else if( (TRUE==hit) && (pm&0x01) )
+                      {
+                          return (-1);
+                      }
+                      pm = pm>>1;
+                  }
+              
+                  return pn;
+              }
+              #endif  /* end of else of SAL_ENABLE */
+ 316          
+ 317          // IGMP Group DB Init: Initializes the IGMP group database and free pool
+ 318          // Sets up router ports, fast leave ports, and allocates group entries from pool
+ 319          int32 igmp_group_db_init(void)
+ 320          {
+ 321   1          ipaddr_group_list_t *iter_group;
+ 322   1          uint16 i;
+ 323   1          
+ 324   1          /* IGMP Router Port Init */
+ 325   1          igmpRouter.router_portMask = 0;
+ 326   1      
+ 327   1          /* Fast Leave */
+ 328   1          igmpFastLeavePort = 0xFFFFFFFFUL;
+ 329   1      
+ 330   1          for(i=0; i<SAL_PORT_ID_CPU; i++)
+ 331   1          {
+ 332   2              igmpRouter.portTimer[i] = 0;
+ 333   2          }
+ 334   1      
+ 335   1          /* IGMP Group/Member Init */
+ 336   1          igmpGroupHead.listNumber = 0;
+ 337   1          igmpGroupHead.item = NULL;
+ 338   1      
+ 339   1          igmpGroupFreeHead.listNumber = MAX_GROUP_SIZE;
+ 340   1          
+ 341   1          iter_group = igmpGroupFreeHead.item = &igmpGroupPool[0];
+ 342   1          for (i=1; i<MAX_GROUP_SIZE; iter_group=iter_group->next, i++)
+ 343   1          {
+ 344   2              iter_group->next = &igmpGroupPool[i];
+ 345   2          }
+ 346   1          iter_group->next = NULL;
+ 347   1          
+ 348   1          return LWPS_OK;
+ 349   1      }
+ 350          
+ 351          // IGMP Static Router Set: Sets static router ports for IGMP snooping
+ 352          // Updates the static router port mask for multicast forwarding
+ 353          int32 igmp_staticRouter_set(sal_lPortmask_t mask)
+ 354          {
+ 355   1          if(igmpRouter.routerStatic_portMask != mask.bits[0])
+ 356   1          {
+ 357   2              igmpRouter.routerStatic_portMask = mask.bits[0];
+ 358   2          }
+ 359   1          return LWPS_OK;
+ 360   1      }
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 7   
+
+ 361          
+ 362          // IGMP Dynamic Router Get: Retrieves the dynamic router port mask
+ 363          // Returns the current dynamic router ports discovered via IGMP queries
+ 364          int32 igmp_dynamicRouter_get(sal_lPortmask_t *mask)
+ 365          {
+ 366   1          mask->bits[0] = igmpRouter.router_portMask;
+ 367   1          return LWPS_OK;
+ 368   1      }
+ 369          
+ 370          // IGMP DB Get Group: Searches for a group entry in the database
+ 371          // Finds group by IP address and VLAN ID, returns iterator and previous pointer
+ 372          static void igmpdb_get_group(ipaddr_group_t *grp, ip_addr_t *grupAddr, uint16 vid, uint8 mode)
+ 373          {
+ 374   1          ipaddr_group_list_t *iter;
+ 375   1          ipaddr_group_list_t *iter_last;
+ 376   1      
+ 377   1          if(mode){}
+ 378   1      
+ 379   1          iter_last = igmpGroupHead.item;
+ 380   1          for (iter=igmpGroupHead.item; iter;iter_last=iter, iter=iter->next)
+ 381   1          {
+ 382   2      #if   CONFIG_IGMP_MLD_ENABLE    
+                      if ( IGMP_CHECK_GROUP(grupAddr->addr, iter->groupAddr.addr, iter->ipvn, mode) && (iter->vid == vid
+             -))
+                      {
+                          break;
+                      }
+              #else
+ 388   2              if ( IGMP_CHECK_GROUP(grupAddr->addr, iter->groupAddr.addr, IGMP_GRP_DB_IPV4, mode) && (iter->vid 
+             -== vid))
+ 389   2              {
+ 390   3                  break;
+ 391   3              }
+ 392   2      #endif        
+ 393   2          }
+ 394   1      
+ 395   1          grp->iter = iter;
+ 396   1          grp->iter_last = iter_last;
+ 397   1      }
+ 398          
+ 399          // IGMP DB Get Empty Entry: Allocates a free group entry from the pool
+ 400          // Returns pointer to new entry or NULL if pool is exhausted
+ 401          static ipaddr_group_list_t * igmpdb_get_empty_entry(ipaddr_group_list_t *iter_last)
+ 402          {
+ 403   1          ipaddr_group_list_t *iter = (ipaddr_group_list_t *)NULL;
+ 404   1      
+ 405   1          if ( igmpGroupFreeHead.listNumber>0 )
+ 406   1          {
+ 407   2              /* add available group number*/
+ 408   2              igmpGroupHead.listNumber++;
+ 409   2              igmpGroupFreeHead.listNumber--;
+ 410   2              DBG_IGMPDB_PRINTF(("[%s][%d][NewGroup, free=%d]\n", __FILE__, \
+ 411   2                                (uint16)__LINE__ , 
+ 412   2                                (uint16)igmpGroupFreeHead.listNumber));
+ 413   2      
+ 414   2              /* get a free group slot */
+ 415   2              iter = igmpGroupFreeHead.item;
+ 416   2              igmpGroupFreeHead.item = igmpGroupFreeHead.item->next;
+ 417   2      
+ 418   2              if( !iter_last )
+ 419   2              {
+ 420   3                  igmpGroupHead.item = iter;        
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 8   
+
+ 421   3              }
+ 422   2              else
+ 423   2              {
+ 424   3                  iter_last->next = iter;
+ 425   3              }
+ 426   2              
+ 427   2              iter->next = (ipaddr_group_list_t *)NULL;
+ 428   2      
+ 429   2              iter->fwdPortMask[0] = 0UL;
+ 430   2          }
+ 431   1          else
+ 432   1          {
+ 433   2              return (ipaddr_group_list_t *)NULL;
+ 434   2          }
+ 435   1          return iter;
+ 436   1      }
+ 437          
+ 438          // IGMP DB Timer: Periodic timer handler for aging out expired group members
+ 439          // Checks router and member port timers, removes expired entries, updates hardware
+ 440          void igmpdb_timer(u8_t pass_seconds)
+ 441          {
+ 442   1          static uint8 pass_time = 0;
+ 443   1          uint16 i, j;
+ 444   1          uint8  time;
+ 445   1          uint16 group_size = igmpGroupHead.listNumber;
+ 446   1          ipaddr_group_list_t *iter_group = igmpGroupHead.item;
+ 447   1          ipaddr_group_list_t *iter_group_rm;
+ 448   1          portmask_type  pm_org;
+ 449   1          sal_ipaddr_t    groupAddr;
+ 450   1          sal_lPortmask_t grp_pm;
+ 451   1          sal_enable_t enable;
+ 452   1          portmask_type router_pm;
+ 453   1      
+ 454   1      
+ 455   1          sal_igmp_state_get(&enable);
+ 456   1          if(enable == DISABLE)
+ 457   1          {
+ 458   2              pass_time = 0;
+ 459   2              return;
+ 460   2          }
+ 461   1      
+ 462   1          pass_time++;
+ 463   1          if( pass_time < IGMPDB_CHECK_PERIOD )
+ 464   1          {
+ 465   2              return;
+ 466   2          }
+ 467   1          pass_time = 0;
+ 468   1      
+ 469   1          /* Check router timer */
+ 470   1          for (i=0; i<SAL_PORT_ID_CPU; i++)
+ 471   1          {
+ 472   2              if( 0!=(time=igmpRouter.portTimer[i]) )
+ 473   2              {
+ 474   3                  if ( time>pass_seconds )
+ 475   3                  {
+ 476   4                      igmpRouter.portTimer[i] -= pass_seconds;
+ 477   4                  }
+ 478   3                  else
+ 479   3                  {
+ 480   4                      igmp_group_del_queryPort(i);
+ 481   4                      DBG_IGMPDB_PRINTF(("[%s][%d][Router Expired:%d]\n", __FILE__, \
+ 482   4                          (uint16)__LINE__, i));
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 9   
+
+ 483   4                  }
+ 484   3              }
+ 485   2          }
+ 486   1      
+ 487   1          /* Check memberPort timer */
+ 488   1          for(i=0; i<group_size; i++)
+ 489   1          {
+ 490   2              pm_org = iter_group->fwdPortMask[0];
+ 491   2              for (j=0; j<SAL_PORT_ID_CPU; j++)
+ 492   2              {
+ 493   3                  if ( 0!=(time=iter_group->portTimer[j]) )
+ 494   3                  {
+ 495   4                      if ( time>((u16_t)pass_seconds) )
+ 496   4                      {
+ 497   5                          iter_group->portTimer[j] -= pass_seconds;
+ 498   5                      }
+ 499   4                      else
+ 500   4                      {
+ 501   5                          iter_group->portTimer[j] = 0; 
+ 502   5                          iter_group->fwdPortMask[0] &= ~(1UL<<j);
+ 503   5                      }
+ 504   4                  }
+ 505   3              }
+ 506   2      
+ 507   2              iter_group_rm = iter_group;
+ 508   2              iter_group = iter_group->next;
+ 509   2              
+ 510   2              /* only leave when there is no any members */
+ 511   2              if( iter_group_rm->fwdPortMask[0] == 0UL )
+ 512   2              {
+ 513   3                  IGMP_MLD_CALLING( iter_group_rm, \
+ 514   3                      (igmp_group_del_group( &(iter_group_rm->groupAddr), iter_group_rm->vid, NULL)), \
+ 515   3                      (mld_group_del_group( &(iter_group_rm->groupAddr), iter_group_rm->vid, NULL))   \
+ 516   3                  );
+ 517   3              }
+ 518   2              else if ( iter_group_rm->fwdPortMask[0]!=pm_org )
+ 519   2              {
+ 520   3              groupAddr = ((uint32)iter_group_rm->groupAddr.addr[0] << 24) | \
+ 521   3                              ((uint32)iter_group_rm->groupAddr.addr[1] << 16) | \
+ 522   3                              ((uint32)iter_group_rm->groupAddr.addr[2] << 8) | \
+ 523   3                              ((uint32)iter_group_rm->groupAddr.addr[3]);
+ 524   3                  grp_pm.bits[0] = iter_group_rm->fwdPortMask[0];
+ 525   3                  /* Get and Add router ports to hardward port mask */
+ 526   3                  igmp_group_get_queryPort(&router_pm);
+ 527   3                  grp_pm.bits[0] |= router_pm;
+ 528   3      
+ 529   3                  IGMP_MLD_CALLING( iter_group_rm, \
+ 530   3              (sal_igmp_ipAddrEntry_add(groupAddr, 0, iter_group_rm->vid, &grp_pm)),    \
+ 531   3                      (sal_igmp_ipv6AddrEntry_add(groupAddr, 0, iter_group_rm->vid, &grp_pm))    \
+ 532   3                  );
+ 533   3              }
+ 534   2          }
+ 535   1      }
+ 536          
+ 537          /* - add ports into routerPort 
+ 538             - source address 0.0.0.0 is not the routerPort
+ 539             - IGMP core program doesn't call this function when
+ 540               source address is 0.0.0.0
+ 541           */
+ 542          // IGMP Group Add Query Port: Adds a port to the router port list
+ 543          // Sets router timer and updates router port mask for IGMP snooping
+ 544          int32 igmp_group_add_queryPort(portmask_type portmask)
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 10  
+
+ 545          {
+ 546   1          int8 pn = u32_mask_to_num(portmask);
+ 547   1      
+ 548   1          if( pn<0 )
+ 549   1          {
+ 550   2              return LWPS_ERR;
+ 551   2          }
+ 552   1      
+ 553   1          igmpRouter.portTimer[pn]    = V1_ROUTER_PRESENT_TIME;
+ 554   1          igmpRouter.router_portMask |= portmask;
+ 555   1          
+ 556   1          return LWPS_OK;
+ 557   1      }
+ 558          
+ 559          // IGMP Group Del Query Port: Removes a port from the router port list
+ 560          // Clears router timer and updates router port mask
+ 561          int32 igmp_group_del_queryPort(int32 pn)
+ 562          {
+ 563   1      
+ 564   1          if( pn>=0 )
+ 565   1          {
+ 566   2              igmpRouter.portTimer[pn] = 0;
+ 567   2          }
+ 568   1          else
+ 569   1          {
+ 570   2              return LWPS_ERR;
+ 571   2          }
+ 572   1          
+ 573   1          igmpRouter.router_portMask      &= (~(1UL<<pn));
+ 574   1          
+ 575   1          return LWPS_OK;
+ 576   1      }
+ 577          
+ 578          // IGMP Group Get Query Port: Retrieves the current router port mask
+ 579          // Combines dynamic and static router ports into output mask
+ 580          int32 igmp_group_get_queryPort(portmask_type *portmask)
+ 581          {
+ 582   1          *portmask = igmpRouter.router_portMask;
+ 583   1          *portmask |= igmpRouter.routerStatic_portMask;
+ 584   1          
+ 585   1          return LWPS_OK;
+ 586   1      }
+ 587          
+ 588          // IGMP Group Link Status Change: Handles port link state changes for multicast groups
+ 589          // Updates group memberships when ports go up/down, removes expired entries
+ 590          int32 igmp_group_linkStatus_change(portmask_type curr_pm, portmask_type prev_pm)
+ 591          {
+ 592   1          ipaddr_group_list_t *iter, *iter_next;
+ 593   1          portmask_type xdata port_index, xdata tmp_pm;
+ 594   1          uint16 xdata listNumber;
+ 595   1          uint8 xdata i, xdata j;
+ 596   1          portmask_type changed_if = (curr_pm ^ prev_pm);
+ 597   1          portmask_type link_down_if = (changed_if & prev_pm);
+ 598   1          portmask_type link_up_if = (changed_if & curr_pm);
+ 599   1        portmask_type router_pm;
+ 600   1          #if LWPS_IGMP_TRUNK_SUPPORT
+ 601   1          uint8 xdata k;
+ 602   1          portmask_type trk_pm;
+ 603   1        sal_ipaddr_t    groupAddr;
+ 604   1        sal_lPortmask_t grp_pm;
+ 605   1          sal_enable_t    linkup;
+ 606   1      
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 11  
+
+ 607   1          for (iter=igmpGroupHead.item, j=0; j<igmpGroupHead.listNumber; j++)
+ 608   1          {
+ 609   2              FOREACH_PORTINMASK(i, link_up_if)
+ 610   2              {
+ 611   3                  trk_pm = check_trunk_portmask(1UL<<i);
+ 612   3                  FOREACH_PORTINMASK(k, trk_pm)
+ 613   3                  {
+ 614   4                      /* Remove un-linkup ports in trunking group */
+ 615   4                      sal_port_link_get(k, &linkup);
+ 616   4                      if(SAL_ENABLED != linkup)
+ 617   4                      {
+ 618   5                          trk_pm &= ~(1UL<<k);
+ 619   5                      }
+ 620   4                  }
+ 621   3      
+ 622   3                  if((0 != trk_pm) && (0 != (iter->fwdPortMask[0] & trk_pm)))
+ 623   3                  {
+ 624   4      
+ 625   4                      /* Group with new member has to update DB and set to HW
+ 626   4                       * If one of the trunk port join, join all trunk ports
+ 627   4                       */
+ 628   4                      iter->fwdPortMask[0] |= (1UL << i);
+ 629   4      
+ 630   4                      /* All the data in the group database should be updated
+ 631   4                       * Get the data from other port in the same trunking group
+ 632   4                       */
+ 633   4                      FOREACH_PORTINMASK(k, (iter->fwdPortMask[0] & trk_pm))
+ 634   4                      {
+ 635   5                          if(k == i)
+ 636   5                          {
+ 637   6                              continue;
+ 638   6                          }
+ 639   5                          iter->portTimer[i] = iter->portTimer[k];
+ 640   5                          /* Any port in the same group is enough, so break it */
+ 641   5                          break;
+ 642   5                      }
+ 643   4      
+ 644   4                      /* Force update HW record */
+ 645   4                      groupAddr = ((uint32)iter->groupAddr.addr[0] << 24) |
+ 646   4                                 ((uint32)iter->groupAddr.addr[1] << 16) |
+ 647   4                                 ((uint32)iter->groupAddr.addr[2] <<  8) |               
+ 648   4                                 ((uint32)iter->groupAddr.addr[3]);
+ 649   4                      grp_pm.bits[0] = iter->fwdPortMask[0];
+ 650   4      
+ 651   4                      /* Get and Add router ports to hardware port mask */
+ 652   4                      igmp_group_get_queryPort(&router_pm);
+ 653   4                      grp_pm.bits[0] |= router_pm;
+ 654   4                      sal_igmp_ipAddrEntry_add(groupAddr, 0, iter->vid, &grp_pm);
+ 655   4                  }
+ 656   3              }
+ 657   2          }
+ 658   1      #endif /* end of LWPS_IGMP_TRUNK_SUPPORT */
+ 659   1          for(i=0, port_index=1;i<SAL_PORT_ID_CPU;i++, port_index <<=1 )
+ 660   1          {
+ 661   2              if( port_index&link_down_if )
+ 662   2              {
+ 663   3                  igmp_group_del_queryPort(i);
+ 664   3              }
+ 665   2          }
+ 666   1      
+ 667   1          listNumber = igmpGroupHead.listNumber;
+ 668   1          for (iter=igmpGroupHead.item, j=0; j<listNumber; j++)
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 12  
+
+ 669   1          {
+ 670   2              /* delete iter group will change iter->next value */
+ 671   2              iter_next = iter->next;
+ 672   2      
+ 673   2              tmp_pm = iter->fwdPortMask[0];
+ 674   2              iter->fwdPortMask[0] &= (~link_down_if);
+ 675   2              if( iter->fwdPortMask[0]==tmp_pm )
+ 676   2              {
+ 677   3                  continue;
+ 678   3              }
+ 679   2              else
+ 680   2              {
+ 681   3                  tmp_pm = iter->fwdPortMask[0]^tmp_pm;
+ 682   3              }
+ 683   2      
+ 684   2              /* remove timers & queryPort */
+ 685   2              /* only left router port in group->delete this group */
+ 686   2              if( iter->fwdPortMask[0] == 0UL )
+ 687   2              {
+ 688   3                  IGMP_MLD_CALLING( iter, \
+ 689   3                      (igmp_group_del_group( &(iter->groupAddr), iter->vid, NULL)), \
+ 690   3                      (mld_group_del_group( &(iter->groupAddr), iter->vid, NULL))   \
+ 691   3                  );
+ 692   3                  
+ 693   3                  for(i=0; i<SAL_PORT_ID_CPU; i++)
+ 694   3                  {
+ 695   4                      iter->portTimer[i] = 0;
+ 696   4                  }
+ 697   3              }
+ 698   2              else
+ 699   2              {
+ 700   3                  for(i=0, port_index=1;i<SAL_PORT_ID_CPU;i++, port_index <<=1 )
+ 701   3                  {
+ 702   4                      if( port_index&tmp_pm )
+ 703   4                      {
+ 704   5                          iter->portTimer[i] = 0;
+ 705   5                          IGMP_MLD_CALLING( iter, \
+ 706   5                              (igmp_group_del_groupMember(&(iter->groupAddr), 1UL<<i, iter->vid, IGMP_ADDR_GROUP
+             -_ADDR)), \
+ 707   5                              (mld_group_del_groupMember(&(iter->groupAddr), 1UL<<i, iter->vid, IGMP_ADDR_GROUP_
+             -ADDR))   \
+ 708   5                          );
+ 709   5                      }
+ 710   4                  }
+ 711   3              }
+ 712   2      
+ 713   2              iter = iter_next;
+ 714   2          }
+ 715   1          
+ 716   1          return LWPS_OK;
+ 717   1      }
+ 718          
+ 719          /* add group member functions */
+ 720          // IGMP Group Add Group Member: Adds a port to a multicast group membership
+ 721          // Creates new group entry if needed, updates forwarding database and hardware
+ 722          int32 igmp_group_add_groupMember(void *d, portmask_type portmask, uint16 vid, uint8 mode)
+ 723          {
+ 724   1          int8 xdata pn;
+ 725   1          ip_addr_t  xdata *grupAddr;
+ 726   1          pktBuf_t   xdata *pBuf;
+ 727   1          igmp_hdr_t xdata *pIgmpHdr;
+ 728   1          ipaddr_group_t      xdata  grp;
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 13  
+
+ 729   1          ipaddr_group_list_t *iter;
+ 730   1          ipaddr_group_list_t *iter_last;
+ 731   1      #if !LWPS_IGMP_TRUNK_SUPPORT
+                  sal_ipaddr_t        xdata  grp_addr;
+                  sal_lPortmask_t     xdata  grm;
+                  portmask_type router_pm;
+              #endif
+ 736   1          pn = u32_mask_to_num(portmask);
+ 737   1      
+ 738   1      
+ 739   1          if( pn<0 )
+ 740   1          {
+ 741   2              return LWPS_ERR;
+ 742   2          }
+ 743   1      
+ 744   1          if( IGMP_ADDR_PBUF==mode )
+ 745   1          {
+ 746   2              pBuf     = (pktBuf_t *) d;
+ 747   2              pIgmpHdr = (igmp_hdr_t *)pBuf->l4;
+ 748   2              grupAddr = &(pIgmpHdr->groupAddr);
+ 749   2          }
+ 750   1          else
+ 751   1          {
+ 752   2              grupAddr = (ip_addr_t *) d;
+ 753   2          }
+ 754   1      
+ 755   1          /* search procedure in add/leave/del functions
+ 756   1             can be merged in single function */
+ 757   1          igmpdb_get_group(&grp, grupAddr, vid, IGMP_GRP_DB_IPV4);
+ 758   1          iter = grp.iter;
+ 759   1          iter_last = grp.iter_last;
+ 760   1      
+ 761   1          if ( !iter )
+ 762   1          {
+ 763   2              iter = igmpdb_get_empty_entry(iter_last);
+ 764   2              if( !iter )
+ 765   2              {
+ 766   3                  return LWPS_ERR;
+ 767   3              }
+ 768   2              IPADDR_COPY( iter->groupAddr.addr, grupAddr->addr);
+ 769   2      #if CONFIG_IGMP_MLD_ENABLE
+                      iter->ipvn = IGMP_GRP_DB_IPV4;
+              #endif /* end CONFIG_IGMP_MLD_ENABLE */
+ 772   2              iter->vid = vid;
+ 773   2          }
+ 774   1      
+ 775   1      #if LWPS_IGMP_TRUNK_SUPPORT
+ 776   1          igmp_add_groupMember_byTrunk(iter, portmask); //add trunking support
+ 777   1      #else
+                  iter->fwdPortMask[0] |= portmask;
+                  iter->portTimer[pn] = IGMP_GROUP_MEM_INTERVAL;
+              
+                  grp_addr = ((uint32)grupAddr->addr[0] << 24) |
+                             ((uint32)grupAddr->addr[1] << 16) |
+                             ((uint32)grupAddr->addr[2] <<  8) |               
+                             ((uint32)grupAddr->addr[3]);
+                  grm.bits[0] = iter->fwdPortMask[0];
+                  /* Get and Add router ports to hardware port mask */
+                  igmp_group_get_queryPort(&router_pm);
+                  grm.bits[0] |= router_pm;
+              
+                  sal_igmp_ipAddrEntry_add(grp_addr, 0, vid, &grm);
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 14  
+
+              #endif    
+ 792   1          return LWPS_OK;
+ 793   1      }
+ 794          
+ 795          /* add group member functions */
+ 796          // IGMP Group Del Group Member: Removes a port from a multicast group membership
+ 797          // Handles fast leave, timer expiration, and updates hardware forwarding
+ 798          int32 igmp_group_del_groupMember(void *d, portmask_type portmask, uint16 vid, uint8 mode)
+ 799          {
+ 800   1          int8  xdata pn;
+ 801   1          igmp_hdr_t xdata *pIgmpHdr;
+ 802   1          ip_addr_t  xdata *grupAddr;
+ 803   1          pktBuf_t   xdata *pBuf;
+ 804   1          ipaddr_group_t      xdata  grp;
+ 805   1          ipaddr_group_list_t *iter;
+ 806   1          ipaddr_group_list_t *iter_last;
+ 807   1      #if LWPS_IGMP_TRUNK_SUPPORT
+ 808   1          sal_ipaddr_t        xdata  grp_addr;
+ 809   1          sal_lPortmask_t     xdata  grm;
+ 810   1          portmask_type router_pm;
+ 811   1      #endif
+ 812   1      
+ 813   1          pn = u32_mask_to_num(portmask);
+ 814   1          
+ 815   1          if( pn<0 )
+ 816   1          {
+ 817   2              return LWPS_ERR;
+ 818   2          }
+ 819   1      
+ 820   1          if( IGMP_ADDR_PBUF==mode )
+ 821   1          {
+ 822   2              pBuf     = (pktBuf_t *) d;
+ 823   2              pIgmpHdr = (igmp_hdr_t *)pBuf->l4;
+ 824   2              grupAddr = &(pIgmpHdr->groupAddr);
+ 825   2          }
+ 826   1          else
+ 827   1          {
+ 828   2              grupAddr = (ip_addr_t *) d;
+ 829   2          }
+ 830   1      
+ 831   1          igmpdb_get_group(&grp, grupAddr, vid, IGMP_GRP_DB_IPV4);
+ 832   1          iter = grp.iter;
+ 833   1          iter_last = grp.iter_last;
+ 834   1      
+ 835   1          if ( !iter )
+ 836   1          {
+ 837   2              DBG_IGMPDB_PRINTF(("[%s][%d][Can't find leave member]\n", __FILE__, (uint16)__LINE__));
+ 838   2              return LWPS_OK;
+ 839   2          }
+ 840   1      
+ 841   1      #if !LWPS_IGMP_TRUNK_SUPPORT
+              
+                  igmp_delete_groupMember_byTrunk(iter, portmask);
+              
+              #else  /* else of LWPS_IGMP_TRUNK_SUPPORT */
+ 846   1      
+ 847   1          if ( portmask&igmpFastLeavePort )
+ 848   1          {
+ 849   2              iter->portTimer[pn] = 0;
+ 850   2              iter->fwdPortMask[0] &= ~(1UL<<pn);
+ 851   2      
+ 852   2              /* only left router port in group->delete this group */
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 15  
+
+ 853   2              if( iter->fwdPortMask[0] == 0UL )
+ 854   2              {
+ 855   3                  igmp_group_del_group( grupAddr, vid, NULL );
+ 856   3              }
+ 857   2              else
+ 858   2              {
+ 859   3                  grp_addr = ((uint32)grupAddr->addr[0] << 24) |
+ 860   3                             ((uint32)grupAddr->addr[1] << 16) |
+ 861   3                             ((uint32)grupAddr->addr[2] <<  8) |               
+ 862   3                             ((uint32)grupAddr->addr[3]);
+ 863   3                  grm.bits[0] = iter->fwdPortMask[0];
+ 864   3                  /* Get and Add router ports to hardware port mask */
+ 865   3                  igmp_group_get_queryPort(&router_pm);
+ 866   3                  grm.bits[0] |= router_pm;
+ 867   3              
+ 868   3                  sal_igmp_ipAddrEntry_add(grp_addr, 0, vid, &grm);
+ 869   3              }
+ 870   2          }
+ 871   1          else
+ 872   1          {
+ 873   2              iter->portTimer[pn] = IGMP_LEAVE_TIME;
+ 874   2          }
+ 875   1          
+ 876   1      #endif /* end of else of LWPS_IGMP_TRUNK_SUPPORT */
+ 877   1          
+ 878   1          return LWPS_OK;
+ 879   1      }
+ 880          
+ 881          /* group member functions */
+ 882          // IGMP Group Del Group: Deletes an entire multicast group from the database
+ 883          // Removes group entry from list and updates hardware forwarding entries
+ 884          int32 igmp_group_del_group(ip_addr_t *grupAddr, uint16 vid, ip_addr_t *sip)
+ 885          {
+ 886   1          ipaddr_group_list_t *iter;
+ 887   1          ipaddr_group_list_t *iter_last;
+ 888   1          ipaddr_group_t xdata grp;
+ 889   1          sal_ipaddr_t    salGroupAddr;
+ 890   1      
+ 891   1          igmpdb_get_group(&grp, grupAddr, vid, IGMP_GRP_DB_IPV4);
+ 892   1          iter = grp.iter;
+ 893   1          iter_last = grp.iter_last;
+ 894   1      
+ 895   1          if ( !iter )
+ 896   1          {
+ 897   2              return LWPS_OK;
+ 898   2          }
+ 899   1          else
+ 900   1          {
+ 901   2              if( iter_last==iter )
+ 902   2              {
+ 903   3                  igmpGroupHead.item = igmpGroupHead.item->next;
+ 904   3              }
+ 905   2              iter_last->next = iter->next;
+ 906   2              iter->next = igmpGroupFreeHead.item;
+ 907   2              igmpGroupFreeHead.item = iter;
+ 908   2          }
+ 909   1      
+ 910   1          igmpGroupHead.listNumber--;
+ 911   1          igmpGroupFreeHead.listNumber++;
+ 912   1      
+ 913   1          DBG_IGMPDB_PRINTF(("[%s][%d][Work Group:%d]\n", __FILE__, (uint16)__LINE__, \
+ 914   1                  (uint16)igmpGroupHead.listNumber ));
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 16  
+
+ 915   1      
+ 916   1          if ( sip ){}
+ 917   1      
+ 918   1          salGroupAddr = ((uint32)grupAddr->addr[0] << 24) | \
+ 919   1                         ((uint32)grupAddr->addr[1] << 16) | \
+ 920   1                         ((uint32)grupAddr->addr[2] << 8) | \
+ 921   1                         ((uint32)grupAddr->addr[3]);
+ 922   1      
+ 923   1          sal_igmp_ipAddrEntry_del(salGroupAddr, 0, vid);
+ 924   1          
+ 925   1          return LWPS_OK;
+ 926   1      }
+ 927          
+ 928          #if !defined(CONFIG_IGMP_PURE_DUMB)
+ 929          // IGMP Get Group List: Returns pointer to the IGMP group list head
+ 930          // Used for iterating through all multicast groups in the database
+ 931          ipaddr_group_head_t* igmp_get_groupList(void)
+ 932          {
+ 933   1          return &igmpGroupHead;
+ 934   1      }
+ 935          #endif /* end of !defined(CONFIG_IGMP_PURE_DUMB) */
+ 936          
+ 937          #if CONFIG_IGMP_MLD_ENABLE
+              /* add group member functions */
+              // MLD Group Add Group Member: Adds a port to IPv6 multicast group membership
+              // Handles MLD (IPv6) group memberships similar to IGMPv4
+              int32 mld_group_add_groupMember(void *d, portmask_type portmask, uint16 vid, uint8 mode)
+              {
+                  int8 xdata pn;
+                  ip_addr_t   xdata grupAddr;
+                  ipv6_addr_t xdata *tmp;
+                  pktBuf_t    xdata *pBuf;
+                  ipaddr_group_t      xdata  grp;
+                  igmp_mld_hdr_t      xdata *pMldHdr;
+                  ipaddr_group_list_t *iter;
+                  ipaddr_group_list_t *iter_last;
+                  sal_ipaddr_t    salGroupAddr;
+                sal_lPortmask_t grp_pm;
+                  portmask_type router_pm;
+              
+                  pn = u32_mask_to_num(portmask);
+              
+                  if( pn<0 )
+                  {
+                      return LWPS_ERR;
+                  }
+              
+                  if( IGMP_ADDR_PBUF==mode )
+                  {
+                      pBuf     = (pktBuf_t *) d;
+                      pMldHdr = (igmp_mld_hdr_t *)pBuf->l4;
+                      IGMP_MEMCPY(grupAddr.addr, &(pMldHdr->groupAddr.addr[IPV6_ADDR_LEN-4]), 4);
+                  }
+                  else
+                  {
+                      tmp = (ipv6_addr_t *) d;
+                      IGMP_MEMCPY(grupAddr.addr, &(tmp->addr[IPV6_ADDR_LEN-4]), 4);
+                  }
+              
+                  igmpdb_get_group(&grp, &grupAddr, vid, IGMP_GRP_DB_IPV6);
+                  iter = grp.iter;
+                  iter_last = grp.iter_last;
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 17  
+
+              
+                  if ( !iter )
+                  {
+                      iter = igmpdb_get_empty_entry(iter_last);
+                      if( !iter )
+                      {
+                          return LWPS_ERR;
+                      }
+                      IPADDR_COPY( iter->groupAddr.addr, grupAddr.addr);
+                      iter->ipvn = IGMP_GRP_DB_IPV6;
+                      iter->vid = vid;
+                  }
+              
+                  iter->fwdPortMask[0] |= portmask;
+                  iter->portTimer[pn] = IGMP_GROUP_MEM_INTERVAL;
+              
+                  salGroupAddr = ((uint32)grupAddr.addr[0] << 24) | \
+                                 ((uint32)grupAddr.addr[1] << 16) | \
+                                 ((uint32)grupAddr.addr[2] << 8) | \
+                                 ((uint32)grupAddr.addr[3]);
+                  grp_pm.bits[0] = iter->fwdPortMask[0];
+                  /* Get and Add router ports to hardware port mask */
+                  igmp_group_get_queryPort(&router_pm);
+                  grp_pm.bits[0] |= router_pm;
+              
+                  sal_igmp_ipv6AddrEntry_add(salGroupAddr, 0, vid, &grp_pm);
+                  
+                  return LWPS_OK;
+              }
+              
+              /* add group member functions */
+              // MLD Group Del Group Member: Removes a port from IPv6 multicast group membership
+              // Handles MLD group deletion with fast leave and timer management
+              int32 mld_group_del_groupMember(void *d, portmask_type portmask, uint16 vid, uint8 mode)
+              {
+                  int8 xdata pn;
+                  ip_addr_t   xdata *v4_tmp;
+                  ipv6_addr_t xdata *tmp;
+                  ip_addr_t    xdata grupAddr;
+                  igmp_mld_hdr_t     xdata *pMldHdr;
+                  ipaddr_group_list_t *iter;
+                  ipaddr_group_list_t *iter_last;
+                  pktBuf_t xdata *pBuf;
+                  ipaddr_group_t xdata grp;
+              #if !LWPS_IGMP_TRUNK_SUPPORT
+                  sal_ipaddr_t    salGroupAddr;
+                  sal_lPortmask_t grp_pm;
+                  portmask_type router_pm;
+              #endif
+                  
+                  pn = u32_mask_to_num(portmask);
+              
+                  if( pn<0 )
+                  {
+                      return LWPS_ERR;
+                  }
+              
+                  if( IGMP_ADDR_PBUF==mode )
+                  {
+                      pBuf     = (pktBuf_t *) d;
+                      pMldHdr  = (igmp_mld_hdr_t *)pBuf->l4;
+                      IGMP_MEMCPY(grupAddr.addr, &(pMldHdr->groupAddr.addr[IPV6_ADDR_LEN-4]), 4);
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 18  
+
+                  }
+                  else if( IGMP_ADDR_GROUP_ADDR==mode )
+                  {
+                      v4_tmp = (ip_addr_t *) d;
+                      IGMP_MEMCPY(grupAddr.addr, v4_tmp->addr, 4);
+                  }
+                  else /* IGMP_ADDR_GROUP_ADDRV6 */
+                  {
+                      tmp = (ipv6_addr_t *) d;
+                      IGMP_MEMCPY(grupAddr.addr, &(tmp->addr[IPV6_ADDR_LEN-4]), 4);
+                  }
+              
+                  igmpdb_get_group(&grp, &grupAddr, vid, IGMP_GRP_DB_IPV6);
+                  iter = grp.iter;
+                  iter_last = grp.iter_last;
+              
+                  if ( !iter )
+                  {
+                      DBG_IGMPDB_PRINTF(("[%s][%d][Can't find leave member]\n", __FILE__, (uint16)__LINE__));
+                      return LWPS_OK;
+                  }
+              
+              #if LWPS_IGMP_TRUNK_SUPPORT
+              
+                  igmp_delete_groupMember_byTrunk(iter, portmask);
+              
+              #else  /* else of LWPS_IGMP_TRUNK_SUPPORT */
+              
+                  if ( portmask&igmpFastLeavePort )
+                  {
+                      iter->portTimer[pn] = 0;
+                      iter->fwdPortMask[0] &= ~(1UL<<pn);
+              
+                      /* only left router port in group->delete this group */
+                      if( (iter->fwdPortMask[0]) == 0UL )
+                      {
+                          mld_group_del_group( &grupAddr, vid, NULL );
+                      }
+                      else
+                      {
+                          salGroupAddr = ((uint32)grupAddr.addr[0] << 24) | \
+                                         ((uint32)grupAddr.addr[1] << 16) | \
+                                         ((uint32)grupAddr.addr[2] << 8) | \
+                                         ((uint32)grupAddr.addr[3]);
+                          grp_pm.bits[0] = iter->fwdPortMask[0];
+                          /* Get and Add router ports to hardware port mask */
+                          igmp_group_get_queryPort(&router_pm);
+                          grp_pm.bits[0] |= router_pm;
+                          
+                          sal_igmp_ipv6AddrEntry_add(salGroupAddr, 0, vid, &grp_pm);
+              
+                      }
+                  }
+                  else
+                  {
+                      iter->portTimer[pn] = IGMP_LEAVE_TIME;
+                  }
+                  
+              #endif /* end of else of LWPS_IGMP_TRUNK_SUPPORT */
+                  
+                  return LWPS_OK;
+              }
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 19  
+
+              
+              /* group member functions */
+              // MLD Group Del Group: Deletes an entire IPv6 multicast group from the database
+              // Removes MLD group entry and updates hardware IPv6 forwarding entries
+              int32 mld_group_del_group(ip_addr_t *grupAddr, uint16 vid, ip_addr_t *sip)
+              {
+                  //uint16 size = igmpGroupHead.listNumber;
+                  ipaddr_group_list_t *iter;
+                  ipaddr_group_list_t *iter_last;
+                  ipaddr_group_t xdata grp;
+                  sal_ipaddr_t    salGroupAddr;
+              
+                  igmpdb_get_group(&grp, grupAddr, vid, IGMP_GRP_DB_IPV6);
+                  iter = grp.iter;
+                  iter_last = grp.iter_last;
+              
+                  if ( !iter )
+                  {
+                      return LWPS_OK;
+                  }
+                  else
+                  {
+                      if( iter_last==iter )
+                      {
+                          igmpGroupHead.item = igmpGroupHead.item->next;
+                      }
+                      iter_last->next = iter->next;
+                      iter->next = igmpGroupFreeHead.item;
+                      igmpGroupFreeHead.item = iter;
+                  }
+              
+                  igmpGroupHead.listNumber--;
+                  igmpGroupFreeHead.listNumber++;
+              
+                  DBG_IGMPDB_PRINTF(("[%s][%d][Work Group:%d]\n", __FILE__, (uint16)__LINE__, \
+                          (uint16)igmpGroupHead.listNumber ));
+              
+                  if ( sip ){}
+              
+                  salGroupAddr = ((uint32)grupAddr->addr[0] << 24) | \
+                                 ((uint32)grupAddr->addr[1] << 16) | \
+                                 ((uint32)grupAddr->addr[2] << 8) | \
+                                 ((uint32)grupAddr->addr[3]);
+                  
+                  sal_igmp_ipv6AddrEntry_del(salGroupAddr, 0, vid);
+                 
+                  return LWPS_OK;
+              }
+              #endif /* end of CONFIG_IGMP_MLD_ENABLE */
+1150          
+1151          
+1152          #endif /* end of DBG_LWPS_IGMP_ENABLE */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   6212    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   4009     272
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+C51 COMPILER V9.60.0.0   IGMP_GROUP_DB                                                     11/02/2026 17:56:59 PAGE 20  
+
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

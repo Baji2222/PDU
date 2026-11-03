@@ -1,0 +1,1087 @@
+--///////////////////////////////////////////////
+--//
+--//  RTL8370M Private MIB
+--//  
+--//  Created: 5/11/2009    
+--//  Modified: 7/8/2010 - remove secDynamicMacAddr and tolTftp 
+--//                       
+--//
+--//  SNMP v1 MIB
+--//
+--///////////////////////////////////////////////
+
+        RTL8370M-MIB DEFINITIONS ::= BEGIN
+
+        IMPORTS                
+            OBJECT-TYPE                          FROM RFC-1212
+            enterprises,
+            Counter, TimeTicks, IpAddress        FROM RFC1155-SMI
+            mib-2,
+            DisplayString, sysObjectID           FROM RFC1213-MIB
+            MacAddress FROM BRIDGE-MIB 
+; 
+--///////////////////////////////////////////////
+--//
+--//  Textual Conventions used in this module
+--//
+--///////////////////////////////////////////////      
+      PORT_ID   ::= INTEGER (1..10)
+      -- For RTL8370M, there is at most 8 ports,
+      -- this port index will be 1~10 with:
+      --  1~8 is front port 1 ~ port 8.
+
+      PORT_LIST ::= OCTET STRING (SIZE(2))
+      -- For those entries with a port list, this syntax represents a list of ports, 
+      -- first byte of the string will be port 1~8 and so on.
+      -- for RTL8370M support 8 ports at most.
+
+--///////////////////////////////////////////////
+--//
+--//  Begin stuff for Reg Module
+--//
+--///////////////////////////////////////////////  
+--//
+--//  OID infrastructure
+--//
+--//////////////////////////////////////////////
+  
+    rtl8370M       OBJECT IDENTIFIER   ::= { enterprises 27282   }
+
+      rtl8370mSystem     OBJECT IDENTIFIER  ::= {      rtl8370M    1   }
+      -- subtree for registrations
+
+      rtl8370mConfiguration  OBJECT IDENTIFIER  ::= {      rtl8370M    2   }
+      -- subtree for company-wide objects and events
+
+      rtl8370mSecurity OBJECT IDENTIFIER  ::= {      rtl8370M    3  }
+      -- subtree for product specific objects and events
+
+      rtl8370mTools     OBJECT IDENTIFIER  ::= {      rtl8370M    5  }
+      -- subtree for requirement specifications  
+
+--///////////////////////////////////////////////
+--//
+--//  rtl8370mSystem contents
+--//
+--///////////////////////////////////////////////
+    sysInformation    OBJECT IDENTIFIER   ::= {   rtl8370mSystem    1   }
+          sysInfoDeviceType OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Device Type of Realtek Product."
+              ::= { sysInformation 1 }
+
+          sysInfoMacAddr OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The MAC address of the device."
+              ::= { sysInformation 2 }
+
+          sysInfoFWVer OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Current firmware version of the device."
+              ::= { sysInformation 3 }	
+
+          sysInfoFWDate OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The release date of currently loaded firmware."
+              ::= { sysInformation 4 }
+
+          sysInfoHWVer OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The hardware version of the device."
+              ::= { sysInformation 5 }
+
+    sysIpSetting      OBJECT IDENTIFIER   ::= {   rtl8370mSystem    2   }
+          sysIpSettingAddr OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IP address of the device."
+              ::= { sysIpSetting 1 }
+
+          sysIpSettingMask OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The IP mask of the device."
+              ::= { sysIpSetting 2 }
+
+          sysIpSettingGW OBJECT-TYPE
+              SYNTAX  IpAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The default gateway IP address of the device."
+              ::= { sysIpSetting 3 }
+
+    sysUserAccount    OBJECT IDENTIFIER   ::= {   rtl8370mSystem    3   }
+          sysUserName OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The user name to access the web interface."
+              ::= { sysUserAccount 1 }
+
+          sysUserPwd OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The password of the user name is required to 
+                       login to the web interface."
+              ::= { sysUserAccount 2 }
+
+    sysPortSetting    OBJECT IDENTIFIER   ::= {   rtl8370mSystem    4   }
+        sysPortSettingTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF SysPortSettingEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "This table is a list of existing ports of the device and
+                       followed by trunk numbers supported in the system.
+                       User can control the state, speed, flow-control 
+                       enable and disable on the switch."
+              ::= { sysPortSetting 1 }
+
+          sysPortSettingEntry OBJECT-TYPE
+              SYNTAX  SysPortSettingEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index of the table entry is port ID, 
+                       start form 1 to the maximum port number + number of 
+                       trunk supported by the system."
+              INDEX   { sysPortSettingPort }
+              ::= { sysPortSettingTable 1 }
+
+          SysPortSettingEntry ::=
+              SEQUENCE {
+                  sysPortSettingPort
+                      PORT_ID,
+                  sysPortSettingState
+                      INTEGER,
+                  sysPortSettingSpeed
+                      INTEGER,
+                  sysPortSettingFlowControl
+                      INTEGER,
+                  sysPortSettingFlowControlState
+                      INTEGER
+                  }
+
+          sysPortSettingPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Port ID of the port to set/get the table entry."
+              ::= { sysPortSettingEntry 1 }
+
+          sysPortSettingState OBJECT-TYPE
+              SYNTAX  INTEGER {disable(0), enable(1)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Port state is for administrator to enable/disable the 
+                       specified port.For the link state of the port, please refere to
+                       RCF-363 Interface Group, ifConnectorPresent."
+              ::= { sysPortSettingEntry 2 }
+
+          sysPortSettingSpeed OBJECT-TYPE
+              SYNTAX  INTEGER {auto(0),half10m(1), full10m(2), half100m(3), full100m(4), full1000m(5)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "RTL8370M provides 6 link speed setting:
+                       0: Auto, for automatically negotiate with link partner 
+                                for all supported link speed.
+                       1: half10m, force to link as half duplex, 10MB link speed.
+                       2: full10m, force to link as full duplex, 10MB link speed.
+                       3: half100m, force to link as half duplex, 100MB link speed. 
+                       4: full100m, force to link as full duplex, 100MB link speed.
+                       5: full1000m, force to link as full duplex, 1000MB link speed.
+                       This field is for administrator to set/get current link 
+                       speed setting of the specified port. For current actual 
+                       link speed and state of auto negotiation of the port, is 
+                       provided in standard MIB as below:
+                       Link Speed: RFC-2863 Interface Group, ifHighSpeed
+                       Duplex: RFC-3635 Ethernet-Like, do3StatsDuplexStatus"
+              ::= { sysPortSettingEntry 3 }
+
+          sysPortSettingFlowControl OBJECT-TYPE
+              SYNTAX  INTEGER {off(0), on(1)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "To set the Flow Control state of the port;
+                        0 to turn off.
+                        1 to turn on."
+              ::= { sysPortSettingEntry 4 }
+
+          sysPortSettingFlowControlState OBJECT-TYPE
+              SYNTAX  INTEGER {off(0), on(1)}
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Show the current Flow Control state of the port;
+                        0 to be off.
+                        1 to be on."
+              ::= { sysPortSettingEntry 5 }
+             
+--///////////////////////////////////////////////
+--//
+--//  rtl8370mConfiguration contents                        
+--//
+--///////////////////////////////////////////////
+    cfgLinkAggregation       OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    1   }
+        cfgTrunkGroupTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgTrunkGroupEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "This table is list of link aggregation trunk groups.
+                       There is 2 trunk groups supported on this system."
+              ::= { cfgLinkAggregation 1 }
+
+          cfgTrunkGroupEntry OBJECT-TYPE
+              SYNTAX  CfgTrunkGroupEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index of trunk group ID."
+              INDEX   { cfgTrunkGroupID }
+              ::= { cfgTrunkGroupTable 1 }
+
+          CfgTrunkGroupEntry ::=
+              SEQUENCE {
+                  cfgTrunkGroupID
+                      INTEGER,
+                   cfgTrunkGroupPorts
+                      PORT_LIST
+              }
+
+          cfgTrunkGroupID OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The group ID is 1 and 2 on RTL8370M which support 2 trunk groups at most."
+              ::= { cfgTrunkGroupEntry 1 }
+
+          cfgTrunkGroupPorts OBJECT-TYPE
+              SYNTAX  PORT_LIST
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "To identify the ports in the trunk group."
+              ::= { cfgTrunkGroupEntry 2 }
+              
+        cfgTrunkDistributionAlgo OBJECT-TYPE
+              SYNTAX  OCTET STRING(SIZE(1))
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "There are 5 bits for the trunk distribution algorethem, the bit order will
+                       follow as below:
+                       bit 0:SPA, Source Port of the packet.
+                       bit 1:SA, Source MAC address of the incoming packet.
+                       bit 2:DA, Destination MAC address of the incoming packet.
+                       bit 3:SIP, Source IP address of the incoming IP packet.
+                       bit 4:DIP, Destination IP address of the incoming IP packet.
+                       the rest 3 bits of the byte is reserved."
+              ::= { cfgLinkAggregation 2 }
+
+
+    cfgVlan                  OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    2   }
+        cfgVlanTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgVlanEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "VLAN control table for the device, the index is defined by the system with 
+                       maximum supported 32 static VLANs, cfgVlanStatus must be set to invalid 
+                       to disable the specified vlan."
+              ::= { cfgVlan 1 }
+
+          cfgVlanEntry OBJECT-TYPE
+              SYNTAX  CfgVlanEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index is created by system and is not allowed to add/remove by 32
+                       entries."
+              INDEX   { cfgVlanIndex }
+              ::= { cfgVlanTable 1 }
+
+          CfgVlanEntry ::=
+              SEQUENCE {
+                  cfgVlanIndex
+                      INTEGER,
+                  cfgVlanID
+                      INTEGER,
+                  cfgVlanName
+                      OCTET STRING,
+                  cfgVlanMemberPorts
+                      PORT_LIST,
+                  cfgVlanTagPorts
+                      PORT_LIST,
+                  cfgVlanUnTagPorts
+                      PORT_LIST,
+                  cfgVlanStatus
+                      INTEGER
+              }
+
+          cfgVlanIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Index of the VLAN table from 1~32 is predefined in the system."
+              ::= { cfgVlanEntry 1 }
+              
+          cfgVlanID OBJECT-TYPE
+              SYNTAX  INTEGER(1..4094)
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "VLAN ID of RTL8370M start from 1 up to 4094."
+              ::= { cfgVlanEntry 2 }
+
+          cfgVlanName OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The name of the VLAN."
+              ::= { cfgVlanEntry 3 }
+
+          cfgVlanMemberPorts OBJECT-TYPE
+              SYNTAX  PORT_LIST
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The list of member ports of the VLAN."
+              ::= { cfgVlanEntry 4 }
+
+          cfgVlanTagPorts OBJECT-TYPE
+              SYNTAX  PORT_LIST
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The list of tagged member ports of the VLAN. All the ports in
+                       this list must be in the VLAN member port list.The VLAN member ports
+                       which are not in the tagged port list must be the untagged member ports."
+              ::= { cfgVlanEntry 5 }
+              
+          cfgVlanUnTagPorts OBJECT-TYPE
+              SYNTAX  PORT_LIST
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The list of untagged member ports of the VLAN. All the ports in
+                       this list must be in the VLAN member port list.
+                       The VLAN member ports which are not in the untagged port list 
+                       must be the tagged member ports."
+              ::= { cfgVlanEntry 6 }
+              
+          cfgVlanStatus OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          valid(1),
+                          invalid(2)
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Write 1 to validate the VLAN entry.
+                       Write 2 to delete."
+              ::= { cfgVlanEntry 7 }
+
+      cfgPortVlanTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgPortVlanEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Port vlan configuration table to set the VLAN attribute of a port."
+              ::= { cfgVlan 2 }
+
+          cfgPortVlanEntry OBJECT-TYPE
+              SYNTAX  CfgPortVlanEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The entry is indexed by Port ID AND with PVID, VLAN Mode 
+                       AND Accept Frame type."
+              INDEX   { cfgPortVlanPort }
+              ::= { cfgPortVlanTable 1 }
+
+          CfgPortVlanEntry ::=
+              SEQUENCE {
+                  cfgPortVlanPort
+                      PORT_ID,
+                  cfgPortVlanPVID
+                      INTEGER,
+                  cfgPortVlanMode
+                      INTEGER,
+                  cfgPortVlanAccFrameType
+                      INTEGER
+              }
+
+          cfgPortVlanPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The port index to set the entry."
+              ::= { cfgPortVlanEntry 1 }
+
+          cfgPortVlanPVID OBJECT-TYPE
+              SYNTAX  INTEGER(1..4094)
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Represents the PVID of the specified port. The value is from 1 to 4094."
+              ::= { cfgPortVlanEntry 2 }
+
+          cfgPortVlanMode OBJECT-TYPE
+              SYNTAX  INTEGER{original(0), keepformate(1), prioritytag(2)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The vlan mode of the port:
+                       0: original mode to egress packets follow VLAN forwarding decision
+                       1: keep format to egress packets by tag-in - tag-out, untag-in - untag-out
+                       2: priority tag to force egress packets always to be with priority tag"
+              ::= { cfgPortVlanEntry 3 }
+
+          cfgPortVlanAccFrameType OBJECT-TYPE
+              SYNTAX  INTEGER{all(0), tagonly(1), untagonly(2)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The Accept frame type of the port:
+                       0: All to accept all frame types from the specified port
+                       1: tag only to accept only tagged frames from the specified port
+                       2: untag only to accept only untagged frames from the specified port"
+              ::= { cfgPortVlanEntry 4 }
+
+    cfgQos                   OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    3   }
+        cfgQosPortPriorityTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgQosPortPriorityEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Set per port priority, from 1 to 4."
+              ::= { cfgQos 1 }
+
+          cfgQosPortPriorityEntry OBJECT-TYPE
+              SYNTAX  CfgQosPortPriorityEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Indexed by port id with priority of the port."
+              INDEX   { cfgQosPortPriorityPort }
+              ::= { cfgQosPortPriorityTable 1 }
+
+          CfgQosPortPriorityEntry ::=
+              SEQUENCE {
+                  cfgQosPriorityPort
+                      PORT_ID,
+                  cfgQosPriorityQueue
+                      INTEGER
+              }
+
+          cfgQosPriorityPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "Port id of the port to set priority."
+              ::= { cfgQosPortPriorityEntry 1 }
+
+          cfgQosPriorityQueue OBJECT-TYPE
+              SYNTAX  INTEGER (1..4)
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The avaliable priority of the port is from 1 to 4. Where the highest priority is 1."
+              ::= { cfgQosPortPriorityEntry 2 }
+
+        cfgQosQueueWeightTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgQosQueueWeightEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The table to configure Queue weight of the system. There are
+                       4 queues in the system so this table will always be with 4 entries
+                       indexed from 1 to 4."
+              ::= { cfgQos 2 }
+
+          cfgQosQueueWeightEntry OBJECT-TYPE
+              SYNTAX  CfgQosQueueWeightEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The table entry shows the queue weight where queue id is the index and the weight is from 0 to 15."
+
+              INDEX   { cfgQosPriorityQueueID }
+              ::= { cfgQosQueueWeightTable 1 }
+
+          CfgQosQueueWeightEntry ::=
+              SEQUENCE {
+                  cfgQosPriorityQueueID
+                      INTEGER,
+                  cfgQosWeight
+                      INTEGER
+              }
+
+          cfgQosPriorityQueueID OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "From 1 to 4 represents Queue 1 to Queue 4 of the switch respectively."
+              ::= { cfgQosQueueWeightEntry 1 }
+
+          cfgQosWeight OBJECT-TYPE
+              SYNTAX  INTEGER(0..15)
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Each queue can be assigned weight with value from 0 to 15."
+              ::= { cfgQosQueueWeightEntry 2 }
+
+    cfgPortBasedMirroring    OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    4   }
+          cfgPortMirrorDirection OBJECT-TYPE
+              SYNTAX  INTEGER{disable(0),rx(1),tx(2),both(3)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Port based mirroring can be set as:
+                       0: disable
+                       1: rx
+                       2: tx
+                       3: both"
+              ::= { cfgPortBasedMirroring 1 }
+
+          cfgPortMirroringPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "To specify the mirroring port."
+              ::= { cfgPortBasedMirroring 2 }
+
+          cfgPortMirroredPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "To specify the mirrored port."
+              ::= { cfgPortBasedMirroring 3 }
+
+    cfgPortIsolation      OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    5   }
+        cfgPortIsolationTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgPortIsolationEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Port Isolation table is implemented in respect of egress port list.
+                       The table will have an entry for each port with lists to
+                       all the other ports. User can remove the isolation group
+                       by edit the port group."
+              ::= { cfgPortIsolation 1 }
+
+          cfgPortIsolationEntry OBJECT-TYPE
+              SYNTAX  CfgPortIsolationEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The entry is indexed by port. Each port has an egress port list where the packets 
+                      can be forwarded to."
+              INDEX   { cfgPortIsolationPort }
+              ::= { cfgPortIsolationTable 1 }
+
+          CfgPortIsolationEntry ::=
+              SEQUENCE {
+                  cfgPortIsolationPort
+                      PORT_ID,
+                  cfgPortIsolationEgressPorts
+                      PORT_LIST
+              }
+
+          cfgPortIsolationPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index is the port number."
+              ::= { cfgPortIsolationEntry 1 }
+
+          cfgPortIsolationEgressPorts OBJECT-TYPE
+              SYNTAX  PORT_LIST
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Egress port list of the specified port."
+              ::= { cfgPortIsolationEntry 2 }
+
+
+    cfgBandwidthControl   OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    6   }
+
+        cfgBandwidthControlTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgBandwidthControlEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "This table provides the facility to configure the
+                       bandwidth control of each port."
+              REFERENCE
+                      "IEEE 802.1D-1990: Section 6.7.2"
+              ::= { cfgBandwidthControl 1 }
+
+          cfgBandwidthControlEntry OBJECT-TYPE
+              SYNTAX  CfgBandwidthControlEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Each entry is indexed by port and able to set
+                       ingress and egress rate seperatly."
+              INDEX   { cfgBandwidthControlPort }
+              ::= { cfgBandwidthControlTable 1 }
+
+          CfgBandwidthControlEntry ::=
+              SEQUENCE {
+                  cfgBandwidthControlPort
+                      PORT_ID,
+                   cfgBandwidthControlIngressRate
+                      INTEGER,
+                   cfgBandwidthControlEgressRate
+                      INTEGER
+              }
+
+          cfgBandwidthControlPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The port number which is the index of the table."
+              ::= { cfgBandwidthControlEntry 1 }
+
+          cfgBandwidthControlIngressRate OBJECT-TYPE
+              SYNTAX  INTEGER (0..1000000)
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The ingress rate of the port.
+                       Mustbe multiple of 8. Specify 1000000 to disable Rate limit."
+              ::= { cfgBandwidthControlEntry 2 }
+
+          cfgBandwidthControlEgressRate OBJECT-TYPE
+              SYNTAX  INTEGER (0..1000000)
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The egress rate of the port.
+                       Mustbe multiple of 8. Specify 1000000 to disable Rate limit."
+              ::= { cfgBandwidthControlEntry 3 }
+
+    cfgJumboFrame OBJECT-TYPE
+          SYNTAX  INTEGER{mtu1522(0), mtu1536(1), mtu1552(2), mtu9216(3)}
+          ACCESS  read-write
+          STATUS  mandatory
+          DESCRIPTION
+                  "Set jumbo frame size by:
+                   (0) 1522 Bytes
+                   (1) 1536 Bytes
+                   (2) 1552 Bytes
+                   (3) 9216 Bytes."
+          ::= { rtl8370mConfiguration 7 }
+
+    cfgServiceVLAN       OBJECT IDENTIFIER   ::= {   rtl8370mConfiguration    9   }
+       cfgSVLANTPID OBJECT-TYPE
+          SYNTAX  OCTET STRING
+          ACCESS  read-write
+          STATUS  mandatory
+          DESCRIPTION
+                  "Set SVLAN TPID with four hex digit, default is 88a8."
+          ::= { cfgServiceVLAN 1 }
+
+       cfgSVLANUplinkPortTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgSVLANUplinkPortEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "SVLAN uplink port table provides the facility to 
+                       set each port to up-link port or non up-link port."
+              ::= { cfgServiceVLAN 2 }
+
+          cfgSVLANUplinkPortEntry OBJECT-TYPE
+              SYNTAX  CfgSVLANUplinkPortEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The table entry indexed by port."
+              INDEX   { cfgSVLANUplinkPort }
+              ::= { cfgSVLANUplinkPortTable 1 }
+
+          CfgSVLANUplinkPortEntry ::=
+              SEQUENCE {
+                  cfgSVLANUplinkPort
+                      PORT_ID,
+                   cfgSVLANUplinkPortState
+                      INTEGER
+              }
+
+          cfgSVLANUplinkPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The port number is the index of the table."
+              ::= { cfgSVLANUplinkPortEntry 1 }
+
+          cfgSVLANUplinkPortState OBJECT-TYPE
+              SYNTAX  INTEGER{non-uplink(0), uplink(1)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The state can set whether:
+                       0: non-uplink port
+                       1: uplink port"
+              ::= { cfgSVLANUplinkPortEntry 2 }
+       
+       cfgSVLANStaticSVLANTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF CfgSVLANStaticSVLANEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "The Static SVLAN table is the table to show 
+                       the SVLAN entries."
+              ::= { cfgServiceVLAN 3 }
+
+          cfgSVLANStaticSVLANEntry OBJECT-TYPE
+              SYNTAX  CfgSVLANStaticSVLANEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "There is a specific index listed from 1 for 
+                       supported entries."
+              INDEX   { cfgSVLANStaticSVLANIndex }
+              ::= { cfgSVLANStaticSVLANTable 1 }
+
+          CfgSVLANStaticSVLANEntry ::=
+              SEQUENCE {
+                  cfgSVLANStaticSVLANIndex
+                      INTEGER,
+                  cfgSVLANStaticSvid
+                      INTEGER,
+                  cfgSVLANStaticVlanName
+                      OCTET STRING,
+                  cfgSVLANStaticMemberPorts
+                      PORT_LIST,
+                  cfgSVLANStaticDefaultSVLAN
+                      INTEGER,
+                  cfgSVLANStaticSVLANStatus
+                      INTEGER
+              }
+
+          cfgSVLANStaticSVLANIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index is from 1 to 32 for each entry."
+              ::= { cfgSVLANStaticSVLANEntry 1 }
+
+          cfgSVLANStaticSvid OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The SVLAN ID of the entry."
+              ::= { cfgSVLANStaticSVLANEntry 2 }
+
+          cfgSVLANStaticVlanName OBJECT-TYPE
+              SYNTAX  OCTET STRING
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The SVLAN name."
+              ::= { cfgSVLANStaticSVLANEntry 3 }
+
+          cfgSVLANStaticMemberPorts OBJECT-TYPE
+              SYNTAX  PORT_LIST
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The member port list of the of the 
+                       static svlan entry."
+              ::= { cfgSVLANStaticSVLANEntry 4 }
+
+          cfgSVLANStaticDefaultSVLAN OBJECT-TYPE
+              SYNTAX  INTEGER{no(0), yes(1)}
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Represents whether the entry is Default SVLAN or not. There is only
+                       one default SVLAN in the system."
+              ::= { cfgSVLANStaticSVLANEntry 5 }
+              
+          cfgSVLANStaticSVLANStatus OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          valid(1),
+                          invalid(2)
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Actions to create/delete the entry.
+                       Write 1(valid) to create/enable the entry.
+                       Write 2(invalid) to delete."
+              ::= { cfgSVLANStaticSVLANEntry 6 }
+
+--///////////////////////////////////////////////
+--//
+--//  rtl8370mSecurity contents                        
+--//
+--///////////////////////////////////////////////
+    secStaticMacAddr       OBJECT IDENTIFIER   ::= {   rtl8370mSecurity    2   }
+
+        fdbStaticTable OBJECT-TYPE
+              SYNTAX  SEQUENCE OF FdbStaticEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "A table containing filtering information
+                      configured into the bridge by (local or network)
+                      management specifying the set of ports to which
+                      frames received from specific ports and containing
+                      specific destination addresses are allowed to be
+                      forwarded.  The value of zero in this table as the
+                      port number from which frames with a specific
+                      destination address are received, is used to
+                      specify all ports for which there is no specific
+                      entry in this table for that particular
+                      destination address.  Entries are valid for
+                      unicast and for group/broadcast addresses."
+              REFERENCE
+                      "IEEE 802.1D-1990: Section 6.7.2"
+              ::= { secStaticMacAddr 1 }
+
+          fdbStaticEntry OBJECT-TYPE
+              SYNTAX  FdbStaticEntry
+              ACCESS  not-accessible
+              STATUS  mandatory
+              DESCRIPTION
+                      "Filtering information configured into the bridge
+                      by (local or network) management specifying the
+                      set of ports to which frames received from a
+                      specific port and containing a specific
+                      destination address are allowed to be forwarded."
+              REFERENCE
+                      "IEEE 802.1D-1990: Section 6.7.2"
+
+
+              INDEX   { fdbStaticIndex }
+              ::= { fdbStaticTable 1 }
+
+          FdbStaticEntry ::=
+              SEQUENCE {
+                  fdbStaticIndex
+                      INTEGER,
+                  fdbStaticAddress
+                      MacAddress,
+                  fdbStaticVid
+                      INTEGER,
+                  fdbStaticPort
+                      PORT_ID,
+                  fdbStaticStatus
+                      INTEGER
+              }
+
+          fdbStaticIndex OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-only
+              STATUS  mandatory
+              DESCRIPTION
+                      "The index of the Static address table."
+              ::= { fdbStaticEntry 1 }
+
+
+          fdbStaticAddress OBJECT-TYPE
+              SYNTAX  MacAddress
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "The destination MAC address in a frame to which
+                      filtering information of this entry applies.  This
+                      object can take the value of a unicast address, a
+                      group address or the broadcast address."
+              REFERENCE
+                      "IEEE 802.1D-1990: Section 3.9.1, 3.9.2"
+              ::= { fdbStaticEntry 2 }
+
+          fdbStaticVid OBJECT-TYPE
+              SYNTAX  INTEGER
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "VID of the MacAddress."
+              ::= { fdbStaticEntry 3 }
+
+          fdbStaticPort OBJECT-TYPE
+              SYNTAX  PORT_ID
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "."
+              ::= { fdbStaticEntry 4 }
+
+          fdbStaticStatus OBJECT-TYPE
+              SYNTAX  INTEGER {
+                          static(1),
+                          invalid(2)
+                      }
+              ACCESS  read-write
+              STATUS  mandatory
+              DESCRIPTION
+                      "Actions to create/delete the entry.
+                       Write 1(static) to create/enable the entry.
+                       Write 2(invalid) to delete."
+              ::= { fdbStaticEntry 5 }
+
+    secStormControl     OBJECT IDENTIFIER   ::= {   rtl8370mSecurity    3   }
+      -- information related to points of i/o that is in table form
+      
+      stormControlTable OBJECT-TYPE
+	  SYNTAX  SEQUENCE OF StormControlEntry
+	  ACCESS  not-accessible
+	  STATUS  mandatory
+	  DESCRIPTION  
+              "Storm control supprot per system setting of unknown unicast, 
+               unknown multicast, broadcast and multicast packet storm protection
+               by rate. And able to set the value to 0 to disable the protection 
+               by port."
+	  ::= { secStormControl 1 }
+      
+      stormControlEntry OBJECT-TYPE
+	  SYNTAX  StormControlEntry
+	  ACCESS  not-accessible
+	  STATUS  mandatory
+	  DESCRIPTION  
+              "The table is indexed by port and each type of storm control rate have
+               its own filed."
+	  INDEX { pstPortNum }
+	  ::= { stormControlTable 1 }
+      
+      StormControlEntry ::= SEQUENCE {
+      stcPort      PORT_ID,
+      stcUnknownUnicast      INTEGER,
+      stcUnknownMulticast      INTEGER,
+      stcBroadcast      INTEGER,
+      stcMulticast      INTEGER
+      }
+
+      stcPort OBJECT-TYPE
+	  SYNTAX   PORT_ID
+	  ACCESS   read-only
+	  STATUS   mandatory
+	  DESCRIPTION
+               "Port id, index of the table."
+	  ::= { stormControlEntry 1 }
+
+      stcUnknownUnicast OBJECT-TYPE
+	  SYNTAX   INTEGER
+	  ACCESS   read-write
+	  STATUS   mandatory
+	  DESCRIPTION
+               "The unknown unicast storm protection rate.
+                The resolution is 8 bps, 
+                the input value have to be multiple of 8.
+                Set 0 to disable, 1048560 bps."
+	  ::= { stormControlEntry 2 }
+
+      stcUnknownMulticast OBJECT-TYPE
+	  SYNTAX   INTEGER
+	  ACCESS   read-write
+	  STATUS   mandatory
+	  DESCRIPTION
+              "The unknown multicast storm protection rate.
+               The resolution is 8 bps, 
+               the input value have to be multiple of 8.
+               Set 0 to disable, 1048560 bps."
+      ::= { stormControlEntry 3 }
+
+      stcBroadcast OBJECT-TYPE
+	  SYNTAX	 INTEGER
+	  ACCESS   read-write
+	  STATUS   mandatory
+	  DESCRIPTION
+              "The broadcast storm protection rate.
+               The resolution is 8 bps, 
+               the input value have to be multiple of 8.
+               Set 0 to disable, 1048560 bps."
+	  ::= { stormControlEntry 4 }
+
+      stcMulticast OBJECT-TYPE
+	  SYNTAX	 INTEGER
+	  ACCESS   read-write
+	  STATUS   mandatory
+	  DESCRIPTION
+              "The known multicast storm protection rate.
+               Which will not count the unknown multicast flows.
+               The resolution is 8 bps, 
+               the input value have to be multiple of 8.
+               Set 0 to disable, 1048560 bps."
+	  ::= { stormControlEntry 5 }
+
+--///////////////////////////////////////////////
+--//
+--//  rtl8370mTools contents                        
+--//
+--///////////////////////////////////////////////
+    tolReset OBJECT-TYPE
+        SYNTAX  INTEGER {standby(0), reset(1)}
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION  
+	    "Reset the setting to factory default."
+    ::= {   rtl8370mTools    2   }
+    tolSave OBJECT-TYPE
+        SYNTAX  INTEGER {normal(0), save(1)}
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION  
+	    "Save the system configuration with:
+	     1: Save current setting to flash."
+    ::= {   rtl8370mTools    3   }
+
+    tolReboot OBJECT-TYPE
+        SYNTAX  INTEGER {normal(0), reboot(1)}
+        ACCESS  write-only
+        STATUS  mandatory
+        DESCRIPTION  
+	    "Reboot the system with:
+	     1: Reboot the system."
+    ::= {   rtl8370mTools    4   }
+
+
+
+END    
+              

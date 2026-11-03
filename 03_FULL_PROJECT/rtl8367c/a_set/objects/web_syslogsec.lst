@@ -1,0 +1,229 @@
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_SYSLOGSEC
+OBJECT MODULE PLACED IN .\objects\web_syslogsec.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_syslogsec.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(
+                    -0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\co
+                    -mmon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,
+                    -SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8
+                    -G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_syslogsec.lst) TABS(2) OBJECT(.\objects\web_syslogsec.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to IP function
+  10           *
+  11           * Feature : Response the request related to IP function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <string.h>
+  19          #include <stdio.h>
+  20          
+  21          #include <salutil.h>
+  22          #include <salsys.h>
+  23          #include <salflash.h>
+  24          #include <salsyslog.h>
+  25          
+  26          #include <web/web_api.h>
+  27          #include "web_ip.h"
+  28          #include "web_util.h"   
+  29          
+  30          #if 1
+  31          /*
+  32           * Symbol Definition
+  33           */
+  34          
+  35          /*
+  36           * Data Declaration
+  37           */
+  38          
+  39          /*
+  40           * Function Declaration
+  41           */
+  42          
+  43          /*
+  44           * Function: get_syslogsec
+  45           * -----------------------
+  46           * Displays syslog configuration page.
+  47           * Shows syslog enable/disable dropdown, server IP, and UDP port.
+  48           * Reads current settings from flash and pre-populates fields.
+  49           * Uses modern form layout with table-based design.
+  50           */
+  51          int32 get_syslogsec(struct http_request_s *pReq)
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 2   
+
+  52          {
+  53   1          sal_ipaddr_t    ip = 0;
+  54   1          uint8           ipStr[16] = { 0 } ;
+  55   1          sal_enable_t  syslogStatus = 0;
+  56   1          uint16 udpPort;
+  57   1          sal_flash_syslog_serverIp_get(&ip);
+  58   1          ip_to_str(ipStr, (uint8 *)&ip);
+  59   1      
+  60   1      //    snmp_trap_dst_ip_get(0, (u8_t *)&ip); //?? Check this Charan
+  61   1      //    ip_to_str(ipStr, (uint8 *)&ip);
+  62   1      
+  63   1        sal_flash_syslog_state_get(&syslogStatus);
+  64   1        sal_flash_syslog_serverPort_get(&udpPort);
+  65   1        
+  66   1          WEB_BEGIN(pReq);
+  67   1      
+  68   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  69   1        WEB_HEADER(pReq, "Content-Type: text/html");
+  70   1      
+  71   1        WEB_PRINTF(pReq, "<html>\n");
+  72   1          WEB_PRINTF(pReq, "\n");
+  73   1        WEB_PRINTF(pReq, "<head>\n");
+  74   1        WEB_PRINTF(pReq, "<title>Syslog Configuration</title>\n");
+  75   1        WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  76   1        WEB_PRINTF(pReq, "</head>\n");
+  77   1        WEB_PRINTF(pReq, "\n");
+  78   1        WEB_PRINTF(pReq, "<body>\n");
+  79   1        WEB_PRINTF(pReq, "<center>\n");
+  80   1        WEB_PRINTF(pReq, "\n");
+  81   1        WEB_PRINTF(pReq, "<fieldset>\n");
+  82   1        WEB_PRINTF(pReq, "<legend>Syslog Configuration</legend>\n");
+  83   1      //  WEB_PRINTF(pReq, "<form method=\"post\" name=\"syslogsec\" action=\"/syslog.cgi\">\n");
+  84   1          WEB_PRINTF(pReq, "<form method=\"post\" name=\"syslogsec\" action=\"/syslog.cgi?page=syslogsec\">\n");
+  85   1      
+  86   1        WEB_PRINTF(pReq, "<br>\n");
+  87   1        WEB_PRINTF(pReq, "<table border=\"1\">\n");
+  88   1        WEB_PRINTF(pReq, "  <tr>\n");
+  89   1        WEB_PRINTF(pReq, "    <th width=\"200\">Syslog Function</th>\n");
+  90   1      
+  91   1        WEB_PRINTF(pReq, "    <td width=\"150\">\n");
+  92   1        WEB_PRINTF(pReq, "      <select name=\"state\" style=\"width:150\">\n");
+  93   1      
+  94   1        if(SAL_ENABLED == syslogStatus)
+  95   1        {
+  96   2          WEB_PRINTF(pReq, "    <option value=\"0\" >Disable \n");          
+  97   2          WEB_PRINTF(pReq, "    <option value=\"1\" selected >Enable \n");
+  98   2        }
+  99   1        else
+ 100   1        {
+ 101   2          WEB_PRINTF(pReq, "    <option value=\"0\" selected >Disable \n");          
+ 102   2          WEB_PRINTF(pReq, "    <option value=\"1\" >Enable \n");  
+ 103   2        }
+ 104   1      
+ 105   1        WEB_PRINTF(pReq, "      </select>\n");
+ 106   1        WEB_PRINTF(pReq, "    </td>\n");
+ 107   1      
+ 108   1        WEB_PRINTF(pReq, "  </tr>\n");
+ 109   1      
+ 110   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 111   1          WEB_PRINTF(pReq, "      <td>Server IP Address</td>\n");
+ 112   1          WEB_PRINTF(pReq, "      <td style=\"text-align:left;\"><input type=\"text\" size=\"16\" name=\"ip\" id
+             -=\"ip\" value=\"%s\" maxlength=\"15\"></td>\n", ipStr);
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 3   
+
+ 113   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 114   1      
+ 115   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 116   1          WEB_PRINTF(pReq, "      <td>UDP Port (1-65525)</td>\n");
+ 117   1          WEB_PRINTF(pReq, "      <td style=\"text-align:left;\"><input type=\"text\" size=\"6\" name=\"udpPort\
+             -" id=\"udpPort\" value=\"%d\" maxlength=\"5\"></td>\n", udpPort);
+ 118   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 119   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 120   1      
+ 121   1        WEB_PRINTF(pReq, "</table>\n");
+ 122   1        WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 123   1        WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+ 124   1        WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"syslog\">\n");
+ 125   1        WEB_PRINTF(pReq, "</form>\n");
+ 126   1        WEB_PRINTF(pReq, "</fieldset>\n");
+ 127   1        WEB_PRINTF(pReq, "</center>\n");
+ 128   1        WEB_PRINTF(pReq, "</body>\n");
+ 129   1        WEB_PRINTF(pReq, "</html>\n");
+ 130   1      
+ 131   1          WEB_END(pReq);
+ 132   1      
+ 133   1          return SUCCESS;
+ 134   1      
+ 135   1      }
+ 136          
+ 137          /*
+ 138           * Function: post_syslogsec
+ 139           * ------------------------
+ 140           * Processes syslog configuration form submission.
+ 141           * Extracts IP, UDP port, and enable state from POST data.
+ 142           * Validates IP format and port range.
+ 143           * Saves all syslog settings to flash and updates system configuration.
+ 144           */
+ 145          int32 post_syslogsec(struct http_request_s *pReq)
+ 146          {
+ 147   1          uint8           *pValue;
+ 148   1          uint8           ipStr[16] = { 0 } ;
+ 149   1          sal_ipaddr_t    ip = 0;
+ 150   1        uint16 udpPort;
+ 151   1        sal_enable_t  syslogStatus = 0;
+ 152   1      
+ 153   1          WEB_VAR(pReq, "ip", &pValue);
+ 154   1          if (pValue) {
+ 155   2              memcpy(ipStr, pValue, sizeof(ipStr));
+ 156   2          }
+ 157   1              
+ 158   1          WEB_VAR(pReq, "udpPort", &pValue);
+ 159   1          if (pValue) {
+ 160   2              udpPort = atoi(pValue);
+ 161   2          }
+ 162   1      
+ 163   1          WEB_VAR(pReq, "state", &pValue);
+ 164   1          if (pValue) {
+ 165   2              syslogStatus = atoi(pValue);
+ 166   2          }
+ 167   1        
+ 168   1          if (str_to_ip(&ip, ipStr) != 0) {
+ 169   2              printmsg(pReq, "Invalid IP Address.");
+ 170   2              return SUCCESS;
+ 171   2          }
+ 172   1          
+ 173   1          //Set the IP address here
+C51 COMPILER V9.60.0.0   WEB_SYSLOGSEC                                                     11/02/2026 17:57:40 PAGE 4   
+
+ 174   1      
+ 175   1       //   snmp_trap_dst_ip_set(0, (u8_t *)&ip);
+ 176   1        sal_sys_syslog_state_set(&syslogStatus,1);
+ 177   1        sal_syslog_state_set(syslogStatus);
+ 178   1      
+ 179   1        sal_sys_syslog_hostIp_set(&ip, 1);
+ 180   1        sal_sys_syslog_hostUdpPort_set(&udpPort, 1);
+ 181   1      
+ 182   1          sal_flash_syslog_serverIp_set(ip);
+ 183   1        sal_flash_syslog_serverPort_set(udpPort);
+ 184   1          sal_flash_cfg_save();
+ 185   1         
+ 186   1          get_syslogsec(pReq);
+ 187   1      
+ 188   1          return SUCCESS;
+ 189   1      }
+ 190          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1441    ----
+   CONSTANT SIZE    =   1154    ----
+   XDATA SIZE       =   ----      55
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1154    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

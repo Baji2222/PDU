@@ -1,0 +1,340 @@
+C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALLED
+OBJECT MODULE PLACED IN .\objects\salled.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salled.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\salled.lst) TABS(2) OBJECT(.\objects\salled.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2009 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 7002 $
+  13           * $Date: 2009-11-13 14:40:24 +0800 (Fri, 13 Nov 2009) $
+  14           *
+  15           * Purpose : System abstraction layer API for wrapping chip driver
+  16           * Feature : Realtek Loop Detection and Prevention Protocol
+  17           *
+  18           */
+  19          
+  20          /* 
+  21           * Include Files 
+  22           */
+  23          #include <salerror.h>
+  24          #include <salled.h>
+  25          
+  26          /* 
+  27           * Symbol and Data Type Definition 
+  28           */
+  29           
+  30          /* 
+  31           * Data Declaration 
+  32           */
+  33          
+  34           /* 
+  35            * Macro Declaration 
+  36            */
+  37          #define CHIP_FORCE_LED0_REG(port)       (0x1B08 + (port >> 3))
+  38          #define CHIP_FORCE_LED1_REG(port)       (0x1B0A + (port >> 3))
+  39          #define CHIP_FORCE_LED2_REG(port)       (0x1B0C + (port >> 3))
+  40          #define CHIP_FORCE_LED_OFF(port)        ((port & 7) * 2)
+  41          #define CHIP_FORCE_LED_MSK(port)        (3 << CHIP_FORCE_LED_OFF(port))
+  42          #define CHIP_FORCE_LED_BLINK_RATE_REG   (0x1B02)
+  43          #define CHIP_FORCE_LED_BLINK_RATE_OFF   (4)
+  44          #define CHIP_FORCE_LED_BLINK_RATE_MSK   (3 << CHIP_FORCE_LED_BLINK_RATE_OFF)
+  45          
+  46          #define BLINK_RATE_MAX_IN_MS            (2048)
+  47           
+  48           /* 
+  49            * Function Declaration 
+  50            */
+  51          
+C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 2   
+
+  52          extern void setReg(uint16, uint16);
+  53          extern uint16 getReg(uint16);
+  54          #if 0//NOT used
+              /* Function Name:
+               *      sal_led_mode_set
+               * Description:
+               *      Set mode of LED.
+               * Input:
+               *      led  - led index.
+               *      mode - force mode.
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS;
+               *      SAL_ERR_PARAMETER;
+               * Note:
+               *      None
+               */
+              int32 sal_led_mode_set(sal_led_group_t group, sal_led_mode_t mode)
+              {
+                  uint16 ledValue, off, tmp;
+              
+                  if(group >= SAL_LED_GROUP_END || mode >= SAL_LED_MODE_END)
+                      return SAL_ERR_PARAMETER;
+              
+                  switch(mode)
+                  {
+                  case SAL_LED_MODE_OFF:
+                      ledValue = 0;
+                      break;
+                  case SAL_LED_MODE_DUPLEX_COL:
+                      ledValue = 1;
+                      break;
+                  case SAL_LED_MODE_LINKACT:
+                      ledValue = 2;
+                      break;      
+                  case SAL_LED_MODE_SPD1000:
+                      ledValue = 3;
+                      break;        
+                  case SAL_LED_MODE_SPD100:
+                      ledValue = 4;
+                      break;      
+                  case SAL_LED_MODE_SPD10:
+                      ledValue = 5;
+                      break;      
+                  case SAL_LED_MODE_SPD1000_ACT:
+                      ledValue = 6;
+                      break;      
+                  case SAL_LED_MODE_SPD100_ACT:
+                      ledValue = 7;
+                      break;      
+                  case SAL_LED_MODE_SPD10_ACT:
+                      ledValue = 8;
+                      break;      
+                  case SAL_LED_MODE_ACT:
+                      ledValue = 15;
+                      break;        
+                  case SAL_LED_MODE_SPD100_SPD10_ACT:
+                      ledValue = 9;
+                      break;
+                  default:
+                      return SAL_ERR_PARAMETER;
+C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 3   
+
+                  }
+              
+                  switch(group)
+                  {
+                  case SAL_LED_GROUP0:
+                      off = 0;
+                      break;
+                  case SAL_LED_GROUP1:
+                      off = 4;
+                      break;    
+                  case SAL_LED_GROUP2:
+                      off = 8;
+                      break; 
+                  default:
+                      return SAL_ERR_PARAMETER;
+                  }
+              
+                  tmp = getReg(0x1b03);
+                  tmp &= ~(0xF << off);
+                  tmp |= (ledValue << off);
+                  setReg(0x1b03, tmp);
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name:
+               *      sal_led_mode_get
+               * Description:
+               *      Get mode of LED.
+               * Input:
+               *      led   - led index.
+               *      pMode - pointer to LED mode.
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS;
+               *      SAL_ERR_PARAMETER;
+               *      SAL_ERR_FAILED;
+               * Note:
+               *      None
+               */
+              int32 sal_led_mode_get(sal_led_group_t group, sal_led_mode_t *pMode)
+              {
+                  uint16 ledValue, off, tmp;
+                  
+                  if(group >= SAL_LED_GROUP_END)
+                      return SAL_ERR_PARAMETER;
+              
+                  switch(group)
+                  {
+                  case SAL_LED_GROUP0:
+                      off = 0;
+                      break;
+                  case SAL_LED_GROUP1:
+                      off = 4;
+                      break;    
+                  case SAL_LED_GROUP2:
+                      off = 8;
+                      break; 
+                  default:
+                      return SAL_ERR_PARAMETER;
+                  }
+C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 4   
+
+              
+                  tmp = getReg(0x1b03);
+                  ledValue = tmp & (0xF << off);
+              
+                  switch(ledValue)
+                  {
+                  case 0:
+                      *pMode = SAL_LED_MODE_OFF;
+                      break;
+                  case 1:
+                      *pMode = SAL_LED_MODE_DUPLEX_COL;
+                      break;        
+                  case 2:
+                      *pMode = SAL_LED_MODE_LINKACT;
+                      break;        
+                  case 3:
+                      *pMode = SAL_LED_MODE_SPD1000;
+                      break;        
+                  case 4:
+                      *pMode = SAL_LED_MODE_SPD100;
+                      break;        
+                  case 5:
+                      *pMode = SAL_LED_MODE_SPD10;
+                      break;        
+                  case 6:
+                      *pMode = SAL_LED_MODE_SPD1000_ACT;
+                      break;        
+                  case 7:
+                      *pMode = SAL_LED_MODE_SPD100;
+                      break;        
+                  case 8:
+                      *pMode = SAL_LED_MODE_SPD10_ACT;
+                      break;        
+                  case 9:
+                      *pMode = SAL_LED_MODE_SPD100_SPD10_ACT;
+                      break;        
+                  case 15:
+                      *pMode = SAL_LED_MODE_ACT;
+                      break;        
+                  default:
+                      /* exception */
+                      return SAL_ERR_FAILED;
+                  }
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 223          
+ 224          /* Function Name:
+ 225           *      sal_led_forceMode_set
+ 226           * Description:
+ 227           *      Set force mode of LED
+ 228           * Input:
+ 229           *      port - port id
+ 230           *      mode - force mode
+ 231           * Output:
+ 232           *      None
+ 233           * Return:
+ 234           *      SAL_ERR_SUCCESS;
+ 235           *      SAL_ERR_PARAMETER;
+ 236           * Note:
+ 237           *      None
+C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 5   
+
+ 238           */
+ 239          int32 sal_led_forceMode_set(sal_port_t port, sal_led_force_t mode)
+ 240          {
+ 241   1          uint16 regAddr, i, tmp;
+ 242   1      
+ 243   1          if(port >= SAL_PORT_ID_CPU || mode >= SAL_LED_FORCE_END)
+ 244   1              return SAL_ERR_PARAMETER;
+ 245   1      
+ 246   1      #if defined(LWS_8G_2F)
+                  if (port == EXT_PORT0)
+                      port = 8;
+                  if (port == EXT_PORT1)
+                      port = 9;                
+              #elif defined(LWS_5G_1F)
+                  if (port == EXT_PORT0)
+                      port = 6;        
+              #else            
+ 255   1      #endif
+ 256   1      
+ 257   1          for(i = 0; i < 3;i++)
+ 258   1          {
+ 259   2              regAddr = CHIP_FORCE_LED0_REG(port) + i * 2;
+ 260   2              tmp = getReg(regAddr);
+ 261   2              tmp &= ~(CHIP_FORCE_LED_MSK(port));
+ 262   2              tmp |= (mode << CHIP_FORCE_LED_OFF(port));
+ 263   2              setReg(regAddr, tmp);
+ 264   2          }
+ 265   1      
+ 266   1          return SAL_ERR_SUCCESS;
+ 267   1      }
+ 268          
+ 269          #if 0
+              /* Function Name:
+               *      sal_led_blinkRate_set
+               * Description:
+               *      Set blink rate when port led is forced to blink
+               * Input:
+               *      rate - Blink rate. Unit: 512ms
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS;
+               *      SAL_ERR_NOT_SUPPORT;
+               * Note:
+               *      None
+               */
+              int32 sal_led_blinkRate_set(sal_led_blink_rate_t rate)
+              {
+                  uint16 tmp;
+              
+                  if(rate > (BLINK_RATE_MAX_IN_MS / 512))
+                      return SAL_ERR_NOT_SUPPORT;
+              
+                  tmp = getReg(CHIP_FORCE_LED_BLINK_RATE_REG);
+                  tmp &= ~(CHIP_FORCE_LED_BLINK_RATE_MSK);
+                  tmp |= (rate << CHIP_FORCE_LED_BLINK_RATE_OFF);
+                  setReg(CHIP_FORCE_LED_BLINK_RATE_REG, tmp);
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 299          
+C51 COMPILER V9.60.0.0   SALLED                                                            11/02/2026 17:57:01 PAGE 6   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    229    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

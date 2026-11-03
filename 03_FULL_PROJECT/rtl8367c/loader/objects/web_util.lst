@@ -1,0 +1,169 @@
+C51 COMPILER V9.60.0.0   WEB_UTIL                                                          08/20/2025 22:07:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_UTIL
+OBJECT MODULE PLACED IN .\objects\web_util.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\web\web_util.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;.
+                    -.\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\
+                    -local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_
+                    -625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\web_util.lst) TABS(2) OBJECT(.\objects\web_util.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <string.h> 
+   4          
+   5          #include <local/config.h>
+   6          #include <local/web_config.h>
+   7          
+   8          #include <salerror.h>
+   9          
+  10          #include <web/web_api.h>
+  11          #include "web_util.h"
+  12          
+  13          #if WEB_ENABLE
+  14          
+  15          #if 0
+              
+              
+              const char *
+              errMsg_get(int32 errCode)
+              {
+                  const char* errStr;
+              
+                  errStr = sal_err_msg_get(errCode); 
+              
+                  if(WEB_MEMCMP(errStr, "Unknown error", sizeof("Unknown error")) != 0)
+                      return errStr;
+              }
+              
+              /*
+               * printerr -- print an error message
+               *
+               * Parameters:
+               *   errno: the error number
+               */
+              void
+              printerr (
+                  struct http_request_s *pReq,
+                  unsigned short  errno
+                  )
+              {
+                  WEB_BEGIN(pReq);
+              
+                  WEB_STATUS(pReq, HTTP_STATUS_OK);
+                  WEB_HEADER(pReq, "Content-Type: text/html");
+                  
+                  WEB_PRINTF(pReq, "<html>\n");
+                  WEB_PRINTF(pReq, "\n");
+                  WEB_PRINTF(pReq, "<head>\n");
+                  WEB_PRINTF(pReq, "<title>Message</title>\n");
+                  WEB_PRINTF(pReq, "</head>\n");
+                  WEB_PRINTF(pReq, "\n");
+                  WEB_PRINTF(pReq, "<body>\n");
+C51 COMPILER V9.60.0.0   WEB_UTIL                                                          08/20/2025 22:07:56 PAGE 2   
+
+                  WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+                  WEB_PRINTF(pReq, "window.location.replace(\"/goback.cgi\");\n");
+                  WEB_PRINTF(pReq, "window.open(\'/alert.cgi?alertmsg=Error: %s\',\'hidden_frame\',\'\');\n", 
+                          errMsg_get(errno));
+                  WEB_PRINTF(pReq, "</script>\n");
+                  WEB_PRINTF(pReq, "</body>\n");
+                  WEB_PRINTF(pReq, "</html>\n");
+                  WEB_END(pReq);
+              }
+              
+              #endif
+  64          
+  65          /*
+  66           * printmsg -- print a message --> Will be deprecated by printerr
+  67           *
+  68           * Parameters:
+  69           *   msg: the message
+  70           */
+  71          #if defined(UPGRADE_TFTP)
+              void
+              printmsg (
+                  struct http_request_s *pReq,
+                  char *  msg
+                  )
+              {
+                  int i;
+                  char msg_temp[128];
+              
+                  WEB_BEGIN(pReq);
+              
+                  WEB_STATUS(pReq, HTTP_STATUS_OK);
+                  WEB_HEADER(pReq, "Content-Type: text/html");
+                  
+                  WEB_PRINTF(pReq, "<html>\n");
+                  WEB_PRINTF(pReq, "\n");
+                  WEB_PRINTF(pReq, "<head>\n");
+                  WEB_PRINTF(pReq, "<title>Message</title>\n");
+                  WEB_PRINTF(pReq, "</head>\n");
+                  WEB_PRINTF(pReq, "\n");
+                  WEB_PRINTF(pReq, "<body>\n");
+                  WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+                  i = 0;
+                  strncpy(msg_temp, msg, 128);
+                  while(msg_temp[i] != '\0')
+                  {
+                          if(msg_temp[i] == '\n')
+                          {
+                          msg_temp[i] = ' ';
+                          }
+                          i ++;
+                  }
+                  WEB_PRINTF(pReq, "window.location.replace(\"/goback.cgi\");\n");
+                  WEB_PRINTF(pReq, "window.open(\'/alert.cgi?alertmsg=%s\',\'hidden_frame\',\'\');\n", msg_temp);
+                  WEB_PRINTF(pReq, "</script>\n");
+                  WEB_PRINTF(pReq, "</body>\n");
+                  WEB_PRINTF(pReq, "</html>\n");
+                  WEB_END(pReq);
+              }
+              #endif
+ 112          
+ 113          
+ 114          char *
+C51 COMPILER V9.60.0.0   WEB_UTIL                                                          08/20/2025 22:07:56 PAGE 3   
+
+ 115          strnstr (const char *haystack, const char *needle, uint16 hlen)
+ 116          {
+ 117   1          uint16 nlen;
+ 118   1                                                                                      
+ 119   1          if (!needle || !*needle)
+ 120   1              return (char *)haystack;
+ 121   1          else
+ 122   1              nlen = strlen (needle);
+ 123   1                                                                                      
+ 124   1          while (hlen >= nlen) {
+ 125   2              if (*needle == *haystack && !strncmp (haystack + 1, needle + 1,
+ 126   2                                                    nlen - 1))
+ 127   2                  return (char *) haystack;
+ 128   2              haystack++; hlen--;
+ 129   2          }
+ 130   1                                                                                     
+ 131   1          return NULL;
+ 132   1      }
+ 133          
+ 134          #endif
+ 135          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    197    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

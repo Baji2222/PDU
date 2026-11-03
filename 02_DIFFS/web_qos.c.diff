@@ -1,0 +1,25 @@
+--- /home/claude/orig/rtl8367c/src/web/web_qos.c	2026-11-02 11:29:21.438118463 +0000
++++ rtl8367c/src/web/web_qos.c	2026-11-02 11:29:44.886529165 +0000
+@@ -530,7 +530,7 @@
+     WEB_BEGIN(pReq);
+     WEB_STATUS(pReq, HTTP_STATUS_OK);
+     WEB_HEADER(pReq, "Content-Type: text/html");
+-    WEB_PRINTF(pReq,
++    WEB_PUTS(pReq,
+     "<html><head><meta name=viewport content=\"width=device-width,initial-scale=1\">"
+     "<title>RTC INFO</title>"
+     "<style>"
+@@ -539,11 +539,11 @@
+     "body{font-family:Arial,sans-serif;background:#f0f2f5;margin:0;min-height:100vh;display:flex;justify-content:center;align-items:center;padding:20px;box-sizing:border-box;color:#1c1f23}"
+     
+     /* Container matching the Set pages */
+-    ".container{background:#fff;border-radius:12px;padding:32px;width:100%%;max-width:840px;box-shadow:0 4px 20px rgba(0,0,0,.1);}"
++    ".container{background:#fff;border-radius:12px;padding:32px;width:100%;max-width:840px;box-shadow:0 4px 20px rgba(0,0,0,.1);}"
+     "h1{font-size:20px;margin:0 0 24px;padding-bottom:12px;border-bottom:3px solid #0f1a2b;text-transform:uppercase;letter-spacing:1px;color:#1c1f23;}"
+     
+     /* Table styling */
+-    "table{width:100%%;border-collapse:collapse;font-size:16px}"
++    "table{width:100%;border-collapse:collapse;font-size:16px}"
+     "th{text-align:left;padding:14px 12px;background:#f1f3f5;color:#6b7280;font-weight:600;font-size:13px;text-transform:uppercase;letter-spacing:.5px}"
+     "th:last-child{text-align:right;padding-right:24px}"
+     "td{padding:16px 12px;border-bottom:1px solid #e9ecef;text-transform:uppercase}"

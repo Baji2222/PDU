@@ -1,0 +1,81 @@
+C51 COMPILER V9.60.0.0   HTML_UNAUTH                                                       11/02/2026 17:57:30 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HTML_UNAUTH
+OBJECT MODULE PLACED IN .\objects\html_unauth.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\html_unauth.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X
+                    -1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\comm
+                    -on\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SA
+                    -L_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,
+                    -SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\html_unauth.lst) TABS(2) OBJECT(.\objects\html_unauth.obj)
+
+line level    source
+
+   1          /*
+   2          * Copyright c                  Realtek Semiconductor Corporation, 2009  
+   3          * All rights reserved.
+   4          * 
+   5          * Abstract : 
+   6          *$Id: 
+   7          */
+   8          #pragma STRING (far)
+   9          
+  10          #include <stdio.h>
+  11          
+  12          #include <web/web_api.h>
+  13          #include "html_unauth.h" 
+  14          #include <syslog/syslogdefs.h>
+  15          
+  16          /*
+  17           * Data Declaration
+  18           */
+  19          uint8 const far htm_http_unauthorized[] = "\
+  20          <html><head>\n\
+  21          <title>401 Authorization Required</title>\n\
+  22          </head><body>\n\
+  23          <h1>Authorization Required</h1>\n\
+  24          <p>This server could not verify that you\n\
+  25          are authorized to access the document\n\
+  26          requested.  Either you supplied the wrong\n\
+  27          credentials (e.g., bad password), or your\n\
+  28          browser doesn't understand how to supply\n\
+  29          the credentials required.</p>\n\
+  30          <hr>\n\
+  31          <address>Web-Smart Server</address>\n\
+  32          </body></html>\n\
+  33          ";
+  34          
+  35          // Get Unauthorized: Sends HTTP 401 Unauthorized response to client
+  36          // Displays authentication required page when user fails to provide valid credentials
+  37          int8 get_unauth(struct http_request_s *pReq)
+  38          {
+  39   1      //  syslog_add_new_buf_entry(SYSLOG_MSG_LOGIN_FAILED, 0);
+  40   1      
+  41   1          WEB_BEGIN(pReq);
+  42   1          WEB_STATUS(pReq, HTTP_STATUS_UNAUTHORIZED);
+  43   1          WEB_HEADER(pReq, "WWW-Authenticate: Basic realm=\"Switch\"");
+  44   1          WEB_DATA(pReq, htm_http_unauthorized, sizeof(htm_http_unauthorized) -1);
+  45   1          WEB_END(pReq);
+  46   1      
+  47   1          return SUCCESS;
+  48   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.60.0.0   HTML_UNAUTH                                                       11/02/2026 17:57:30 PAGE 2   
+
+   CODE SIZE        =     98    ----
+   CONSTANT SIZE    =    431    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    431    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

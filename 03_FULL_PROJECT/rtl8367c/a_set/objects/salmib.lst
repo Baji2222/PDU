@@ -1,0 +1,430 @@
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALMIB
+OBJECT MODULE PLACED IN .\objects\salmib.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salmib.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\salmib.lst) TABS(2) OBJECT(.\objects\salmib.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <saltrunk.h>
+   4          #include <salportmask.h>
+   5          #include <salmib.h>
+   6          #include <salerror.h>
+   7          #include <stdio.h>
+   8          #include <salrate.h>
+   9          #include <stat.h>
+  10          #include <rtk_error.h>
+  11          
+  12          #if 0//NOT used
+              /* Function Name:
+               *      sal_mib_global_reset
+               * Description:
+               *      Reset the global counters.
+               * Input:
+               *      None
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_NOT_SUPPORT
+               *      SAL_ERR_SUCCESS
+               * Note:
+               *      None
+               */
+              int32 sal_mib_global_reset(void)
+              {
+                  return rtk_stat_global_reset();
+              }
+              #endif
+  32          
+  33          int32 sal_mib_port_reset(sal_port_t port)
+  34          {
+  35   1          int32 ret;
+  36   1      
+  37   1          if ((port >= SAL_MAX_PHY_N_CPU_PORT)) {
+  38   2          return SAL_ERR_PORT_RANGE;
+  39   2        }
+  40   1        
+  41   1          if ((ret = rtk_stat_port_reset(port)) != RT_ERR_OK)
+  42   1              return ret;
+  43   1          
+  44   1          return SAL_ERR_SUCCESS;
+  45   1      } 
+  46          
+  47          #if 1
+  48          /* Function Name:
+  49           *      sal_mib_port_get
+  50           * Description:
+  51           *      Get one specified port counter.
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 2   
+
+  52           * Input:
+  53           *      port        - port id
+  54           *      cntr_idx    - specified port counter index
+  55           * Output:
+  56           *      pCntH       - MSB of the counter value
+  57           *      pCntL       - LSB of the counter value
+  58           * Return:
+  59           *      SAL_ERR_NOT_SUPPORT
+  60           *      SAL_ERR_SUCCESS
+  61           * Note:
+  62           *      The value of *pCntH means only for 64-bit MIBs. for 32-bit MIBs, 
+  63           *      the value of *pCntH should be 0.
+  64           *
+  65           *      The value of MIB counters can be retrieved by arithmatic expression 
+  66           *      (((uint64)*pCntH << 32) | *pCntL) if 64-bit data type is supported.       
+  67           */
+  68          int32 sal_mib_port_get(sal_port_t port, sal_stat_port_type_t cntrIdx, uint32 *pCntH, uint32 *pCntL)
+  69          {
+  70   1          rtk_api_ret_t ret;
+  71   1          uint32        tmpCntr1, tmpCntr2;
+  72   1      
+  73   1          if(cntrIdx >= SAL_MIB_PORT_CNTR_END)
+  74   1              return SAL_ERR_PARAMETER;
+  75   1      
+  76   1          switch(cntrIdx)
+  77   1          {
+  78   2          case SAL_IF_OUT_OCTETS_INDEX:
+  79   2              ret = rtk_stat_port_get(port, STAT_IfOutOctets, pCntH, pCntL);
+  80   2              break;
+  81   2          case SAL_IF_IN_OCTETS_INDEX:
+  82   2              ret = rtk_stat_port_get(port, STAT_IfInOctets, pCntH, pCntL);
+  83   2              break;
+  84   2          case SAL_DOT3_OUT_PAUSE_FRAMES_INDEX:
+  85   2              ret = rtk_stat_port_get(port, STAT_Dot3OutPauseFrames, pCntH, pCntL);
+  86   2              break;
+  87   2          case SAL_DOT3_STATS_EXCESSIVE_COLLISIONS_INDEX:
+  88   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsExcessiveCollisions, pCntH, pCntL);
+  89   2              break;
+  90   2          case SAL_DOT3_STATS_LATE_COLLISIONS_INDEX:
+  91   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsLateCollisions, pCntH, pCntL);        
+  92   2              break;
+  93   2          case SAL_DOT3_STATS_DEFERRED_TRANSMISSIONS_INDEX:
+  94   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsDeferredTransmissions, pCntH, pCntL);        
+  95   2              break;
+  96   2          case SAL_DOT3_STATS_MULTIPLE_COLLISION_FRAMES_INDEX:
+  97   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsMultipleCollisionFrames, pCntH, pCntL);        
+  98   2              break;
+  99   2          case SAL_DOT3_STATS_SINGLE_COLLISION_FRAMES_INDEX:
+ 100   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsSingleCollisionFrames, pCntH, pCntL);        
+ 101   2              break;
+ 102   2          case SAL_DOT3_IN_PAUSE_FRAMES_INDEX:
+ 103   2              ret = rtk_stat_port_get(port, STAT_Dot3InPauseFrames, pCntH, pCntL);
+ 104   2              break;
+ 105   2          case SAL_DOT3_STATS_SYMBOL_ERRORS_INDEX:
+ 106   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsSymbolErrors, pCntH, pCntL);        
+ 107   2              break;
+ 108   2          case SAL_DOT3_STATS_FCS_ERRORS_INDEX:
+ 109   2              ret = rtk_stat_port_get(port, STAT_Dot3StatsFCSErrors, pCntH, pCntL);        
+ 110   2              break;
+ 111   2          case SAL_ETHER_STATS_JABBERS_INDEX:
+ 112   2              ret = rtk_stat_port_get(port, STAT_EtherStatsJabbers, pCntH, pCntL);
+ 113   2              break;
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 3   
+
+ 114   2          case SAL_ETHER_STATS_COLLISIONS_INDEX:
+ 115   2              ret = rtk_stat_port_get(port, STAT_EtherStatsCollisions, pCntH, pCntL);
+ 116   2              break;
+ 117   2          case SAL_ETHER_STATS_MCAST_PKTS_INDEX:
+ 118   2              ret = rtk_stat_port_get(port, STAT_EtherStatsMulticastPkts, pCntH, pCntL);
+ 119   2              break;
+ 120   2          case SAL_ETHER_STATS_BCAST_PKTS_INDEX:
+ 121   2              ret = rtk_stat_port_get(port, STAT_EtherStatsBroadcastPkts, pCntH, pCntL);
+ 122   2              break;
+ 123   2          case SAL_ETHER_STATS_FRAGMENTS_INDEX:
+ 124   2              ret = rtk_stat_port_get(port, STAT_EtherStatsFragments, pCntH, pCntL);
+ 125   2              break;
+ 126   2          case SAL_ETHER_STATS_PKTS_64OCTETS_INDEX:
+ 127   2              ret = rtk_stat_port_get(port, STAT_EtherStatsPkts64Octets, pCntH, pCntL);
+ 128   2              break;
+ 129   2          case SAL_ETHER_STATS_PKTS_65TO127OCTETS_INDEX:
+ 130   2              ret = rtk_stat_port_get(port, STAT_EtherStatsPkts65to127Octets, pCntH, pCntL);
+ 131   2              break;
+ 132   2          case SAL_ETHER_STATS_PKTS_128TO255OCTETS_INDEX:
+ 133   2              ret = rtk_stat_port_get(port, STAT_EtherStatsPkts128to255Octets, pCntH, pCntL);
+ 134   2              break;
+ 135   2          case SAL_ETHER_STATS_PKTS_256TO511OCTETS_INDEX:
+ 136   2              ret = rtk_stat_port_get(port, STAT_EtherStatsPkts256to511Octets, pCntH, pCntL);
+ 137   2              break;
+ 138   2          case SAL_ETHER_STATS_PKTS_512TO1023OCTETS_INDEX:
+ 139   2              ret = rtk_stat_port_get(port, STAT_EtherStatsPkts512to1023Octets, pCntH, pCntL);
+ 140   2              break;
+ 141   2          case SAL_ETHER_STATS_PKTS_1024TO1518OCTETS_INDEX:
+ 142   2              ret = rtk_stat_port_get(port, STAT_EtherStatsPkts1024to1518Octets, pCntH, pCntL);
+ 143   2              break;
+ 144   2          case SAL_ETHER_STATS_PKTS_INDEX:
+ 145   2              *pCntL = 0;
+ 146   2              if(SUCCESS == rtk_stat_port_get(port, STAT_EtherStatsPkts64Octets, &tmpCntr1, &tmpCntr2))
+ 147   2                  *pCntL += tmpCntr2;
+ 148   2              if(SUCCESS == rtk_stat_port_get(port, STAT_EtherStatsPkts65to127Octets, &tmpCntr1, &tmpCntr2))
+ 149   2                  *pCntL += tmpCntr2;
+ 150   2              if(SUCCESS == rtk_stat_port_get(port, STAT_EtherStatsPkts128to255Octets, &tmpCntr1, &tmpCntr2))
+ 151   2                  *pCntL += tmpCntr2;
+ 152   2              if(SUCCESS == rtk_stat_port_get(port, STAT_EtherStatsPkts256to511Octets, &tmpCntr1, &tmpCntr2))
+ 153   2                  *pCntL += tmpCntr2;
+ 154   2              if(SUCCESS == rtk_stat_port_get(port, STAT_EtherStatsPkts512to1023Octets, &tmpCntr1, &tmpCntr2))
+ 155   2                  *pCntL += tmpCntr2;
+ 156   2              if(SUCCESS == rtk_stat_port_get(port, STAT_EtherStatsPkts1024to1518Octets, &tmpCntr1, &tmpCntr2))
+ 157   2                  *pCntL += tmpCntr2;
+ 158   2              *pCntH = 0;
+ 159   2              break;
+ 160   2          case SAL_ETHER_STATS_OVERSIZE_PKTS_INDEX:
+ 161   2              ret = rtk_stat_port_get(port, STAT_EtherOversizeStats, pCntH, pCntL);
+ 162   2              break;
+ 163   2          case SAL_ETHER_STATS_OCTETS_INDEX:
+ 164   2              ret = rtk_stat_port_get(port, STAT_EtherStatsOctets, pCntH, pCntL);
+ 165   2              break;
+ 166   2          case SAL_ETHER_STATS_UNDER_SIZE_PKTS_INDEX:
+ 167   2              ret = rtk_stat_port_get(port, STAT_EtherStatsUnderSizePkts, pCntH, pCntL);
+ 168   2              break;
+ 169   2          case SAL_OUT_UCAST_PKTS_CNT_INDEX:
+ 170   2              ret = rtk_stat_port_get(port, STAT_IfOutUcastPkts, pCntH, pCntL);
+ 171   2              break;
+ 172   2          case SAL_OUT_MCAST_PKTS_CNT_INDEX:
+ 173   2              ret = rtk_stat_port_get(port, STAT_IfOutMulticastPkts, pCntH, pCntL);
+ 174   2              break;
+ 175   2          case SAL_OUT_BCAST_PKTS_CNT_INDEX:
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 4   
+
+ 176   2              ret = rtk_stat_port_get(port, STAT_IfOutBroadcastPkts, pCntH, pCntL);
+ 177   2              break;
+ 178   2          case SAL_IN_UCAST_PKTS_CNT_INDEX:
+ 179   2              ret = rtk_stat_port_get(port, STAT_IfInUcastPkts, pCntH, pCntL);
+ 180   2              break;
+ 181   2          case SAL_ETHER_STATS_DROP_EVENTS_INDEX:
+ 182   2              ret = rtk_stat_port_get(port, STAT_EtherStatsDropEvents, pCntH, pCntL);
+ 183   2              break;
+ 184   2          default:
+ 185   2              return SAL_ERR_NOT_SUPPORT;
+ 186   2          }
+ 187   1          return SAL_ERR_SUCCESS;
+ 188   1      }
+ 189          #endif
+ 190          
+ 191          void _counter_add(uint32 *pOrigH, uint32 *pOrigL, uint32 marginH, uint32 marginL)
+ 192          {        
+ 193   1          if (*pOrigL > (uint32)0xFFFFFFFF - marginL) // Overflow 
+ 194   1              *pOrigH += 1;
+ 195   1              
+ 196   1          *pOrigH += marginH;
+ 197   1          *pOrigL += marginL;
+ 198   1      }
+ 199          
+ 200          int32 _counter_sub(uint32 *pOrigH, uint32 *pOrigL, uint32 marginH, uint32 marginL)
+ 201          {
+ 202   1          if (*pOrigH < marginH || (*pOrigH == marginH && *pOrigL < marginL)) 
+ 203   1          {
+ 204   2              printf("Error in %s, %d\n", __FILE__, (uint16)__LINE__);
+ 205   2              return SAL_ERR_FAILED;
+ 206   2          }
+ 207   1      
+ 208   1          *pOrigH -= marginH;
+ 209   1          if (*pOrigL > marginL)
+ 210   1              *pOrigL  -= marginL;
+ 211   1          else
+ 212   1          {
+ 213   2              *pOrigH -= 1;
+ 214   2              *pOrigL = *pOrigL + ((uint32)0xffffffff - marginL + 1);
+ 215   2          }
+ 216   1      
+ 217   1          return SAL_ERR_SUCCESS;
+ 218   1      }
+ 219          
+ 220          int32 sal_mib_rxGoodPkt_get(sal_port_t port, uint32* high, uint32 *low)
+ 221          {
+ 222   1        sal_port_t      portId;
+ 223   1        sal_pPortmask_t portMask;
+ 224   1      
+ 225   1          rtk_stat_counter_t cnth,cnth2,cnth3;
+ 226   1          rtk_stat_counter_t cntl,cntl2,cntl3; 
+ 227   1      
+ 228   1        if ((port > SAL_PORT_ID_CPU - 1)) {
+ 229   2          return SAL_ERR_PORT_RANGE;
+ 230   2        }
+ 231   1          
+ 232   1          *high = 0, *low  = 0;
+ 233   1      
+ 234   1        sal_trunk_logicId_toPhysicMask(&portMask, port);
+ 235   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 236   1          {
+ 237   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&portMask, portId))
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 5   
+
+ 238   2              {
+ 239   3                  cnth = cntl = 0;
+ 240   3                rtk_stat_port_get(portId, STAT_IfInUcastPkts, &cnth, &cntl);
+ 241   3                  _counter_add(high, low, cnth, cntl);
+ 242   3      
+ 243   3                  cnth3 = cntl3 = 0;
+ 244   3                  rtk_stat_port_get(portId, STAT_IfOutMulticastPkts,  &cnth3, &cntl3);
+ 245   3      
+ 246   3                  cnth = cntl = 0;
+ 247   3                rtk_stat_port_get(portId, STAT_EtherStatsMulticastPkts, &cnth, &cntl);
+ 248   3                  _counter_add(high, low, cnth, cntl);
+ 249   3                  
+ 250   3            /*avoid mib counter too big to subtract*/
+ 251   3                  cnth2 = cntl2 = 0;
+ 252   3                  rtk_stat_port_get(portId, STAT_IfOutBroadcastPkts,  &cnth2, &cntl2);
+ 253   3      
+ 254   3                  cnth = cntl = 0;
+ 255   3                rtk_stat_port_get(portId, STAT_EtherStatsBroadcastPkts, &cnth, &cntl);
+ 256   3                  _counter_add(high, low, cnth, cntl);
+ 257   3                  
+ 258   3            /*avoid mib counter too big to subtract*/
+ 259   3                  _counter_sub(high, low, cnth2, cntl2);  
+ 260   3                  _counter_sub(high, low, cnth3, cntl3);  
+ 261   3              }
+ 262   2          }    
+ 263   1      
+ 264   1        return SAL_ERR_SUCCESS;
+ 265   1      }
+ 266          
+ 267          int32 sal_mib_rxBadPkt_get(sal_port_t port, uint32* high, uint32 *low)
+ 268          {
+ 269   1        sal_port_t      portId;
+ 270   1        sal_pPortmask_t portMask;
+ 271   1        uint32 frameCode;
+ 272   1      
+ 273   1          rtk_stat_counter_t cnth;
+ 274   1          rtk_stat_counter_t cntl; 
+ 275   1      
+ 276   1        if ((port > SAL_PORT_ID_CPU - 1)) {
+ 277   2          return SAL_ERR_PORT_RANGE;
+ 278   2        }
+ 279   1          
+ 280   1          *high = 0, *low  = 0;
+ 281   1      
+ 282   1          sal_rate_maxFrameSize_get(&frameCode);
+ 283   1          
+ 284   1        sal_trunk_logicId_toPhysicMask(&portMask, port);
+ 285   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 286   1          {
+ 287   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&portMask, portId))
+ 288   2              {
+ 289   3                  if (SAL_JUMBO_FRAME_16k != frameCode)
+ 290   3                  {
+ 291   4                      cnth = cntl = 0;
+ 292   4                      rtk_stat_port_get(portId, STAT_EtherOversizeStats, &cnth, &cntl);
+ 293   4                    _counter_add(high, low, cnth, cntl);
+ 294   4                }
+ 295   3                  
+ 296   3                cnth = cntl = 0;
+ 297   3                  rtk_stat_port_get(portId, STAT_EtherStatsUnderSizePkts, &cnth, &cntl);
+ 298   3                _counter_add(high, low, cnth, cntl);
+ 299   3                  
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 6   
+
+ 300   3                cnth = cntl = 0;
+ 301   3                  rtk_stat_port_get(portId, STAT_Dot3StatsFCSErrors, &cnth, &cntl);
+ 302   3                _counter_add(high, low, cnth, cntl);
+ 303   3                  
+ 304   3                cnth = cntl = 0;
+ 305   3                  rtk_stat_port_get(portId, STAT_EtherStatsJabbers, &cnth, &cntl);
+ 306   3                _counter_add(high, low, cnth, cntl);
+ 307   3                  
+ 308   3                  cnth = cntl = 0;
+ 309   3                  rtk_stat_port_get(portId, STAT_EtherStatsFragments, &cnth, &cntl);
+ 310   3                _counter_add(high, low, cnth, cntl);
+ 311   3              }
+ 312   2          }    
+ 313   1      
+ 314   1        return SAL_ERR_SUCCESS;
+ 315   1      }
+ 316          
+ 317          int32 sal_mib_txGoodPkt_get(sal_port_t port, uint32* high, uint32 *low)
+ 318          {
+ 319   1        sal_port_t      portId;
+ 320   1        sal_pPortmask_t portMask;
+ 321   1      
+ 322   1          rtk_stat_counter_t cnth;
+ 323   1          rtk_stat_counter_t cntl; 
+ 324   1      
+ 325   1        if ((port > SAL_PORT_ID_CPU - 1)) {
+ 326   2          return SAL_ERR_PORT_RANGE;
+ 327   2        }
+ 328   1          
+ 329   1          *high = 0, *low  = 0;
+ 330   1      
+ 331   1        sal_trunk_logicId_toPhysicMask(&portMask, port);
+ 332   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 333   1          {
+ 334   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&portMask, portId))
+ 335   2              {
+ 336   3                  cnth = cntl = 0;
+ 337   3                  rtk_stat_port_get(portId, STAT_IfOutUcastPkts, &cnth, &cntl);
+ 338   3                _counter_add(high, low, cnth, cntl);
+ 339   3                  
+ 340   3                cnth = cntl = 0;
+ 341   3                  rtk_stat_port_get(portId, STAT_IfOutMulticastPkts, &cnth, &cntl);
+ 342   3                _counter_add(high, low, cnth, cntl);
+ 343   3                  
+ 344   3                cnth = cntl = 0;
+ 345   3                  rtk_stat_port_get(portId, STAT_IfOutBroadcastPkts, &cnth, &cntl);
+ 346   3                _counter_add(high, low, cnth, cntl);
+ 347   3              }
+ 348   2          }    
+ 349   1      
+ 350   1        return SAL_ERR_SUCCESS;
+ 351   1      }
+ 352          
+ 353          int32 sal_mib_txBadPkt_get(sal_port_t port, uint32* high, uint32 *low)
+ 354          {
+ 355   1        sal_port_t      portId;
+ 356   1        sal_pPortmask_t portMask;
+ 357   1      
+ 358   1          rtk_stat_counter_t cnth;
+ 359   1          rtk_stat_counter_t cntl; 
+ 360   1      
+ 361   1        if ((port > SAL_PORT_ID_CPU - 1)) {
+C51 COMPILER V9.60.0.0   SALMIB                                                            11/02/2026 17:57:02 PAGE 7   
+
+ 362   2          return SAL_ERR_PORT_RANGE;
+ 363   2        }
+ 364   1      
+ 365   1          //printf("Please find TxCrcCheckFailCnt Mib API!\n");
+ 366   1          *high = 0, *low  = 0;
+ 367   1      
+ 368   1        sal_trunk_logicId_toPhysicMask(&portMask, port);
+ 369   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId)
+ 370   1          {
+ 371   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&portMask, portId))
+ 372   2              {            
+ 373   3                cnth = cntl = 0;
+ 374   3                  rtk_stat_port_get(portId, STAT_Dot3StatsExcessiveCollisions, &cnth, &cntl);
+ 375   3                _counter_add(high, low, cnth, cntl);
+ 376   3      
+ 377   3                  /*
+ 378   3                cnth = cntl = 0;
+ 379   3                  rtk_stat_port_get(portId, STAT_TXCRCCheckFailCnt, &cnth, &cntl);
+ 380   3                _counter_add(high, low, cnth, cntl);
+ 381   3                */
+ 382   3              }
+ 383   2          }    
+ 384   1      
+ 385   1        return SAL_ERR_SUCCESS;
+ 386   1      }
+ 387          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3505    ----
+   CONSTANT SIZE    =     37    ----
+   XDATA SIZE       =   ----     150
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     37    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

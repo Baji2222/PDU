@@ -1,0 +1,317 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MISC                                             11/02/2026 17:57:21 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_MISC
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_misc.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_misc.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWS
+                    -E INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\
+                    -sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,R
+                    -TK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIB
+                    -LE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_misc.lst) TABS(2) OBJECT(.\objects\rtl836
+                    -7c_asicdrv_misc.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Miscellaneous functions
+  17           *
+  18           */
+  19          
+  20          #include <rtl8367c_asicdrv_misc.h>
+  21          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicMacAddress
+               * Description:
+               *      Set switch MAC address
+               * Input:
+               *      mac     - switch mac
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMacAddress(ether_addr_t mac)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+                  uint8 *accessPtr;
+                  uint32 i;
+              
+                  accessPtr =  (uint8*)&mac;
+              
+                  regData = *accessPtr;
+                  accessPtr ++;
+                  regData = (regData << 8) | *accessPtr;
+                  accessPtr ++;
+                  for(i = 0; i <=2; i++)
+                  {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MISC                                             11/02/2026 17:57:21 PAGE 2   
+
+                      retVal = rtl8367c_setAsicReg(RTL8367C_REG_SWITCH_MAC2 - i, regData);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+              
+                      regData = *accessPtr;
+                      accessPtr ++;
+                      regData = (regData << 8) | *accessPtr;
+                      accessPtr ++;
+                  }
+              
+                  return retVal;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicMacAddress
+               * Description:
+               *      Get switch MAC address
+               * Input:
+               *      pMac    - switch mac
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMacAddress(ether_addr_t *pMac)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+                  uint8 *accessPtr;
+                  uint32 i;
+              
+              
+                  accessPtr = (uint8*)pMac;
+              
+                  for(i = 0; i <= 2; i++)
+                  {
+                      retVal = rtl8367c_getAsicReg(RTL8367C_REG_SWITCH_MAC2 - i, &regData);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+              
+                      *accessPtr = (regData & 0xFF00) >> 8;
+                      accessPtr ++;
+                      *accessPtr = regData & 0xFF;
+                      accessPtr ++;
+                  }
+              
+                  return retVal;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicDebugInfo
+               * Description:
+               *      Get per-port packet forward debugging information
+               * Input:
+               *      port        - Physical port number (0~7)
+               *      pDebugifo   - per-port packet trap/drop/forward reason
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MISC                                             11/02/2026 17:57:21 PAGE 3   
+
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicDebugInfo(uint32 port, uint32 *pDebugifo)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_DEBUG_INFO_REG(port), RTL8367C_DEBUG_INFO_MASK(port), pDebugif
+             -o);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicPortJamMode
+               * Description:
+               *      Set half duplex flow control setting
+               * Input:
+               *      mode  - 0: Back-Pressure 1: DEFER
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortJamMode(uint32 mode)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_CFG_BACKPRESSURE, RTL8367C_LONGTXE_OFFSET,mode);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortJamMode
+               * Description:
+               *      Get half duplex flow control setting
+               * Input:
+               *      pMode   - 0: Back-Pressure 1: DEFER
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortJamMode(uint32* pMode)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_CFG_BACKPRESSURE, RTL8367C_LONGTXE_OFFSET, pMode);
+              }
+              #endif
+ 161          
+ 162          /* Function Name:
+ 163           *      rtl8367c_setAsicMaxLengthCfg
+ 164           * Description:
+ 165           *      Set Max packet length configuration
+ 166           * Input:
+ 167           *      cfgId       - Configuration ID
+ 168           *      maxLength   - Max Length
+ 169           * Output:
+ 170           *      None
+ 171           * Return:
+ 172           *      RT_ERR_OK       - Success
+ 173           *      RT_ERR_SMI      - SMI access error
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MISC                                             11/02/2026 17:57:21 PAGE 4   
+
+ 174           * Note:
+ 175           *      None
+ 176           */
+ 177          ret_t rtl8367c_setAsicMaxLengthCfg(uint32 cfgId, uint32 maxLength)
+ 178          {
+ 179   1          return rtl8367c_setAsicRegBits(RTL8367C_REG_MAX_LEN_RX_TX_CFG0 + cfgId, RTL8367C_MAX_LEN_RX_TX_CFG0_MA
+             -SK, maxLength);
+ 180   1      }
+ 181          
+ 182          /* Function Name:
+ 183           *      rtl8367c_getAsicMaxLengthCfg
+ 184           * Description:
+ 185           *      Get Max packet length configuration
+ 186           * Input:
+ 187           *      cfgId       - Configuration ID
+ 188           *      maxLength   - Max Length
+ 189           * Output:
+ 190           *      None
+ 191           * Return:
+ 192           *      RT_ERR_OK       - Success
+ 193           *      RT_ERR_SMI      - SMI access error
+ 194           * Note:
+ 195           *      None
+ 196           */
+ 197          ret_t rtl8367c_getAsicMaxLengthCfg(uint32 cfgId, uint32 *pMaxLength)
+ 198          {
+ 199   1          return rtl8367c_getAsicRegBits(RTL8367C_REG_MAX_LEN_RX_TX_CFG0 + cfgId, RTL8367C_MAX_LEN_RX_TX_CFG0_MA
+             -SK, pMaxLength);
+ 200   1      }
+ 201          
+ 202          /* Function Name:
+ 203           *      rtl8367c_setAsicMaxLength
+ 204           * Description:
+ 205           *      Set Max packet length
+ 206           * Input:
+ 207           *      port        - port ID
+ 208           *      type        - 0: 10M/100M speed, 1: giga speed
+ 209           *      cfgId       - Configuration ID
+ 210           * Output:
+ 211           *      None
+ 212           * Return:
+ 213           *      RT_ERR_OK       - Success
+ 214           *      RT_ERR_SMI      - SMI access error
+ 215           * Note:
+ 216           *      None
+ 217           */
+ 218          ret_t rtl8367c_setAsicMaxLength(uint32 port, uint32 type, uint32 cfgId)
+ 219          {
+ 220   1          ret_t retVal;
+ 221   1      
+ 222   1          if(port < 8)
+ 223   1          {
+ 224   2              retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MAX_LENGTH_CFG, (type * 8) + port, cfgId);
+ 225   2              if(retVal != RT_ERR_OK)
+ 226   2                  return retVal;
+ 227   2          }
+ 228   1          else
+ 229   1          {
+ 230   2              retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MAX_LENGTH_CFG_EXT, (type * 3) + port - 8, cfgId);
+ 231   2              if(retVal != RT_ERR_OK)
+ 232   2                  return retVal;
+ 233   2          }
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MISC                                             11/02/2026 17:57:21 PAGE 5   
+
+ 234   1      
+ 235   1          return RT_ERR_OK;
+ 236   1      }
+ 237          
+ 238          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicMaxLength
+               * Description:
+               *      Get Max packet length
+               * Input:
+               *      port        - port ID
+               *      type        - 0: 10M/100M speed, 1: giga speed
+               *      cfgId       - Configuration ID
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMaxLength(uint32 port, uint32 type, uint32 *pCfgId)
+              {
+                  ret_t retVal;
+              
+                  if(port < 8)
+                  {
+                      retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MAX_LENGTH_CFG, (type * 8) + port, pCfgId);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                  }
+                  else
+                  {
+                      retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MAX_LENGTH_CFG_EXT, (type * 3) + port - 8, pCfgId);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                  }
+                  return RT_ERR_OK;
+              }
+              #endif
+ 274          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    303    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      25
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,2689 @@
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE PORT
+OBJECT MODULE PLACED IN .\objects\port.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\api\port.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000) I
+                    -NCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\incl
+                    -ude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REPLA
+                    -CE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_LE
+                    -D_MODE) VARBANKING DEBUG PRINT(.\objects\port.lst) TABS(2) OBJECT(.\objects\port.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTK switch high-level API for RTL8367/RTL8367C
+  16           * Feature : Here is a list of all functions and variables in Port module.
+  17           *
+  18           */
+  19          
+  20          #include <rtk_switch.h>
+  21          #include <rtk_error.h>
+  22          #include <port.h>
+  23          #include <string.h>
+  24          
+  25          #include <rtl8367c_asicdrv.h>
+  26          #include <rtl8367c_asicdrv_port.h>
+  27          #include <rtl8367c_asicdrv_misc.h>
+  28          #include <rtl8367c_asicdrv_portIsolation.h>
+  29          
+  30          #define FIBER_INIT_SIZE 1507
+  31          code uint8 Fiber[FIBER_INIT_SIZE] = {
+  32          0x02,0x04,0x41,0xE4,0xF5,0xA8,0xD2,0xAF,
+  33          0x22,0x00,0x00,0x02,0x05,0x2D,0xE4,0x90,
+  34          0x06,0x2A,0xF0,0xFD,0x7C,0x01,0x7F,0x3F,
+  35          0x7E,0x1D,0x12,0x05,0xAF,0x7D,0x40,0x12,
+  36          0x02,0x5F,0xE4,0xFF,0xFE,0xFD,0x80,0x08,
+  37          0x12,0x05,0x9E,0x50,0x0C,0x12,0x05,0x8B,
+  38          0xFC,0x90,0x06,0x24,0x12,0x03,0x76,0x80,
+  39          0xEF,0xE4,0xF5,0xA8,0xD2,0xAF,0x7D,0x1F,
+  40          0xFC,0x7F,0x49,0x7E,0x13,0x12,0x05,0xAF,
+  41          0x12,0x05,0xD6,0x7D,0xD7,0x12,0x02,0x1E,
+  42          0x7D,0x80,0x12,0x01,0xCA,0x7D,0x94,0x7C,
+  43          0xF9,0x12,0x02,0x3B,0x7D,0x81,0x12,0x01,
+  44          0xCA,0x7D,0xA2,0x7C,0x31,0x12,0x02,0x3B,
+  45          0x7D,0x82,0x12,0x01,0xDF,0x7D,0x60,0x7C,
+  46          0x69,0x12,0x02,0x43,0x7D,0x83,0x12,0x01,
+  47          0xDF,0x7D,0x28,0x7C,0x97,0x12,0x02,0x43,
+  48          0x7D,0x84,0x12,0x01,0xF4,0x7D,0x85,0x7C,
+  49          0x9D,0x12,0x02,0x57,0x7D,0x23,0x12,0x01,
+  50          0xF4,0x7D,0x10,0x7C,0xD8,0x12,0x02,0x57,
+  51          0x7D,0x24,0x7C,0x04,0x12,0x02,0x28,0x7D,
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 2   
+
+  52          0x00,0x12,0x02,0x1E,0x7D,0x2F,0x12,0x02,
+  53          0x09,0x7D,0x20,0x7C,0x0F,0x7F,0x02,0x7E,
+  54          0x66,0x12,0x05,0xAF,0x7D,0x01,0x12,0x02,
+  55          0x09,0x7D,0x04,0x7C,0x00,0x7F,0x01,0x7E,
+  56          0x66,0x12,0x05,0xAF,0x7D,0x80,0x7C,0x00,
+  57          0x7F,0x00,0x7E,0x66,0x12,0x05,0xAF,0x7F,
+  58          0x02,0x7E,0x66,0x12,0x02,0x4B,0x44,0x02,
+  59          0xFF,0x90,0x06,0x28,0xEE,0xF0,0xA3,0xEF,
+  60          0xF0,0x44,0x04,0xFF,0x90,0x06,0x28,0xEE,
+  61          0xF0,0xFC,0xA3,0xEF,0xF0,0xFD,0x7F,0x02,
+  62          0x7E,0x66,0x12,0x05,0xAF,0x7D,0x04,0x7C,
+  63          0x00,0x12,0x02,0x28,0x7D,0xB9,0x7C,0x15,
+  64          0x7F,0xEB,0x7E,0x13,0x12,0x05,0xAF,0x7D,
+  65          0x07,0x7C,0x00,0x7F,0xE7,0x7E,0x13,0x12,
+  66          0x05,0xAF,0x7D,0x40,0x7C,0x11,0x7F,0x00,
+  67          0x7E,0x62,0x12,0x05,0xAF,0x12,0x03,0x82,
+  68          0x7D,0x41,0x12,0x02,0x5F,0xE4,0xFF,0xFE,
+  69          0xFD,0x80,0x08,0x12,0x05,0x9E,0x50,0x0C,
+  70          0x12,0x05,0x8B,0xFC,0x90,0x06,0x24,0x12,
+  71          0x03,0x76,0x80,0xEF,0xC2,0x00,0xC2,0x01,
+  72          0xD2,0xA9,0xD2,0x8C,0x7F,0x01,0x7E,0x62,
+  73          0x12,0x02,0x4B,0x30,0xE2,0x05,0xE4,0xA3,
+  74          0xF0,0x80,0xF1,0x90,0x06,0x2A,0xE0,0x70,
+  75          0x12,0x12,0x01,0x89,0x90,0x06,0x2A,0x74,
+  76          0x01,0xF0,0xE4,0x90,0x06,0x2D,0xF0,0xA3,
+  77          0xF0,0x80,0xD9,0xC3,0x90,0x06,0x2E,0xE0,
+  78          0x94,0x64,0x90,0x06,0x2D,0xE0,0x94,0x00,
+  79          0x40,0xCA,0xE4,0xF0,0xA3,0xF0,0x12,0x01,
+  80          0x89,0x90,0x06,0x2A,0x74,0x01,0xF0,0x80,
+  81          0xBB,0x7D,0x04,0xFC,0x7F,0x02,0x7E,0x66,
+  82          0x12,0x05,0xAF,0x7D,0x00,0x7C,0x04,0x7F,
+  83          0x01,0x7E,0x66,0x12,0x05,0xAF,0x7D,0xC0,
+  84          0x7C,0x00,0x7F,0x00,0x7E,0x66,0x12,0x05,
+  85          0xAF,0xE4,0xFD,0xFC,0x7F,0x02,0x7E,0x66,
+  86          0x12,0x05,0xAF,0x7D,0x00,0x7C,0x04,0x7F,
+  87          0x01,0x7E,0x66,0x12,0x05,0xAF,0x7D,0xC0,
+  88          0x7C,0x00,0x7F,0x00,0x7E,0x66,0x12,0x05,
+  89          0xAF,0x22,0x7C,0x04,0x7F,0x01,0x7E,0x66,
+  90          0x12,0x05,0xAF,0x7D,0xC0,0x7C,0x00,0x7F,
+  91          0x00,0x7E,0x66,0x12,0x05,0xAF,0x22,0x7C,
+  92          0x04,0x7F,0x01,0x7E,0x66,0x12,0x05,0xAF,
+  93          0x7D,0xC0,0x7C,0x00,0x7F,0x00,0x7E,0x66,
+  94          0x12,0x05,0xAF,0x22,0x7C,0x04,0x7F,0x01,
+  95          0x7E,0x66,0x12,0x05,0xAF,0x7D,0xC0,0x7C,
+  96          0x00,0x7F,0x00,0x7E,0x66,0x12,0x05,0xAF,
+  97          0x22,0x7C,0x00,0x7F,0x01,0x7E,0x66,0x12,
+  98          0x05,0xAF,0x7D,0xC0,0x7C,0x00,0x7F,0x00,
+  99          0x7E,0x66,0x12,0x05,0xAF,0x22,0x7C,0x04,
+ 100          0x7F,0x02,0x7E,0x66,0x12,0x05,0xAF,0x22,
+ 101          0x7F,0x01,0x7E,0x66,0x12,0x05,0xAF,0x7D,
+ 102          0xC0,0x7C,0x00,0x7F,0x00,0x7E,0x66,0x12,
+ 103          0x05,0xAF,0x22,0x7F,0x02,0x7E,0x66,0x12,
+ 104          0x05,0xAF,0x22,0x7F,0x02,0x7E,0x66,0x12,
+ 105          0x05,0xAF,0x22,0x12,0x05,0x67,0x90,0x06,
+ 106          0x28,0xEE,0xF0,0xA3,0xEF,0xF0,0x22,0x7F,
+ 107          0x02,0x7E,0x66,0x12,0x05,0xAF,0x22,0x7C,
+ 108          0x00,0x7F,0x36,0x7E,0x13,0x12,0x05,0xAF,
+ 109          0x22,0xC5,0xF0,0xF8,0xA3,0xE0,0x28,0xF0,
+ 110          0xC5,0xF0,0xF8,0xE5,0x82,0x15,0x82,0x70,
+ 111          0x02,0x15,0x83,0xE0,0x38,0xF0,0x22,0x75,
+ 112          0xF0,0x08,0x75,0x82,0x00,0xEF,0x2F,0xFF,
+ 113          0xEE,0x33,0xFE,0xCD,0x33,0xCD,0xCC,0x33,
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 3   
+
+ 114          0xCC,0xC5,0x82,0x33,0xC5,0x82,0x9B,0xED,
+ 115          0x9A,0xEC,0x99,0xE5,0x82,0x98,0x40,0x0C,
+ 116          0xF5,0x82,0xEE,0x9B,0xFE,0xED,0x9A,0xFD,
+ 117          0xEC,0x99,0xFC,0x0F,0xD5,0xF0,0xD6,0xE4,
+ 118          0xCE,0xFB,0xE4,0xCD,0xFA,0xE4,0xCC,0xF9,
+ 119          0xA8,0x82,0x22,0xB8,0x00,0xC1,0xB9,0x00,
+ 120          0x59,0xBA,0x00,0x2D,0xEC,0x8B,0xF0,0x84,
+ 121          0xCF,0xCE,0xCD,0xFC,0xE5,0xF0,0xCB,0xF9,
+ 122          0x78,0x18,0xEF,0x2F,0xFF,0xEE,0x33,0xFE,
+ 123          0xED,0x33,0xFD,0xEC,0x33,0xFC,0xEB,0x33,
+ 124          0xFB,0x10,0xD7,0x03,0x99,0x40,0x04,0xEB,
+ 125          0x99,0xFB,0x0F,0xD8,0xE5,0xE4,0xF9,0xFA,
+ 126          0x22,0x78,0x18,0xEF,0x2F,0xFF,0xEE,0x33,
+ 127          0xFE,0xED,0x33,0xFD,0xEC,0x33,0xFC,0xC9,
+ 128          0x33,0xC9,0x10,0xD7,0x05,0x9B,0xE9,0x9A,
+ 129          0x40,0x07,0xEC,0x9B,0xFC,0xE9,0x9A,0xF9,
+ 130          0x0F,0xD8,0xE0,0xE4,0xC9,0xFA,0xE4,0xCC,
+ 131          0xFB,0x22,0x75,0xF0,0x10,0xEF,0x2F,0xFF,
+ 132          0xEE,0x33,0xFE,0xED,0x33,0xFD,0xCC,0x33,
+ 133          0xCC,0xC8,0x33,0xC8,0x10,0xD7,0x07,0x9B,
+ 134          0xEC,0x9A,0xE8,0x99,0x40,0x0A,0xED,0x9B,
+ 135          0xFD,0xEC,0x9A,0xFC,0xE8,0x99,0xF8,0x0F,
+ 136          0xD5,0xF0,0xDA,0xE4,0xCD,0xFB,0xE4,0xCC,
+ 137          0xFA,0xE4,0xC8,0xF9,0x22,0xEB,0x9F,0xF5,
+ 138          0xF0,0xEA,0x9E,0x42,0xF0,0xE9,0x9D,0x42,
+ 139          0xF0,0xE8,0x9C,0x45,0xF0,0x22,0xE0,0xFC,
+ 140          0xA3,0xE0,0xFD,0xA3,0xE0,0xFE,0xA3,0xE0,
+ 141          0xFF,0x22,0xE0,0xF8,0xA3,0xE0,0xF9,0xA3,
+ 142          0xE0,0xFA,0xA3,0xE0,0xFB,0x22,0xEC,0xF0,
+ 143          0xA3,0xED,0xF0,0xA3,0xEE,0xF0,0xA3,0xEF,
+ 144          0xF0,0x22,0x12,0x03,0xF8,0x12,0x04,0x1A,
+ 145          0x44,0x40,0x12,0x04,0x0F,0x7D,0x03,0x7C,
+ 146          0x00,0x12,0x04,0x23,0x12,0x05,0xAF,0x12,
+ 147          0x03,0xF8,0x12,0x04,0x1A,0x54,0xBF,0x12,
+ 148          0x04,0x0F,0x7D,0x03,0x7C,0x00,0x12,0x03,
+ 149          0xD0,0x7F,0x02,0x7E,0x66,0x12,0x05,0x67,
+ 150          0xEF,0x54,0xFD,0x54,0xFE,0x12,0x04,0x33,
+ 151          0x12,0x03,0xD0,0x7F,0x02,0x7E,0x66,0x12,
+ 152          0x05,0x67,0xEF,0x44,0x02,0x44,0x01,0x12,
+ 153          0x04,0x33,0x12,0x04,0x23,0x02,0x05,0xAF,
+ 154          0x7F,0x01,0x7E,0x66,0x12,0x05,0xAF,0x7D,
+ 155          0xC0,0x7C,0x00,0x7F,0x00,0x7E,0x66,0x12,
+ 156          0x05,0xAF,0xE4,0xFD,0xFC,0x7F,0x01,0x7E,
+ 157          0x66,0x12,0x05,0xAF,0x7D,0x80,0x7C,0x00,
+ 158          0x7F,0x00,0x7E,0x66,0x12,0x05,0xAF,0x22,
+ 159          0x7D,0x03,0x7C,0x00,0x7F,0x01,0x7E,0x66,
+ 160          0x12,0x05,0xAF,0x7D,0x80,0x7C,0x00,0x7F,
+ 161          0x00,0x7E,0x66,0x12,0x05,0xAF,0x22,0xFD,
+ 162          0xAC,0x06,0x7F,0x02,0x7E,0x66,0x12,0x05,
+ 163          0xAF,0x22,0x7F,0x02,0x7E,0x66,0x12,0x05,
+ 164          0x67,0xEF,0x22,0x7F,0x01,0x7E,0x66,0x12,
+ 165          0x05,0xAF,0x7D,0xC0,0x7C,0x00,0x7F,0x00,
+ 166          0x7E,0x66,0x22,0xFD,0xAC,0x06,0x7F,0x02,
+ 167          0x7E,0x66,0x12,0x05,0xAF,0xE4,0xFD,0xFC,
+ 168          0x22,0x78,0x7F,0xE4,0xF6,0xD8,0xFD,0x75,
+ 169          0x81,0x3C,0x02,0x04,0x88,0x02,0x00,0x0E,
+ 170          0xE4,0x93,0xA3,0xF8,0xE4,0x93,0xA3,0x40,
+ 171          0x03,0xF6,0x80,0x01,0xF2,0x08,0xDF,0xF4,
+ 172          0x80,0x29,0xE4,0x93,0xA3,0xF8,0x54,0x07,
+ 173          0x24,0x0C,0xC8,0xC3,0x33,0xC4,0x54,0x0F,
+ 174          0x44,0x20,0xC8,0x83,0x40,0x04,0xF4,0x56,
+ 175          0x80,0x01,0x46,0xF6,0xDF,0xE4,0x80,0x0B,
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 4   
+
+ 176          0x01,0x02,0x04,0x08,0x10,0x20,0x40,0x80,
+ 177          0x90,0x05,0xCB,0xE4,0x7E,0x01,0x93,0x60,
+ 178          0xBC,0xA3,0xFF,0x54,0x3F,0x30,0xE5,0x09,
+ 179          0x54,0x1F,0xFE,0xE4,0x93,0xA3,0x60,0x01,
+ 180          0x0E,0xCF,0x54,0xC0,0x25,0xE0,0x60,0xA8,
+ 181          0x40,0xB8,0xE4,0x93,0xA3,0xFA,0xE4,0x93,
+ 182          0xA3,0xF8,0xE4,0x93,0xA3,0xC8,0xC5,0x82,
+ 183          0xC8,0xCA,0xC5,0x83,0xCA,0xF0,0xA3,0xC8,
+ 184          0xC5,0x82,0xC8,0xCA,0xC5,0x83,0xCA,0xDF,
+ 185          0xE9,0xDE,0xE7,0x80,0xBE,0x75,0x0F,0x80,
+ 186          0x75,0x0E,0x7E,0x75,0x0D,0xAA,0x75,0x0C,
+ 187          0x83,0xE4,0xF5,0x10,0x75,0x0B,0xA0,0x75,
+ 188          0x0A,0xAC,0x75,0x09,0xB9,0x75,0x08,0x03,
+ 189          0x75,0x89,0x11,0x7B,0x60,0x7A,0x09,0xF9,
+ 190          0xF8,0xAF,0x0B,0xAE,0x0A,0xAD,0x09,0xAC,
+ 191          0x08,0x12,0x02,0xBB,0xAD,0x07,0xAC,0x06,
+ 192          0xC3,0xE4,0x9D,0xFD,0xE4,0x9C,0xFC,0x78,
+ 193          0x17,0xF6,0xAF,0x05,0xEF,0x08,0xF6,0x18,
+ 194          0xE6,0xF5,0x8C,0x08,0xE6,0xF5,0x8A,0x74,
+ 195          0x0D,0x2D,0xFD,0xE4,0x3C,0x18,0xF6,0xAF,
+ 196          0x05,0xEF,0x08,0xF6,0x75,0x88,0x10,0x53,
+ 197          0x8E,0xC7,0xD2,0xA9,0x22,0xC0,0xE0,0xC0,
+ 198          0xF0,0xC0,0x83,0xC0,0x82,0xC0,0xD0,0x75,
+ 199          0xD0,0x00,0xC0,0x00,0x78,0x17,0xE6,0xF5,
+ 200          0x8C,0x78,0x18,0xE6,0xF5,0x8A,0x90,0x06,
+ 201          0x2B,0xE4,0x75,0xF0,0x01,0x12,0x02,0x69,
+ 202          0x90,0x06,0x2D,0xE4,0x75,0xF0,0x01,0x12,
+ 203          0x02,0x69,0xD0,0x00,0xD0,0xD0,0xD0,0x82,
+ 204          0xD0,0x83,0xD0,0xF0,0xD0,0xE0,0x32,0xC2,
+ 205          0xAF,0xAD,0x07,0xAC,0x06,0x8C,0xA2,0x8D,
+ 206          0xA3,0x75,0xA0,0x01,0x00,0x00,0x00,0x00,
+ 207          0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xAE,
+ 208          0xA1,0xBE,0x00,0xF0,0xAE,0xA6,0xAF,0xA7,
+ 209          0xD2,0xAF,0x22,0x90,0x06,0x24,0x12,0x03,
+ 210          0x5E,0xEF,0x24,0x01,0xFF,0xE4,0x3E,0xFE,
+ 211          0xE4,0x3D,0xFD,0xE4,0x3C,0x22,0xE4,0x7F,
+ 212          0x20,0x7E,0x4E,0xFD,0xFC,0x90,0x06,0x24,
+ 213          0x12,0x03,0x6A,0xC3,0x02,0x03,0x4D,0xC2,
+ 214          0xAF,0xAB,0x07,0xAA,0x06,0x8A,0xA2,0x8B,
+ 215          0xA3,0x8C,0xA4,0x8D,0xA5,0x75,0xA0,0x03,
+ 216          0x00,0x00,0x00,0xAA,0xA1,0xBA,0x00,0xF8,
+ 217          0xD2,0xAF,0x22,0x42,0x06,0x2D,0x00,0x00,
+ 218          0x42,0x06,0x2B,0x00,0x00,0x00,0x12,0x05,
+ 219          0xDF,0x12,0x04,0xCD,0x02,0x00,0x03,0xE4,
+ 220          0xF5,0x8E,0x22};
+ 221          
+ 222          
+ 223          /* Function Name:
+ 224           *      _rtk_port_FiberModeAbility_set
+ 225           * Description:
+ 226           *      Set ethernet PHY auto-negotiation desired ability.
+ 227           * Input:
+ 228           *      port        - port id.
+ 229           *      pAbility    - Ability structure
+ 230           * Output:
+ 231           *      None
+ 232           * Return:
+ 233           *      RT_ERR_OK               - OK
+ 234           *      RT_ERR_FAILED           - Failed
+ 235           *      RT_ERR_SMI              - SMI access error
+ 236           *      RT_ERR_PORT_ID          - Invalid port number.
+ 237           *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 5   
+
+ 238           *      RT_ERR_INPUT            - Invalid input parameters.
+ 239           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+ 240           * Note:
+ 241           *      If Full_1000 bit is set to 1, the AutoNegotiation will be automatic set to 1. While both AutoNegot
+             -iation and Full_1000 are set to 0, the PHY speed and duplex selection will
+ 242           *      be set as following 100F > 100H > 10F > 10H priority sequence.
+ 243           */
+ 244          static rtk_api_ret_t _rtk_port_FiberModeAbility_set(rtk_port_t port, rtk_port_phy_ability_t *pAbility)
+ 245          {
+ 246   1          rtk_api_ret_t   retVal;
+ 247   1          uint32      regData;
+ 248   1      
+ 249   1          /* Check Combo port or not */
+ 250   1          RTK_CHK_PORT_IS_COMBO(port);
+ 251   1      
+ 252   1          /* Flow Control */
+ 253   1          if ((retVal = rtl8367c_getAsicReg(RTL8367C_REG_FIB0_CFG04, &regData)) != RT_ERR_OK)
+ 254   1              return retVal;
+ 255   1      
+ 256   1          if (pAbility->AsyFC == 1)
+ 257   1              regData |= (0x0001 << 8);
+ 258   1          else
+ 259   1              regData &= ~(0x0001 << 8);
+ 260   1      
+ 261   1          if (pAbility->FC == 1)
+ 262   1              regData |= (0x0001 << 7);
+ 263   1          else
+ 264   1              regData &= ~(0x0001 << 7);
+ 265   1      
+ 266   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_FIB0_CFG04, regData)) != RT_ERR_OK)
+ 267   1              return retVal;
+ 268   1      
+ 269   1          /* Speed ability */
+ 270   1          if( (pAbility->Full_1000 == 1) && (pAbility->Full_100 == 1) && (pAbility->AutoNegotiation == 1) )
+ 271   1          {
+ 272   2              if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_FRC_MODE_OFFSET, 0)) !
+             -= RT_ERR_OK)
+ 273   2                  return retVal;
+ 274   2      
+ 275   2              if ((retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_MODE_MASK, 7)) != RT_
+             -ERR_OK)
+ 276   2                  return retVal;
+ 277   2      
+ 278   2              if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_FIB0_CFG00, 0x1140)) != RT_ERR_OK)
+ 279   2                  return retVal;
+ 280   2          }
+ 281   1          else if(pAbility->Full_1000 == 1)
+ 282   1          {
+ 283   2              if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_FRC_MODE_OFFSET, 1)) !
+             -= RT_ERR_OK)
+ 284   2                  return retVal;
+ 285   2      
+ 286   2              if ((retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_MODE_MASK, 4)) != RT_
+             -ERR_OK)
+ 287   2                  return retVal;
+ 288   2      
+ 289   2              if(pAbility->AutoNegotiation == 1)
+ 290   2              {
+ 291   3                  if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_FIB0_CFG00, 0x1140)) != RT_ERR_OK)
+ 292   3                      return retVal;
+ 293   3              }
+ 294   2              else
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 6   
+
+ 295   2              {
+ 296   3                  if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_FIB0_CFG00, 0x0140)) != RT_ERR_OK)
+ 297   3                      return retVal;
+ 298   3              }
+ 299   2          }
+ 300   1          else if(pAbility->Full_100 == 1)
+ 301   1          {
+ 302   2              if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_FRC_MODE_OFFSET, 1)) !
+             -= RT_ERR_OK)
+ 303   2                  return retVal;
+ 304   2      
+ 305   2              if ((retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_MODE_MASK, 5)) != RT_
+             -ERR_OK)
+ 306   2                  return retVal;
+ 307   2      
+ 308   2              if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_FIB0_CFG00, 0x2100)) != RT_ERR_OK)
+ 309   2                  return retVal;
+ 310   2          }
+ 311   1      
+ 312   1          /* Digital software reset */
+ 313   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, 0x0003)) != RT_ERR_OK)
+ 314   1              return retVal;
+ 315   1      
+ 316   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x0080)) != RT_ERR_OK)
+ 317   1              return retVal;
+ 318   1      
+ 319   1          if ((retVal = rtl8367c_getAsicReg(RTL8367C_REG_SDS_INDACS_DATA, &regData)) != RT_ERR_OK)
+ 320   1              return retVal;
+ 321   1      
+ 322   1          regData |= (0x0001 << 6);
+ 323   1      
+ 324   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_DATA, regData)) != RT_ERR_OK)
+ 325   1              return retVal;
+ 326   1      
+ 327   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, 0x0003)) != RT_ERR_OK)
+ 328   1              return retVal;
+ 329   1      
+ 330   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x00C0)) != RT_ERR_OK)
+ 331   1              return retVal;
+ 332   1      
+ 333   1          regData &= ~(0x0001 << 6);
+ 334   1      
+ 335   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_DATA, regData)) != RT_ERR_OK)
+ 336   1              return retVal;
+ 337   1      
+ 338   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, 0x0003)) != RT_ERR_OK)
+ 339   1              return retVal;
+ 340   1      
+ 341   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x00C0)) != RT_ERR_OK)
+ 342   1              return retVal;
+ 343   1      
+ 344   1          /* CDR reset */
+ 345   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_DATA, 0x1401))!=RT_ERR_OK)
+ 346   1              return retVal;
+ 347   1      
+ 348   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, 0x0000))!=RT_ERR_OK)
+ 349   1              return retVal;
+ 350   1      
+ 351   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x00C0))!=RT_ERR_OK)
+ 352   1              return retVal;
+ 353   1      
+ 354   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_DATA, 0x1403))!=RT_ERR_OK)
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 7   
+
+ 355   1              return retVal;
+ 356   1      
+ 357   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, 0x0000))!=RT_ERR_OK)
+ 358   1              return retVal;
+ 359   1      
+ 360   1          if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x00C0))!=RT_ERR_OK)
+ 361   1              return retVal;
+ 362   1      
+ 363   1          return RT_ERR_OK;
+ 364   1      }
+ 365          #if 0
+              
+              /* Function Name:
+               *      _rtk_port_FiberModeAbility_get
+               * Description:
+               *      Set ethernet PHY auto-negotiation desired ability.
+               * Input:
+               *      port        - port id.
+               *      pAbility    - Ability structure
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+               * Note:
+               *      If Full_1000 bit is set to 1, the AutoNegotiation will be automatic set to 1. While both AutoNegot
+             -iation and Full_1000 are set to 0, the PHY speed and duplex selection will
+               *      be set as following 100F > 100H > 10F > 10H priority sequence.
+               */
+              static rtk_api_ret_t _rtk_port_FiberModeAbility_get(rtk_port_t port, rtk_port_phy_ability_t *pAbility)
+              {
+                  rtk_api_ret_t   retVal;
+                  uint32      data1, regData;
+              
+                  /* Check Combo port or not */
+                  RTK_CHK_PORT_IS_COMBO(port);
+              
+                  memset(pAbility, 0x00, sizeof(rtk_port_phy_ability_t));
+              
+                  /* Flow Control */
+                  if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_FRC_REG4_OFFSET, 1)) != RT
+             -_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_FRC_REG4_FIB100_OFFSET, 0)
+             -) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_ADR, 0x0044)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_setAsicReg(RTL8367C_REG_SDS_INDACS_CMD, 0x0080)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_getAsicReg(RTL8367C_REG_SDS_INDACS_DATA, &regData)) != RT_ERR_OK)
+                      return retVal;
+              
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 8   
+
+                  if(regData & (0x0001 << 8))
+                      pAbility->AsyFC = 1;
+              
+                  if(regData & (0x0001 << 7))
+                      pAbility->FC = 1;
+              
+                  /* Speed ability */
+                  if ((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_FRC_MODE_OFFSET, &data1)) 
+             -!= RT_ERR_OK)
+                          return retVal;
+              
+                  if(data1 == 0)
+                  {
+                      pAbility->AutoNegotiation = 1;
+                      pAbility->Full_1000 = 1;
+                      pAbility->Full_100 = 1;
+                  }
+                  else
+                  {
+                      if ((retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_FIBER_CFG_1, RTL8367C_SDS_MODE_MASK, &data1)) !
+             -= RT_ERR_OK)
+                          return retVal;
+              
+                      if(data1 == 4)
+                      {
+                          pAbility->Full_1000 = 1;
+              
+                          if ((retVal = rtl8367c_getAsicReg(RTL8367C_REG_FIB0_CFG00, &data1)) != RT_ERR_OK)
+                              return retVal;
+              
+                          if(data1 & 0x1000)
+                              pAbility->AutoNegotiation = 1;
+                          else
+                              pAbility->AutoNegotiation = 0;
+                      }
+                      else if(data1 == 5)
+                          pAbility->Full_100 = 1;
+                      else
+                          return RT_ERR_FAILED;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 456          /* Function Name:
+ 457           *      rtk_port_phyAutoNegoAbility_set
+ 458           * Description:
+ 459           *      Set ethernet PHY auto-negotiation desired ability.
+ 460           * Input:
+ 461           *      port        - port id.
+ 462           *      pAbility    - Ability structure
+ 463           * Output:
+ 464           *      None
+ 465           * Return:
+ 466           *      RT_ERR_OK               - OK
+ 467           *      RT_ERR_FAILED           - Failed
+ 468           *      RT_ERR_SMI              - SMI access error
+ 469           *      RT_ERR_PORT_ID          - Invalid port number.
+ 470           *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+ 471           *      RT_ERR_INPUT            - Invalid input parameters.
+ 472           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+ 473           * Note:
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 9   
+
+ 474           *      If Full_1000 bit is set to 1, the AutoNegotiation will be automatic set to 1. While both AutoNegot
+             -iation and Full_1000 are set to 0, the PHY speed and duplex selection will
+ 475           *      be set as following 100F > 100H > 10F > 10H priority sequence.
+ 476           */
+ 477          rtk_api_ret_t rtk_port_phyAutoNegoAbility_set(rtk_port_t port, rtk_port_phy_ability_t *pAbility)
+ 478          {
+ 479   1          rtk_api_ret_t       retVal;
+ 480   1          uint32          phyData;
+ 481   1          uint32          phyEnMsk0;
+ 482   1          uint32          phyEnMsk4;
+ 483   1          uint32          phyEnMsk9;
+ 484   1          rtk_port_media_t    media_type;
+ 485   1      
+ 486   1          /* Check initialization state */
+ 487   1          RTK_CHK_INIT_STATE();
+ 488   1      
+ 489   1          /* Check Port Valid */
+ 490   1          RTK_CHK_PORT_IS_UTP(port);
+ 491   1      
+ 492   1          if(NULL == pAbility)
+ 493   1              return RT_ERR_NULL_POINTER;
+ 494   1      
+ 495   1          if (pAbility->Half_10 >= RTK_ENABLE_END || pAbility->Full_10 >= RTK_ENABLE_END ||
+ 496   1             pAbility->Half_100 >= RTK_ENABLE_END || pAbility->Full_100 >= RTK_ENABLE_END ||
+ 497   1             pAbility->Full_1000 >= RTK_ENABLE_END || pAbility->AutoNegotiation >= RTK_ENABLE_END ||
+ 498   1             pAbility->AsyFC >= RTK_ENABLE_END || pAbility->FC >= RTK_ENABLE_END)
+ 499   1              return RT_ERR_INPUT;
+ 500   1      
+ 501   1          if (rtk_switch_isComboPort(port) == RT_ERR_OK)
+ 502   1          {
+ 503   2              if ((retVal = rtk_port_phyComboPortMedia_get(port, &media_type)) != RT_ERR_OK)
+ 504   2                  return retVal;
+ 505   2      
+ 506   2              if(media_type == PORT_MEDIA_FIBER)
+ 507   2              {
+ 508   3                  return _rtk_port_FiberModeAbility_set(port, pAbility);
+ 509   3              }
+ 510   2          }
+ 511   1      
+ 512   1          /*for PHY auto mode setup*/
+ 513   1          pAbility->AutoNegotiation = 1;
+ 514   1      
+ 515   1          phyEnMsk0 = 0;
+ 516   1          phyEnMsk4 = 0;
+ 517   1          phyEnMsk9 = 0;
+ 518   1      
+ 519   1          if (1 == pAbility->Half_10)
+ 520   1          {
+ 521   2              /*10BASE-TX half duplex capable in reg 4.5*/
+ 522   2              phyEnMsk4 = phyEnMsk4 | (1 << 5);
+ 523   2      
+ 524   2              /*Speed selection [1:0] */
+ 525   2              /* 11=Reserved*/
+ 526   2              /* 10= 1000Mpbs*/
+ 527   2              /* 01= 100Mpbs*/
+ 528   2              /* 00= 10Mpbs*/
+ 529   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 530   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 13));
+ 531   2          }
+ 532   1      
+ 533   1          if (1 == pAbility->Full_10)
+ 534   1          {
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 10  
+
+ 535   2              /*10BASE-TX full duplex capable in reg 4.6*/
+ 536   2              phyEnMsk4 = phyEnMsk4 | (1 << 6);
+ 537   2              /*Speed selection [1:0] */
+ 538   2              /* 11=Reserved*/
+ 539   2              /* 10= 1000Mpbs*/
+ 540   2              /* 01= 100Mpbs*/
+ 541   2              /* 00= 10Mpbs*/
+ 542   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 543   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 13));
+ 544   2      
+ 545   2              /*Full duplex mode in reg 0.8*/
+ 546   2              phyEnMsk0 = phyEnMsk0 | (1 << 8);
+ 547   2      
+ 548   2          }
+ 549   1      
+ 550   1          if (1 == pAbility->Half_100)
+ 551   1          {
+ 552   2              /*100BASE-TX half duplex capable in reg 4.7*/
+ 553   2              phyEnMsk4 = phyEnMsk4 | (1 << 7);
+ 554   2              /*Speed selection [1:0] */
+ 555   2              /* 11=Reserved*/
+ 556   2              /* 10= 1000Mpbs*/
+ 557   2              /* 01= 100Mpbs*/
+ 558   2              /* 00= 10Mpbs*/
+ 559   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 560   2              phyEnMsk0 = phyEnMsk0 | (1 << 13);
+ 561   2          }
+ 562   1      
+ 563   1      
+ 564   1          if (1 == pAbility->Full_100)
+ 565   1          {
+ 566   2              /*100BASE-TX full duplex capable in reg 4.8*/
+ 567   2              phyEnMsk4 = phyEnMsk4 | (1 << 8);
+ 568   2              /*Speed selection [1:0] */
+ 569   2              /* 11=Reserved*/
+ 570   2              /* 10= 1000Mpbs*/
+ 571   2              /* 01= 100Mpbs*/
+ 572   2              /* 00= 10Mpbs*/
+ 573   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 574   2              phyEnMsk0 = phyEnMsk0 | (1 << 13);
+ 575   2              /*Full duplex mode in reg 0.8*/
+ 576   2              phyEnMsk0 = phyEnMsk0 | (1 << 8);
+ 577   2          }
+ 578   1      
+ 579   1      
+ 580   1          if (1 == pAbility->Full_1000)
+ 581   1          {
+ 582   2              /*1000 BASE-T FULL duplex capable setting in reg 9.9*/
+ 583   2              phyEnMsk9 = phyEnMsk9 | (1 << 9);
+ 584   2      
+ 585   2              /*Speed selection [1:0] */
+ 586   2              /* 11=Reserved*/
+ 587   2              /* 10= 1000Mpbs*/
+ 588   2              /* 01= 100Mpbs*/
+ 589   2              /* 00= 10Mpbs*/
+ 590   2              phyEnMsk0 = phyEnMsk0 | (1 << 6);
+ 591   2              phyEnMsk0 = phyEnMsk0 & (~(1 << 13));
+ 592   2      
+ 593   2      
+ 594   2              /*Auto-Negotiation setting in reg 0.12*/
+ 595   2              phyEnMsk0 = phyEnMsk0 | (1 << 12);
+ 596   2      
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 11  
+
+ 597   2           }
+ 598   1      
+ 599   1          if (1 == pAbility->AutoNegotiation)
+ 600   1          {
+ 601   2              /*Auto-Negotiation setting in reg 0.12*/
+ 602   2              phyEnMsk0 = phyEnMsk0 | (1 << 12);
+ 603   2          }
+ 604   1      
+ 605   1          if (1 == pAbility->AsyFC)
+ 606   1          {
+ 607   2              /*Asymetric flow control in reg 4.11*/
+ 608   2              phyEnMsk4 = phyEnMsk4 | (1 << 11);
+ 609   2          }
+ 610   1          if (1 == pAbility->FC)
+ 611   1          {
+ 612   2              /*Flow control in reg 4.10*/
+ 613   2              phyEnMsk4 = phyEnMsk4 | (1 << 10);
+ 614   2          }
+ 615   1      
+ 616   1          /*1000 BASE-T control register setting*/
+ 617   1          if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, &phyDa
+             -ta)) != RT_ERR_OK)
+ 618   1              return retVal;
+ 619   1      
+ 620   1          phyData = (phyData & (~0x0200)) | phyEnMsk9 ;
+ 621   1      
+ 622   1          if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, phyDat
+             -a)) != RT_ERR_OK)
+ 623   1              return retVal;
+ 624   1      
+ 625   1          /*Auto-Negotiation control register setting*/
+ 626   1          if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_AN_ADVERTISEMENT_REG, &phyData
+             -)) != RT_ERR_OK)
+ 627   1              return retVal;
+ 628   1      
+ 629   1          phyData = (phyData & (~0x0DE0)) | phyEnMsk4;
+ 630   1          if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_AN_ADVERTISEMENT_REG, phyData)
+             -) != RT_ERR_OK)
+ 631   1              return retVal;
+ 632   1      
+ 633   1          /*Control register setting and restart auto*/
+ 634   1          if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, &phyData)) != RT_
+             -ERR_OK)
+ 635   1              return retVal;
+ 636   1      
+ 637   1          phyData = (phyData & (~0x3140)) | phyEnMsk0;
+ 638   1          /*If have auto-negotiation capable, then restart auto negotiation*/
+ 639   1          if (1 == pAbility->AutoNegotiation)
+ 640   1          {
+ 641   2              phyData = phyData | (1 << 9);
+ 642   2          }
+ 643   1      
+ 644   1          if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, phyData)) != RT_E
+             -RR_OK)
+ 645   1              return retVal;
+ 646   1      
+ 647   1          return RT_ERR_OK;
+ 648   1      }
+ 649          
+ 650          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_port_phyAutoNegoAbility_get
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 12  
+
+               * Description:
+               *      Get PHY ability through PHY registers.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pAbility - Ability structure
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+               * Note:
+               *      Get the capablity of specified PHY.
+               */
+              rtk_api_ret_t rtk_port_phyAutoNegoAbility_get(rtk_port_t port, rtk_port_phy_ability_t *pAbility)
+              {
+                  rtk_api_ret_t       retVal;
+                  uint32          phyData0;
+                  uint32          phyData4;
+                  uint32          phyData9;
+                  rtk_port_media_t    media_type;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_UTP(port);
+              
+                  if(NULL == pAbility)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (rtk_switch_isComboPort(port) == RT_ERR_OK)
+                  {
+                      if ((retVal = rtk_port_phyComboPortMedia_get(port, &media_type)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if(media_type == PORT_MEDIA_FIBER)
+                      {
+                          return _rtk_port_FiberModeAbility_get(port, pAbility);
+                      }
+                  }
+              
+                  /*Control register setting and restart auto*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, &phyData0)) != RT
+             -_ERR_OK)
+                      return retVal;
+              
+                  /*Auto-Negotiation control register setting*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_AN_ADVERTISEMENT_REG, &phyData
+             -4)) != RT_ERR_OK)
+                      return retVal;
+              
+                  /*1000 BASE-T control register setting*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, &phyDa
+             -ta9)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if (phyData9 & (1 << 9))
+                      pAbility->Full_1000 = 1;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 13  
+
+                  else
+                      pAbility->Full_1000 = 0;
+              
+                  if (phyData4 & (1 << 11))
+                      pAbility->AsyFC = 1;
+                  else
+                      pAbility->AsyFC = 0;
+              
+                  if (phyData4 & (1 << 10))
+                      pAbility->FC = 1;
+                  else
+                      pAbility->FC = 0;
+              
+              
+                  if (phyData4 & (1 << 8))
+                      pAbility->Full_100 = 1;
+                  else
+                      pAbility->Full_100 = 0;
+              
+                  if (phyData4 & (1 << 7))
+                      pAbility->Half_100 = 1;
+                  else
+                      pAbility->Half_100 = 0;
+              
+                  if (phyData4 & (1 << 6))
+                      pAbility->Full_10 = 1;
+                  else
+                      pAbility->Full_10 = 0;
+              
+                  if (phyData4 & (1 << 5))
+                      pAbility->Half_10 = 1;
+                  else
+                      pAbility->Half_10 = 0;
+              
+              
+                  if (phyData0 & (1 << 12))
+                      pAbility->AutoNegotiation = 1;
+                  else
+                      pAbility->AutoNegotiation = 0;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 755          
+ 756          /* Function Name:
+ 757           *      rtk_port_phyForceModeAbility_set
+ 758           * Description:
+ 759           *      Set the port speed/duplex mode/pause/asy_pause in the PHY force mode.
+ 760           * Input:
+ 761           *      port        - port id.
+ 762           *      pAbility    - Ability structure
+ 763           * Output:
+ 764           *      None
+ 765           * Return:
+ 766           *      RT_ERR_OK               - OK
+ 767           *      RT_ERR_FAILED           - Failed
+ 768           *      RT_ERR_SMI              - SMI access error
+ 769           *      RT_ERR_PORT_ID          - Invalid port number.
+ 770           *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+ 771           *      RT_ERR_INPUT            - Invalid input parameters.
+ 772           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+ 773           * Note:
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 14  
+
+ 774           *      While both AutoNegotiation and Full_1000 are set to 0, the PHY speed and duplex selection will
+ 775           *      be set as following 100F > 100H > 10F > 10H priority sequence.
+ 776           *      This API can be used to configure combo port in fiber mode.
+ 777           *      The possible parameters in fiber mode are Full_1000 and Full 100.
+ 778           *      All the other fields in rtk_port_phy_ability_t will be ignored in fiber port.
+ 779           */
+ 780          rtk_api_ret_t rtk_port_phyForceModeAbility_set(rtk_port_t port, rtk_port_phy_ability_t *pAbility)
+ 781          {
+ 782   1           rtk_api_ret_t      retVal;
+ 783   1           uint32         phyData;
+ 784   1           uint32         phyEnMsk0;
+ 785   1           uint32         phyEnMsk4;
+ 786   1           uint32         phyEnMsk9;
+ 787   1           rtk_port_media_t   media_type;
+ 788   1      
+ 789   1           /* Check initialization state */
+ 790   1           RTK_CHK_INIT_STATE();
+ 791   1      
+ 792   1           /* Check Port Valid */
+ 793   1           RTK_CHK_PORT_IS_UTP(port);
+ 794   1      
+ 795   1           if(NULL == pAbility)
+ 796   1              return RT_ERR_NULL_POINTER;
+ 797   1      
+ 798   1           if (pAbility->Half_10 >= RTK_ENABLE_END || pAbility->Full_10 >= RTK_ENABLE_END ||
+ 799   1              pAbility->Half_100 >= RTK_ENABLE_END || pAbility->Full_100 >= RTK_ENABLE_END ||
+ 800   1              pAbility->Full_1000 >= RTK_ENABLE_END || pAbility->AutoNegotiation >= RTK_ENABLE_END ||
+ 801   1              pAbility->AsyFC >= RTK_ENABLE_END || pAbility->FC >= RTK_ENABLE_END)
+ 802   1               return RT_ERR_INPUT;
+ 803   1      
+ 804   1           if (rtk_switch_isComboPort(port) == RT_ERR_OK)
+ 805   1           {
+ 806   2               if ((retVal = rtk_port_phyComboPortMedia_get(port, &media_type)) != RT_ERR_OK)
+ 807   2                   return retVal;
+ 808   2      
+ 809   2               if(media_type == PORT_MEDIA_FIBER)
+ 810   2               {
+ 811   3                   return _rtk_port_FiberModeAbility_set(port, pAbility);
+ 812   3               }
+ 813   2           }
+ 814   1      
+ 815   1           if (1 == pAbility->Full_1000)
+ 816   1               return RT_ERR_INPUT;
+ 817   1      
+ 818   1           /*for PHY force mode setup*/
+ 819   1           pAbility->AutoNegotiation = 0;
+ 820   1      
+ 821   1           phyEnMsk0 = 0;
+ 822   1           phyEnMsk4 = 0;
+ 823   1           phyEnMsk9 = 0;
+ 824   1      
+ 825   1           if (1 == pAbility->Half_10)
+ 826   1           {
+ 827   2               /*10BASE-TX half duplex capable in reg 4.5*/
+ 828   2               phyEnMsk4 = phyEnMsk4 | (1 << 5);
+ 829   2      
+ 830   2               /*Speed selection [1:0] */
+ 831   2               /* 11=Reserved*/
+ 832   2               /* 10= 1000Mpbs*/
+ 833   2               /* 01= 100Mpbs*/
+ 834   2               /* 00= 10Mpbs*/
+ 835   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 15  
+
+ 836   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 13));
+ 837   2           }
+ 838   1      
+ 839   1           if (1 == pAbility->Full_10)
+ 840   1           {
+ 841   2               /*10BASE-TX full duplex capable in reg 4.6*/
+ 842   2               phyEnMsk4 = phyEnMsk4 | (1 << 6);
+ 843   2               /*Speed selection [1:0] */
+ 844   2               /* 11=Reserved*/
+ 845   2               /* 10= 1000Mpbs*/
+ 846   2               /* 01= 100Mpbs*/
+ 847   2               /* 00= 10Mpbs*/
+ 848   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 849   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 13));
+ 850   2      
+ 851   2               /*Full duplex mode in reg 0.8*/
+ 852   2               phyEnMsk0 = phyEnMsk0 | (1 << 8);
+ 853   2      
+ 854   2           }
+ 855   1      
+ 856   1           if (1 == pAbility->Half_100)
+ 857   1           {
+ 858   2               /*100BASE-TX half duplex capable in reg 4.7*/
+ 859   2               phyEnMsk4 = phyEnMsk4 | (1 << 7);
+ 860   2               /*Speed selection [1:0] */
+ 861   2               /* 11=Reserved*/
+ 862   2               /* 10= 1000Mpbs*/
+ 863   2               /* 01= 100Mpbs*/
+ 864   2               /* 00= 10Mpbs*/
+ 865   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 866   2               phyEnMsk0 = phyEnMsk0 | (1 << 13);
+ 867   2           }
+ 868   1      
+ 869   1      
+ 870   1           if (1 == pAbility->Full_100)
+ 871   1           {
+ 872   2               /*100BASE-TX full duplex capable in reg 4.8*/
+ 873   2               phyEnMsk4 = phyEnMsk4 | (1 << 8);
+ 874   2               /*Speed selection [1:0] */
+ 875   2               /* 11=Reserved*/
+ 876   2               /* 10= 1000Mpbs*/
+ 877   2               /* 01= 100Mpbs*/
+ 878   2               /* 00= 10Mpbs*/
+ 879   2               phyEnMsk0 = phyEnMsk0 & (~(1 << 6));
+ 880   2               phyEnMsk0 = phyEnMsk0 | (1 << 13);
+ 881   2               /*Full duplex mode in reg 0.8*/
+ 882   2               phyEnMsk0 = phyEnMsk0 | (1 << 8);
+ 883   2           }
+ 884   1      
+ 885   1           if (1 == pAbility->AsyFC)
+ 886   1           {
+ 887   2               /*Asymetric flow control in reg 4.11*/
+ 888   2               phyEnMsk4 = phyEnMsk4 | (1 << 11);
+ 889   2           }
+ 890   1           if (1 == pAbility->FC)
+ 891   1           {
+ 892   2               /*Flow control in reg 4.10*/
+ 893   2               phyEnMsk4 = phyEnMsk4 | ((1 << 10));
+ 894   2           }
+ 895   1      
+ 896   1           /*1000 BASE-T control register setting*/
+ 897   1           if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, &phyD
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 16  
+
+             -ata)) != RT_ERR_OK)
+ 898   1               return retVal;
+ 899   1      
+ 900   1           phyData = (phyData & (~0x0200)) | phyEnMsk9 ;
+ 901   1      
+ 902   1           if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, phyDa
+             -ta)) != RT_ERR_OK)
+ 903   1               return retVal;
+ 904   1      
+ 905   1           /*Auto-Negotiation control register setting*/
+ 906   1           if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_AN_ADVERTISEMENT_REG, &phyDat
+             -a)) != RT_ERR_OK)
+ 907   1               return retVal;
+ 908   1      
+ 909   1           phyData = (phyData & (~0x0DE0)) | phyEnMsk4;
+ 910   1           if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_AN_ADVERTISEMENT_REG, phyData
+             -)) != RT_ERR_OK)
+ 911   1               return retVal;
+ 912   1      
+ 913   1           /*Control register setting and power off/on*/
+ 914   1           phyData = phyEnMsk0 & (~(1 << 12));
+ 915   1           phyData |= (1 << 11);   /* power down PHY, bit 11 should be set to 1 */
+ 916   1           if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, phyData)) != RT_
+             -ERR_OK)
+ 917   1               return retVal;
+ 918   1      
+ 919   1           phyData = phyData & (~(1 << 11));   /* power on PHY, bit 11 should be set to 0*/
+ 920   1           if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, phyData)) != RT_
+             -ERR_OK)
+ 921   1               return retVal;
+ 922   1      
+ 923   1           return RT_ERR_OK;
+ 924   1      }
+ 925          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_port_phyForceModeAbility_get
+               * Description:
+               *      Get PHY ability through PHY registers.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pAbility - Ability structure
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+               * Note:
+               *      Get the capablity of specified PHY.
+               */
+              rtk_api_ret_t rtk_port_phyForceModeAbility_get(rtk_port_t port, rtk_port_phy_ability_t *pAbility)
+              {
+                  rtk_api_ret_t       retVal;
+                  uint32          phyData0;
+                  uint32          phyData4;
+                  uint32          phyData9;
+                  rtk_port_media_t    media_type;
+              
+                  /* Check initialization state */
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 17  
+
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                   RTK_CHK_PORT_IS_UTP(port);
+              
+                   if(NULL == pAbility)
+                      return RT_ERR_NULL_POINTER;
+              
+                   if (rtk_switch_isComboPort(port) == RT_ERR_OK)
+                   {
+                       if ((retVal = rtk_port_phyComboPortMedia_get(port, &media_type)) != RT_ERR_OK)
+                           return retVal;
+              
+                       if(media_type == PORT_MEDIA_FIBER)
+                       {
+                           return _rtk_port_FiberModeAbility_get(port, pAbility);
+                       }
+                   }
+              
+                  /*Control register setting and restart auto*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, &phyData0)) != RT
+             -_ERR_OK)
+                      return retVal;
+              
+                  /*Auto-Negotiation control register setting*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_AN_ADVERTISEMENT_REG, &phyData
+             -4)) != RT_ERR_OK)
+                      return retVal;
+              
+                  /*1000 BASE-T control register setting*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_1000_BASET_CONTROL_REG, &phyDa
+             -ta9)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if (phyData9 & (1 << 9))
+                      pAbility->Full_1000 = 1;
+                  else
+                      pAbility->Full_1000 = 0;
+              
+                  if (phyData4 & (1 << 11))
+                      pAbility->AsyFC = 1;
+                  else
+                      pAbility->AsyFC = 0;
+              
+                  if (phyData4 & ((1 << 10)))
+                      pAbility->FC = 1;
+                  else
+                      pAbility->FC = 0;
+              
+              
+                  if (phyData4 & (1 << 8))
+                      pAbility->Full_100 = 1;
+                  else
+                      pAbility->Full_100 = 0;
+              
+                  if (phyData4 & (1 << 7))
+                      pAbility->Half_100 = 1;
+                  else
+                      pAbility->Half_100 = 0;
+              
+                  if (phyData4 & (1 << 6))
+                      pAbility->Full_10 = 1;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 18  
+
+                  else
+                      pAbility->Full_10 = 0;
+              
+                  if (phyData4 & (1 << 5))
+                      pAbility->Half_10 = 1;
+                  else
+                      pAbility->Half_10 = 0;
+              
+              
+                  if (phyData0 & (1 << 12))
+                      pAbility->AutoNegotiation = 1;
+                  else
+                      pAbility->AutoNegotiation = 0;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_phyStatus_get
+               * Description:
+               *      Get ethernet PHY linking status
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      linkStatus  - PHY link status
+               *      speed       - PHY link speed
+               *      duplex      - PHY duplex mode
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_ID          - Invalid port number.
+               *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+               * Note:
+               *      API will return auto negotiation status of phy.
+               */
+              rtk_api_ret_t rtk_port_phyStatus_get(rtk_port_t port, rtk_port_linkStatus_t *pLinkStatus, rtk_port_speed_t
+             - *pSpeed, rtk_port_duplex_t *pDuplex)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 phyData;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_UTP(port);
+              
+                  if( (NULL == pLinkStatus) || (NULL == pSpeed) || (NULL == pDuplex) )
+                      return RT_ERR_NULL_POINTER;
+              
+                  /*Get PHY resolved register*/
+                  if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_RESOLVED_REG, &phyData)) != RT
+             -_ERR_OK)
+                      return retVal;
+              
+                  /*check link status*/
+                  if (phyData & (1<<2))
+                  {
+                      *pLinkStatus = 1;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 19  
+
+              
+                      /*check link speed*/
+                      *pSpeed = (phyData&0x0030) >> 4;
+              
+                      /*check link duplex*/
+                      *pDuplex = (phyData&0x0008) >> 3;
+                  }
+                  else
+                  {
+                      *pLinkStatus = 0;
+                      *pSpeed = 0;
+                      *pDuplex = 0;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_macForceLink_set
+               * Description:
+               *      Set port force linking configuration.
+               * Input:
+               *      port            - port id.
+               *      pPortability    - port ability configuration
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      This API can set Port/MAC force mode properties.
+               */
+              rtk_api_ret_t rtk_port_macForceLink_set(rtk_port_t port, rtk_port_mac_ability_t *pPortability)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_port_ability_t ability;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_UTP(port);
+              
+                  if(NULL == pPortability)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (pPortability->forcemode >1|| pPortability->speed > 2 || pPortability->duplex > 1 ||
+                     pPortability->link > 1 || pPortability->nway > 1 || pPortability->txpause > 1 || pPortability->rxpa
+             -use > 1)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_getAsicPortForceLink(rtk_switch_port_L2P_get(port), &ability)) != RT_ERR_OK)
+                      return retVal;
+              
+                  ability.forcemode = pPortability->forcemode;
+                  ability.speed     = pPortability->speed;
+                  ability.duplex    = pPortability->duplex;
+                  ability.link      = pPortability->link;
+                  ability.nway      = pPortability->nway;
+                  ability.txpause   = pPortability->txpause;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 20  
+
+                  ability.rxpause   = pPortability->rxpause;
+              
+                  if ((retVal = rtl8367c_setAsicPortForceLink(rtk_switch_port_L2P_get(port), &ability)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_macForceLink_get
+               * Description:
+               *      Get port force linking configuration.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pPortability - port ability configuration
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API can get Port/MAC force mode properties.
+               */
+              rtk_api_ret_t rtk_port_macForceLink_get(rtk_port_t port, rtk_port_mac_ability_t *pPortability)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_port_ability_t ability;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_UTP(port);
+              
+                  if(NULL == pPortability)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortForceLink(rtk_switch_port_L2P_get(port), &ability)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pPortability->forcemode = ability.forcemode;
+                  pPortability->speed     = ability.speed;
+                  pPortability->duplex    = ability.duplex;
+                  pPortability->link      = ability.link;
+                  pPortability->nway      = ability.nway;
+                  pPortability->txpause   = ability.txpause;
+                  pPortability->rxpause   = ability.rxpause;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_macForceLinkExt_set
+               * Description:
+               *      Set external interface force linking configuration.
+               * Input:
+               *      port            - external port ID
+               *      mode            - external interface mode
+               *      pPortability    - port ability configuration
+               * Output:
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 21  
+
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API can set external interface force mode properties.
+               *      The external interface can be set to:
+               *      - MODE_EXT_DISABLE,
+               *      - MODE_EXT_RGMII,
+               *      - MODE_EXT_MII_MAC,
+               *      - MODE_EXT_MII_PHY,
+               *      - MODE_EXT_TMII_MAC,
+               *      - MODE_EXT_TMII_PHY,
+               *      - MODE_EXT_GMII,
+               *      - MODE_EXT_RMII_MAC,
+               *      - MODE_EXT_RMII_PHY,
+               *      - MODE_EXT_SGMII,
+               *      - MODE_EXT_HSGMII,
+               *      - MODE_EXT_1000X_100FX,
+               *      - MODE_EXT_1000X,
+               *      - MODE_EXT_100FX,
+               */
+              rtk_api_ret_t rtk_port_macForceLinkExt_set(rtk_port_t port, rtk_mode_ext_t mode, rtk_port_mac_ability_t *p
+             -Portability)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_port_ability_t ability;
+                  uint32 ext_id;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_EXT(port);
+              
+                  if(NULL == pPortability)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if (mode >=MODE_EXT_END)
+                      return RT_ERR_INPUT;
+              
+                  if(mode == MODE_EXT_HSGMII)
+                  {
+                      if (pPortability->forcemode > 1 || pPortability->speed != PORT_SPEED_2500M || pPortability->duplex
+             - != PORT_FULL_DUPLEX ||
+                         pPortability->link >= PORT_LINKSTATUS_END || pPortability->nway > 1 || pPortability->txpause > 
+             -1 || pPortability->rxpause > 1)
+                          return RT_ERR_INPUT;
+              
+                      if(rtk_switch_isHsgPort(port) != RT_ERR_OK)
+                          return RT_ERR_PORT_ID;
+                  }
+                  else
+                  {
+                      if (pPortability->forcemode > 1 || pPortability->speed > PORT_SPEED_1000M || pPortability->duplex 
+             ->= PORT_DUPLEX_END ||
+                         pPortability->link >= PORT_LINKSTATUS_END || pPortability->nway > 1 || pPortability->txpause > 
+             -1 || pPortability->rxpause > 1)
+                          return RT_ERR_INPUT;
+                  }
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 22  
+
+              
+                  ext_id = port - 15;
+              
+                  if(mode == MODE_EXT_DISABLE)
+                  {
+                      memset(&ability, 0x00, sizeof(rtl8367c_port_ability_t));
+                      if ((retVal = rtl8367c_setAsicPortForceLinkExt(ext_id, &ability)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicPortExtMode(ext_id, mode)) != RT_ERR_OK)
+                          return retVal;
+                  }
+                  else
+                  {
+                      if ((retVal = rtl8367c_setAsicPortExtMode(ext_id, mode)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_getAsicPortForceLinkExt(ext_id, &ability)) != RT_ERR_OK)
+                          return retVal;
+              
+                      ability.forcemode = pPortability->forcemode;
+                      ability.speed     = (mode == MODE_EXT_HSGMII) ? PORT_SPEED_1000M : pPortability->speed;
+                      ability.duplex    = pPortability->duplex;
+                      ability.link      = pPortability->link;
+                      ability.nway      = pPortability->nway;
+                      ability.txpause   = pPortability->txpause;
+                      ability.rxpause   = pPortability->rxpause;
+              
+                      if ((retVal = rtl8367c_setAsicPortForceLinkExt(ext_id, &ability)) != RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_macForceLinkExt_get
+               * Description:
+               *      Set external interface force linking configuration.
+               * Input:
+               *      port            - external port ID
+               * Output:
+               *      pMode           - external interface mode
+               *      pPortability    - port ability configuration
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API can get external interface force mode properties.
+               */
+              rtk_api_ret_t rtk_port_macForceLinkExt_get(rtk_port_t port, rtk_mode_ext_t *pMode, rtk_port_mac_ability_t 
+             -*pPortability)
+              {
+                  rtk_api_ret_t retVal;
+                  rtl8367c_port_ability_t ability;
+                  uint32 ext_id;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 23  
+
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_EXT(port);
+              
+                  if(NULL == pMode)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pPortability)
+                      return RT_ERR_NULL_POINTER;
+              
+                  ext_id = port - 15;
+              
+                  if ((retVal = rtl8367c_getAsicPortExtMode(ext_id, (uint32 *)pMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if ((retVal = rtl8367c_getAsicPortForceLinkExt(ext_id, &ability)) != RT_ERR_OK)
+                      return retVal;
+              
+                  pPortability->forcemode = ability.forcemode;
+                  pPortability->speed     = (*pMode == MODE_EXT_HSGMII) ? PORT_SPEED_2500M : ability.speed;
+                  pPortability->duplex    = ability.duplex;
+                  pPortability->link      = ability.link;
+                  pPortability->nway      = ability.nway;
+                  pPortability->txpause   = ability.txpause;
+                  pPortability->rxpause   = ability.rxpause;
+              
+                  return RT_ERR_OK;
+              
+              }
+              #endif
+1343          /* Function Name:
+1344           *      rtk_port_macStatus_get
+1345           * Description:
+1346           *      Get port link status.
+1347           * Input:
+1348           *      port - Port id.
+1349           * Output:
+1350           *      pPortstatus - port ability configuration
+1351           * Return:
+1352           *      RT_ERR_OK           - OK
+1353           *      RT_ERR_FAILED       - Failed
+1354           *      RT_ERR_SMI          - SMI access error
+1355           *      RT_ERR_PORT_ID      - Invalid port number.
+1356           * Note:
+1357           *      This API can get Port/PHY properties.
+1358           */
+1359          rtk_api_ret_t rtk_port_macStatus_get(rtk_port_t port, rtk_port_mac_ability_t *pPortstatus)
+1360          {
+1361   1          rtk_api_ret_t retVal;
+1362   1          rtl8367c_port_status_t status;
+1363   1          uint32 hsgsel;
+1364   1      
+1365   1          /* Check initialization state */
+1366   1          RTK_CHK_INIT_STATE();
+1367   1      
+1368   1          /* Check Port Valid */
+1369   1          RTK_CHK_PORT_VALID(port);
+1370   1      
+1371   1          if(NULL == pPortstatus)
+1372   1              return RT_ERR_NULL_POINTER;
+1373   1      
+1374   1          if ((retVal = rtl8367c_getAsicPortStatus(rtk_switch_port_L2P_get(port), &status)) != RT_ERR_OK)
+1375   1              return retVal;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 24  
+
+1376   1      
+1377   1      
+1378   1          pPortstatus->duplex    = status.duplex;
+1379   1          pPortstatus->link      = status.link;
+1380   1          pPortstatus->nway      = status.nway;
+1381   1          pPortstatus->txpause   = status.txpause;
+1382   1          pPortstatus->rxpause   = status.rxpause;
+1383   1      
+1384   1          if( (retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_SDS_MISC, RTL8367C_CFG_MAC8_SEL_HSGMII_OFFSET, &hsgs
+             -el)) != RT_ERR_OK)
+1385   1                  return retVal;
+1386   1      
+1387   1          if( (rtk_switch_isHsgPort(port) == RT_ERR_OK) && (hsgsel == 1) )
+1388   1              pPortstatus->speed = PORT_SPEED_2500M;
+1389   1          else
+1390   1              pPortstatus->speed = status.speed;
+1391   1      
+1392   1          return RT_ERR_OK;
+1393   1      }
+1394          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_port_macLocalLoopbackEnable_set
+               * Description:
+               *      Set Port Local Loopback. (Redirect TX to RX.)
+               * Input:
+               *      port    - Port id.
+               *      enable  - Loopback state, 0:disable, 1:enable
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      This API can enable/disable Local loopback in MAC.
+               *      For UTP port, This API will also enable the digital
+               *      loopback bit in PHY register for sync of speed between
+               *      PHY and MAC. For EXT port, users need to force the
+               *      link state by themself.
+               */
+              rtk_api_ret_t rtk_port_macLocalLoopbackEnable_set(rtk_port_t port, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t   retVal;
+                  uint32      data1;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(enable >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicPortLoopback(rtk_switch_port_L2P_get(port), enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if(rtk_switch_isUtpPort(port) == RT_ERR_OK)
+                  {
+                      if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, &data1)) != R
+             -T_ERR_OK)
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 25  
+
+                          return retVal;
+              
+                      if(enable == ENABLED)
+                          data1 |= (0x0001 << 14);
+                      else
+                          data1 &= ~(0x0001 << 14);
+              
+                      if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), PHY_CONTROL_REG, data1)) != RT
+             -_ERR_OK)
+                          return retVal;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_macLocalLoopbackEnable_get
+               * Description:
+               *      Get Port Local Loopback. (Redirect TX to RX.)
+               * Input:
+               *      port    - Port id.
+               * Output:
+               *      pEnable  - Loopback state, 0:disable, 1:enable
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      None.
+               */
+              rtk_api_ret_t rtk_port_macLocalLoopbackEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortLoopback(rtk_switch_port_L2P_get(port), pEnable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1485          /* Function Name:
+1486           *      rtk_port_phyReg_set
+1487           * Description:
+1488           *      Set PHY register data of the specific port.
+1489           * Input:
+1490           *      port    - port id.
+1491           *      reg     - Register id
+1492           *      regData - Register data
+1493           * Output:
+1494           *      None
+1495           * Return:
+1496           *      RT_ERR_OK               - OK
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 26  
+
+1497           *      RT_ERR_FAILED           - Failed
+1498           *      RT_ERR_SMI              - SMI access error
+1499           *      RT_ERR_PORT_ID          - Invalid port number.
+1500           *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+1501           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+1502           * Note:
+1503           *      This API can set PHY register data of the specific port.
+1504           */
+1505          rtk_api_ret_t rtk_port_phyReg_set(rtk_port_t port, rtk_port_phy_reg_t reg, rtk_port_phy_data_t regData)
+1506          {
+1507   1          rtk_api_ret_t retVal;
+1508   1      
+1509   1          /* Check initialization state */
+1510   1          RTK_CHK_INIT_STATE();
+1511   1      
+1512   1          /* Check Port Valid */
+1513   1          RTK_CHK_PORT_IS_UTP(port);
+1514   1      
+1515   1          if ((retVal = rtl8367c_setAsicPHYReg(rtk_switch_port_L2P_get(port), reg, regData)) != RT_ERR_OK)
+1516   1              return retVal;
+1517   1      
+1518   1          return RT_ERR_OK;
+1519   1      }
+1520          
+1521          /* Function Name:
+1522           *      rtk_port_phyReg_get
+1523           * Description:
+1524           *      Get PHY register data of the specific port.
+1525           * Input:
+1526           *      port    - Port id.
+1527           *      reg     - Register id
+1528           * Output:
+1529           *      pData   - Register data
+1530           * Return:
+1531           *      RT_ERR_OK               - OK
+1532           *      RT_ERR_FAILED           - Failed
+1533           *      RT_ERR_SMI              - SMI access error
+1534           *      RT_ERR_PORT_ID          - Invalid port number.
+1535           *      RT_ERR_PHY_REG_ID       - Invalid PHY address
+1536           *      RT_ERR_BUSYWAIT_TIMEOUT - PHY access busy
+1537           * Note:
+1538           *      This API can get PHY register data of the specific port.
+1539           */
+1540          rtk_api_ret_t rtk_port_phyReg_get(rtk_port_t port, rtk_port_phy_reg_t reg, rtk_port_phy_data_t *pData)
+1541          {
+1542   1          rtk_api_ret_t retVal;
+1543   1      
+1544   1          /* Check initialization state */
+1545   1          RTK_CHK_INIT_STATE();
+1546   1      
+1547   1          /* Check Port Valid */
+1548   1          RTK_CHK_PORT_IS_UTP(port);
+1549   1      
+1550   1          if ((retVal = rtl8367c_getAsicPHYReg(rtk_switch_port_L2P_get(port), reg, pData)) != RT_ERR_OK)
+1551   1              return retVal;
+1552   1      
+1553   1          return RT_ERR_OK;
+1554   1      }
+1555          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_port_backpressureEnable_set
+               * Description:
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 27  
+
+               *      Set the half duplex backpressure enable status of the specific port.
+               * Input:
+               *      port    - port id.
+               *      enable  - Back pressure status.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               *      RT_ERR_ENABLE       - Invalid enable input.
+               * Note:
+               *      This API can set the half duplex backpressure enable status of the specific port.
+               *      The half duplex backpressure enable status of the port is as following:
+               *      - DISABLE(Defer)
+               *      - ENABLE (Backpressure)
+               */
+              rtk_api_ret_t rtk_port_backpressureEnable_set(rtk_port_t port, rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (port != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_PORT_ID;
+              
+                  if (enable >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicPortJamMode(!enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_backpressureEnable_get
+               * Description:
+               *      Get the half duplex backpressure enable status of the specific port.
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEnable - Back pressure status.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_ID      - Invalid port number.
+               * Note:
+               *      This API can get the half duplex backpressure enable status of the specific port.
+               *      The half duplex backpressure enable status of the port is as following:
+               *      - DISABLE(Defer)
+               *      - ENABLE (Backpressure)
+               */
+              rtk_api_ret_t rtk_port_backpressureEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 regData;
+              
+                  /* Check initialization state */
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 28  
+
+                  RTK_CHK_INIT_STATE();
+              
+                  if (port != RTK_WHOLE_SYSTEM)
+                      return RT_ERR_PORT_ID;
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortJamMode(&regData)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pEnable = !regData;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1637          /* Function Name:
+1638           *      rtk_port_adminEnable_set
+1639           * Description:
+1640           *      Set port admin configuration of the specific port.
+1641           * Input:
+1642           *      port    - port id.
+1643           *      enable  - Back pressure status.
+1644           * Output:
+1645           *      None
+1646           * Return:
+1647           *      RT_ERR_OK           - OK
+1648           *      RT_ERR_FAILED       - Failed
+1649           *      RT_ERR_SMI          - SMI access error
+1650           *      RT_ERR_PORT_ID      - Invalid port number.
+1651           *      RT_ERR_ENABLE       - Invalid enable input.
+1652           * Note:
+1653           *      This API can set port admin configuration of the specific port.
+1654           *      The port admin configuration of the port is as following:
+1655           *      - DISABLE
+1656           *      - ENABLE
+1657           */
+1658          rtk_api_ret_t rtk_port_adminEnable_set(rtk_port_t port, rtk_enable_t enable)
+1659          {
+1660   1          rtk_api_ret_t retVal;
+1661   1          uint32      data1;
+1662   1      
+1663   1          /* Check initialization state */
+1664   1          RTK_CHK_INIT_STATE();
+1665   1      
+1666   1          /* Check Port Valid */
+1667   1          RTK_CHK_PORT_IS_UTP(port);
+1668   1      
+1669   1          if (enable >= RTK_ENABLE_END)
+1670   1              return RT_ERR_INPUT;
+1671   1      
+1672   1          if ((retVal = rtk_port_phyReg_get(port, PHY_CONTROL_REG, &data1)) != RT_ERR_OK)
+1673   1              return retVal;
+1674   1      
+1675   1          if (ENABLED == enable)
+1676   1          {
+1677   2              data1 &= 0xF7FF;
+1678   2              data1 |= 0x0200;
+1679   2          }
+1680   1          else if (DISABLED == enable)
+1681   1          {
+1682   2              data1 |= 0x0800;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 29  
+
+1683   2          }
+1684   1      
+1685   1          if ((retVal = rtk_port_phyReg_set(port, PHY_CONTROL_REG, data1)) != RT_ERR_OK)
+1686   1              return retVal;
+1687   1      
+1688   1          return RT_ERR_OK;
+1689   1      }
+1690          
+1691          /* Function Name:
+1692           *      rtk_port_adminEnable_get
+1693           * Description:
+1694           *      Get port admin configurationof the specific port.
+1695           * Input:
+1696           *      port - Port id.
+1697           * Output:
+1698           *      pEnable - Back pressure status.
+1699           * Return:
+1700           *      RT_ERR_OK           - OK
+1701           *      RT_ERR_FAILED       - Failed
+1702           *      RT_ERR_SMI          - SMI access error
+1703           *      RT_ERR_PORT_ID      - Invalid port number.
+1704           * Note:
+1705           *      This API can get port admin configuration of the specific port.
+1706           *      The port admin configuration of the port is as following:
+1707           *      - DISABLE
+1708           *      - ENABLE
+1709           */
+1710          rtk_api_ret_t rtk_port_adminEnable_get(rtk_port_t port, rtk_enable_t *pEnable)
+1711          {
+1712   1          rtk_api_ret_t retVal;
+1713   1          uint32      data1;
+1714   1      
+1715   1          /* Check initialization state */
+1716   1          RTK_CHK_INIT_STATE();
+1717   1      
+1718   1          /* Check Port Valid */
+1719   1          RTK_CHK_PORT_IS_UTP(port);
+1720   1      
+1721   1          if(NULL == pEnable)
+1722   1              return RT_ERR_NULL_POINTER;
+1723   1      
+1724   1          if ((retVal = rtk_port_phyReg_get(port, PHY_CONTROL_REG, &data1)) != RT_ERR_OK)
+1725   1              return retVal;
+1726   1      
+1727   1          if ( (data1 & 0x0800) == 0x0800)
+1728   1          {
+1729   2              *pEnable = DISABLED;
+1730   2          }
+1731   1          else
+1732   1          {
+1733   2              *pEnable = ENABLED;
+1734   2          }
+1735   1      
+1736   1          return RT_ERR_OK;
+1737   1      }
+1738          
+1739          /* Function Name:
+1740           *      rtk_port_isolation_set
+1741           * Description:
+1742           *      Set permitted port isolation portmask
+1743           * Input:
+1744           *      port         - port id.
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 30  
+
+1745           *      pPortmask    - Permit port mask
+1746           * Output:
+1747           *      None
+1748           * Return:
+1749           *      RT_ERR_OK           - OK
+1750           *      RT_ERR_FAILED       - Failed
+1751           *      RT_ERR_SMI          - SMI access error
+1752           *      RT_ERR_PORT_ID      - Invalid port number.
+1753           *      RT_ERR_PORT_MASK    - Invalid portmask.
+1754           * Note:
+1755           *      This API set the port mask that a port can trasmit packet to of each port
+1756           *      A port can only transmit packet to ports included in permitted portmask
+1757           */
+1758          rtk_api_ret_t rtk_port_isolation_set(rtk_port_t port, rtk_portmask_t *pPortmask)
+1759          {
+1760   1          rtk_api_ret_t retVal;
+1761   1          uint32 pmask;
+1762   1      
+1763   1          /* Check initialization state */
+1764   1          RTK_CHK_INIT_STATE();
+1765   1      
+1766   1          /* Check Port Valid */
+1767   1          RTK_CHK_PORT_VALID(port);
+1768   1      
+1769   1          if(NULL == pPortmask)
+1770   1              return RT_ERR_NULL_POINTER;
+1771   1      
+1772   1          /* check port mask */
+1773   1          RTK_CHK_PORTMASK_VALID(pPortmask);
+1774   1      
+1775   1          if ((retVal = rtk_switch_portmask_L2P_get(pPortmask, &pmask)) != RT_ERR_OK)
+1776   1              return retVal;
+1777   1      
+1778   1          if ((retVal = rtl8367c_setAsicPortIsolationPermittedPortmask(rtk_switch_port_L2P_get(port), pmask)) !=
+             - RT_ERR_OK)
+1779   1              return retVal;
+1780   1      
+1781   1          return RT_ERR_OK;
+1782   1      }
+1783          
+1784          /* Function Name:
+1785           *      rtk_port_isolation_get
+1786           * Description:
+1787           *      Get permitted port isolation portmask
+1788           * Input:
+1789           *      port - Port id.
+1790           * Output:
+1791           *      pPortmask - Permit port mask
+1792           * Return:
+1793           *      RT_ERR_OK           - OK
+1794           *      RT_ERR_FAILED       - Failed
+1795           *      RT_ERR_SMI          - SMI access error
+1796           *      RT_ERR_PORT_ID      - Invalid port number.
+1797           * Note:
+1798           *      This API get the port mask that a port can trasmit packet to of each port
+1799           *      A port can only transmit packet to ports included in permitted portmask
+1800           */
+1801          rtk_api_ret_t rtk_port_isolation_get(rtk_port_t port, rtk_portmask_t *pPortmask)
+1802          {
+1803   1          rtk_api_ret_t retVal;
+1804   1          uint32 pmask;
+1805   1      
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 31  
+
+1806   1          /* Check initialization state */
+1807   1          RTK_CHK_INIT_STATE();
+1808   1      
+1809   1          /* Check Port Valid */
+1810   1          RTK_CHK_PORT_VALID(port);
+1811   1      
+1812   1          if(NULL == pPortmask)
+1813   1              return RT_ERR_NULL_POINTER;
+1814   1      
+1815   1          if ((retVal = rtl8367c_getAsicPortIsolationPermittedPortmask(rtk_switch_port_L2P_get(port), &pmask)) !
+             -= RT_ERR_OK)
+1816   1              return retVal;
+1817   1      
+1818   1          if ((retVal = rtk_switch_portmask_P2L_get(pmask, pPortmask)) != RT_ERR_OK)
+1819   1              return retVal;
+1820   1      
+1821   1          return RT_ERR_OK;
+1822   1      }
+1823          #if 0 //NOT used
+              /* Function Name:
+               *      rtk_port_rgmiiDelayExt_set
+               * Description:
+               *      Set RGMII interface delay value for TX and RX.
+               * Input:
+               *      txDelay - TX delay value, 1 for delay 2ns and 0 for no-delay
+               *      rxDelay - RX delay value, 0~7 for delay setup.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API can set external interface 2 RGMII delay.
+               *      In TX delay, there are 2 selection: no-delay and 2ns delay.
+               *      In RX dekay, there are 8 steps for delay tunning. 0 for no-delay, and 7 for maximum delay.
+               */
+              rtk_api_ret_t rtk_port_rgmiiDelayExt_set(rtk_port_t port, rtk_data_t txDelay, rtk_data_t rxDelay)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 regAddr, regData;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_EXT(port);
+              
+                  if ((txDelay > 1) || (rxDelay > 7))
+                      return RT_ERR_INPUT;
+              
+                  if(port == EXT_PORT0)
+                      regAddr = RTL8367C_REG_EXT1_RGMXF;
+                  else if(port == EXT_PORT1)
+                      regAddr = RTL8367C_REG_EXT2_RGMXF;
+                  else
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_getAsicReg(regAddr, &regData)) != RT_ERR_OK)
+                      return retVal;
+              
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 32  
+
+                  regData = (regData & 0xFFF0) | ((txDelay << 3) & 0x0008) | (rxDelay & 0x0007);
+              
+                  if ((retVal = rtl8367c_setAsicReg(regAddr, regData)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_rgmiiDelayExt_get
+               * Description:
+               *      Get RGMII interface delay value for TX and RX.
+               * Input:
+               *      None
+               * Output:
+               *      pTxDelay - TX delay value
+               *      pRxDelay - RX delay value
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_INPUT        - Invalid input parameters.
+               * Note:
+               *      This API can set external interface 2 RGMII delay.
+               *      In TX delay, there are 2 selection: no-delay and 2ns delay.
+               *      In RX dekay, there are 8 steps for delay tunning. 0 for n0-delay, and 7 for maximum delay.
+               */
+              rtk_api_ret_t rtk_port_rgmiiDelayExt_get(rtk_port_t port, rtk_data_t *pTxDelay, rtk_data_t *pRxDelay)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 regAddr, regData;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_EXT(port);
+              
+                  if( (NULL == pTxDelay) || (NULL == pRxDelay) )
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(port == EXT_PORT0)
+                      regAddr = RTL8367C_REG_EXT1_RGMXF;
+                  else if(port == EXT_PORT1)
+                      regAddr = RTL8367C_REG_EXT2_RGMXF;
+                  else
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_getAsicReg(regAddr, &regData)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pTxDelay = (regData & 0x0008) >> 3;
+                  *pRxDelay = regData & 0x0007;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_phyEnableAll_set
+               * Description:
+               *      Set all PHY enable status.
+               * Input:
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 33  
+
+               *      enable - PHY Enable State.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_ENABLE       - Invalid enable input.
+               * Note:
+               *      This API can set all PHY status.
+               *      The configuration of all PHY is as following:
+               *      - DISABLE
+               *      - ENABLE
+               */
+              rtk_api_ret_t rtk_port_phyEnableAll_set(rtk_enable_t enable)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 data1;
+                  uint32 port;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if (enable >= RTK_ENABLE_END)
+                      return RT_ERR_ENABLE;
+              
+                  if ((retVal = rtl8367c_setAsicPortEnableAll(enable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  RTK_SCAN_ALL_LOG_PORT(port)
+                  {
+                      if(rtk_switch_isUtpPort(port) == RT_ERR_OK)
+                      {
+                          if ((retVal = rtk_port_phyReg_get(port, PHY_CONTROL_REG, &data1)) != RT_ERR_OK)
+                              return retVal;
+              
+                          if (ENABLED == enable)
+                          {
+                              data1 &= 0xF7FF;
+                              data1 |= 0x0200;
+                          }
+                          else
+                          {
+                              data1 |= 0x0800;
+                          }
+              
+                          if ((retVal = rtk_port_phyReg_set(port, PHY_CONTROL_REG, data1)) != RT_ERR_OK)
+                              return retVal;
+                      }
+                  }
+              
+                  return RT_ERR_OK;
+              
+              }
+              
+              /* Function Name:
+               *      rtk_port_phyEnableAll_get
+               * Description:
+               *      Get all PHY enable status.
+               * Input:
+               *      None
+               * Output:
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 34  
+
+               *      pEnable - PHY Enable State.
+               * Return:
+               *      RT_ERR_OK           - OK
+               *      RT_ERR_FAILED       - Failed
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *      This API can set all PHY status.
+               *      The configuration of all PHY is as following:
+               *      - DISABLE
+               *      - ENABLE
+               */
+              rtk_api_ret_t rtk_port_phyEnableAll_get(rtk_enable_t *pEnable)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  if(NULL == pEnable)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortEnableAll(pEnable)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_efid_set
+               * Description:
+               *      Set port-based enhanced filtering database
+               * Input:
+               *      port - Port id.
+               *      efid - Specified enhanced filtering database.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_L2_FID - Invalid fid.
+               *      RT_ERR_INPUT - Invalid input parameter.
+               *      RT_ERR_PORT_ID - Invalid port ID.
+               * Note:
+               *      The API can set port-based enhanced filtering database.
+               */
+              rtk_api_ret_t rtk_port_efid_set(rtk_port_t port, rtk_data_t efid)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  /* efid must be 0~7 */
+                  if (efid > RTK_EFID_MAX)
+                      return RT_ERR_INPUT;
+              
+                  if ((retVal = rtl8367c_setAsicPortIsolationEfid(rtk_switch_port_L2P_get(port), efid))!=RT_ERR_OK)
+                      return retVal;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 35  
+
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_efid_get
+               * Description:
+               *      Get port-based enhanced filtering database
+               * Input:
+               *      port - Port id.
+               * Output:
+               *      pEfid - Specified enhanced filtering database.
+               * Return:
+               *      RT_ERR_OK              - OK
+               *      RT_ERR_FAILED          - Failed
+               *      RT_ERR_SMI             - SMI access error
+               *      RT_ERR_INPUT - Invalid input parameters.
+               *      RT_ERR_PORT_ID - Invalid port ID.
+               * Note:
+               *      The API can get port-based enhanced filtering database status.
+               */
+              rtk_api_ret_t rtk_port_efid_get(rtk_port_t port, rtk_data_t *pEfid)
+              {
+                  rtk_api_ret_t retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_VALID(port);
+              
+                  if(NULL == pEfid)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if ((retVal = rtl8367c_getAsicPortIsolationEfid(rtk_switch_port_L2P_get(port), pEfid))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtk_port_phyComboPortMedia_set
+               * Description:
+               *      Set Combo port media type
+               * Input:
+               *      port    - Port id.
+               *      media   - Media (COPPER or FIBER)
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_INPUT            - Invalid input parameters.
+               *      RT_ERR_PORT_ID          - Invalid port ID.
+               * Note:
+               *      The API can Set Combo port media type.
+               */
+              rtk_api_ret_t rtk_port_phyComboPortMedia_set(rtk_port_t port, rtk_port_media_t media)
+              {
+                  rtk_api_ret_t retVal;
+                  uint32 regData;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 36  
+
+                  uint32 idx;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  RTK_CHK_PORT_IS_UTP(port);
+              
+                  /* Check Combo Port ID */
+                  RTK_CHK_PORT_IS_COMBO(port);
+              
+                  if (media >= PORT_MEDIA_END)
+                      return RT_ERR_INPUT;
+              
+                  if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0249)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_getAsicReg(0x1300, &regData)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0000)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if(regData != 0x6367)
+                      return RT_ERR_CHIP_NOT_SUPPORTED;
+              
+                  if(media == PORT_MEDIA_FIBER)
+                  {
+                      /* software init */
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_CHIP_RESET, RTL8367C_DW8051_RST_OFFSET, 1)) != R
+             -T_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MISCELLANEOUS_CONFIGURE0, RTL8367C_DW8051_EN_OFF
+             -SET, 1)) != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_DW8051_RDY, RTL8367C_ACS_IROM_ENABLE_OFFSET, 1))
+             - != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_DW8051_RDY, RTL8367C_IROM_MSB_OFFSET, 0)) != RT_
+             -ERR_OK)
+                          return retVal;
+              
+                      for(idx = 0; idx < FIBER_INIT_SIZE; idx++)
+                      {
+                          if ((retVal = rtl8367c_setAsicReg(0xE000 + idx, (uint32)Fiber[idx])) != RT_ERR_OK)
+                              return retVal;
+                      }
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_DW8051_RDY, RTL8367C_IROM_MSB_OFFSET, 0)) != RT_
+             -ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_DW8051_RDY, RTL8367C_ACS_IROM_ENABLE_OFFSET, 0))
+             - != RT_ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_CHIP_RESET, RTL8367C_DW8051_RST_OFFSET, 0)) != R
+             -T_ERR_OK)
+                          return retVal;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 37  
+
+                  }
+                  else
+                  {
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_UTP_FIB_DET, RTL8367C_UTP_FIRST_OFFSET, 1))!=RT_
+             -ERR_OK)
+                          return retVal;
+              
+                      if ((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_DW8051_RDY, RTL8367C_DW8051_READY_OFFSET, 0)) !=
+             - RT_ERR_OK)
+                          return retVal;
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+2183          
+2184          /* Function Name:
+2185           *      rtk_port_phyComboPortMedia_get
+2186           * Description:
+2187           *      Get Combo port media type
+2188           * Input:
+2189           *      port    - Port id.
+2190           * Output:
+2191           *      pMedia  - Media (COPPER or FIBER)
+2192           * Return:
+2193           *      RT_ERR_OK               - OK
+2194           *      RT_ERR_FAILED           - Failed
+2195           *      RT_ERR_SMI              - SMI access error
+2196           *      RT_ERR_INPUT            - Invalid input parameters.
+2197           *      RT_ERR_PORT_ID          - Invalid port ID.
+2198           * Note:
+2199           *      The API can Set Combo port media type.
+2200           */
+2201          rtk_api_ret_t rtk_port_phyComboPortMedia_get(rtk_port_t port, rtk_port_media_t *pMedia)
+2202          {
+2203   1          rtk_api_ret_t   retVal;
+2204   1          uint32      regData;
+2205   1          uint32      data1;
+2206   1      
+2207   1          /* Check initialization state */
+2208   1          RTK_CHK_INIT_STATE();
+2209   1      
+2210   1          /* Check Port Valid */
+2211   1          RTK_CHK_PORT_IS_UTP(port);
+2212   1      
+2213   1          /* Check Combo Port ID */
+2214   1          RTK_CHK_PORT_IS_COMBO(port);
+2215   1      
+2216   1          if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0249)) != RT_ERR_OK)
+2217   1              return retVal;
+2218   1      
+2219   1          if((retVal = rtl8367c_getAsicReg(0x1300, &regData)) != RT_ERR_OK)
+2220   1              return retVal;
+2221   1      
+2222   1          if((retVal = rtl8367c_setAsicReg(0x13C2, 0x0000)) != RT_ERR_OK)
+2223   1              return retVal;
+2224   1      
+2225   1          if(regData != 0x6367)
+2226   1          {
+2227   2              *pMedia = PORT_MEDIA_COPPER;
+2228   2          }
+2229   1          else
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 38  
+
+2230   1          {
+2231   2          if ((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_UTP_FIB_DET, RTL8367C_UTP_FIRST_OFFSET, &data1))!=RT
+             -_ERR_OK)
+2232   2              return retVal;
+2233   2      
+2234   2          if(data1 == 1)
+2235   2              *pMedia = PORT_MEDIA_COPPER;
+2236   2          else
+2237   2              *pMedia = PORT_MEDIA_FIBER;
+2238   2          }
+2239   1      
+2240   1          return RT_ERR_OK;
+2241   1      }
+2242          
+2243          /* Function Name:
+2244           *      rtk_port_rtctEnable_set
+2245           * Description:
+2246           *      Enable RTCT test
+2247           * Input:
+2248           *      pPortmask    - Port mask of RTCT enabled port
+2249           * Output:
+2250           *      None
+2251           * Return:
+2252           *      RT_ERR_OK               - OK
+2253           *      RT_ERR_FAILED           - Failed
+2254           *      RT_ERR_SMI              - SMI access error
+2255           *      RT_ERR_PORT_MASK        - Invalid port mask.
+2256           * Note:
+2257           *      The API can enable RTCT Test
+2258           */
+2259          rtk_api_ret_t rtk_port_rtctEnable_set(rtk_portmask_t *pPortmask)
+2260          {
+2261   1          rtk_api_ret_t   retVal;
+2262   1      
+2263   1          /* Check initialization state */
+2264   1          RTK_CHK_INIT_STATE();
+2265   1      
+2266   1          /* Check Port Mask Valid */
+2267   1          RTK_CHK_PORTMASK_VALID_ONLY_UTP(pPortmask);
+2268   1      
+2269   1          if ((retVal = rtl8367c_setAsicPortRTCTEnable(pPortmask->bits[0]))!=RT_ERR_OK)
+2270   1              return retVal;
+2271   1      
+2272   1          return RT_ERR_OK;
+2273   1      }
+2274          
+2275          #if 0
+              /* Function Name:
+               *      rtk_port_rtctDisable_set
+               * Description:
+               *      Disable RTCT test
+               * Input:
+               *      pPortmask    - Port mask of RTCT disabled port
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - OK
+               *      RT_ERR_FAILED           - Failed
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_PORT_MASK        - Invalid port mask.
+               * Note:
+               *      The API can disable RTCT Test
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 39  
+
+               */
+              rtk_api_ret_t rtk_port_rtctDisable_set(rtk_portmask_t *pPortmask)
+              {
+                  rtk_api_ret_t   retVal;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Mask Valid */
+                  RTK_CHK_PORTMASK_VALID_ONLY_UTP(pPortmask);
+              
+                  if ((retVal = rtl8367c_setAsicPortRTCTDisable(pPortmask->bits[0]))!=RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+2308          
+2309          /* Function Name:
+2310           *      rtk_port_rtctResult_get
+2311           * Description:
+2312           *      Get the result of RTCT test
+2313           * Input:
+2314           *      port        - Port ID
+2315           * Output:
+2316           *      pRtctResult - The result of RTCT result
+2317           * Return:
+2318           *      RT_ERR_OK                   - OK
+2319           *      RT_ERR_FAILED               - Failed
+2320           *      RT_ERR_SMI                  - SMI access error
+2321           *      RT_ERR_PORT_ID              - Invalid port ID.
+2322           *      RT_ERR_PHY_RTCT_NOT_FINISH  - Testing does not finish.
+2323           * Note:
+2324           *      The API can get RTCT test result.
+2325           *      RTCT test may takes 4.8 seconds to finish its test at most.
+2326           *      Thus, if this API return RT_ERR_PHY_RTCT_NOT_FINISH or
+2327           *      other error code, the result can not be referenced and
+2328           *      user should call this API again until this API returns
+2329           *      a RT_ERR_OK.
+2330           *      The result is stored at pRtctResult->rtk_ge_result
+2331           *      pRtctResult->linkType is unused.
+2332           *      The unit of channel length is 2.5cm. Ex. 300 means 300 * 2.5 = 750cm = 7.5M
+2333           */
+2334          rtk_api_ret_t rtk_port_rtctResult_get(rtk_port_t port, rtk_rtctResult_t *pRtctResult)
+2335          {
+2336   1          rtk_api_ret_t               retVal;
+2337   1          rtl8367c_port_rtct_result_t result;
+2338   1      
+2339   1          /* Check initialization state */
+2340   1          RTK_CHK_INIT_STATE();
+2341   1      
+2342   1          /* Check Port Valid */
+2343   1          RTK_CHK_PORT_IS_UTP(port);
+2344   1      
+2345   1          memset(pRtctResult, 0x00, sizeof(rtk_rtctResult_t));
+2346   1          if ((retVal = rtl8367c_getAsicPortRTCTResult(port, &result))!=RT_ERR_OK)
+2347   1              return retVal;
+2348   1      
+2349   1          pRtctResult->result.rtk_ge_result.channelALen = result.channelALen;
+2350   1          pRtctResult->result.rtk_ge_result.channelBLen = result.channelBLen;
+2351   1          pRtctResult->result.rtk_ge_result.channelCLen = result.channelCLen;
+2352   1          pRtctResult->result.rtk_ge_result.channelDLen = result.channelDLen;
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 40  
+
+2353   1      
+2354   1          pRtctResult->result.rtk_ge_result.channelALinedriver = result.channelALinedriver;
+2355   1          pRtctResult->result.rtk_ge_result.channelBLinedriver = result.channelBLinedriver;
+2356   1          pRtctResult->result.rtk_ge_result.channelCLinedriver = result.channelCLinedriver;
+2357   1          pRtctResult->result.rtk_ge_result.channelDLinedriver = result.channelDLinedriver;
+2358   1      
+2359   1          pRtctResult->result.rtk_ge_result.channelAMismatch = result.channelAMismatch;
+2360   1          pRtctResult->result.rtk_ge_result.channelBMismatch = result.channelBMismatch;
+2361   1          pRtctResult->result.rtk_ge_result.channelCMismatch = result.channelCMismatch;
+2362   1          pRtctResult->result.rtk_ge_result.channelDMismatch = result.channelDMismatch;
+2363   1      
+2364   1          pRtctResult->result.rtk_ge_result.channelAOpen = result.channelAOpen;
+2365   1          pRtctResult->result.rtk_ge_result.channelBOpen = result.channelBOpen;
+2366   1          pRtctResult->result.rtk_ge_result.channelCOpen = result.channelCOpen;
+2367   1          pRtctResult->result.rtk_ge_result.channelDOpen = result.channelDOpen;
+2368   1      
+2369   1          pRtctResult->result.rtk_ge_result.channelAShort = result.channelAShort;
+2370   1          pRtctResult->result.rtk_ge_result.channelBShort = result.channelBShort;
+2371   1          pRtctResult->result.rtk_ge_result.channelCShort = result.channelCShort;
+2372   1          pRtctResult->result.rtk_ge_result.channelDShort = result.channelDShort;
+2373   1      
+2374   1          return RT_ERR_OK;
+2375   1      }
+2376          
+2377          #if 0
+              /* Function Name:
+               *      rtk_port_sds_reset
+               * Description:
+               *      Reset Serdes
+               * Input:
+               *      port        - Port ID
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_PORT_ID              - Invalid port ID.
+               * Note:
+               *      The API can reset Serdes
+               */
+              rtk_api_ret_t rtk_port_sds_reset(rtk_port_t port)
+              {
+                  uint32 ext_id;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  if(rtk_switch_isSgmiiPort(port) != RT_ERR_OK)
+                      return RT_ERR_PORT_ID;
+              
+                  ext_id = port - 15;
+                  return rtl8367c_sdsReset(ext_id);
+              }
+              
+              /* Function Name:
+               *      rtk_port_sgmiiLinkStatus_get
+               * Description:
+               *      Get SGMII status
+               * Input:
+               *      port        - Port ID
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 41  
+
+               * Output:
+               *      pSignalDetect   - Signal detect
+               *      pSync           - Sync
+               *      pLink           - Link
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_PORT_ID              - Invalid port ID.
+               * Note:
+               *      The API can reset Serdes
+               */
+              rtk_api_ret_t rtk_port_sgmiiLinkStatus_get(rtk_port_t port, rtk_data_t *pSignalDetect, rtk_data_t *pSync, 
+             -rtk_port_linkStatus_t *pLink)
+              {
+                  rtk_uint32 ext_id;
+              
+                  /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  if(rtk_switch_isSgmiiPort(port) != RT_ERR_OK)
+                      return RT_ERR_PORT_ID;
+              
+                  if(NULL == pSignalDetect)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pSync)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(NULL == pLink)
+                      return RT_ERR_NULL_POINTER;
+              
+                  ext_id = port - 15;
+                  return rtl8367c_getSdsLinkStatus(ext_id, (rtk_uint32 *)pSignalDetect, (rtk_uint32 *)pSync, (rtk_uint32
+             - *)pLink);
+              }
+              
+              /* Function Name:
+               *      rtk_port_sgmiiNway_set
+               * Description:
+               *      Configure SGMII/HSGMII port Nway state
+               * Input:
+               *      port        - Port ID
+               *      state       - Nway state
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_PORT_ID              - Invalid port ID.
+               * Note:
+               *      The API configure SGMII/HSGMII port Nway state
+               */
+              rtk_api_ret_t rtk_port_sgmiiNway_set(rtk_port_t port, rtk_enable_t state)
+              {
+                  rtk_uint32 ext_id;
+              
+                   /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+C51 COMPILER V9.60.0.0   PORT                                                              11/02/2026 17:57:11 PAGE 42  
+
+                  /* Check Port Valid */
+                  if(rtk_switch_isSgmiiPort(port) != RT_ERR_OK)
+                      return RT_ERR_PORT_ID;
+              
+                  if(state >= RTK_ENABLE_END)
+                      return RT_ERR_INPUT;
+              
+                  ext_id = port - 15;
+                  return rtl8367c_setSgmiiNway(ext_id, (rtk_uint32)state);
+              }
+              
+              /* Function Name:
+               *      rtk_port_sgmiiNway_get
+               * Description:
+               *      Get SGMII/HSGMII port Nway state
+               * Input:
+               *      port        - Port ID
+               * Output:
+               *      pState      - Nway state
+               * Return:
+               *      RT_ERR_OK                   - OK
+               *      RT_ERR_FAILED               - Failed
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_PORT_ID              - Invalid port ID.
+               * Note:
+               *      The API can get SGMII/HSGMII port Nway state
+               */
+              rtk_api_ret_t rtk_port_sgmiiNway_get(rtk_port_t port, rtk_enable_t *pState)
+              {
+                  rtk_uint32 ext_id;
+              
+                   /* Check initialization state */
+                  RTK_CHK_INIT_STATE();
+              
+                  /* Check Port Valid */
+                  if(rtk_switch_isSgmiiPort(port) != RT_ERR_OK)
+                      return RT_ERR_PORT_ID;
+              
+                  if(NULL == pState)
+                      return RT_ERR_NULL_POINTER;
+              
+                  ext_id = port - 15;
+                  return rtl8367c_getSgmiiNway(ext_id, (rtk_uint32 *)pState);
+              }
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   6123    ----
+   CONSTANT SIZE    =   1507    ----
+   XDATA SIZE       =   ----     225
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

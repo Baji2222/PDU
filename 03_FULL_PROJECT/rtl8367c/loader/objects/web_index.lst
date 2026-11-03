@@ -1,0 +1,85 @@
+C51 COMPILER V9.60.0.0   WEB_INDEX                                                         08/20/2025 22:07:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_INDEX
+OBJECT MODULE PLACED IN .\objects\web_index.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\web\web_index.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;
+                    -..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include
+                    -\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK
+                    -_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\web_index.lst) TABS(2) OBJECT(.\objects\web_index.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <local/config.h>
+   4          
+   5          #include <web/web_api.h>
+   6          #include <web/http_debug.h>
+   7          
+   8          #include "web_index.h" 
+   9          
+  10          #include <stdio.h>
+  11          
+  12          #if WEB_ENABLE
+  13          
+  14          uint8 const far htm_index[] = "\
+  15          <html>\n\
+  16          <head>\n\
+  17          <meta HTTP-EQUIV=\"Content-Type\" CONTENT=\"text/html; charset=big5\">\n\
+  18          <title>OPL Web-Smart Switch</title>\n\
+  19          </head>\n\
+  20          <frameset cols=\"0, 250,*\">\n\
+  21          <frame name=\"hidden_frame\" frameborder=\"0\" src=\"hidden.cgi\" >\n\
+  22          <frame name=\"menu-frame\" target=\"main-frame\" src=\"menu.cgi\" >\n\
+  23          <frameset rows=\"130,*\">\
+  24          <frame name=\"panel-frame\" scrolling=\"no\" src=\"panel.cgi\" noresize>\n\
+  25          <frame name=\"main-frame\" src=\"info.cgi\" noresize>\n\
+  26          <noframes>\n\
+  27          <body>\n\
+  28          <p>This page uses frames, but the browser does not support them.</p>\n\
+  29          </body>\n\
+  30          </noframes>\n\
+  31          </frameset>\n\
+  32          </html>\n\
+  33          ";
+  34          
+  35          int8 get_index(struct http_request_s *pReq)
+  36          {
+  37   1          DBG_LWPS_HTTP_PRINTF(("-------get_index()-------\n"));
+  38   1      
+  39   1          WEB_BEGIN(pReq);
+  40   1          
+  41   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  42   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  43   1         
+  44   1          WEB_DATA(pReq, htm_index, sizeof(htm_index) - 1);
+  45   1          
+  46   1          WEB_END(pReq);
+  47   1      
+  48   1          return SUCCESS;
+  49   1      }
+  50          
+  51          #endif
+  52          
+C51 COMPILER V9.60.0.0   WEB_INDEX                                                         08/20/2025 22:07:56 PAGE 2   
+
+  53          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     97    ----
+   CONSTANT SIZE    =    568    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    568    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

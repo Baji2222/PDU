@@ -1,0 +1,157 @@
+C51 COMPILER V9.60.0.0   MEM_LIB                                                           08/20/2025 22:07:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MEM_LIB
+OBJECT MODULE PLACED IN .\objects\mem_lib.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\..\common\lib\mem\mem_lib.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR
+                    -(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sa
+                    -l;.\include\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL
+                    -,DW8051_CLK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\mem_lib.lst) TABS(2) OBJECT(.\objects\mem_l
+                    -ib.obj)
+
+line level    source
+
+   1          /*
+   2          * Copyright c                  Realtek Semiconductor Corporation, 2008  
+   3          * All rights reserved.
+   4          * 
+   5          */
+   6          
+   7          
+   8          #include <local/config.h>
+   9          #include <mem/mem_lib.h>
+  10          #include <common.h>
+  11          
+  12          #include <stdio.h>
+  13          
+  14          extern uint8     xdata p_tx_buffer[];
+  15          
+  16          #if defined(STANDARD_MEM_LIB)
+              #define MEMLIB_MEMCPY  memcpy
+              #define MEMLIB_MEMSET  memset
+              #define MEMLIB_MEMCMP  memcmp
+              #define MEMLIB_STRCMP  strcmp
+              #else
+  22          #define MEMLIB_MEMCPY  nostarnard_memcpy
+  23          #define MEMLIB_MEMSET  nostarnard_memset
+  24          #define MEMLIB_MEMCMP  nostarnard_memcmp
+  25          #define MEMLIB_STRCMP  nostarnard_strcmp
+  26          #if 0
+              void* nostarnard_memcpy(void *dest, const void *src, u16_t n)
+              {
+                  u16_t i;
+                  u8_t  *d, *s;
+                  d = (u8_t*)dest;
+                  s = (u8_t*)src;
+              
+                  for(i=0;i<n;i++)
+                  {
+                      d[i] = s[i];
+                  }
+                  
+                  return dest;
+              }
+              #endif
+  42          #if !defined(LWS_LOADER)
+              int nostarnard_memcmp(const void *s1, const void *s2, u16_t n)
+              {
+                  u16_t i;
+                  u8_t  *d, *s;
+                  d = (u8_t*)s1;
+                  s = (u8_t*)s2;
+              
+                  for(i=0;i<n;i++)
+                  {
+C51 COMPILER V9.60.0.0   MEM_LIB                                                           08/20/2025 22:07:57 PAGE 2   
+
+                      if( d[i]>s[i] )
+                      {
+                          return 1;
+                      }
+                      else if( d[i]<s[i] )
+                      {
+                          return -1;
+                      }
+                  }
+                  
+                  return 0;
+              }
+              #endif
+  65          int nostarnard_memset(void *s, u8_t c, u16_t n)
+  66          {
+  67   1          u16_t i;
+  68   1          u8_t  *d;
+  69   1          d = (u8_t*)s;
+  70   1      
+  71   1          for(i=0;i<n;i++)
+  72   1          {
+  73   2              d[i] = c;
+  74   2          }
+  75   1          
+  76   1          return s;
+  77   1      }
+  78          
+  79          int nostarnard_strcmp(const char *str1, const char *str2)
+  80          {
+  81   1          while(1)
+  82   1        {
+  83   2            if(*str1 == 0 && *str2 == 0)
+  84   2              return 0;
+  85   2              else if(*str1 != *str2)
+  86   2              return *str1 - *str2;
+  87   2          else
+  88   2          {
+  89   3              str1++;
+  90   3            str2++;
+  91   3          }
+  92   2        }
+  93   1      }
+  94          
+  95          #endif /* end of defined(STANDARD_MEM_LIB) */
+  96          
+  97          u8_t xdata ram_heap[MEM_SIZE];
+  98          
+  99          void mem_init(void)
+ 100          {
+ 101   1          uint8 *ptr;
+ 102   1      
+ 103   1          MEMLIB_MEMSET(ram_heap,0x0,MEM_SIZE);
+ 104   1          init_mempool((void xdata *) &ram_heap[0], MEM_SIZE);
+ 105   1      
+ 106   1          /* trigger malloc call to add malloc segment into binary */
+ 107   1          ptr = malloc (32);
+ 108   1          free(ptr);
+ 109   1      }
+ 110          #if !defined(LWS_LOADER)
+              u8_t* malloc_tx_buf(u32_t len){
+                
+                if( len>P_BUFFER_SIZE ){
+C51 COMPILER V9.60.0.0   MEM_LIB                                                           08/20/2025 22:07:57 PAGE 3   
+
+                  return NULL;
+                }else{
+                  return p_tx_buffer;
+                }
+              }
+              #endif
+ 120          
+ 121          
+ 122          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    222    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   6144      15
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

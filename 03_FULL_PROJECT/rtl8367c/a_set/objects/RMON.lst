@@ -1,0 +1,532 @@
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RMON
+OBJECT MODULE PLACED IN .\objects\RMON.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\snmp\mib\RMON.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE 
+                    -INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sa
+                    -l;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK
+                    -_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE
+                    -_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\RMON.lst) TABS(2) OBJECT(.\objects\RMON.obj)
+
+line level    source
+
+   1          /*
+   2          * Copyright (c)                  Realtek Semiconductor Corporation, 2008  
+   3          * All rights reserved.
+   4          * 
+   5          * Abstract : RTL8213M Media Converter, RFC 2819
+   6          * 
+   7          *$Id: rfc2819.c,v 1.1 2008/06/20 08:53:35 yajin_zhou Exp $
+   8          */
+   9          
+  10          #include <local/config.h>
+  11          #include <snmp/mib/RMON.h>
+  12          #include <snmp/mib/mib.h>
+  13          #include <snmp/snmp_debug.h>
+  14          
+  15          #if !defined(SAL_REPLACE)
+              #include <local/rtk_sal_mib.h>
+              #else
+  18          #include <snmp/mib_glue.h>
+*** WARNING C322 IN LINE 165 OF ..\..\common\include\snmp/mib_glue.h: unknown identifier
+  19          #endif
+  20          
+  21          
+  22          #if LWPS_SNMP
+  23          
+  24          #if LWPS_SNMP_RMON
+  25          
+  26          extern volatile uint32 data current_time;
+  27          extern far const struct snmp_obj_id ifspecific;
+  28          
+  29          
+  30          /* RMON.statistics.etherstatstable.etherStatsEntry  .1.3.6.1.2.1.16.1.1.1 */
+  31          struct mib_list_rootnode statistics_root = {
+  32            &rmon_stat_get_object_def,
+  33            &rmon_stat_get_value,
+  34            &rmon_stat_set_test,
+  35            &rmon_stat_set_value,
+  36            MIB_NODE_LR,
+  37            0,
+  38            NULL,
+  39            NULL,
+  40            0
+  41          };
+  42          far const s32_t statisticsentry_ids[21] = {
+  43            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
+  44            16, 17, 18, 19, 20, 21
+  45          };
+  46          far struct mib_node *const statisticsentry_nodes[21] = {
+  47            (struct mib_node *) &statistics_root,
+  48            (struct mib_node *) &statistics_root,
+  49            (struct mib_node *) &statistics_root,
+  50            (struct mib_node *) &statistics_root, 
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 2   
+
+  51            (struct mib_node *) &statistics_root, 
+  52            (struct mib_node *) &statistics_root, 
+  53            (struct mib_node *) &statistics_root, 
+  54            (struct mib_node *) &statistics_root, 
+  55            (struct mib_node *) &statistics_root, 
+  56            (struct mib_node *) &statistics_root, 
+  57            (struct mib_node *) &statistics_root, 
+  58            (struct mib_node *) &statistics_root, 
+  59            (struct mib_node *) &statistics_root, 
+  60            (struct mib_node *) &statistics_root, 
+  61            (struct mib_node *) &statistics_root, 
+  62            (struct mib_node *) &statistics_root, 
+  63            (struct mib_node *) &statistics_root, 
+  64            (struct mib_node *) &statistics_root, 
+  65            (struct mib_node *) &statistics_root, 
+  66            (struct mib_node *) &statistics_root, 
+  67            (struct mib_node *) &statistics_root
+  68          };
+  69          far const struct mib_array_node statisticsentry = {
+  70            &noleafs_get_object_def,
+  71            &noleafs_get_value,
+  72            &noleafs_set_test,
+  73            &noleafs_set_value,
+  74            MIB_NODE_AR,
+  75            21,
+  76            statisticsentry_ids,
+  77            statisticsentry_nodes
+  78          };
+  79          
+  80          /* RMON.statistics.etherstatstable  .1.3.6.1.2.1.16.1.1 */
+  81          far const s32_t statisticstable_ids[1] = { 1 };
+  82          far struct mib_node *const statisticstable_nodes[1] = {
+  83            (struct mib_node *) &statisticsentry
+  84          };
+  85          struct mib_ram_array_node xdata statisticstable = {
+  86            &noleafs_get_object_def,
+  87            &noleafs_get_value,
+  88            &noleafs_set_test,
+  89            &noleafs_set_value,
+  90            MIB_NODE_RA,
+  91            1,
+  92            statisticstable_ids,
+  93            statisticstable_nodes
+  94          };
+  95          
+  96          /* RMON.statistics  .1.3.6.1.2.1.16.1 */
+  97          far const s32_t statistics_ids[1] = { 1 };
+  98          far struct mib_node *const statistics_nodes[1] = {
+  99            (struct mib_node *) &statisticstable
+ 100          };
+ 101          far const struct mib_array_node statistics = {
+ 102            &noleafs_get_object_def,
+ 103            &noleafs_get_value,
+ 104            &noleafs_set_test,
+ 105            &noleafs_set_value,
+ 106            MIB_NODE_AR,
+ 107            1,
+ 108            statistics_ids,
+ 109            statistics_nodes
+ 110          };
+ 111          
+ 112          /* RMON .1.3.6.1.2.1.16 */
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 3   
+
+ 113          far const s32_t rmon_ids[1] = { 1};
+ 114          far struct mib_node *const rmon_nodes[1] = {
+ 115            (struct mib_node *) &statistics
+ 116          };
+ 117          struct mib_array_node rmon = {
+ 118            &noleafs_get_object_def,
+ 119            &noleafs_get_value,
+ 120            &noleafs_set_test,
+ 121            &noleafs_set_value,
+ 122            MIB_NODE_AR,
+ 123            1,
+ 124            rmon_ids,
+ 125            rmon_nodes
+ 126          };
+ 127          
+ 128          /* mib-2.rmon counter(s) */
+ 129          struct snmp_obj_id xdata rmon_stat_datasource[COMBO_PORT_NUM];
+ 130          u8_t xdata rmon_stat_owner[COMBO_PORT_NUM][16];
+ 131          u8_t xdata rmon_stat_owner_len[COMBO_PORT_NUM];
+ 132          u32_t xdata rmon_stat_status[COMBO_PORT_NUM];
+ 133          
+ 134          
+ 135          /*
+ 136           * Function: snmp_insert_statsidx_tree
+ 137           * -----------------------------------
+ 138           * Inserts a node into the RMON statistics table for SNMP traversal.
+ 139           * Adds one entry with the specified index.
+ 140           * Enables getnext traversal on the statisticstable.
+ 141           */
+ 142          void snmp_insert_statsidx_tree(s32_t index)
+ 143          {
+ 144   1          struct mib_list_node *if_node = NULL;
+ 145   1      
+ 146   1          snmp_mib_node_insert(&statistics_root, index, &if_node);
+ 147   1          /* enable getnext traversal on filled table */
+ 148   1          statisticstable.maxlength = 1;
+ 149   1      }
+ 150          
+ 151          /*
+ 152           * Function: rmon_stat_get_object_def
+ 153           * ----------------------------------
+ 154           * Defines RMON statistics entry objects for RFC2819.
+ 155           * Handles etherStatsIndex, etherStatsDataSource, etherStatsDropEvents, etc.
+ 156           * Sets ASN.1 types and access rights for each OID.
+ 157           */
+ 158          void rmon_stat_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 159          {
+ 160   1          u8_t xdata id;
+ 161   1      
+ 162   1          /* return to object name, adding index depth (1) */
+ 163   1          ident_len += 1;
+ 164   1          ident -= 1;
+ 165   1          if (ident_len == 2)
+ 166   1          {
+ 167   2              od->id_inst_len = ident_len;
+ 168   2              od->id_inst_ptr = ident;
+ 169   2      
+ 170   2              id = ident[0];
+ 171   2              DBG_SNMP_PRINTF(("rmon_stat_get_object_def  .%" U16_F "\n", (u16_t) id));
+ 172   2              switch (id)
+ 173   2              {
+ 174   3              case 1:
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 4   
+
+ 175   3                  od->instance = MIB_OBJECT_TAB;
+ 176   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 177   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 178   3                  od->v_len = sizeof(s32_t);
+ 179   3                  break;
+ 180   3      
+ 181   3              case 2:
+ 182   3                  od->instance = MIB_OBJECT_TAB;
+ 183   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 184   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OBJ_ID);
+ 185   3                  //od->v_len = ifspecific.len * sizeof(s32_t);
+ 186   3                  od->v_len = rmon_stat_datasource[0].len * sizeof(s32_t);
+ 187   3                  break;
+ 188   3              case 3:
+ 189   3              case 4:
+ 190   3              case 5:
+ 191   3              case 6:
+ 192   3              case 7:
+ 193   3              case 8:
+ 194   3              case 9:
+ 195   3              case 10:
+ 196   3              case 11:
+ 197   3              case 12:
+ 198   3              case 13:
+ 199   3              case 14:
+ 200   3              case 15:
+ 201   3              case 16:
+ 202   3              case 17:
+ 203   3              case 18:
+ 204   3              case 19:
+ 205   3                  od->instance = MIB_OBJECT_TAB;
+ 206   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 207   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 208   3                  od->v_len = sizeof(u32_t);
+ 209   3                  break;
+ 210   3              case 20:
+ 211   3                  od->instance = MIB_OBJECT_TAB;
+ 212   3                  od->access = MIB_OBJECT_READ_WRITE;
+ 213   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
+ 214   3                  od->v_len = (u16_t)rmon_stat_owner_len[ident[1] - 1];
+ 215   3                  break;
+ 216   3              case 21:
+ 217   3                  od->instance = MIB_OBJECT_TAB;
+ 218   3                  od->access = MIB_OBJECT_READ_WRITE;
+ 219   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 220   3                  od->v_len = sizeof(u32_t);
+ 221   3                  break;
+ 222   3              default:
+ 223   3                  DBG_SNMP_PRINTF(("rmon_stat_get_object_def: no such object\n"));
+ 224   3                  od->instance = MIB_OBJECT_NONE;
+ 225   3                  break;
+ 226   3              };
+ 227   2          }
+ 228   1          else
+ 229   1          {
+ 230   2              DBG_SNMP_PRINTF(("rmon_stat_get_object_def: no scalar\n"));
+ 231   2              od->instance = MIB_OBJECT_NONE;
+ 232   2          }
+ 233   1      
+ 234   1      }
+ 235          
+ 236          /*
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 5   
+
+ 237           * Function: rmon_stat_get_value
+ 238           * -----------------------------
+ 239           * Retrieves RMON statistics entry values for each interface.
+ 240           * Returns etherStatsIndex, DataSource, DropEvents, Octets, Pkts, BroadcastPkts, etc.
+ 241           * Uses GET_ETHER_STATS macros to retrieve counter values.
+ 242           */
+ 243          void rmon_stat_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 244          {
+ 245   1      
+ 246   1          u8_t xdata index;
+ 247   1          u8_t xdata id;
+ 248   1          xdata u32_t *xdata uint_ptr = value;
+ 249   1        xdata s32_t *xdata int_ptr = value;
+ 250   1      
+ 251   1          /*kill keil warning */
+ 252   1          if (len)
+ 253   1          {
+ 254   2          }
+ 255   1          index = od->id_inst_ptr[1];
+ 256   1          id = od->id_inst_ptr[0];
+ 257   1          //DBG_SNMP_PRINTF(("id %bd index %bd \n", id, index));
+ 258   1        
+ 259   1          /*id=1: port no */
+ 260   1          switch (id)
+ 261   1          {
+ 262   2          case 1:
+ 263   2          *int_ptr = index;
+ 264   2          break;
+ 265   2          
+ 266   2        case 2: /* etherStatsDataSource */
+ 267   2          //objectidncpy((s32_t *) value, (s32_t *) ifspecific.id, len / sizeof(s32_t));
+ 268   2          objectidncpy((s32_t *) value, (s32_t *) rmon_stat_datasource[index-1].id, len / sizeof(s32_t));
+ 269   2          //GET_ETHER_STATS_DATA_SOURCE( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 270   2          break;
+ 271   2          
+ 272   2          case 3: /* etherStatsDropEvent */
+ 273   2          GET_ETHER_STATS_DROP_EVENTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 274   2              break;
+ 275   2          
+ 276   2        case 4: /* etherStatsOctets */    
+ 277   2                  {
+ 278   3                    u32_t xdata value64[2];
+ 279   3          GET_ETHER_STATS_OCTETS( ((u8_t)index-1), ((u8_t)(sizeof(u32_t) * 2)), ((u8_t*)value64));
+ 280   3                    *uint_ptr = value64[1];
+ 281   3                  }
+ 282   2          break;
+ 283   2      
+ 284   2          case 5: /* etherStatsPkts */
+ 285   2          { //GET_ETHER_STATS_PKTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 286   3          u32_t xdata tmp = 0;
+ 287   3          GET_ETHER_STATS_PKTS_64_OCTECTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)&tmp));
+ 288   3                    *uint_ptr = tmp;
+ 289   3                    GET_ETHER_STATS_PKTS_65TO127_OCTECTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)&tmp));
+ 290   3                    *uint_ptr += tmp;
+ 291   3                    GET_ETHER_STATS_PKTS_128TO255_OCTECTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)&tmp))
+             -;
+ 292   3                    *uint_ptr += tmp;
+ 293   3                    GET_ETHER_STATS_PKTS_256TO511_OCTECTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)&tmp))
+             -;
+ 294   3                    *uint_ptr += tmp;
+ 295   3                    GET_ETHER_STATS_PKTS_512TO1023_OCTECTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)&tmp)
+             -);
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 6   
+
+ 296   3                    *uint_ptr += tmp;
+ 297   3                    GET_ETHER_STATS_PKTS_1024TO1518_OCTECTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)&tmp
+             -));
+ 298   3                    *uint_ptr += tmp; 
+ 299   3           }
+ 300   2          break;
+ 301   2      
+ 302   2          case 6: /* etherStatsBroadcastPkts */
+ 303   2              GET_ETHER_STATS_BROADCAST_PKTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 304   2              break;
+ 305   2          
+ 306   2          case 7: /* etherStatsMulticastPkts */
+ 307   2              GET_ETHER_STATS_MULTICAST_PKTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 308   2              break;
+ 309   2          
+ 310   2          case 8: /* etherStatsCRCAlignErrors */
+ 311   2              //GET_ETHER_STATS_CRC_ALIGN_ERRORS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 312   2               *uint_ptr = 0;
+ 313   2              break;
+ 314   2          
+ 315   2          case 9: /* etherStatsUndersizePkts */
+ 316   2              GET_ETHER_STATS_UNDERSIZE_PKTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 317   2              break;
+ 318   2          
+ 319   2          case 10: /* etherStatsOversizePkts */
+ 320   2              GET_ETHER_STATS_OVERSIZE_PKTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 321   2              break;
+ 322   2          
+ 323   2          case 11: /* etherStatsFragments */
+ 324   2              GET_ETHER_STATS_FRAGMENTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 325   2              break;
+ 326   2          
+ 327   2          case 12: /* etherStatsJabbers */
+ 328   2              GET_ETHER_STATS_JABBERS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 329   2              break;
+ 330   2          
+ 331   2          case 13: /* etherStatsCollisions */
+ 332   2              GET_ETHER_STATS_COLLISIONS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 333   2              break;
+ 334   2          
+ 335   2          case 14: /* etherStatsPkts64Octets */
+ 336   2              GET_ETHER_STATS_PKTS_64_OCTECTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 337   2              break;
+ 338   2          
+ 339   2          case 15: /* etherStatsPkts65To127Octets */
+ 340   2              GET_ETHER_STATS_PKTS_65TO127_OCTECTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 341   2              break;
+ 342   2          
+ 343   2          case 16:/* etherStatsPkts128To255Octets */
+ 344   2              GET_ETHER_STATS_PKTS_128TO255_OCTECTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 345   2              break;
+ 346   2          
+ 347   2          case 17:/* etherStatsPkts256To511Octets */
+ 348   2              GET_ETHER_STATS_PKTS_256TO511_OCTECTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 349   2              break;
+ 350   2          
+ 351   2          case 18:/* etherStatsPkts512To1023Octets */
+ 352   2              GET_ETHER_STATS_PKTS_512TO1023_OCTECTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr))
+             -;
+ 353   2              break;
+ 354   2          
+ 355   2          case 19:/* etherStatsPkts1024To1518Octets */
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 7   
+
+ 356   2              GET_ETHER_STATS_PKTS_1024TO1518_OCTECTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr)
+             -);
+ 357   2              break;
+ 358   2          
+ 359   2        case 20:/* etherStatsOwner */
+ 360   2          ocstrncpy(value, &rmon_stat_owner[index - 1][0], len);
+ 361   2          break;
+ 362   2          
+ 363   2        case 21:/* etherStatsStatus */
+ 364   2          *int_ptr = rmon_stat_status[index - 1];
+ 365   2          break;
+ 366   2          
+ 367   2        default:
+ 368   2          *int_ptr = 0;
+ 369   2          }
+ 370   1      
+ 371   1      }
+ 372          
+ 373          /*
+ 374           * Function: rmon_stat_set_test
+ 375           * ----------------------------
+ 376           * Tests write permission for RMON statistics objects.
+ 377           * Allows writing to etherStatsStatus (id=21) and etherStatsOwner (id=20).
+ 378           * Validates owner string length (<64 characters).
+ 379           */
+ 380          u8_t rmon_stat_set_test(struct obj_def *od, u16_t len, void *value) reentrant
+ 381          {
+ 382   1          u8_t id, set_ok;
+ 383   1      
+ 384   1          if (len)
+ 385   1          {
+ 386   2          }
+ 387   1          if (value)
+ 388   1          {
+ 389   2          }
+ 390   1          set_ok = 0;
+ 391   1          id = od->id_inst_ptr[0];
+ 392   1          if ((id == 21))
+ 393   1              set_ok = 1;
+ 394   1          else if (id == 20)
+ 395   1          {
+ 396   2              if (len < 64)
+ 397   2                  set_ok = 1;
+ 398   2          }
+ 399   1      
+ 400   1          return set_ok;
+ 401   1      }
+ 402          
+ 403          /*
+ 404           * Function: rmon_stat_set_value
+ 405           * -----------------------------
+ 406           * Writes values to RMON statistics entry objects.
+ 407           * Sets etherStatsOwner and etherStatsStatus.
+ 408           * Updates global arrays for owner string and status.
+ 409           */
+ 410          void rmon_stat_set_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 411          {
+ 412   1          u8_t id;
+ 413   1          u8_t index;
+ 414   1          s32_t *sint_ptr = value;
+ 415   1          if (len)
+ 416   1          {
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 8   
+
+ 417   2          }
+ 418   1          id = od->id_inst_ptr[0];
+ 419   1          index = od->id_inst_ptr[1];
+ 420   1      
+ 421   1          DBG_SNMP_PRINTF(("index %bd id %bd *sint_ptr ld \n", index, id, *sint_ptr));
+ 422   1      
+ 423   1          //if (id==2)
+ 424   1          // {
+ 425   1          //     rmon_stat_datasource[index-1]= *sint_ptr;
+ 426   1          // }
+ 427   1          // else 
+ 428   1          if (id == 21)
+ 429   1          {
+ 430   2              rmon_stat_status[index - 1] = *sint_ptr;
+ 431   2          }
+ 432   1          else if (id == 20)
+ 433   1          {
+ 434   2              rmon_stat_owner_len[index - 1] = len;
+ 435   2              ocstrncpy(&rmon_stat_owner[index - 1][0], value, len);
+ 436   2          }
+ 437   1      }
+ 438          
+ 439          /*
+ 440           * Function: mib2_rmon_init
+ 441           * ------------------------
+ 442           * Initializes RMON MIB (RFC2819) statistics tables.
+ 443           * Sets owner name to PROJECT_NAME, status to 0.
+ 444           * Builds datasource OID for each port (ifIndex).
+ 445           * Inserts statistics entry for each interface.
+ 446           */
+ 447          void mib2_rmon_init(void)
+ 448          {
+ 449   1          u8_t xdata i;
+ 450   1          DBG_SNMP_PRINTF(("\nmib2_rmon_init\n"));
+ 451   1          
+ 452   1        for(i=0;i<INTERFACE_NUMBER;i++)
+ 453   1        {
+ 454   2          strcpy(rmon_stat_owner[i], PROJECT_NAME);
+ 455   2          rmon_stat_owner_len[i] = (u8_t)strlen(rmon_stat_owner[i]);
+ 456   2          rmon_stat_status[i] = 0;
+ 457   2          rmon_stat_datasource[i].len = 11;
+ 458   2          /* 1.3.6.1.2.1.2.2.1.1.x */
+ 459   2          rmon_stat_datasource[i].id[0] = 1UL;
+ 460   2          rmon_stat_datasource[i].id[1] = 3UL;
+ 461   2          rmon_stat_datasource[i].id[2] = 6UL;
+ 462   2          rmon_stat_datasource[i].id[3] = 1UL;
+ 463   2          rmon_stat_datasource[i].id[4] = 2UL;
+ 464   2          rmon_stat_datasource[i].id[5] = 1UL;
+ 465   2          rmon_stat_datasource[i].id[6] = 2UL;
+ 466   2          rmon_stat_datasource[i].id[7] = 2UL;
+ 467   2          rmon_stat_datasource[i].id[8] = 1UL;
+ 468   2          rmon_stat_datasource[i].id[9] = 1UL;
+ 469   2          rmon_stat_datasource[i].id[10] = (uint32)(i+1);
+ 470   2          
+ 471   2          snmp_insert_statsidx_tree(i+1);
+ 472   2        }
+ 473   1      
+ 474   1      }
+ 475          
+ 476          #endif /* end of LWPS_SNMP_RMON */
+ 477          
+ 478          #endif /* end of LWPS_SNMP */
+C51 COMPILER V9.60.0.0   RMON                                                              11/02/2026 17:57:45 PAGE 9   
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2657    ----
+   CONSTANT SIZE    =      9    ----
+   XDATA SIZE       =   2765       4
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    210    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,85 @@
+C51 COMPILER V9.60.0.0   BASE64                                                            11/02/2026 17:57:30 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BASE64
+OBJECT MODULE PLACED IN .\objects\base64.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\web\base64.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INT
+                    -VECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;.
+                    -.\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_AP
+                    -I_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82
+                    -l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\base64.lst) TABS(2) OBJECT(.\objects\base64.obj)
+
+line level    source
+
+   1          /*
+   2           *  Third Party module: Web Encryption Algorithm
+   3           */
+   4          #include <common_types.h>
+   5          #include <local/config.h>
+   6          #include "base64.h"
+   7          
+   8          #if WEB_ENABLE
+   9          
+  10          #define MAX_INPUT_LENGTH        (16 + 1 + 8 + 1)
+  11          #define MAX_OUTPUT_LENGTH       (MAX_INPUT_LENGTH * 2)
+  12          
+  13          /*
+  14           * Translation Table as described in RFC1113
+  15           */
+  16          uint8 const far cb64[]="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+  17          static char _base64_output[MAX_OUTPUT_LENGTH];
+  18          
+  19          /*
+  20           * encodeblock()
+  21           *
+  22           * encode 3 8-bit binary bytes as 4 '6-bit' characters
+  23           */
+  24          // Encode Block: Converts 3 binary bytes into 4 Base64 characters
+  25          // Splits 24 bits into four 6-bit groups and maps to Base64 alphabet
+  26          static void encodeblock( unsigned char in[3], unsigned char out[4], int len )
+  27          {
+  28   1          out[0] = cb64[ in[0] >> 2 ];
+  29   1          out[1] = cb64[ ((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4) ];
+  30   1          out[2] = (unsigned char) (len > 1 ? cb64[ ((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6) ] : '=');
+  31   1          out[3] = (unsigned char) (len > 2 ? cb64[ in[2] & 0x3f ] : '=');
+  32   1      }
+  33          
+  34          // Base64 Encode: Encodes input data as Base64 string
+  35          // Processes input bytes in chunks of 3 and returns encoded Base64 output
+  36          unsigned char* base64_encode( unsigned char *input, int length )
+  37          {
+  38   1          unsigned char i;
+  39   1      
+  40   1          if (length > MAX_INPUT_LENGTH)
+  41   1              return NULL;
+  42   1      
+  43   1          for (i=0; (i*3)<length; i++)
+  44   1          {
+  45   2              encodeblock(input + (i*3), &_base64_output[i*4], ((length - (i*3)) >= 3)? 3 : (length - (i*3)));
+  46   2          }
+  47   1          _base64_output[i*4] = '\0';
+  48   1      
+  49   1          return _base64_output;
+  50   1      }
+  51          
+C51 COMPILER V9.60.0.0   BASE64                                                            11/02/2026 17:57:30 PAGE 2   
+
+  52          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    491    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     52      14
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     65    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

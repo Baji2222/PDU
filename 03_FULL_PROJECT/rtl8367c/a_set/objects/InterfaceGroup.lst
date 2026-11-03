@@ -1,0 +1,677 @@
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE INTERFACEGROUP
+OBJECT MODULE PLACED IN .\objects\InterfaceGroup.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\snmp\mib\InterfaceGroup.c LARGE OMF2 OPTIMIZE(8,SIZ
+                    -E) BROWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..
+                    -\common\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_S
+                    -UPPORT,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,
+                    -COMPATIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\InterfaceGroup.lst) TABS(2) OBJECT(.\objects\Inter
+                    -faceGroup.obj)
+
+line level    source
+
+   1          /*
+   2          * Copyright (c)                  Realtek Semiconductor Corporation, 2008  
+   3          * All rights reserved.
+   4          * 
+   5          * Abstract : RTL8213M Media Converter,  rfc2863
+   6          * 
+   7          *$Id: rfc2863.c,v 1.1 2008/06/20 08:53:35 yajin_zhou Exp $
+   8          */
+   9          #include <local/config.h>
+  10          #include <salport.h>
+  11          #include <snmp/mib/InterfaceGroup.h>
+  12          #include <snmp/mib/mib.h>
+  13          #include <snmp/snmp_debug.h>
+  14          #include <snmp/snmp.h>
+  15          #if !defined(SAL_REPLACE)
+              #include <local/rtk_sal_mib.h>
+              #else
+  18          #include <snmp/mib_glue.h>
+*** WARNING C322 IN LINE 165 OF ..\..\common\include\snmp/mib_glue.h: unknown identifier
+  19          #endif
+  20          
+  21          
+  22          #if LWPS_SNMP
+  23          
+  24          #if LWPS_SNMP_INTERFACE_GROUP
+  25          
+  26          /* SNMP ifHighSpeed */
+  27          #define PORT_STATUS_SPEED_10M       (10UL)
+  28          #define PORT_STATUS_SPEED_100M      (100UL)
+  29          #define PORT_STATUS_SPEED_1000M     (1000UL)
+  30          
+  31          /* SNMP ifConnectorPresent */
+  32          #define PORT_STATUS_LINK_UP         (1)
+  33          #define PORT_STATUS_LINK_DOWN       (2)
+  34          
+  35          /* ifMIB.ifMIBObjects.ifXTable.ifXEntry .1.3.6.1.2.1.31.1.1 */
+  36          struct mib_list_rootnode xdata ifXTable_root = {
+  37            &ifXTable_get_object_def,
+  38            &ifXTable_get_value,
+  39            &ifXTable_set_test,
+  40            &ifXTable_set_value,
+  41            MIB_NODE_LR,
+  42            0,
+  43            NULL,
+  44            NULL,
+  45            0
+  46          };
+  47          far const s32_t ifXentry_ids[19] = {
+  48            1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+  49            11, 12, 13, 14, 15, 16, 17, 18, 19
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 2   
+
+  50          };
+  51          far struct mib_node *const ifXentry_nodes[19] = {
+  52            (struct mib_node *) &ifXTable_root,
+  53            (struct mib_node *) &ifXTable_root,
+  54            (struct mib_node *) &ifXTable_root,
+  55            (struct mib_node *) &ifXTable_root,
+  56            (struct mib_node *) &ifXTable_root,
+  57            (struct mib_node *) &ifXTable_root,
+  58            (struct mib_node *) &ifXTable_root,
+  59            (struct mib_node *) &ifXTable_root,
+  60            (struct mib_node *) &ifXTable_root,
+  61            (struct mib_node *) &ifXTable_root,
+  62            (struct mib_node *) &ifXTable_root,
+  63            (struct mib_node *) &ifXTable_root,
+  64            (struct mib_node *) &ifXTable_root,
+  65            (struct mib_node *) &ifXTable_root,
+  66            (struct mib_node *) &ifXTable_root,
+  67            (struct mib_node *) &ifXTable_root,
+  68            (struct mib_node *) &ifXTable_root,
+  69            (struct mib_node *) &ifXTable_root,
+  70            (struct mib_node *) &ifXTable_root
+  71          };
+  72          far const struct mib_array_node ifXentry = {
+  73            &noleafs_get_object_def,
+  74            &noleafs_get_value,
+  75            &noleafs_set_test,
+  76            &noleafs_set_value,
+  77            MIB_NODE_AR,
+  78            19,
+  79            ifXentry_ids,
+  80            ifXentry_nodes
+  81          };
+  82          
+  83          /* ifMIB.ifMIBObjects.ifXTable .1.3.6.1.2.1.31.1.1 */
+  84          far const s32_t ifXTable_ids[1] =  { 1 };
+  85          far struct mib_node *const ifXTable_nodes[1] = {
+  86            (struct mib_node * const) &ifXentry
+  87          };
+  88          struct mib_ram_array_node xdata ifXTable = {
+  89            &noleafs_get_object_def,
+  90            &noleafs_get_value,
+  91            &noleafs_set_test,
+  92            &noleafs_set_value,
+  93            MIB_NODE_RA,
+  94            1,
+  95            ifXTable_ids,
+  96            ifXTable_nodes
+  97          };
+  98          
+  99          
+ 100          /* ifMIB.ifMIBObjects .1.3.6.1.2.1.31.1 */
+ 101          /* 6 subitems for RFC2863, only support 1 */
+ 102          far const s32_t ifMIBObjects_ids[1] = { 1};
+ 103          far struct mib_node *const ifMIBObjects_nodes[1] = {
+ 104            (struct mib_node *) &ifXTable,
+ 105          };
+ 106          far const struct mib_array_node ifMIBObjects = {
+ 107            &noleafs_get_object_def,
+ 108            &noleafs_get_value,
+ 109            &noleafs_set_test,
+ 110            &noleafs_set_value,
+ 111            MIB_NODE_AR,
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 3   
+
+ 112            1, /* 6 for RFC2863 */
+ 113            ifMIBObjects_ids,
+ 114            ifMIBObjects_nodes
+ 115          };
+ 116          
+ 117          mib_scalar_node xdata ifMIBObjects_scalar;
+ 118          
+ 119          
+ 120          /* ifMIB .1.3.6.1.2.1.31 */
+ 121          far const s32_t ifMIB_ids[1] = { 1 };
+ 122          far struct mib_node *const ifMIB_nodes[1] = {
+ 123            (struct mib_node *) &ifMIBObjects
+ 124          };
+ 125          struct mib_array_node ifMIB = {
+ 126            &noleafs_get_object_def,
+ 127            &noleafs_get_value,
+ 128            &noleafs_set_test,
+ 129            &noleafs_set_value,
+ 130            MIB_NODE_AR,
+ 131            1,
+ 132            ifMIB_ids,
+ 133            ifMIB_nodes
+ 134          };
+ 135          
+ 136          u32_t xdata ifPromiscuousMode[COMBO_PORT_NUM];
+ 137          u8_t xdata ifAlias[COMBO_PORT_NUM][CONFIG_SNMP_IF_ALIAS_LENGTH];
+ 138          u8_t xdata ifAliasLen[COMBO_PORT_NUM];
+ 139          
+ 140          /*
+ 141           * Function: snmp_inc_ifXTable
+ 142           * ---------------------------
+ 143           * Inserts a node into ifXTable for SNMP traversal.
+ 144           * Adds one entry to enable getnext operations.
+ 145           * Sets maxlength to 1 for table access.
+ 146           */
+ 147          void snmp_inc_ifXTable(void)
+ 148          {
+ 149   1          struct mib_list_node *if_node = NULL;
+ 150   1      
+ 151   1          snmp_mib_node_insert(&ifXTable_root, ifXTable_root.count + 1, &if_node);
+ 152   1          /* enable getnext traversal on filled table */
+ 153   1          ifXTable.maxlength = 1;
+ 154   1      
+ 155   1      }
+ 156          
+ 157          /*
+ 158           * Function: ifXTable_get_object_def
+ 159           * ---------------------------------
+ 160           * Defines ifXTable entry objects for interface extension MIB.
+ 161           * Handles ifName, ifInMulticastPkts, ifInBroadcastPkts, ifHCInOctets, etc.
+ 162           * Sets ASN.1 types and access rights for each OID.
+ 163           */
+ 164          void ifXTable_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 165          {
+ 166   1          u8_t xdata id;
+ 167   1          u8_t xdata index;
+ 168   1      
+ 169   1        DBG_SNMP_PRINTF(("[%s][%d]\n", __FILE__, (uint16)__LINE__));
+ 170   1      
+ 171   1        index = od->id_inst_ptr[1];
+ 172   1        
+ 173   1          /* return to object name, adding index depth (1) */
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 4   
+
+ 174   1          ident_len += 1;
+ 175   1          ident -= 1;
+ 176   1          if (ident_len == 2)
+ 177   1          {
+ 178   2              od->id_inst_len = ident_len;
+ 179   2              od->id_inst_ptr = ident;
+ 180   2      
+ 181   2              id = ident[0];
+ 182   2      
+ 183   2              DBG_SNMP_PRINTF(("ifXTable_get_object_def %" U16_F "\n", (u16_t) id));
+ 184   2              switch (id)
+ 185   2              {
+ 186   3      
+ 187   3              case 1:
+ 188   3                  od->instance = MIB_OBJECT_TAB;
+ 189   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 190   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
+ 191   3            if( index>=10 )
+ 192   3            {
+ 193   4                    od->v_len = 6;
+ 194   4            }
+ 195   3            else
+ 196   3            {
+ 197   4              od->v_len = 5;
+ 198   4            }
+ 199   3                  break;
+ 200   3      
+ 201   3              case 2:
+ 202   3              case 3:
+ 203   3              case 4:
+ 204   3              case 5:
+ 205   3                  od->instance = MIB_OBJECT_TAB;
+ 206   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 207   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 208   3                  od->v_len = sizeof(u32_t);
+ 209   3                  break;
+ 210   3              case 6:
+ 211   3              case 10:
+ 212   3                  od->instance = MIB_OBJECT_TAB;
+ 213   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 214   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER64);
+ 215   3                  od->v_len = sizeof(u32_t) + sizeof(u32_t);
+ 216   3                  break;
+ 217   3              case 7:
+ 218   3              case 8:
+ 219   3              case 9:
+ 220   3              case 11:
+ 221   3              case 12:
+ 222   3              case 13:
+ 223   3                  od->instance = MIB_OBJECT_TAB;
+ 224   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 225   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 226   3                  od->v_len = sizeof(u32_t);
+ 227   3                  break;
+ 228   3      
+ 229   3              case 14:
+ 230   3                  od->instance = MIB_OBJECT_TAB;
+ 231   3                  od->access = MIB_OBJECT_READ_WRITE;
+ 232   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 233   3                  od->v_len = sizeof(u32_t);
+ 234   3                  break;
+ 235   3      
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 5   
+
+ 236   3              case 15:
+ 237   3                  od->instance = MIB_OBJECT_TAB;
+ 238   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 239   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_GAUGE);
+ 240   3                  od->v_len = sizeof(u32_t);
+ 241   3                  break;
+ 242   3      
+ 243   3              case 16:
+ 244   3                  od->instance = MIB_OBJECT_TAB;
+ 245   3                  od->access = MIB_OBJECT_READ_WRITE;
+ 246   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 247   3                  od->v_len = sizeof(u32_t);
+ 248   3                  break;
+ 249   3              case 17:
+ 250   3                  od->instance = MIB_OBJECT_TAB;
+ 251   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 252   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 253   3                  od->v_len = sizeof(u32_t);
+ 254   3                  break;
+ 255   3      
+ 256   3              case 18:
+ 257   3                  od->instance = MIB_OBJECT_TAB;
+ 258   3                  od->access = MIB_OBJECT_READ_WRITE;
+ 259   3                  od->asn_type = (SNMP_ASN1_UNIV | SNMP_ASN1_PRIMIT | SNMP_ASN1_OC_STR);
+ 260   3                  od->v_len = ifAliasLen[ident[1] - 1];
+ 261   3                  break;
+ 262   3              case 19:
+ 263   3                  od->instance = MIB_OBJECT_TAB;
+ 264   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 265   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_TIMETICKS);
+ 266   3                  od->v_len = sizeof(u32_t);
+ 267   3                  break;
+ 268   3      
+ 269   3      
+ 270   3              default:
+ 271   3                  DBG_SNMP_PRINTF(("ifXTable_get_object_def: no such object\n"));
+ 272   3                  od->instance = MIB_OBJECT_NONE;
+ 273   3                  break;
+ 274   3      
+ 275   3      
+ 276   3              }
+ 277   2      
+ 278   2          }
+ 279   1          else
+ 280   1          {
+ 281   2              DBG_SNMP_PRINTF(("ifXTable_get_object_def: no scalar\n"));
+ 282   2              od->instance = MIB_OBJECT_NONE;
+ 283   2          }
+ 284   1      }
+ 285          
+ 286          /*
+ 287           * Function: ifXTable_get_value
+ 288           * ----------------------------
+ 289           * Retrieves ifXTable entry values for interface extension statistics.
+ 290           * Returns ifName, multicast/broadcast counters, HC counters, speed, link status.
+ 291           * Uses GET_IF_* macros to retrieve counter values.
+ 292           */
+ 293          void ifXTable_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 294          {
+ 295   1          u8_t xdata index;
+ 296   1          u8_t xdata id;
+ 297   1        u8_t xdata tmp[3];
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 6   
+
+ 298   1        u8_t *u8_ptr = value;
+ 299   1          sal_port_macStatus_t status;
+ 300   1      
+ 301   1      
+ 302   1          /*kill keil warning */
+ 303   1          if (len)
+ 304   1          {
+ 305   2          }
+ 306   1      
+ 307   1      
+ 308   1          index = od->id_inst_ptr[1];
+ 309   1          id = od->id_inst_ptr[0];
+ 310   1      
+ 311   1        tmp[2] = '\0';
+ 312   1          switch (id)
+ 313   1          {
+ 314   2          case 1:
+ 315   2              {
+ 316   3            //ocstrncpy(value, "port", len);
+ 317   3            u8_ptr[0] = 'p';
+ 318   3            u8_ptr[1] = 'o';
+ 319   3            u8_ptr[2] = 'r';
+ 320   3            u8_ptr[3] = 't';
+ 321   3            if( index >= 10)
+ 322   3            {
+ 323   4              tmp[0] = (index/10)+'0';
+ 324   4              tmp[1] = (index%10)+'0';
+ 325   4            }
+ 326   3            else
+ 327   3            {
+ 328   4              tmp[0] = (index)+'0';
+ 329   4              tmp[1] = '\0';
+ 330   4            }
+ 331   3            if( (len-4) < ((u16_t)0xFFF0U) )
+ 332   3            {
+ 333   4              ocstrncpy(value+4, tmp, len-4);
+ 334   4            }
+ 335   3              }
+ 336   2              break;
+ 337   2          case 2:
+ 338   2              {
+ 339   3                  u32_t *xdata uint_ptr = value;
+ 340   3      
+ 341   3                  /*ifInMulticastPkts */
+ 342   3            GET_IF_IN_MULTICAST_PKTS( ((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 343   3              }
+ 344   2              break;
+ 345   2          case 3:
+ 346   2              {
+ 347   3                  u32_t *xdata uint_ptr = value;
+ 348   3      
+ 349   3                  /*ifInBroadcastPkts */
+ 350   3                  GET_IF_IN_BROADCAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 351   3      
+ 352   3              }
+ 353   2              break;
+ 354   2      
+ 355   2      
+ 356   2          case 4:
+ 357   2              {
+ 358   3                  u32_t *xdata uint_ptr = value;
+ 359   3      
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 7   
+
+ 360   3                  /*ifOutMulticastPkts */
+ 361   3            GET_IF_OUT_MULTICAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 362   3              }
+ 363   2              break;
+ 364   2      
+ 365   2          case 5:
+ 366   2              {
+ 367   3                  u32_t *xdata uint_ptr = value;
+ 368   3      
+ 369   3                  /*ifOutBroadcastPkts */
+ 370   3            GET_IF_OUT_BROADCAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 371   3              }
+ 372   2              break;
+ 373   2      
+ 374   2          case 6:                    /*ifHCInOctets */
+ 375   2              {
+ 376   3                  u32_t *xdata uint_ptr = value;
+ 377   3                  u32_t xdata value64[2];
+ 378   3      
+ 379   3                  /* ifHCInOctets */
+ 380   3            GET_IF_HC_IN_OCTETS(((u8_t)index-1), ((u8_t)(sizeof(u32_t)*2)), ((u8_t*)value64));
+ 381   3                 uncpy((u32_t *) value, (u32_t *) value64, 2);
+ 382   3              }
+ 383   2              break;
+ 384   2      
+ 385   2          case 7:
+ 386   2              {
+ 387   3                  u32_t  *xdata uint_ptr = value;
+ 388   3                  /*ifHCInUcastPkts */
+ 389   3                  GET_IF_HC_IN_UCAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 390   3              }
+ 391   2              break;
+ 392   2      
+ 393   2      
+ 394   2          case 8:
+ 395   2              {
+ 396   3                  u32_t  *xdata uint_ptr = value;
+ 397   3      
+ 398   3                  /*ifHCInMulticastPkts */
+ 399   3                  GET_IF_HC_IN_MULTICAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 400   3              }
+ 401   2              break;
+ 402   2      
+ 403   2          case 9:
+ 404   2              {
+ 405   3                 u32_t  *xdata uint_ptr = value;
+ 406   3                  /*ifHCInBroadcastPkts */
+ 407   3                  GET_IF_HC_IN_BROADCAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 408   3              }
+ 409   2              break;
+ 410   2          case 10:                   /*ifHCOutOctets */
+ 411   2              {
+ 412   3                  u32_t xdata value64[2];
+ 413   3                  /*ifHCOutOctets */
+ 414   3                  GET_IF_HC_OUT_OCTETS(((u8_t)index-1), ((u8_t)(sizeof(u32_t)*2)), ((u8_t*)value64));
+ 415   3                  uncpy((u32_t *) value, (u32_t *) value64, 2);
+ 416   3      
+ 417   3              }
+ 418   2              break;
+ 419   2      
+ 420   2          case 11:
+ 421   2              {
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 8   
+
+ 422   3                  u32_t  *xdata uint_ptr = value;
+ 423   3      
+ 424   3                  /*ifHCOutUcastPkts */
+ 425   3                  GET_IF_HC_OUT_UCAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 426   3              }
+ 427   2              break;
+ 428   2      
+ 429   2      
+ 430   2          case 12:
+ 431   2              {
+ 432   3                  u32_t  *xdata uint_ptr = value;
+ 433   3                  /*ifHCOutMulticastPkts */
+ 434   3                  GET_IF_HC_OUT_MULTICAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 435   3              }
+ 436   2              break;
+ 437   2      
+ 438   2          case 13:
+ 439   2              {
+ 440   3                  u32_t  *xdata uint_ptr = value;
+ 441   3                  /*ifHCOutBroadcastPkts */
+ 442   3                  GET_IF_HC_OUT_BROADCAST_PKTS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 443   3              }
+ 444   2              break;
+ 445   2      
+ 446   2          case 14:
+ 447   2              {
+ 448   3                  u32_t *xdata uint_ptr = value;
+ 449   3      #if LWPS_SNMP_TRAP_ENABLE
+ 450   3                  u8_t  enable;
+ 451   3                  snmp_linkUpdownTrap_get_enable(((u8_t)index-1), &enable);
+ 452   3                  if(SAL_ENABLED == enable)
+ 453   3                     *uint_ptr = 1;
+ 454   3                  else
+ 455   3                     *uint_ptr = 2; 
+ 456   3      #else
+                          *uint_ptr = 2;
+              #endif
+ 459   3              }
+ 460   2              break;
+ 461   2      
+ 462   2      
+ 463   2          case 15:
+ 464   2              {
+ 465   3                  u32_t *xdata uint_ptr = value;
+ 466   3                  sal_port_macStatus_get(index-1, &status);
+ 467   3      
+ 468   3                  //*uint_ptr = (u32_t)GET_PORT_SPEED( ((u8_t)index-1) );
+ 469   3      
+ 470   3                  if (status.speed == SAL_PORT_SPEED_10) 
+ 471   3                  {
+ 472   4              *uint_ptr = PORT_STATUS_SPEED_10M;
+ 473   4            }
+ 474   3            else if (status.speed == SAL_PORT_SPEED_100) 
+ 475   3                  {
+ 476   4              *uint_ptr = PORT_STATUS_SPEED_100M;
+ 477   4            }
+ 478   3            else if (status.speed == SAL_PORT_SPEED_1000) 
+ 479   3                  {
+ 480   4              *uint_ptr = PORT_STATUS_SPEED_1000M;
+ 481   4            }
+ 482   3                  else
+ 483   3                  {
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 9   
+
+ 484   4                      *uint_ptr = 0;
+ 485   4                  }
+ 486   3      
+ 487   3              }
+ 488   2              break;
+ 489   2      
+ 490   2          case 16:
+ 491   2              {
+ 492   3                  u32_t *xdata uint_ptr = value;
+ 493   3                  *uint_ptr = ifPromiscuousMode[index - 1];
+ 494   3              }
+ 495   2              break;
+ 496   2      
+ 497   2          case 17:
+ 498   2              {
+ 499   3                  u32_t *xdata uint_ptr = value;
+ 500   3                  sal_port_macStatus_get(index-1, &status);
+ 501   3                  if( SAL_DISABLED==status.linkup )
+ 502   3                  {
+ 503   4                      *uint_ptr = (u32_t)( PORT_STATUS_LINK_DOWN );
+ 504   4                  }
+ 505   3                  else
+ 506   3                  {
+ 507   4                      *uint_ptr = (u32_t)( PORT_STATUS_LINK_UP );
+ 508   4                  }
+ 509   3      
+ 510   3              }
+ 511   2              break;
+ 512   2      
+ 513   2          case 18:
+ 514   2              {
+ 515   3                  ocstrncpy(value, &ifAlias[index - 1][0], len);
+ 516   3              }
+ 517   2              break;
+ 518   2      
+ 519   2          case 19:
+ 520   2              {
+ 521   3      
+ 522   3                  u32_t *xdata uint_ptr = value;
+ 523   3                  *uint_ptr = linkChangeTime[index-1];
+ 524   3              }
+ 525   2              break;
+ 526   2      
+ 527   2          }
+ 528   1      
+ 529   1      
+ 530   1      }
+ 531          
+ 532          /*
+ 533           * Function: ifXTable_set_test
+ 534           * ---------------------------
+ 535           * Tests write permission for ifXTable objects.
+ 536           * Validates ifLinkUpDownTrapEnable (1/2), ifPromiscuousMode (1/2), ifAlias (<64 chars).
+ 537           * Returns 1 if write allowed, 0 if denied.
+ 538           */
+ 539          u8_t ifXTable_set_test(struct obj_def *od, u16_t len, void *value) reentrant
+ 540          {
+ 541   1          u8_t id, set_ok;
+ 542   1          xdata u32_t *xdata int_ptr = value;
+ 543   1      
+ 544   1      
+ 545   1          if (len)
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 10  
+
+ 546   1          {
+ 547   2          }
+ 548   1          if (value)
+ 549   1          {
+ 550   2          }
+ 551   1          set_ok = 0;
+ 552   1          id = od->id_inst_ptr[0];
+ 553   1          switch (id)
+ 554   1          {
+ 555   2      #if LWPS_SNMP_TRAP_ENABLE
+ 556   2           case 14:
+ 557   2              if ((*int_ptr == 1) || (*int_ptr == 2))
+ 558   2                  set_ok = 1;    
+ 559   2              break;
+ 560   2      #endif
+ 561   2          
+ 562   2          case 16:
+ 563   2              if ((*int_ptr == 1) || (*int_ptr == 2))
+ 564   2                  set_ok = 1;
+ 565   2              break;
+ 566   2      
+ 567   2          case 18:
+ 568   2              if (len < 64)
+ 569   2                  set_ok = 1;
+ 570   2              break;
+ 571   2          }
+ 572   1          return set_ok;
+ 573   1      
+ 574   1      
+ 575   1      }
+ 576          
+ 577          /*
+ 578           * Function: ifXTable_set_value
+ 579           * ----------------------------
+ 580           * Writes values to ifXTable entry objects.
+ 581           * Sets ifLinkUpDownTrapEnable, ifPromiscuousMode, ifAlias.
+ 582           * Updates global arrays for alias and promiscuous mode.
+ 583           */
+ 584          void ifXTable_set_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 585          {
+ 586   1          u8_t id, index;
+ 587   1          u32_t *uint_ptr = value;
+ 588   1      #if LWPS_SNMP_TRAP_ENABLE
+ 589   1          u8_t enable;
+ 590   1      #endif
+ 591   1            
+ 592   1          if (len)
+ 593   1          {
+ 594   2          }
+ 595   1          id = od->id_inst_ptr[0];
+ 596   1          index = od->id_inst_ptr[1];
+ 597   1          switch (id)
+ 598   1          {
+ 599   2      #if LWPS_SNMP_TRAP_ENABLE
+ 600   2           case 14:  
+ 601   2              if(*uint_ptr == 2)
+ 602   2                  enable = SAL_DISABLED;
+ 603   2              else
+ 604   2                  enable = SAL_ENABLED;
+ 605   2              snmp_linkUpdownTrap_set_enable(((u8_t)index-1),enable);
+ 606   2              break;
+ 607   2      #endif
+C51 COMPILER V9.60.0.0   INTERFACEGROUP                                                    11/02/2026 17:57:44 PAGE 11  
+
+ 608   2      
+ 609   2          case 16:
+ 610   2              ifPromiscuousMode[index - 1] = *uint_ptr;
+ 611   2              break;
+ 612   2      
+ 613   2          case 18:
+ 614   2      
+ 615   2              ifAliasLen[index - 1] = len;
+ 616   2              ocstrncpy(&ifAlias[index - 1][0], value, len);
+ 617   2              break;
+ 618   2          }
+ 619   1      
+ 620   1      }
+ 621          
+ 622          #endif /* end of LWPS_SNMP_INTERFACE_GROUP */
+ 623          
+ 624          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3032    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =    458       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    196    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

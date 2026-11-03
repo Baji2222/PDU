@@ -1,0 +1,169 @@
+C51 COMPILER V9.60.0.0   WEB_GREENETH                                                      11/02/2026 17:57:32 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_GREENETH
+OBJECT MODULE PLACED IN .\objects\web_greeneth.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_greeneth.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0
+                    -X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\com
+                    -mon\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,S
+                    -AL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G
+                    -,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_greeneth.lst) TABS(2) OBJECT(.\objects\web_greeneth.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * $Revision$
+   6           * $Date$
+   7           *
+   8           * Purpose : The handler of HTTP request to green ethernet function
+   9           *
+  10           * Feature : Response the related request of green ethernet function
+  11           *
+  12           */
+  13          #pragma STRING (far)
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdlib.h>
+  19          
+  20          #include <salerror.h>
+  21          #include <salgreeneth.h>
+  22          #include <salsys.h>
+  23          #include <web/http_types.h>
+  24          #include <web/web_api.h>
+  25          
+  26          #include <local/web_config.h>
+  27          
+  28          #if __WEB_GREENETH__
+  29          
+  30          /*
+  31           * Function Declaration
+  32           */
+  33          
+  34          /*
+  35           * Function: get_greeneth
+  36           * ----------------------
+  37           * Displays Green Ethernet configuration page.
+  38           * Reads current Green Ethernet enable/disable state.
+  39           * Renders HTML with dropdown showing current state.
+  40           * Highlights selected option (Enable/Disable) in dropdown.
+  41           */
+  42          int32 get_greeneth(struct http_request_s *pReq)
+  43          {
+  44   1          sal_enable_t gr_enable;
+  45   1          
+  46   1      //    WEB_BEGIN(pReq);
+  47   1      
+  48   1      //    WEB_STATUS(pReq, HTTP_STATUS_OK);
+  49   1      //    WEB_HEADER(pReq, "Content-Type: text/html");
+  50   1      
+  51   1      //    WEB_PRINTF(pReq, "<html>\n");
+C51 COMPILER V9.60.0.0   WEB_GREENETH                                                      11/02/2026 17:57:32 PAGE 2   
+
+  52   1      //    WEB_PRINTF(pReq, "<head>\n");
+  53   1      //    WEB_PRINTF(pReq, "<title>Green Ethernet Setting</title>\n");
+  54   1      //    WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+  55   1      //    WEB_PRINTF(pReq, "</head>\n");
+  56   1      //    WEB_PRINTF(pReq, "\n");
+  57   1      //    WEB_PRINTF(pReq, "<body>\n");
+  58   1      //    WEB_PRINTF(pReq, "<center>\n");
+  59   1      //    WEB_PRINTF(pReq, "\n");
+  60   1      //    WEB_PRINTF(pReq, "<fieldset>\n");
+  61   1      //    WEB_PRINTF(pReq, "<legend>Green Ethernet Setting</legend>\n");
+  62   1      //    WEB_PRINTF(pReq, "<form method=\"post\" name=\"greeneth\" action=\"/greeneth.cgi\">\n");
+  63   1      
+  64   1      //    WEB_PRINTF(pReq, "<br>\n");
+  65   1      //    WEB_PRINTF(pReq, "<table border=\"1\">\n");
+  66   1      //    WEB_PRINTF(pReq, "  <tr>\n");
+  67   1      //    WEB_PRINTF(pReq, "    <th width=\"200\">Green Ethernet</th>\n");
+  68   1      
+  69   1      //    WEB_PRINTF(pReq, "      <td width=\"150\">\n");
+  70   1      //    WEB_PRINTF(pReq, "        <select name=\"state\" style=\"width:150\">\n");
+  71   1      
+  72   1      //    sal_greenEth_enable_get(&gr_enable);
+  73   1      
+  74   1      //    if(SAL_ENABLED == gr_enable)
+  75   1          {
+  76   2      //        WEB_PRINTF(pReq, "      <option value=\"0\" >Disable \n");                
+  77   2      //        WEB_PRINTF(pReq, "      <option value=\"1\" selected >Enable \n");
+  78   2          }
+  79   1      //    else
+  80   1          {
+  81   2      //        WEB_PRINTF(pReq, "      <option value=\"0\" selected >Disable \n");                
+  82   2      //        WEB_PRINTF(pReq, "      <option value=\"1\" >Enable \n");    
+  83   2          }
+  84   1          
+  85   1      //    WEB_PRINTF(pReq, "        </select>\n");
+  86   1      //    WEB_PRINTF(pReq, "      </td>\n");
+  87   1      
+  88   1      //    WEB_PRINTF(pReq, "  </tr>\n");
+  89   1      //    WEB_PRINTF(pReq, "</table>\n");
+  90   1      //    WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+  91   1      //    WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+  92   1      //    WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"green\">\n");
+  93   1      //    WEB_PRINTF(pReq, "</form>\n");
+  94   1      //    WEB_PRINTF(pReq, "</fieldset>\n");
+  95   1      //    WEB_PRINTF(pReq, "</center>\n");
+  96   1      //    WEB_PRINTF(pReq, "</body>\n");
+  97   1      //    WEB_PRINTF(pReq, "</html>\n");
+  98   1      
+  99   1          WEB_END(pReq);
+ 100   1      
+ 101   1          return SUCCESS;
+ 102   1      }
+*** WARNING C280 IN LINE 44 OF ..\src\web\web_greeneth.c: 'gr_enable': unreferenced local variable
+ 103          
+ 104          /*
+ 105           * Function: post_greeneth
+ 106           * -----------------------
+ 107           * Processes Green Ethernet configuration form submission.
+ 108           * Extracts 'state' value from POST data (0=Disable, 1=Enable).
+ 109           * Calls sal_greenEth_enable_set() to apply the setting.
+ 110           * Redirects back to GET handler to refresh the page.
+ 111           */
+ 112          int32 post_greeneth(struct http_request_s *pReq)
+C51 COMPILER V9.60.0.0   WEB_GREENETH                                                      11/02/2026 17:57:32 PAGE 3   
+
+ 113          {
+ 114   1          uint8           *pValue;
+ 115   1          uint8           enable;
+ 116   1      
+ 117   1          WEB_VAR(pReq, "state", &pValue);
+ 118   1          if (pValue) {
+ 119   2              enable = atoi(pValue);
+ 120   2          }
+ 121   1      
+ 122   1          if(enable)
+ 123   1              sal_greenEth_enable_set(SAL_ENABLED);
+ 124   1          else
+ 125   1              sal_greenEth_enable_set(SAL_DISABLED);
+ 126   1      
+ 127   1          
+ 128   1          get_greeneth(pReq);
+ 129   1      
+ 130   1          return SUCCESS;
+ 131   1      }
+ 132          
+ 133          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    109    ----
+   CONSTANT SIZE    =      6    ----
+   XDATA SIZE       =   ----       8
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =      6    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

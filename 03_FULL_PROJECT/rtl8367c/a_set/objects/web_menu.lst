@@ -1,0 +1,396 @@
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_MENU
+OBJECT MODULE PLACED IN .\objects\web_menu.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_menu.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_menu.lst) TABS(2) OBJECT(.\objects\web_menu.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          
+   3          #include <web/web_api.h>
+   4          #include <web/web_err.h>
+   5          #include <web/http_debug.h>
+   6          
+   7          #include "web_menu.h"
+   8          
+   9          //uint8 const far htm_menu[] = "\
+*** WARNING C329 IN LINE 9 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+  10          //<html>\n\
+  11          //<head>\n\
+  12          //<title>Menu</title>\n\
+  13          //<STYLE type=\"text/css\">\n\
+  14          //*{margin:0;padding:0;box-sizing:border-box}\n\
+  15          //body{font-size:13px;font-family:sans-serif;background:#f0f0f0;height:100vh;overflow:hidden}\n\
+  16          //.header{display:flex;align-items:center;background:#0f1a2b;padding:0 25px;height:70px;width:100%;positio
+             -n:fixed;top:0;left:0;z-index:100;border-bottom:2px solid #00d4ff}\n\
+  17          //.logo-container{flex:0 0 auto;margin-right:20px}\n\
+  18          //.logo-container img{height:45px;vertical-align:middle}\n\
+  19          //.title-container{flex:1;text-align:center;color:#fff;font-size:22px;font-weight:700;letter-spacing:4px;t
+             -ext-transform:uppercase}\n\
+  20          //.title-container span{color:#00d4ff}\n\
+  21          //.header-status{display:flex;align-items:center;gap:15px;font-size:11px;color:#8899b4}\n\
+  22          //.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#00ff88}\n\
+  23          //.sidebar{position:fixed;top:70px;left:0;width:220px;height:calc(100vh - 70px);background:#0f1a2b;overflo
+             -w-y:auto;z-index:50;border-right:1px solid #1a2f44}\n\
+  24          //.sidebar ul{list-style:none;margin:0;padding:10px 0}\n\
+  25          //.sidebar ul li{border-bottom:1px solid rgba(26,47,68,0.5);position:relative}\n\
+  26          //.sidebar ul li a{display:block;color:#8899b4;padding:14px 20px 14px 25px;text-decoration:none;font-size:
+             -13px;font-weight:500}\n\
+  27          //.sidebar ul li a:hover{color:#fff;background:rgba(0,212,255,0.05);padding-left:30px}\n\
+  28          //.sidebar ul li.active a{color:#00d4ff;background:rgba(0,212,255,0.08)}\n\
+  29          //.sidebar ul ul{display:none;background:rgba(0,0,0,0.2);padding:0}\n\
+  30          //.sidebar ul ul li{border-bottom:1px solid rgba(26,47,68,0.3)}\n\
+  31          //.sidebar ul ul li a{padding:12px 20px 12px 40px;font-size:12px;color:#6a7b94}\n\
+  32          //.sidebar ul ul li a:hover{color:#fff;padding-left:45px}\n\
+  33          //.sidebar ul li:hover>ul{display:block}\n\
+  34          //.sidebar-footer{position:absolute;bottom:0;left:0;width:100%;padding:15px 20px;background:#0a0e17;border
+             --top:1px solid #1a2f44}\n\
+  35          //.sidebar-footer .model{color:#00d4ff;font-weight:600;font-size:11px;margin-bottom:3px}\n\
+  36          //.sidebar-footer .fw{color:#4a5a72;font-size:10px}\n\
+  37          //.content-container{position:fixed;top:70px;left:220px;width:calc(100% - 220px);height:calc(100vh - 70px)
+             -;background:#fff;overflow:hidden}\n\
+  38          //iframe{width:100%;height:100%;border:none;display:block;background:#fff}\n\
+  39          //.sidebar::-webkit-scrollbar{width:4px}\n\
+  40          //.sidebar::-webkit-scrollbar-track{background:#0f1a2b}\n\
+  41          //.sidebar::-webkit-scrollbar-thumb{background:#00d4ff;border-radius:2px}\n\
+  42          //</STYLE>\n\
+  43          //<script>\n\
+  44          //function h(){var a=document.getElementById('f').contentWindow.location.pathname,b=document.querySelector
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 2   
+
+             -All('.sidebar>ul>li>a');b.forEach(function(d){d.parentElement.classList.remove('active');var e=d.getAttribute('href');if
+             -(e===a||e===a.replace('./','')){d.parentElement.classList.add('active')}})}\n\
+  45          //window.onload=function(){setTimeout(h,300);document.getElementById('f').addEventListener('load',h)}\n\
+  46          //</script>\n\
+  47          //</head>\n\
+  48          //<body>\n\
+  49          //<div class=\"header\">\n\
+  50          //<div class=\"logo-container\"><a href='http://www.opplin.com' target='_blank'><img src='/logo.png' borde
+             -r=0 alt='OPL'></a></div>\n\
+  51          //<div class=\"title-container\"><span>SMART</span> PDU</div>\n\
+  52          //<div class=\"header-status\"><span class=\"status-dot\"></span><span>ONLINE</span><span style=\"color:#3
+             -a4a62;\">|</span><span>v1.03</span></div>\n\
+  53          //</div>\n\
+  54          //<div class=\"sidebar\">\n\
+  55          //<ul>\n\
+  56          //<li><a href=\"poe.cgi\" target=\"f\">PDU Dashboard</a></li>\n\
+  57          //<li><a href=\"info.cgi\" target=\"f\">Information</a></li>\n\
+  58          //<li><a href=\"ip.cgi\" target=\"f\">IP Setting</a></li>\n\
+  59          //<li><a href=\"vlan.cgi?page=static\" target=\"f\">Static VLAN</a></li>\n\
+  60          //<li><a href=\"vlan.cgi?page=port_based\" target=\"f\">VLAN Setting</a></li>\n\
+  61          //<li><a href=\"vlan.cgi?page=vlan_ip\" target=\"f\">VLAN IP</a></li>\n\
+  62          //<li><a href=\"user.cgi\" target=\"f\">User Account</a></li>\n\
+  63          //<li><a href=\"snmpsecurity.cgi?page=snmpsec\" target=\"f\">SNMP Settings</a></li>\n\
+  64          //<li><a href=\"#\">Tools</a>\n\
+  65          //<ul>\n\
+  66          //<li><a href=\"fwug.cgi\" target=\"f\">Firmware Upgrade</a></li>\n\
+  67          //<li><a href=\"config_back.cgi\" target=\"f\">Configuration Backup</a></li>\n\
+  68          //<li><a href=\"reset.cgi\" target=\"f\">Reset</a></li>\n\
+  69          //<li><a href=\"save.cgi\" target=\"f\">Save</a></li>\n\
+  70          //<li><a href=\"reboot.cgi\" target=\"f\">Reboot</a></li>\n\
+  71          //</ul>\n\
+  72          //</li>\n\
+  73          //</ul>\n\
+  74          //<div class=\"sidebar-footer\">\n\
+  75          //<div class=\"model\">MODEL:OPL-PDU8-C20</div>\n\
+  76          //<div class=\"fw\">FW:1.03.12212017</div>\n\
+  77          //</div>\n\
+  78          //</div>\n\
+  79          //<div class=\"content-container\">\n\
+  80          //<iframe id=\"f\" name=\"f\" src=\"poe.cgi\"></iframe>\n\
+  81          //</div>\n\
+  82          //</body>\n\
+  83          //</html>\n\
+  84          //";
+*** WARNING C329 IN LINE 10 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 11 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 12 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 13 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 14 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 15 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 16 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+  85          
+  86          
+  87          //uint8 const far htm_menu[] = "\
+*** WARNING C329 IN LINE 87 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+  88          //<html>\n\
+  89          //<head>\n\
+  90          //<title>Menu</title>\n\
+  91          //<STYLE type=\"text/css\">\n\
+  92          //*{margin:0;padding:0;box-sizing:border-box}\n\
+  93          //body{font-size:13px;font-family:sans-serif;background:#f0f0f0;height:100vh;overflow:hidden}\n\
+  94          //.header{display:flex;align-items:center;background:#0f1a2b;padding:0 25px;height:70px;width:100%;positio
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 3   
+
+             -n:fixed;top:0;left:0;z-index:100;border-bottom:2px solid #00d4ff}\n\
+  95          //.logo-container{flex:0 0 auto;margin-right:20px}\n\
+  96          //.logo-container img{height:45px;vertical-align:middle}\n\
+  97          //.title-container{flex:1;text-align:center;color:#fff;font-size:22px;font-weight:700;letter-spacing:4px;t
+             -ext-transform:uppercase}\n\
+  98          //.title-container span{color:#00d4ff}\n\
+  99          //.header-status{display:flex;align-items:center;gap:15px;font-size:11px;color:#8899b4}\n\
+ 100          //.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#00ff88}\n\
+ 101          //.sidebar{position:fixed;top:70px;left:0;width:220px;height:calc(100vh - 70px);background:#0f1a2b;overflo
+             -w-y:auto;z-index:50;border-right:1px solid #1a2f44}\n\
+ 102          //.sidebar ul{list-style:none;margin:0;padding:10px 0}\n\
+ 103          //.sidebar ul li{border-bottom:1px solid rgba(26,47,68,0.5);position:relative}\n\
+ 104          //.sidebar ul li a{display:block;color:#8899b4;padding:14px 20px 14px 25px;text-decoration:none;font-size:
+             -13px;font-weight:500;cursor:pointer}\n\
+ 105          //.sidebar ul li a:hover{color:#fff;background:rgba(0,212,255,0.05);padding-left:30px}\n\
+ 106          //.sidebar ul li.active a{color:#00d4ff;background:rgba(0,212,255,0.08)}\n\
+ 107          //.sidebar ul ul{display:none;background:rgba(0,0,0,0.2);padding:0}\n\
+ 108          //.sidebar ul ul li{border-bottom:1px solid rgba(26,47,68,0.3)}\n\
+ 109          //.sidebar ul ul li a{padding:12px 20px 12px 40px;font-size:12px;color:#6a7b94}\n\
+ 110          //.sidebar ul ul li a:hover{color:#fff;padding-left:45px}\n\
+ 111          //.sidebar ul li:hover>ul{display:block}\n\
+ 112          //.sidebar-footer{position:absolute;bottom:0;left:0;width:100%;padding:15px 20px;background:#0a0e17;border
+             --top:1px solid #1a2f44}\n\
+ 113          //.sidebar-footer .model{color:#00d4ff;font-weight:600;font-size:11px;margin-bottom:3px}\n\
+ 114          //.sidebar-footer .fw{color:#4a5a72;font-size:10px}\n\
+ 115          //.content-container{position:fixed;top:70px;left:220px;width:calc(100% - 220px);height:calc(100vh - 70px)
+             -;background:#fff;overflow:hidden}\n\
+ 116          //iframe{width:100%;height:100%;border:none;display:block;background:#fff}\n\
+ 117          //.sidebar::-webkit-scrollbar{width:4px}\n\
+ 118          //.sidebar::-webkit-scrollbar-track{background:#0f1a2b}\n\
+ 119          //.sidebar::-webkit-scrollbar-thumb{background:#00d4ff;border-radius:2px}\n\
+ 120          //</STYLE>\n\
+ 121          //<script>\n\
+ 122          //function setActive(li){\n\
+ 123          //    var items=document.querySelectorAll('.sidebar>ul>li');\n\
+ 124          //    items.forEach(function(i){i.classList.remove('active')});\n\
+ 125          //    if(li) li.classList.add('active');\n\
+ 126          //}\n\
+ 127          //function handleClick(e){\n\
+ 128          //    var a=e.target;\n\
+ 129          //    while(a.tagName!='A') a=a.parentElement;\n\
+ 130          //    var li=a.parentElement;\n\
+ 131          //    while(li.tagName!='LI') li=li.parentElement;\n\
+ 132          //    var parentLi=li.closest('.sidebar>ul>li');\n\
+ 133          //    if(parentLi) setActive(parentLi);\n\
+ 134          //    else setActive(li);\n\
+ 135          //}\n\
+ 136          //function highlightCurrent(){\n\
+ 137          //    var f=document.getElementById('f');\n\
+ 138          //    if(!f||!f.contentWindow)return;\n\
+ 139          //    try{\n\
+ 140          //        var url=f.contentWindow.location.pathname+f.contentWindow.location.search;\n\
+ 141          //        var items=document.querySelectorAll('.sidebar>ul>li');\n\
+ 142          //        items.forEach(function(li){\n\
+ 143          //            var a=li.querySelector('a');\n\
+ 144          //            if(!a)return;\n\
+ 145          //            var href=a.getAttribute('href');\n\
+ 146          //            if(href && href!='#' && url.indexOf(href)!==-1){\n\
+ 147          //                setActive(li);\n\
+ 148          //            }\n\
+ 149          //        });\n\
+ 150          //        var tools=document.querySelector('.sidebar>ul>li:last-child');\n\
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 4   
+
+ 151          //        if(tools){\n\
+ 152          //            var subItems=tools.querySelectorAll('ul li a');\n\
+ 153          //            subItems.forEach(function(a){\n\
+ 154          //                var href=a.getAttribute('href');\n\
+ 155          //                if(href && url.indexOf(href)!==-1){\n\
+ 156          //                    setActive(tools);\n\
+ 157          //                }\n\
+ 158          //            });\n\
+ 159          //        }\n\
+ 160          //    }catch(e){}\n\
+ 161          //}\n\
+ 162          //window.onload=function(){\n\
+ 163          //    var links=document.querySelectorAll('.sidebar>ul>li>a, .sidebar>ul>li>ul li a');\n\
+ 164          //    links.forEach(function(a){\n\
+ 165          //        a.addEventListener('click',handleClick);\n\
+ 166          //    });\n\
+ 167          //    setTimeout(highlightCurrent,200);\n\
+ 168          //    var f=document.getElementById('f');\n\
+ 169          //    if(f){\n\
+ 170          //        f.onload=function(){setTimeout(highlightCurrent,100);};\n\
+ 171          //    }\n\
+ 172          //};\n\
+ 173          //</script>\n\
+ 174          //</head>\n\
+ 175          //<body>\n\
+ 176          //<div class=\"header\">\n\
+ 177          //<div class=\"logo-container\"><a href='http://www.opplin.com' target='_blank'><img src='/logo.png' borde
+             -r=0 alt='OPL'></a></div>\n\
+ 178          //<div class=\"title-container\"><span>SMART</span> PDU</div>\n\
+ 179          //<div class=\"header-status\"><span class=\"status-dot\"></span><span>ONLINE</span><span style=\"color:#3
+             -a4a62;\">|</span><span>v1.03</span></div>\n\
+ 180          //</div>\n\
+ 181          //<div class=\"sidebar\">\n\
+ 182          //<ul>\n\
+ 183          //<li><a href=\"poe.cgi\" target=\"f\">PDU Dashboard</a></li>\n\
+ 184          //<li><a href=\"info.cgi\" target=\"f\">Information</a></li>\n\
+ 185          //<li><a href=\"ip.cgi\" target=\"f\">IP Setting</a></li>\n\
+ 186          //<li><a href=\"vlan.cgi?page=static\" target=\"f\">Static VLAN</a></li>\n\
+ 187          //<li><a href=\"vlan.cgi?page=port_based\" target=\"f\">VLAN Setting</a></li>\n\
+ 188          //<li><a href=\"vlan.cgi?page=vlan_ip\" target=\"f\">VLAN IP</a></li>\n\
+ 189          //<li><a href=\"user.cgi\" target=\"f\">User Account</a></li>\n\
+ 190          //<li><a href=\"snmpsecurity.cgi?page=snmpsec\" target=\"f\">SNMP Settings</a></li>\n\
+ 191          //<li><a href=\"#\">Tools</a>\n\
+ 192          //<ul>\n\
+ 193          //<li><a href=\"fwug.cgi\" target=\"f\">Firmware Upgrade</a></li>\n\
+ 194          //<li><a href=\"config_back.cgi\" target=\"f\">Configuration Backup</a></li>\n\
+ 195          //<li><a href=\"reset.cgi\" target=\"f\">Reset</a></li>\n\
+ 196          //<li><a href=\"save.cgi\" target=\"f\">Save</a></li>\n\
+ 197          //<li><a href=\"reboot.cgi\" target=\"f\">Reboot</a></li>\n\
+ 198          //</ul>\n\
+ 199          //</li>\n\
+ 200          //</ul>\n\
+ 201          //<div class=\"sidebar-footer\">\n\
+ 202          //<div class=\"model\">MODEL:OPL-PDU8-C20</div>\n\
+ 203          //<div class=\"fw\">FW:1.03.12212017</div>\n\
+ 204          //</div>\n\
+ 205          //</div>\n\
+ 206          //<div class=\"content-container\">\n\
+ 207          //<iframe id=\"f\" name=\"f\" src=\"poe.cgi\"></iframe>\n\
+ 208          //</div>\n\
+ 209          //</body>\n\
+ 210          //</html>\n\
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 5   
+
+ 211          //";
+*** WARNING C329 IN LINE 88 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 89 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 90 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 91 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 92 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 93 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+*** WARNING C329 IN LINE 94 OF ..\src\web\web_menu.c: single-line comment contains line-continuation
+ 212          
+ 213          
+ 214          
+ 215          
+ 216          
+ 217          uint8 const far htm_menu[] = "\
+ 218          <html><head><title>Menu</title><STYLE type=\"text/css\">\
+ 219          *{margin:0;padding:0;box-sizing:border-box}\
+ 220          body{font-size:13px;font-family:sans-serif;background:#f0f0f0;height:100vh;overflow:hidden}\
+ 221          .header{display:flex;align-items:center;background:#0f1a2b;padding:0 25px;height:70px;width:100%;position:
+             -fixed;top:0;left:0;z-index:100;border-bottom:2px solid #00d4ff}\
+ 222          .logo-container{flex:0 0 auto;margin-right:20px}\
+ 223          .logo-container img{height:45px;vertical-align:middle}\
+ 224          .title-container{flex:1;text-align:center;color:#fff;font-size:22px;font-weight:700;letter-spacing:4px;tex
+             -t-transform:uppercase}\
+ 225          .title-container span{color:#00d4ff}\
+ 226          .header-status{display:flex;align-items:center;gap:15px;font-size:11px;color:#8899b4}\
+ 227          .status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:#00ff88}\
+ 228          .sidebar{position:fixed;top:70px;left:0;width:220px;height:calc(100vh - 70px);background:#0f1a2b;overflow-
+             -y:auto;z-index:50;border-right:1px solid #1a2f44}\
+ 229          .sidebar ul{list-style:none;margin:0;padding:10px 0}\
+ 230          .sidebar ul li{border-bottom:1px solid rgba(26,47,68,0.5)}\
+ 231          .sidebar ul li a{display:block;color:#8899b4;padding:14px 20px 14px 25px;text-decoration:none;font-size:13
+             -px;font-weight:500;cursor:pointer}\
+ 232          .sidebar ul li a:hover{color:#fff;background:rgba(0,212,255,0.05);padding-left:30px}\
+ 233          .sidebar ul li.active>a{color:#00d4ff;background:rgba(0,212,255,0.08)}\
+ 234          .sidebar ul li.active>ul li a{color:#8899b4}\
+ 235          .sidebar ul li.active>ul li.active>a{color:#00d4ff;background:rgba(0,212,255,0.08)}\
+ 236          .sidebar ul ul{display:none;background:rgba(0,0,0,0.2);padding:0}\
+ 237          .sidebar ul ul li{border-bottom:1px solid rgba(26,47,68,0.3)}\
+ 238          .sidebar ul ul li a{padding:12px 20px 12px 40px;font-size:12px;color:#6a7b94}\
+ 239          .sidebar ul ul li a:hover{color:#fff;padding-left:45px}\
+ 240          .sidebar ul li:hover>ul{display:block}\
+ 241          .sidebar-footer{position:absolute;bottom:0;left:0;width:100%;padding:15px 20px;background:#0a0e17;border-t
+             -op:1px solid #1a2f44}\
+ 242          .sidebar-footer .model{color:#00d4ff;font-weight:600;font-size:11px;margin-bottom:3px}\
+ 243          .sidebar-footer .fw{color:#4a5a72;font-size:10px}\
+ 244          .content-container{position:fixed;top:70px;left:220px;width:calc(100% - 220px);height:calc(100vh - 70px);b
+             -ackground:#fff;overflow:hidden}\
+ 245          iframe{width:100%;height:100%;border:none;display:block;background:#fff}\
+ 246          .sidebar::-webkit-scrollbar{width:4px}\
+ 247          .sidebar::-webkit-scrollbar-track{background:#0f1a2b}\
+ 248          .sidebar::-webkit-scrollbar-thumb{background:#00d4ff;border-radius:2px}\
+ 249          </STYLE><script>\
+ 250          function sa(l){var i=document.querySelectorAll('.sidebar>ul>li');i.forEach(function(x){x.classList.remove(
+             -'active')});var s=document.querySelectorAll('.sidebar>ul>li>ul li');s.forEach(function(x){x.classList.remove('active')})
+             -;if(l)l.classList.add('active')}\
+ 251          function hc(e){var a=e.target;while(a.tagName!='A')a=a.parentElement;var l=a.parentElement;while(l.tagName
+             -!='LI')l=l.parentElement;var p=l.closest('.sidebar>ul>li');if(p){sa(p);if(l!==p)l.classList.add('active')}else sa(l)}\
+ 252          function hc2(){var f=document.getElementById('f');if(!f||!f.contentWindow)return;try{var u=f.contentWindow
+             -.location.pathname+f.contentWindow.location.search;var i=document.querySelectorAll('.sidebar>ul>li');i.forEach(function(
+             -l){var a=l.querySelector('a');if(!a)return;var h=a.getAttribute('href');if(h&&h!='#'&&u.indexOf(h)!==-1)sa(l)});var s=do
+             -cument.querySelectorAll('.sidebar>ul>li>ul li');s.forEach(function(l){var a=l.querySelector('a');if(!a)return;var h=a.ge
+             -tAttribute('href');if(h&&u.indexOf(h)!==-1){l.classList.add('active');var p=l.closest('.sidebar>ul>li');if(p)sa(p)}})}ca
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 6   
+
+             -tch(e){}}\
+ 253          window.onload=function(){var l=document.querySelectorAll('.sidebar>ul>li>a, .sidebar>ul>li>ul li a');l.for
+             -Each(function(a){a.addEventListener('click',hc)});setTimeout(hc2,200);var f=document.getElementById('f');if(f){f.onload=
+             -function(){setTimeout(hc2,100)}}};\
+ 254          </script></head><body>\
+ 255          <div class=\"header\"><div class=\"logo-container\"><a href='http://www.opplin.com' target='_blank'><img s
+             -rc='/logo.png' border=0 alt='OPL'></a></div><div class=\"title-container\"><span>SMART</span> PDU</div><div class=\"head
+             -er-status\"><span class=\"status-dot\"></span><span>ONLINE</span><span style=\"color:#3a4a62;\">|</span><span>v1.03</spa
+             -n></div></div>\
+ 256          <div class=\"sidebar\"><ul>\
+ 257          <li><a href=\"poe.cgi\" target=\"f\">PDU Dashboard</a></li>\
+ 258          <li><a href=\"info.cgi\" target=\"f\">Information</a></li>\
+ 259          <li><a href=\"ip.cgi\" target=\"f\">IP Setting</a></li>\
+ 260          <li><a href=\"vlan.cgi?page=get_rtc_config\" target=\"f\">RTC and Alarms</a></li>\
+ 261          <li><a href=\"vlan.cgi?page=set_rtc_alarm\"  target=\"f\">RTC Set Alarm</a></li>\
+ 262          <li><a href=\"vlan.cgi?page=set_rtc_data_alarm\" target=\"f\">RTC Set Time and Date</a></li>\
+ 263          <li><a href=\"user.cgi\" target=\"f\">User Account</a></li>\
+ 264          <li><a href=\"snmpsecurity.cgi?page=snmpsec\" target=\"f\">SNMP Settings</a></li>\
+ 265          <li><a href=\"#\">Tools</a><ul>\
+ 266          <li><a href=\"fwug.cgi\" target=\"f\">Firmware Upgrade</a></li>\
+ 267          <li><a href=\"config_back.cgi\" target=\"f\">Configuration Backup</a></li>\
+ 268          <li><a href=\"reset.cgi\" target=\"f\">Reset</a></li>\
+ 269          <li><a href=\"save.cgi\" target=\"f\">Save</a></li>\
+ 270          <li><a href=\"reboot.cgi\" target=\"f\">Reboot</a></li>\
+ 271          </ul></li></ul>\
+ 272          <div class=\"sidebar-footer\"><div class=\"model\">MODEL:OPL-PDU8-C20</div><div class=\"fw\">FW:1.03.12212
+             -017</div></div></div>\
+ 273          <div class=\"content-container\"><iframe id=\"f\" name=\"f\" src=\"poe.cgi\"></iframe></div>\
+ 274          </body></html>\
+ 275          ";
+ 276          
+ 277          /*
+ 278           * Function: get_menu
+ 279           * ------------------
+ 280           * Serves the main navigation menu page to the client.
+ 281           * Returns complete HTML with CSS styling and dropdown menus.
+ 282           * Sets Content-Type header for HTML and sends menu data.
+ 283           * Logs debug message when accessed.
+ 284           */
+ 285          int8 get_menu(struct http_request_s *pReq)
+ 286          {
+ 287   1          DBG_LWPS_HTTP_PRINTF(("-------get_menu()-------\n"));
+ 288   1      
+ 289   1          WEB_BEGIN(pReq);
+ 290   1      
+ 291   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 292   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 293   1      
+ 294   1          WEB_DATA(pReq, htm_menu, sizeof(htm_menu) - 1);
+ 295   1      
+ 296   1          WEB_END(pReq);
+ 297   1      
+ 298   1          return SUCCESS;
+ 299   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     97    ----
+   CONSTANT SIZE    =   5258    ----
+   XDATA SIZE       =   ----       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+C51 COMPILER V9.60.0.0   WEB_MENU                                                          11/02/2026 17:57:35 PAGE 7   
+
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   5258    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  16 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,142 @@
+C51 COMPILER V9.60.0.0   SALFLASH                                                          08/20/2025 22:07:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALFLASH
+OBJECT MODULE PLACED IN .\objects\salflash.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\sal\salflash.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;.
+                    -.\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\
+                    -local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_
+                    -625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\salflash.lst) TABS(2) OBJECT(.\objects\salflash.obj)
+
+line level    source
+
+   1          #include <salerror.h>
+   2          #include <salflash.h>
+   3          #include <salsys.h>
+   4          
+   5          #include <local/flash_api.h>
+   6          #include <local/sal_config.h>
+   7          #include <string.h>
+   8          #include <stdio.h>
+   9          
+  10          #define _SalFlshRead(var, addr, vartype)  FLASH_READ((uint32)addr, (int8 *)var, sizeof(vartype))
+  11          
+  12          static uint32 config_offset = 0;
+  13          
+  14          int32
+  15          SalFlshGetInitOKMark (
+  16              uint32 *    pulMark
+  17              )
+  18          {
+  19   1          sal_flash_beginMark_t   stFlshMark;
+  20   1      
+  21   1          _SalFlshRead(&stFlshMark, FLSH_ADDR_SIGNATURE, sal_flash_beginMark_t);
+  22   1          *pulMark = stFlshMark.signature;
+  23   1      
+  24   1          return SAL_ERR_SUCCESS;
+  25   1      }
+  26          
+  27          void SalFlshCopyFlshToCache(void)
+  28          {
+  29   1          memset(&configCache, 0x00, sizeof(ConfigCache));
+  30   1          FLASH_READ((uint32)(config_offset + FLSH_CONFIG_ADDR_START), (int8 *)&configCache, FLSH_ADDR_END - FLS
+             -H_CONFIG_ADDR_START);
+  31   1      }
+  32          
+  33          int32
+  34          sal_flash_sysIp_get (
+  35              sal_ipaddr_t *pIp,
+  36              sal_ipaddr_t *pNetmask
+  37              )
+  38          {
+  39   1          sal_flash_sysInfo_t stFlshSys;
+  40   1      
+  41   1          _SalFlshRead(&stFlshSys, config_offset + FLSH_ADDR_SYS, sal_flash_sysInfo_t);
+  42   1          *pIp = stFlshSys.ip;
+  43   1          *pNetmask = stFlshSys.netmask;
+  44   1          return SAL_ERR_SUCCESS;
+  45   1      }
+  46          
+  47          int32
+  48          sal_flash_sysGateway_get (
+  49              sal_ipaddr_t *pGateway
+  50              )
+  51          {
+C51 COMPILER V9.60.0.0   SALFLASH                                                          08/20/2025 22:07:56 PAGE 2   
+
+  52   1          sal_flash_sysInfo_t stFlshSys;
+  53   1      
+  54   1          if (pGateway == NULL)
+  55   1              return SAL_ERR_NULL_POINTER;
+  56   1      
+  57   1          _SalFlshRead(&stFlshSys, config_offset + FLSH_ADDR_SYS, sal_flash_sysInfo_t);
+  58   1          *pGateway = stFlshSys.gateway;
+  59   1          return SAL_ERR_SUCCESS;
+  60   1      }
+  61          #if 0
+              int32
+              sal_flash_sysMac_set (
+                  sal_mac_t *pMac
+                  )
+              {
+                  uint8 xdata buf[100];
+              
+                  if (NULL == pMac)
+                      return SAL_ERR_NULL_POINTER;
+              
+                  /* read MAC and serial number */    
+                  FLASH_READ((uint32)(FLSH_NVDATA_START), buf, sizeof(buf));
+                  /* keep serial number and replace MAC part */
+                  memcpy(&buf[0],pMac->octet,ETHER_ADDR_LEN);
+                  
+                  FLASH_ERASE_SECTOR(FLSH_NVDATA_START);
+                  FLASH_WRITE((uint32)FLSH_NVDATA_START, buf, sizeof(buf));
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+  83          int32
+  84          sal_flash_sysMac_get (
+  85              sal_mac_t *pMac
+  86              )
+  87          {
+  88   1      
+  89   1          uint8 xdata buf[6];
+  90   1          memset(buf,0,sizeof(buf));
+  91   1          FLASH_READ((uint32)(FLSH_NVDATA_MAC), buf, sizeof(buf));
+  92   1          memcpy(pMac->octet, &buf[0], sizeof(buf));
+  93   1      
+  94   1          return SAL_ERR_SUCCESS;
+  95   1      }
+  96          
+  97          int32
+  98          sal_flash_vlan_enable_get (
+  99              sal_enable_t *pEnable
+ 100              )
+ 101          {
+ 102   1          sal_flash_vlan_t flashVlan;
+ 103   1          _SalFlshRead(&flashVlan, FLSH_ADDR_VLAN, sal_flash_vlan_t);
+ 104   1          *pEnable = flashVlan.enable;
+ 105   1          return SAL_ERR_SUCCESS;
+ 106   1      }
+ 107          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    403    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      4     139
+C51 COMPILER V9.60.0.0   SALFLASH                                                          08/20/2025 22:07:56 PAGE 3   
+
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

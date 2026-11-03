@@ -1,0 +1,638 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_MIB
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_mib.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_mib.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE
+                    - INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\s
+                    -al;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RT
+                    -K_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBL
+                    -E_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_mib.lst) TABS(2) OBJECT(.\objects\rtl8367c
+                    -_asicdrv_mib.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : MIB related functions
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_mib.h>
+  20          /* Function Name:
+  21           *      rtl8367c_setAsicMIBsCounterReset
+  22           * Description:
+  23           *      Reset global/queue manage or per-port MIB counter
+  24           * Input:
+  25           *      greset  - Global reset
+  26           *      qmreset - Queue maganement reset
+  27           *      portmask    - Port reset mask
+  28           * Output:
+  29           *      None
+  30           * Return:
+  31           *      RT_ERR_OK               - Success
+  32           *      RT_ERR_SMI              - SMI access error
+  33           * Note:
+  34           *      None
+  35           */
+  36          ret_t rtl8367c_setAsicMIBsCounterReset(uint32 greset, uint32 qmreset, uint32 portmask)
+  37          {
+  38   1          ret_t retVal;
+  39   1          uint32 regData;
+  40   1          uint32 regBits;
+  41   1      
+  42   1          regBits = RTL8367C_GLOBAL_RESET_MASK |
+  43   1                      RTL8367C_QM_RESET_MASK |
+  44   1                          RTL8367C_MIB_PORT07_MASK |
+  45   1                          ((uint32)0x7 << 13);
+  46   1          regData = ((greset << RTL8367C_GLOBAL_RESET_OFFSET) & RTL8367C_GLOBAL_RESET_MASK) |
+  47   1                      ((qmreset << RTL8367C_QM_RESET_OFFSET) & RTL8367C_QM_RESET_MASK) |
+  48   1                      (((portmask & 0xFF) << RTL8367C_PORT0_RESET_OFFSET) & RTL8367C_MIB_PORT07_MASK) |
+  49   1                      (((portmask >> 8)&0x7) << 13);
+  50   1      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 2   
+
+  51   1      
+  52   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_MIB_CTRL0, regBits, (regData >> RTL8367C_PORT0_RESET_OFF
+             -SET));
+  53   1      
+  54   1          return retVal;
+  55   1      }
+  56          /* Function Name:
+  57           *      rtl8367c_getAsicMIBsCounter
+  58           * Description:
+  59           *      Get MIBs counter
+  60           * Input:
+  61           *      port        - Physical port number (0~7)
+  62           *      mibIdx      - MIB counter index
+  63           *      pCounter    - MIB retrived counter
+  64           * Output:
+  65           *      None
+  66           * Return:
+  67           *      RT_ERR_OK               - Success
+  68           *      RT_ERR_SMI              - SMI access error
+  69           *      RT_ERR_PORT_ID          - Invalid port number
+  70           *      RT_ERR_BUSYWAIT_TIMEOUT - MIB is busy at retrieving
+  71           *      RT_ERR_STAT_CNTR_FAIL   - MIB is resetting
+  72           * Note:
+  73           *      Before MIBs counter retrieving, writting accessing address to ASIC at first and check the MIB
+  74           *      control register status. If busy bit of MIB control is set, that means MIB counter have been
+  75           *      waiting for preparing, then software must wait atfer this busy flag reset by ASIC. This driver
+  76           *      did not recycle reading user desired counter. Software must use driver again to get MIB counter
+  77           *      if return value is not RT_ERR_OK.
+  78           */
+  79          ret_t rtl8367c_getAsicMIBsCounter(uint32 port, RTL8367C_MIBCOUNTER mibIdx, uint32* pcounterH, uint32* pcou
+             -nterL)
+  80          {
+  81   1          ret_t retVal;
+  82   1          uint32 regAddr;
+  83   1          uint32 regData;
+  84   1          uint32 mibAddr;
+  85   1          uint32 mibOff=0;
+  86   1      
+  87   1          /* address offset to MIBs counter */
+  88   1          CONST uint16 mibLength[RTL8367C_MIBS_NUMBER]= {
+  89   1              4,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  90   1              4,2,2,2,2,2,2,2,2,
+  91   1              4,2,2,2,2,2,2,2,2,2,2,2,2,2,2,
+  92   1              2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2};
+  93   1      
+  94   1          uint16 i;
+  95   1          uint32 mibCounter;
+  96   1      
+  97   1      
+  98   1          if(port > RTL8367C_PORTIDMAX)
+  99   1              return RT_ERR_PORT_ID;
+ 100   1      
+ 101   1          if(mibIdx >= RTL8367C_MIBS_NUMBER)
+ 102   1              return RT_ERR_STAT_INVALID_CNTR;
+ 103   1      
+ 104   1          if(dot1dTpLearnedEntryDiscards == mibIdx)
+ 105   1          {
+ 106   2              mibAddr = RTL8367C_MIB_LEARNENTRYDISCARD_OFFSET;
+ 107   2          }
+ 108   1          else
+ 109   1          {
+ 110   2              i = 0;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 3   
+
+ 111   2              mibOff = RTL8367C_MIB_PORT_OFFSET * port;
+ 112   2      
+ 113   2              if(port > 7)
+ 114   2                  mibOff = mibOff + 68;
+ 115   2      
+ 116   2              while(i < mibIdx)
+ 117   2              {
+ 118   3                  mibOff += mibLength[i];
+ 119   3                  i++;
+ 120   3              }
+ 121   2      
+ 122   2              mibAddr = mibOff;
+ 123   2          }
+ 124   1      
+ 125   1      
+ 126   1          /*writing access counter address first*/
+ 127   1          /*This address is SRAM address, and SRAM address = MIB register address >> 2*/
+ 128   1          /*then ASIC will prepare 64bits counter wait for being retrived*/
+ 129   1          /*Write Mib related address to access control register*/
+ 130   1          retVal = rtl8367c_setAsicReg(RTL8367C_REG_MIB_ADDRESS, (mibAddr >> 2));
+ 131   1          if(retVal != RT_ERR_OK)
+ 132   1              return retVal;
+ 133   1      
+ 134   1      
+ 135   1      
+ 136   1          /* polling busy flag */
+ 137   1          i = 100;
+ 138   1          while(i > 0)
+ 139   1          {
+ 140   2              /*read MIB control register*/
+ 141   2              retVal = rtl8367c_getAsicReg(RTL8367C_MIB_CTRL_REG,&regData);
+ 142   2              if(retVal != RT_ERR_OK)
+ 143   2                  return retVal;
+ 144   2      
+ 145   2              if((regData & RTL8367C_MIB_CTRL0_BUSY_FLAG_MASK) == 0)
+ 146   2              {
+ 147   3                  break;
+ 148   3              }
+ 149   2      
+ 150   2              i--;
+ 151   2          }
+ 152   1      
+ 153   1          if(regData & RTL8367C_MIB_CTRL0_BUSY_FLAG_MASK)
+ 154   1              return RT_ERR_BUSYWAIT_TIMEOUT;
+ 155   1      
+ 156   1          if(regData & RTL8367C_RESET_FLAG_MASK)
+ 157   1              return RT_ERR_STAT_CNTR_FAIL;
+ 158   1      
+ 159   1          mibCounter = 0;
+ 160   1          i = mibLength[mibIdx];
+ 161   1          if(4 == i)
+ 162   1              regAddr = RTL8367C_MIB_COUNTER_BASE_REG + 3;
+ 163   1          else
+ 164   1              regAddr = RTL8367C_MIB_COUNTER_BASE_REG + ((mibOff + 1) % 4);
+ 165   1      
+ 166   1          while(i)
+ 167   1          {
+ 168   2              retVal = rtl8367c_getAsicReg(regAddr, &regData);
+ 169   2              if(retVal != RT_ERR_OK)
+ 170   2                  return retVal;
+ 171   2      
+ 172   2              mibCounter = (mibCounter << 16) | (regData & 0xFFFF);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 4   
+
+ 173   2      
+ 174   2              regAddr --;
+ 175   2              i --;
+ 176   2      
+ 177   2          if ( i == 2 )
+ 178   2              {
+ 179   3                  *pcounterH = mibCounter;
+ 180   3                  mibCounter = 0;
+ 181   3              }
+ 182   2      
+ 183   2              if ( i == 0 )
+ 184   2              {
+ 185   3                  *pcounterL = mibCounter;
+ 186   3              }
+ 187   2      
+ 188   2        }
+ 189   1      
+ 190   1          return RT_ERR_OK;
+ 191   1      }
+ 192          #if 0//NOT used
+              
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsLogCounter
+               * Description:
+               *      Get MIBs Loggin counter
+               * Input:
+               *      index       - The index of 32 logging counter (0 ~ 31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_ENTRY_INDEX      - Wrong index
+               *      RT_ERR_BUSYWAIT_TIMEOUT - MIB is busy at retrieving
+               *      RT_ERR_STAT_CNTR_FAIL   - MIB is resetting
+               * Note:
+               *      This API get 32 logging counter
+               */
+              ret_t rtl8367c_getAsicMIBsLogCounter(uint32 index, uint32 *pCounter)
+              {
+                  ret_t retVal;
+                  uint32 regAddr;
+                  uint32 regData;
+                  uint32 mibAddr;
+                  uint16 i;
+                  uint32 mibCounter;
+              
+                  if(index > RTL8367C_MIB_MAX_LOG_CNT_IDX)
+                      return RT_ERR_ENTRY_INDEX;
+              
+                  mibAddr = RTL8367C_MIB_LOG_CNT_OFFSET + ((index / 2) * 4);
+              
+                  retVal = rtl8367c_setAsicReg(RTL8367C_REG_MIB_ADDRESS, (mibAddr >> 2));
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                /*read MIB control register*/
+                retVal = rtl8367c_getAsicReg(RTL8367C_MIB_CTRL_REG, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  if(regData & RTL8367C_MIB_CTRL0_BUSY_FLAG_MASK)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 5   
+
+                      return RT_ERR_BUSYWAIT_TIMEOUT;
+              
+                  if(regData & RTL8367C_RESET_FLAG_MASK)
+                      return RT_ERR_STAT_CNTR_FAIL;
+              
+                  mibCounter = 0;
+                  if((index % 2) == 1)
+                      regAddr = RTL8367C_MIB_COUNTER_BASE_REG + 3;
+                  else
+                      regAddr = RTL8367C_MIB_COUNTER_BASE_REG + 1;
+              
+                  for(i = 0; i <= 1; i++)
+                  {
+                      retVal = rtl8367c_getAsicReg(regAddr, &regData);
+              
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+              
+                      mibCounter = (mibCounter << 16) | (regData & 0xFFFF);
+              
+                      regAddr --;
+                  }
+              
+                  *pCounter = mibCounter;
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsControl
+               * Description:
+               *      Get MIB control register
+               * Input:
+               *      pMask       - MIB control status mask bit[0]-busy bit[1]
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               * Note:
+               *      Software need to check this control register atfer doing port resetting or global resetting
+               */
+              ret_t rtl8367c_getAsicMIBsControl(uint32* pMask)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_MIB_CTRL_REG, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  *pMask = regData & (RTL8367C_MIB_CTRL0_BUSY_FLAG_MASK | RTL8367C_RESET_FLAG_MASK);
+              
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsResetValue
+               * Description:
+               *      Reset all counter to 0 or 1
+               * Input:
+               *      value           - Reset to value 0 or 1
+               * Output:
+               *      None
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 6   
+
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsResetValue(uint32 value)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_CTRL0, RTL8367C_RESET_VALUE_OFFSET, value);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsResetValue
+               * Description:
+               *      Reset all counter to 0 or 1
+               * Input:
+               *      value           - Reset to value 0 or 1
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMIBsResetValue(uint32* value)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_CTRL0, RTL8367C_RESET_VALUE_OFFSET, value);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsUsageMode
+               * Description:
+               *      MIB update mode
+               * Input:
+               *      mode            - 1: latch all MIBs by timer 0:normal free run counting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsUsageMode(uint32 mode)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_CTRL4, RTL8367C_MIB_USAGE_MODE_OFFSET, mode);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsUsageMode
+               * Description:
+               *      MIB update mode
+               * Input:
+               *      pMode           - 1: latch all MIBs by timer 0:normal free run counting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMIBsUsageMode(uint32* pMode)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 7   
+
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_CTRL4, RTL8367C_MIB_USAGE_MODE_OFFSET, pMode);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsTimer
+               * Description:
+               *      MIB latching timer
+               * Input:
+               *      timer           - latch timer, unit 1 second
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsTimer(uint32 timer)
+              {
+                  return rtl8367c_setAsicRegBits(RTL8367C_REG_MIB_CTRL4, RTL8367C_MIB_TIMER_MASK, timer);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsTimer
+               * Description:
+               *      MIB latching timer
+               * Input:
+               *      pTimer          - latch timer, unit 1 second
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMIBsTimer(uint32* pTimer)
+              {
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_MIB_CTRL4, RTL8367C_MIB_TIMER_MASK, pTimer);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsLoggingMode
+               * Description:
+               *      MIB logging counter mode
+               * Input:
+               *      index   - logging counter mode index (0~15)
+               *      mode    - 0:32-bits mode 1:64-bits mode
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_OUT_OF_RANGE     - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsLoggingMode(uint32 index, uint32 mode)
+              {
+                  if(index > RTL8367C_MIB_MAX_LOG_MODE_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_CTRL3, index,mode);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 8   
+
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsLoggingMode
+               * Description:
+               *      MIB logging counter mode
+               * Input:
+               *      index   - logging counter mode index (0~15)
+               *      pMode   - 0:32-bits mode 1:64-bits mode
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI        - SMI access error
+               *      RT_ERR_OUT_OF_RANGE   - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMIBsLoggingMode(uint32 index, uint32* pMode)
+              {
+                  if(index > RTL8367C_MIB_MAX_LOG_MODE_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_CTRL3, index,pMode);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsLoggingType
+               * Description:
+               *      MIB logging counter type
+               * Input:
+               *      index   - logging counter mode index (0~15)
+               *      type    - 0:Packet count 1:Byte count
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI        - SMI access error
+               *      RT_ERR_OUT_OF_RANGE   - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsLoggingType(uint32 index, uint32 type)
+              {
+                  if(index > RTL8367C_MIB_MAX_LOG_MODE_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_CTRL5, index,type);        
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicMIBsLoggingType
+               * Description:
+               *      MIB logging counter type
+               * Input:
+               *      index   - logging counter mode index (0~15)
+               *      pType   - 0:Packet count 1:Byte count
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_OUT_OF_RANGE     - input parameter out of range
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 9   
+
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMIBsLoggingType(uint32 index, uint32* pType)
+              {
+                  if(index > RTL8367C_MIB_MAX_LOG_MODE_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_CTRL5, index,pType);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsResetLoggingCounter
+               * Description:
+               *      MIB logging counter type
+               * Input:
+               *      index   - logging counter index (0~31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_OUT_OF_RANGE     - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsResetLoggingCounter(uint32 index)
+              {
+                  ret_t retVal;
+              
+                  if(index > RTL8367C_MIB_MAX_LOG_CNT_IDX)
+                      return RT_ERR_OUT_OF_RANGE;
+              
+                  if(index < 16)
+                      retVal = rtl8367c_setAsicReg(RTL8367C_REG_MIB_CTRL1, 1<<index);
+                  else
+                      retVal = rtl8367c_setAsicReg(RTL8367C_REG_MIB_CTRL2, 1<<(index-16));
+              
+                  return retVal;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsLength
+               * Description:
+               *      Set MIB length couting mode
+               * Input:
+               *      txLengthMode    - 0: tag length doesn't be counted. 1: tag length is counted.
+               *      rxLengthMode    - 0: tag length doesn't be counted. 1: tag length is counted.
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_OUT_OF_RANGE     - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMIBsLength(uint32 txLengthMode, uint32 rxLengthMode)
+              {
+                  ret_t retVal;
+              
+                  if( (retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_RMON_LEN_CTRL, RTL8367C_TX_LENGTH_CTRL_OFFSET, t
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_MIB                                              11/02/2026 17:57:20 PAGE 10  
+
+             -xLengthMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if( (retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_MIB_RMON_LEN_CTRL, RTL8367C_RX_LENGTH_CTRL_OFFSET, r
+             -xLengthMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMIBsLength
+               * Description:
+               *      Set MIB length couting mode
+               * Input:
+               *      None.
+               * Output:
+               *      pTxLengthMode - 0: tag length doesn't be counted. 1: tag length is counted.
+               *      pRxLengthMode - 0: tag length doesn't be counted. 1: tag length is counted.
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_OUT_OF_RANGE     - input parameter out of range
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicMIBsLength(uint32 *pTxLengthMode, uint32 *pRxLengthMode)
+              {
+                  ret_t retVal;
+              
+                  if( (retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_RMON_LEN_CTRL, RTL8367C_TX_LENGTH_CTRL_OFFSET, p
+             -TxLengthMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if( (retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_MIB_RMON_LEN_CTRL, RTL8367C_RX_LENGTH_CTRL_OFFSET, p
+             -RxLengthMode)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+ 582          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    920    ----
+   CONSTANT SIZE    =    118    ----
+   XDATA SIZE       =   ----     173
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

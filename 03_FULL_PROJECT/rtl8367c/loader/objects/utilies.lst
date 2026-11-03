@@ -1,0 +1,104 @@
+C51 COMPILER V9.60.0.0   UTILIES                                                           08/20/2025 22:07:53 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE UTILIES
+OBJECT MODULE PLACED IN .\objects\utilies.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\utilies.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..\inc
+                    -lude;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\local
+                    -;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_625,F
+                    -LASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\utilies.lst) TABS(2) OBJECT(.\objects\utilies.obj)
+
+line level    source
+
+   1          #include <local/config.h>
+   2          #include <reg_sfr.h>
+   3          
+   4          //#include "SPIFlashDrv.h"
+   5          //#include "NORFlashDrv.h"
+   6          #include <stdio.h>
+   7          
+   8          #include "common.h"
+   9          #include "asicreg.h"
+  10          
+  11          /* Functions */
+  12          #if 0
+              uint16 getReg(uint16 address)
+              {
+                uint16 xdata tmp;
+                EA  = 0;
+                  INDACC_ADDR_H = address / 0x100;
+                  INDACC_ADDR_L = address & 0xFF;
+                INDACC_CMD = 0x01;
+              
+                while( INDACC_STATUS != 0 ) 
+                  ;
+              
+                tmp = (uint16)((uint16)(INDACC_RDATA_H) << ((uint16)8)) | (uint16)INDACC_RDATA_L;
+                EA  = 1;
+                return tmp;
+              }
+              
+              void setReg(uint16 address, uint16 value)
+              {
+                  uint16 xdata tmp = 0;
+                EA  = 0;
+                  INDACC_ADDR_H = (uint8)(address / 0x100);
+                  INDACC_ADDR_L = (uint8)(address & 0xFF);
+                  INDACC_WDATA_H = (uint8)(value / 0x100);
+                  INDACC_WDATA_L = (uint8)(value & 0xFF);
+              
+                  INDACC_CMD = 0x03;
+              
+                while( INDACC_STATUS != 0)
+                  ;
+                EA  = 1;
+                return;
+              }
+              #endif /* */
+  46          
+  47          void change_clock(uint16 xdata value) large{
+  48   1        volatile uint32 xdata i;
+  49   1        for(i=0;i<0x100;i++);
+  50   1        if(value < 0x04) //8051 Clock >100Mhz
+  51   1        {
+  52   2            //if 8051 Clock >100Mhz, SPI flash access clock is divided to half 8051 Clock
+C51 COMPILER V9.60.0.0   UTILIES                                                           08/20/2025 22:07:53 PAGE 2   
+
+  53   2              setReg(DW8051_RDY, (DW8051_RDY_RATE(value)|(1<<8)) );
+  54   2        }
+  55   1        else
+  56   1          {
+  57   2              //if 8051 Clock < 100Mhz, SPI flash access clock is equal to 8051 Clock
+  58   2        setReg(DW8051_RDY, (DW8051_RDY_RATE(value)) );
+  59   2          }
+  60   1        for(i=0;i<65535;i++);
+  61   1        uart_init();
+  62   1        for(i=0;i<0x100;i++);
+  63   1      }
+  64          
+  65          void set_8051RDY() large{
+  66   1        volatile uint32 xdata tmp;
+  67   1        tmp = getReg(DW8051_RDY);
+  68   1      
+  69   1        setReg(DW8051_RDY, tmp |0x1);
+  70   1      }
+  71          
+  72          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    270    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      10
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,1108 @@
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_MAC
+OBJECT MODULE PLACED IN .\objects\web_mac.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_mac.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_mac.lst) TABS(2) OBJECT(.\objects\web_mac.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   3           * All rights reserved.
+   4           *
+   5           * $Revision$
+   6           * $Date$
+   7           *
+   8           * Purpose : The handler of HTTP request to MAC function
+   9           *
+  10           * Feature : Response the request related to MAC function
+  11           *
+  12           */
+  13          #pragma STRING (far)
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <string.h>
+  19          #include <stdio.h>
+  20          
+  21          #include <salflash.h>
+  22          #include <salutil.h>
+  23          #include <saltrunk.h>
+  24          #include <salflash.h>
+  25          #include <sall2.h>
+  26          #include <salsys.h>
+  27          
+  28          #include <web/web_api.h>
+  29          #include "web_mac.h"
+  30          #include "web_util.h"
+  31          
+  32          /*
+  33           * Symbol Definition
+  34           */
+  35          #define SET_GET_FLASH TRUE
+  36          #define ENTRY_STATIC             (1)
+  37          
+  38          /*
+  39           * Data Declaration
+  40           */
+  41          
+  42          
+  43          
+  44          /*
+  45           * Function Declaration
+  46           */
+  47          
+  48          /*
+  49           * Function: get_mac
+  50           * -----------------
+  51           * Placeholder handler for MAC page.
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 2   
+
+  52           * Currently displays simple text response.
+  53           * Can be extended for main MAC configuration.
+  54           */
+  55          int32 get_mac(struct http_request_s *pReq)
+  56          {
+  57   1          WEB_BEGIN(pReq);
+  58   1      
+  59   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  60   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  61   1      
+  62   1          WEB_PRINTF(pReq, "<html>\n");
+  63   1          WEB_PRINTF(pReq, "This is mac.cgi");
+  64   1          WEB_PRINTF(pReq, "</html>\n");
+  65   1      
+  66   1          WEB_END(pReq);
+  67   1      
+  68   1          return SUCCESS;
+  69   1      }
+  70          
+  71          /*
+  72           * Function: get_mac_forwardingtable
+  73           * ---------------------------------
+  74           * Displays MAC address forwarding table from SRAM.
+  75           * Reads all SRAM entries and filters CPU port entries.
+  76           * Shows MAC, VLAN ID, type (Static/Dynamic), and port mapping.
+  77           * Includes button to clear dynamic entries.
+  78           */
+  79          int32 get_mac_forwardingtable(struct http_request_s *pReq)
+  80          {
+  81   1          uint32              indx = 0;
+  82   1          sal_l2_type_t       type;
+  83   1          uint32              entryNum = 1;
+  84   1          sal_mac_t           mac;
+  85   1          uint8               macStr[128];
+  86   1          sal_vlan_t          fid;
+  87   1          sal_lPortmask_t     lportmask;
+  88   1          sal_pPortmask_t     portmask; 
+  89   1          uint8               portmaskStr[128];
+  90   1          uint8               bStatic;
+  91   1          uint8               staticStr[128];
+  92   1          
+  93   1          WEB_BEGIN(pReq);
+  94   1      
+  95   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  96   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  97   1      
+  98   1          WEB_PRINTF(pReq, "<html>\n");
+  99   1          WEB_PRINTF(pReq, "\n");
+ 100   1          WEB_PRINTF(pReq, "<head>\n");
+ 101   1          WEB_PRINTF(pReq, "<title>MAC Address Information</title>\n");
+ 102   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 103   1          WEB_PRINTF(pReq, "</head>\n");
+ 104   1          WEB_PRINTF(pReq, "\n");
+ 105   1          WEB_PRINTF(pReq, "<body>\n");
+ 106   1          WEB_PRINTF(pReq, "<center>\n");
+ 107   1          WEB_PRINTF(pReq, "\n");
+ 108   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 109   1          WEB_PRINTF(pReq, "<legend>MAC Address Information</legend>\n");
+ 110   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac.cgi?page=fwd_tbl\">\n");
+ 111   1          WEB_PRINTF(pReq, "<br>\n");
+ 112   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 113   1          WEB_PRINTF(pReq, "  <tr>\n");
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 3   
+
+ 114   1          WEB_PRINTF(pReq, "    <th width=\"35\">No.</th>\n");
+ 115   1          WEB_PRINTF(pReq, "    <th width=\"185\">MAC Address</th>\n");
+ 116   1          WEB_PRINTF(pReq, "    <th width=\"80\">VLAN ID</th>\n");
+ 117   1          WEB_PRINTF(pReq, "    <th width=\"165\">Type</th>\n");
+ 118   1          WEB_PRINTF(pReq, "    <th width=\"190\">Port</th>\n");
+ 119   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 120   1          
+ 121   1          for (indx = 0; indx < MAX_MAC_SRAM_ENTRY; indx++)
+ 122   1          {
+ 123   2              if(SUCCESS != sal_l2_sramEntry_get(indx, &mac, &fid, &bStatic, &type, &portmask))
+ 124   2                  continue;
+ 125   2      
+ 126   2              if (SAL_L2_UCAST != type)
+ 127   2              {
+ 128   3                  continue;
+ 129   3              }
+ 130   2      
+ 131   2              /* Exclude MAC Addresses learnt by CPU PORT */
+ 132   2              if(portmask.bits[0] & (1 << SAL_PORT_ID_CPU))
+ 133   2              {
+ 134   3                  continue;
+ 135   3              }
+ 136   2      
+ 137   2              mac_to_str(macStr, mac.octet);
+ 138   2      
+ 139   2              if (1 == bStatic)
+ 140   2                  strcpy(staticStr,  "Static");
+ 141   2              else
+ 142   2                  strcpy(staticStr,  "Dynamic");
+ 143   2      
+ 144   2              sal_lPortMask_delAll(&lportmask);
+ 145   2      
+ 146   2              sal_lPortMask_copyUL(&lportmask, &portmask.bits[0]);
+ 147   2      
+ 148   2              strcpy(portmaskStr, "");
+ 149   2      
+ 150   2              lmask_to_comma(portmaskStr, &lportmask);
+ 151   2      
+ 152   2              WEB_PRINTF(pReq, "  <tr>\n");
+ 153   2              WEB_PRINTF(pReq, "    <td align=\"center\">%d</td>\n", (uint16)entryNum);
+ 154   2              WEB_PRINTF(pReq, "    <td align=\"center\">%s</td>\n", macStr);
+ 155   2              WEB_PRINTF(pReq, "    <td align=\"center\">%d</td>\n", (uint16)fid);
+ 156   2              WEB_PRINTF(pReq, "    <td align=\"center\">%s</td>\n", staticStr);
+ 157   2              WEB_PRINTF(pReq, "    <td align=\"center\">%s</td>\n", portmaskStr);
+ 158   2              WEB_PRINTF(pReq, "  </tr>\n");
+ 159   2      
+ 160   2              entryNum++;
+ 161   2          }
+ 162   1      
+ 163   1          WEB_PRINTF(pReq, "</table>\n");
+ 164   1      
+ 165   1          WEB_PRINTF(pReq, "<br style=\"line-height:50%%\">\n");
+ 166   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"Clear Dynamic Entries\">\n");
+ 167   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"mactblclr\">\n");
+ 168   1          WEB_PRINTF(pReq, "</form>\n");
+ 169   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 170   1          WEB_PRINTF(pReq, "\n");
+ 171   1      
+ 172   1          WEB_PRINTF(pReq, "</center>\n");
+ 173   1          WEB_PRINTF(pReq, "</body>\n");
+ 174   1          WEB_PRINTF(pReq, "</html>\n");
+ 175   1      
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 4   
+
+ 176   1          WEB_END(pReq);
+ 177   1      
+ 178   1          return SUCCESS;
+ 179   1      }
+ 180          
+ 181          extern void sal_mac_dbg_dump(void);
+ 182          
+ 183          /*
+ 184           * Function: get_mac_search
+ 185           * ------------------------
+ 186           * Displays MAC address search page with input form.
+ 187           * Allows user to enter MAC address and VLAN ID for search.
+ 188           * Provides search button to find specific MAC entry.
+ 189           * Results are displayed on separate result page.
+ 190           */
+ 191          int32 get_mac_search(struct http_request_s *pReq)
+ 192          {
+ 193   1          WEB_BEGIN(pReq);
+ 194   1      
+ 195   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 196   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 197   1      
+ 198   1          WEB_PRINTF(pReq, "<html>\n");
+ 199   1          WEB_PRINTF(pReq, "\n");
+ 200   1          WEB_PRINTF(pReq, "<head>\n");
+ 201   1          WEB_PRINTF(pReq, "<title>MAC Addresses Searching</title>\n");
+ 202   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 203   1          WEB_PRINTF(pReq, "</head>\n");
+ 204   1          WEB_PRINTF(pReq, "\n");
+ 205   1          WEB_PRINTF(pReq, "<body>\n");
+ 206   1          WEB_PRINTF(pReq, "<center>\n");
+ 207   1          WEB_PRINTF(pReq, "\n");
+ 208   1      
+ 209   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 210   1          WEB_PRINTF(pReq, "<legend>MAC Addresses Searching</legend>\n");
+ 211   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac.cgi?page=search\">\n");
+ 212   1      
+ 213   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 214   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 215   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"150\">MAC Address</th>\n");
+ 216   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"90\">VLAN ID</th>\n");
+ 217   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 218   1      
+ 219   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 220   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" name=\"mac\" value=\"00:00:00:00:00:
+             -00\"></td>\n");
+ 221   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" size=\"5\" name=\"vlan\"> (1~4094)</
+             -td>\n");
+ 222   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 223   1          WEB_PRINTF(pReq, "  </table>\n");
+ 224   1      
+ 225   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 226   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Search \">\n");
+ 227   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"macsearch\">\n");
+ 228   1          WEB_PRINTF(pReq, "</form>\n");
+ 229   1      
+ 230   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 231   1          WEB_PRINTF(pReq, "<p>\n");
+ 232   1          WEB_PRINTF(pReq, "\n");
+ 233   1      
+ 234   1          WEB_PRINTF(pReq, "</center>\n");
+ 235   1          WEB_PRINTF(pReq, "</body>\n");
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 5   
+
+ 236   1          WEB_PRINTF(pReq, "</html>\n");
+ 237   1      
+ 238   1          WEB_END(pReq);
+ 239   1      
+ 240   1          return SUCCESS;
+ 241   1      }
+ 242          
+ 243          /*
+ 244           * Function: _get_mac_search_res
+ 245           * -----------------------------
+ 246           * Displays MAC search result page with found entry details.
+ 247           * Shows MAC address, VLAN ID, type, and port information.
+ 248           * Reuses the search form for additional searches.
+ 249           * Helper function called from post_mac_search.
+ 250           */
+ 251          int32 _get_mac_search_res(struct http_request_s *pReq, sal_l2_ucastAddr_t* pSearch_res)
+ 252          {
+ 253   1          uint8       macStr[128];
+ 254   1          uint8       staticStr[128];
+ 255   1          uint8       logicPortStr[MAX_LOGIC_ID_LEN];
+ 256   1          sal_port_t  port;
+ 257   1                  
+ 258   1          WEB_BEGIN(pReq);
+ 259   1      
+ 260   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 261   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 262   1      
+ 263   1          WEB_PRINTF(pReq, "<html>\n");
+ 264   1          WEB_PRINTF(pReq, "\n");
+ 265   1          WEB_PRINTF(pReq, "<head>\n");
+ 266   1          WEB_PRINTF(pReq, "<title>MAC Addresses Searching</title>\n");
+ 267   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 268   1          WEB_PRINTF(pReq, "</head>\n");
+ 269   1          WEB_PRINTF(pReq, "\n");
+ 270   1          WEB_PRINTF(pReq, "<body>\n");
+ 271   1          WEB_PRINTF(pReq, "<center>\n");
+ 272   1          WEB_PRINTF(pReq, "\n");
+ 273   1      
+ 274   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 275   1          WEB_PRINTF(pReq, "<legend>MAC Addresses Searching</legend>\n");
+ 276   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac.cgi?page=search\">\n");
+ 277   1      
+ 278   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 279   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 280   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"150\">MAC Address</th>\n");
+ 281   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"90\">VLAN ID</th>\n");
+ 282   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 283   1      
+ 284   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 285   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" name=\"mac\" value=\"00:00:00:00:00:
+             -00\"></td>\n");
+ 286   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" size=\"5\" name=\"vlan\"> (1~4094)</
+             -td>\n");
+ 287   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 288   1          WEB_PRINTF(pReq, "  </table>\n");
+ 289   1      
+ 290   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 291   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Add \">\n");
+ 292   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"macsearch\">\n");
+ 293   1          WEB_PRINTF(pReq, "</form>\n");
+ 294   1      
+ 295   1          WEB_PRINTF(pReq, "<hr>\n");
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 6   
+
+ 296   1      
+ 297   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac.cgi?page=staticdel\">\n");
+ 298   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 299   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 300   1          WEB_PRINTF(pReq, "    <th width=\"185\">MAC Address</th>\n");
+ 301   1          WEB_PRINTF(pReq, "    <th width=\"80\">VLAN ID</th>\n");
+ 302   1          WEB_PRINTF(pReq, "    <th width=\"165\">Type</th>\n");
+ 303   1          WEB_PRINTF(pReq, "    <th width=\"190\">Port</th>\n");
+ 304   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 305   1          
+ 306   1          mac_to_str(macStr, pSearch_res->mac.octet);
+ 307   1      
+ 308   1          if (TRUE == pSearch_res->isStatic)
+ 309   1              strcpy(staticStr,  "Static");
+ 310   1          else
+ 311   1              strcpy(staticStr,  "Dynamic");
+ 312   1      
+ 313   1          sal_trunk_physicId_toLogicId(&port, pSearch_res->srcPort);
+ 314   1          sal_trunk_logicId_toStr(logicPortStr, port);
+ 315   1      
+ 316   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 317   1          WEB_PRINTF(pReq, "    <td align=\"center\">%s</td>\n", macStr);
+ 318   1          WEB_PRINTF(pReq, "    <td align=\"center\">%d</td>\n", (uint16)pSearch_res->vid);
+ 319   1          WEB_PRINTF(pReq, "    <td align=\"center\">%s</td>\n", staticStr);
+ 320   1          WEB_PRINTF(pReq, "    <td align=\"center\">%s</td>\n", logicPortStr);
+ 321   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 322   1          
+ 323   1          WEB_PRINTF(pReq, "</table>\n");
+ 324   1          WEB_PRINTF(pReq, "</form>\n");
+ 325   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 326   1          WEB_PRINTF(pReq, "<p>\n");
+ 327   1          WEB_PRINTF(pReq, "\n");
+ 328   1      
+ 329   1          WEB_PRINTF(pReq, "</center>\n");
+ 330   1          WEB_PRINTF(pReq, "</body>\n");
+ 331   1          WEB_PRINTF(pReq, "</html>\n");
+ 332   1      
+ 333   1          WEB_END(pReq);
+ 334   1      
+ 335   1          return SUCCESS;
+ 336   1      }
+ 337          
+ 338          /*
+ 339           * Function: get_mac_staticmac
+ 340           * ---------------------------
+ 341           * Displays static MAC address configuration page.
+ 342           * Shows form to add static MAC with VLAN and port selection.
+ 343           * Lists existing static MAC entries with delete checkboxes.
+ 344           * Supports source MAC blocking checkbox for security.
+ 345           */
+ 346          int32 get_mac_staticmac(struct http_request_s *pReq)
+ 347          {
+ 348   1          sal_flash_l2_sttcEntry_t    entry;
+ 349   1          sal_lPortmask_t             portmask;   
+ 350   1          uint32  indx = 0;
+ 351   1          uint32  entryNum = 1;
+ 352   1          uint16  port;
+ 353   1          uint16  fid;
+ 354   1          uint8   macStr[128];
+ 355   1          uint8   portmaskStr[128];
+ 356   1          uint8   logicPortStr[MAX_LOGIC_ID_LEN];
+ 357   1          uint8   emptyMac[ETHER_ADDR_LEN];
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 7   
+
+ 358   1      
+ 359   1          WEB_BEGIN(pReq);
+ 360   1      
+ 361   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 362   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 363   1      
+ 364   1          WEB_PRINTF(pReq, "<html>\n");
+ 365   1          WEB_PRINTF(pReq, "\n");
+ 366   1          WEB_PRINTF(pReq, "<head>\n");
+ 367   1          WEB_PRINTF(pReq, "<title>Static MAC Addresses</title>\n");
+ 368   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 369   1          WEB_PRINTF(pReq, "</head>\n");
+ 370   1          WEB_PRINTF(pReq, "\n");
+ 371   1          WEB_PRINTF(pReq, "<body>\n");
+ 372   1          WEB_PRINTF(pReq, "<center>\n");
+ 373   1          WEB_PRINTF(pReq, "\n");
+ 374   1      
+ 375   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 376   1          WEB_PRINTF(pReq, "<legend>Static MAC Setting</legend>\n");
+ 377   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac.cgi?page=static\">\n");
+ 378   1      
+ 379   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 380   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 381   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"150\">MAC Address</th>\n");
+ 382   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"90\">VLAN ID</th>\n");
+ 383   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"90\">Port</th>\n");
+ 384   1          WEB_PRINTF(pReq, "      <th align=\"center\" width=\"90\">Source MAC Blocking</th>\n");    
+ 385   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 386   1      
+ 387   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 388   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" name=\"mac\" value=\"00:00:00:00:00:
+             -00\"></td>\n");
+ 389   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" size=\"5\" name=\"vlan\"> (1~4094)</
+             -td>\n");
+ 390   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 391   1          WEB_PRINTF(pReq, "        <select name=\"src\" size=\"6\">\n");
+ 392   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port)
+ 393   1          {
+ 394   2              if (!(sal_trunk_logicId_exist(port)))
+ 395   2              {
+ 396   3                  continue;
+ 397   3              }
+ 398   2      
+ 399   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 400   2              WEB_PRINTF(pReq, "          <option value=\"%d\">%s\n", (uint16)port, logicPortStr);
+ 401   2          }
+ 402   1      
+ 403   1          WEB_PRINTF(pReq, "        </select>\n");
+ 404   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"checkbox\" name=\"src_blk\"></td>\n");
+ 405   1          WEB_PRINTF(pReq, "      </td>\n");
+ 406   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 407   1          WEB_PRINTF(pReq, "  </table>\n");
+ 408   1      
+ 409   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 410   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Add \">\n");
+ 411   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"macstatic\">\n");
+ 412   1          WEB_PRINTF(pReq, "</form>\n");
+ 413   1      
+ 414   1          WEB_PRINTF(pReq, "<hr>\n");
+ 415   1      
+ 416   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac.cgi?page=staticdel\">\n");
+ 417   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 8   
+
+ 418   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 419   1          WEB_PRINTF(pReq, "    <th width=\"35\">No.</th>\n");
+ 420   1          WEB_PRINTF(pReq, "    <th width=\"190\">MAC Address</th>\n");
+ 421   1          WEB_PRINTF(pReq, "    <th width=\"80\">VLAN ID</th>\n");
+ 422   1          WEB_PRINTF(pReq, "    <th width=\"190\">Port</th>\n");
+ 423   1          WEB_PRINTF(pReq, "    <th width=\"80\">Source MAC Blocking</th>\n");    
+ 424   1          WEB_PRINTF(pReq, "    <th width=\"2\">Select</th>\n");
+ 425   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 426   1      
+ 427   1          memset(emptyMac, 0, ETHER_ADDR_LEN);
+ 428   1      
+ 429   1          for (indx = 0; indx < SAL_MAX_STATIC_MAC; indx++)
+ 430   1          {
+ 431   2      
+ 432   2              if (SAL_ERR_SUCCESS != sal_flash_l2_sttcEntry_get((uint16) indx, &entry))
+ 433   2              {
+ 434   3                  continue;
+ 435   3              }
+ 436   2      
+ 437   2              if (memcmp(entry.mac.octet, emptyMac, ETHER_ADDR_LEN) == 0)
+ 438   2              {
+ 439   3                  continue;
+ 440   3              }
+ 441   2      
+ 442   2              fid = entry.fid;
+ 443   2      
+ 444   2              mac_to_str(macStr, entry.mac.octet);
+ 445   2      
+ 446   2      //        printf("Physical portmask: %lx\n", entry.pPortMask.bits[0]);
+ 447   2              strcpy(portmaskStr, "");        
+ 448   2              sal_trunk_physicMask_toLogicMask(&portmask, &entry.pPortMask);
+ 449   2      //        printf("Logical portmask : %lx\n", portmask.bits[0]);
+ 450   2              lmask_to_comma(portmaskStr, &portmask);
+ 451   2      
+ 452   2              WEB_PRINTF(pReq, "  <tr>\n");
+ 453   2              WEB_PRINTF(pReq, "      <td align=\"center\">%d</td>\n", (uint16)entryNum);
+ 454   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", macStr);
+ 455   2              WEB_PRINTF(pReq, "      <td align=\"center\">%d</td>\n", (uint16)fid);
+ 456   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", portmaskStr);
+ 457   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", entry.saBlock?"Blocked":"-");        
+ 458   2              WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"checkbox\" name=\"del\" value=\"%s_%d\"
+             -></td>\n", macStr, (uint16)fid);
+ 459   2              WEB_PRINTF(pReq, "  </tr>\n");
+ 460   2      
+ 461   2              entryNum++;
+ 462   2          }
+ 463   1      
+ 464   1          WEB_PRINTF(pReq, "  </table>\n");
+ 465   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 466   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Delete \">\n");
+ 467   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"macstatictbl\">\n");
+ 468   1          WEB_PRINTF(pReq, "</form>\n");
+ 469   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 470   1          WEB_PRINTF(pReq, "<p>\n");
+ 471   1          WEB_PRINTF(pReq, "\n");
+ 472   1      
+ 473   1          WEB_PRINTF(pReq, "</center>\n");
+ 474   1          WEB_PRINTF(pReq, "</body>\n");
+ 475   1          WEB_PRINTF(pReq, "</html>\n");
+ 476   1      
+ 477   1          WEB_END(pReq);
+ 478   1      
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 9   
+
+ 479   1          return SUCCESS;
+ 480   1      }
+ 481          
+ 482          /*
+ 483           * Function: post_mac_del
+ 484           * ----------------------
+ 485           * Processes static MAC entry deletion from form submission.
+ 486           * Parses checkbox values containing "MAC_FID" format.
+ 487           * Deletes each selected MAC entry from hardware and flash.
+ 488           * Refreshes static MAC page after deletion.
+ 489           */
+ 490          int32
+ 491          post_mac_del(struct http_request_s *pReq)
+ 492          {
+ 493   1          sal_mac_t   mac;
+ 494   1          int32       ret;
+ 495   1          uint16      fid = 0;
+ 496   1          uint8       macStr[128], tmp[64];
+ 497   1          uint8       *pValue;
+ 498   1      
+ 499   1          WEB_VAR(pReq, "del", &pValue);
+ 500   1          if (pValue) {
+ 501   2              strcpy(tmp, "");
+ 502   2              sprintf(tmp, "%s", pValue);
+ 503   2              strcpy(macStr, strtok (pValue, "_"));
+ 504   2              fid = atoi(strstr(tmp, "_") + 1);
+ 505   2              str_to_mac(mac.octet, macStr, 0);
+ 506   2              if ((ret = sal_l2_entry_del(&mac, fid)) != SAL_ERR_SUCCESS)
+ 507   2              {
+ 508   3                  printerr(pReq, ret);
+ 509   3                  return SUCCESS;
+ 510   3              }
+ 511   2      #if SET_GET_FLASH
+ 512   2              sal_flash_l2_sttcEntry_del(&mac, fid);
+ 513   2      #endif
+ 514   2          }        
+ 515   1                 
+ 516   1          while(pValue != NULL)
+ 517   1          {
+ 518   2              WEB_VAR(pReq, NULL, &pValue);
+ 519   2              if (pValue) {
+ 520   3                  strcpy(tmp, "");
+ 521   3                  sprintf(tmp, "%s", pValue);
+ 522   3                  strcpy(macStr, strtok (pValue, "_"));
+ 523   3                  fid = atoi(strstr(tmp, "_") + 1);
+ 524   3                  str_to_mac(mac.octet, macStr, 0);
+ 525   3                  if ((ret = sal_l2_entry_del(&mac, fid)) != SAL_ERR_SUCCESS)
+ 526   3                  {
+ 527   4                      printerr(pReq, ret);
+ 528   4                      return SUCCESS;
+ 529   4                  }
+ 530   3      #if SET_GET_FLASH
+ 531   3                  sal_flash_l2_sttcEntry_del(&mac, fid);
+ 532   3      #endif
+ 533   3              }
+ 534   2          }
+ 535   1      
+ 536   1          get_mac_staticmac(pReq);
+ 537   1      
+ 538   1      
+ 539   1          sal_mac_dbg_dump();
+ 540   1          return SUCCESS;
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 10  
+
+ 541   1      }
+ 542          
+ 543          /*
+ 544           * Function: post_mac_add
+ 545           * ----------------------
+ 546           * Processes static MAC entry addition from form submission.
+ 547           * Validates MAC format, VLAN ID range (1-4094), and port selection.
+ 548           * Checks for multicast MAC (rejected) and duplicate entries.
+ 549           * Adds entry to hardware and flash, handles slot allocation.
+ 550           */
+ 551          int32
+ 552          post_mac_add(struct http_request_s *pReq)
+ 553          {
+ 554   1          sal_pPortmask_t portmask;
+ 555   1          sal_port_t      port;
+ 556   1          sal_mac_t       mac;
+ 557   1          uint16          cvid = 0;
+ 558   1          uint8           macStr[ETHER_ADDR_LEN], src_blk;
+ 559   1          uint8           *pValue;
+ 560   1          
+ 561   1      
+ 562   1      #if SET_GET_FLASH
+ 563   1          uint32         slot = 0;
+ 564   1          sal_flash_l2_sttcEntry_t Entry;
+ 565   1      #endif
+ 566   1      
+ 567   1      #if SET_GET_FLASH
+ 568   1          memset(&Entry, 0, sizeof(sal_flash_l2_sttcEntry_t));
+ 569   1      #endif
+ 570   1      
+ 571   1      
+ 572   1          WEB_VAR(pReq, "mac", &pValue);
+ 573   1          if (pValue) {
+ 574   2              if (str_to_mac(macStr, pValue, 0) != 0)
+ 575   2              {
+ 576   3                  printmsg(pReq, "Invalid MAC Address !!");
+ 577   3                  return SUCCESS;
+ 578   3              }
+ 579   2      
+ 580   2              if (macStr[0] & 0x01)
+ 581   2              {
+ 582   3                  printmsg(pReq, "Multicast MAC is not supported !!");
+ 583   3                  return SUCCESS;
+ 584   3              }
+ 585   2          }
+ 586   1      
+ 587   1          WEB_VAR(pReq, "vlan", &pValue);
+ 588   1          if (pValue) {
+ 589   2              cvid = atoi(pValue);
+ 590   2              if ((cvid < 1) || (cvid > 4094))
+ 591   2              {
+ 592   3                  printmsg(pReq, "Invalid Vlan ID !!");
+ 593   3                  return SUCCESS;
+ 594   3              }
+ 595   2          }
+ 596   1      
+ 597   1          if (WEB_VAR(pReq, "src", &pValue) == FAILED)
+ 598   1          {
+ 599   2              printmsg(pReq, "Invalid port number !!");
+ 600   2              return SUCCESS;
+ 601   2          }
+ 602   1      
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 11  
+
+ 603   1          if (pValue) {
+ 604   2              port = atoi(pValue);
+ 605   2              sal_trunk_logicId_toPhysicMask(&portmask, port);
+ 606   2          }
+ 607   1      
+ 608   1          WEB_VAR(pReq, "src_blk", &pValue);
+ 609   1          if(pValue)
+ 610   1              src_blk = TRUE;
+ 611   1          else
+ 612   1              src_blk = FALSE;
+ 613   1      
+ 614   1      
+ 615   1      #if SET_GET_FLASH
+ 616   1      
+ 617   1          if (SAL_ERR_SUCCESS == sal_flash_l2_matchedSlot_get(&slot, (sal_mac_t *)macStr, cvid))
+ 618   1          {
+ 619   2              memcpy(mac.octet, macStr, ETHER_ADDR_LEN);
+ 620   2              sal_flash_l2_sttcEntry_del(&mac, cvid);
+ 621   2          }
+ 622   1          else // not found a matched entry
+ 623   1          {
+ 624   2              if (SAL_ERR_SUCCESS != sal_flash_l2_firstAvailableSlot_get(&slot))
+ 625   2              {
+ 626   3                  printmsg(pReq, "MAC Table is full !!");
+ 627   3                  return SUCCESS;
+ 628   3              }
+ 629   2          }
+ 630   1      
+ 631   1          memcpy(Entry.mac.octet, macStr, ETHER_ADDR_LEN);
+ 632   1          Entry.fid       = cvid;
+ 633   1          Entry.auth      = FALSE;
+ 634   1          Entry.saBlock   = src_blk;
+ 635   1          Entry.daBlock   = FALSE;
+ 636   1          Entry.valid     = 1;
+ 637   1          sal_trunk_logicId_toPhysicMask(&Entry.pPortMask, port);
+ 638   1      
+ 639   1          memcpy(mac.octet, macStr, ETHER_ADDR_LEN);
+ 640   1          
+ 641   1          if (SAL_ERR_SUCCESS == sal_l2_entry_add(
+ 642   1                                      &Entry.mac,
+ 643   1                                      cvid,
+ 644   1                                      ENTRY_STATIC, Entry.auth, Entry.saBlock, Entry.daBlock,
+ 645   1                                      &Entry.pPortMask))
+ 646   1          {
+ 647   2              sal_flash_l2_sttcEntry_add(slot, &Entry);
+ 648   2          }
+ 649   1          else
+ 650   1          {
+ 651   2              printmsg(pReq, "Could not add the MAC entry !!");
+ 652   2              return SUCCESS;
+ 653   2          }
+ 654   1      
+ 655   1      #else
+                  memcpy(mac.octet, macStr, ETHER_ADDR_LEN);
+                  sal_l2_entry_add(&mac, cvid, TRUE, FALSE, FALSE, FALSE, &portmask);
+              #endif
+ 659   1      
+ 660   1      
+ 661   1          get_mac_staticmac(pReq);
+ 662   1      
+ 663   1          sal_mac_dbg_dump();
+ 664   1          return SUCCESS;
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 12  
+
+ 665   1      }
+ 666          
+ 667          /*
+ 668           * Function: post_mac_search
+ 669           * -------------------------
+ 670           * Processes MAC address search request from form submission.
+ 671           * Validates MAC format and VLAN ID range.
+ 672           * Calls sal_l2_addr_get() to search for the MAC entry.
+ 673           * Displays search result via _get_mac_search_res() helper.
+ 674           */
+ 675          int32 post_mac_search(struct http_request_s *pReq)
+ 676          {
+ 677   1          sal_l2_ucastAddr_t  search_res;
+ 678   1          sal_mac_t           mac;
+ 679   1          sal_vlan_t          fid;
+ 680   1      
+ 681   1          int32       ret; 
+ 682   1          uint8       *pValue;
+ 683   1          uint8       macStr[ETHER_ADDR_LEN];
+ 684   1      
+ 685   1          WEB_VAR(pReq, "mac", &pValue);
+ 686   1          if (pValue) {
+ 687   2              if (str_to_mac(macStr, pValue, 0) != 0)
+ 688   2              {
+ 689   3                  printmsg(pReq, "Invalid MAC Address !!");
+ 690   3                  return SUCCESS;
+ 691   3              }
+ 692   2      
+ 693   2              if (macStr[0] & 0x01)
+ 694   2              {
+ 695   3                  printmsg(pReq, "Multicast MAC is not supported !!");
+ 696   3                  return SUCCESS;
+ 697   3              }
+ 698   2          }
+ 699   1      
+ 700   1          WEB_VAR(pReq, "vlan", &pValue);
+ 701   1          if (pValue) {
+ 702   2              fid = atoi(pValue);
+ 703   2              if ((fid < 1) || (fid > 4094))
+ 704   2              {
+ 705   3                  printmsg(pReq, "Invalid Vlan ID !!");
+ 706   3                  return SUCCESS;
+ 707   3              }
+ 708   2          }
+ 709   1      
+ 710   1          memcpy(mac.octet, macStr, ETHER_ADDR_LEN);
+ 711   1      
+ 712   1          printf("Post Mac address: %02bx: %02bx: %02bx: %02bx: %02bx: %02bx\n", \
+ 713   1              macStr[0], macStr[1], macStr[2], macStr[3], macStr[4], macStr[5]);
+ 714   1      
+ 715   1          if ((ret = sal_l2_addr_get(&mac, fid, &search_res)) != SAL_ERR_SUCCESS)
+ 716   1          {
+ 717   2              printerr(pReq, ret);       
+ 718   2              return SUCCESS;
+ 719   2          }
+ 720   1      
+ 721   1          _get_mac_search_res(pReq, &search_res);
+ 722   1          return SUCCESS;
+ 723   1      }
+ 724          
+ 725          /*
+ 726           * Function: post_mac_tblclear
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 13  
+
+ 727           * ---------------------------
+ 728           * Clears all dynamic MAC entries from the forwarding table.
+ 729           * Calls sal_l2_table_clear() with SAL_L2_CLR_DYNAMIC flag.
+ 730           * Static MAC entries are preserved.
+ 731           * Refreshes MAC forwarding table page after clear.
+ 732           */
+ 733          int32
+ 734          post_mac_tblclear(struct http_request_s *pReq)
+ 735          {
+ 736   1          int32 ret;
+ 737   1          if ((ret = sal_l2_table_clear(SAL_L2_CLR_DYNAMIC)) != SAL_ERR_SUCCESS)
+ 738   1          {
+ 739   2              printerr(pReq, ret);
+ 740   2              return SUCCESS;
+ 741   2          }
+ 742   1      
+ 743   1      
+ 744   1          get_mac_forwardingtable(pReq);
+ 745   1          return SUCCESS;
+ 746   1      }
+ 747          
+ 748          /*
+ 749           * Function: get_mac_constraint
+ 750           * ----------------------------
+ 751           * Displays MAC learning constraint configuration page.
+ 752           * Shows current learn-over action (Drop/Flooding).
+ 753           * Allows setting per-port entry limits with enable/disable.
+ 754           * Displays current entry limits for all ports.
+ 755           */
+ 756          int32 get_mac_constraint(struct http_request_s *pReq)
+ 757          {
+ 758   1          uint8   port = 0;
+ 759   1          uint8   logicPortStr[MAX_LOGIC_ID_LEN];
+ 760   1          int32   ret;        
+ 761   1          uint32  limits;
+ 762   1          sal_l2_limitLearnCntAction_t act;
+ 763   1          WEB_BEGIN(pReq);
+ 764   1      
+ 765   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 766   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 767   1      
+ 768   1          WEB_PRINTF(pReq, "<html>\n");
+ 769   1          WEB_PRINTF(pReq, "\n");
+ 770   1          WEB_PRINTF(pReq, "<head>\n");
+ 771   1          WEB_PRINTF(pReq, "<title>MAC Constraint Setting</title>\n");
+ 772   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 773   1          WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+ 774   1          WEB_PRINTF(pReq, "  function chkEnable(value)\n");
+ 775   1          WEB_PRINTF(pReq, "  {\n");
+ 776   1          WEB_PRINTF(pReq, "      if ( value == '1' ) {\n");
+ 777   1          WEB_PRINTF(pReq, "          document.getElementById('limit').value = \'\';\n");
+ 778   1          WEB_PRINTF(pReq, "          document.getElementById('limit').disabled = false;\n");
+ 779   1          WEB_PRINTF(pReq, "      }\n");
+ 780   1          WEB_PRINTF(pReq, "      else { \n");
+ 781   1          WEB_PRINTF(pReq, "          document.getElementById('limit').value = \'Unlimited\';\n");
+ 782   1          WEB_PRINTF(pReq, "          document.getElementById('limit').disabled = true;\n");
+ 783   1          WEB_PRINTF(pReq, "      }\n");
+ 784   1          WEB_PRINTF(pReq, "  }\n");
+ 785   1          WEB_PRINTF(pReq, "</script>\n");
+ 786   1          WEB_PRINTF(pReq, "</head>\n");
+ 787   1          WEB_PRINTF(pReq, "\n");
+ 788   1          WEB_PRINTF(pReq, "<body>\n");
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 14  
+
+ 789   1      
+ 790   1      
+ 791   1              WEB_PRINTF(pReq, "<center>\n");
+ 792   1              WEB_PRINTF(pReq, "\n");
+ 793   1              WEB_PRINTF(pReq, "<fieldset>\n");
+ 794   1              WEB_PRINTF(pReq, "<legend>MAC Constraint Action Setting</legend>\n");
+ 795   1              WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac_constraint.cgi?page=set_action\">\n");
+ 796   1      
+ 797   1              WEB_PRINTF(pReq, "<br>\n");
+ 798   1              WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 799   1              WEB_PRINTF(pReq, "  <tr>\n");
+ 800   1              WEB_PRINTF(pReq, "    <th width=\"200\">Learn over Action</th>\n");
+ 801   1      
+ 802   1              WEB_PRINTF(pReq, "      <td width=\"150\">\n");
+ 803   1              WEB_PRINTF(pReq, "        <select name=\"select_action\" style=\"width:150\">\n");
+ 804   1      
+ 805   1              if ((ret = sal_l2_limitLearningCntAction_get(SAL_WHOLE_SYSTEM, &act)) != SAL_ERR_SUCCESS)
+ 806   1                  printerr(pReq, ret);
+ 807   1      
+ 808   1              switch(act)
+ 809   1              {
+ 810   2              case SAL_LIMIT_LEARN_CNT_ACTION_DROP:
+ 811   2                  WEB_PRINTF(pReq, "      <option value=\"0\" selected>Drop \n");                
+ 812   2                  WEB_PRINTF(pReq, "      <option value=\"1\">Flooding \n");
+ 813   2                  break;
+ 814   2                  
+ 815   2              case SAL_LIMIT_LEARN_CNT_ACTION_FORWARD:
+ 816   2                  WEB_PRINTF(pReq, "      <option value=\"0\" >Drop \n");                        
+ 817   2                  WEB_PRINTF(pReq, "      <option value=\"1\" selected>Flooding \n");
+ 818   2                  break;
+ 819   2                  
+ 820   2              default:
+ 821   2                  printmsg(pReq, "Learnover: wrong!\n");
+ 822   2                  return SUCCESS;
+ 823   2              }
+ 824   1              
+ 825   1              WEB_PRINTF(pReq, "        </select>\n");
+ 826   1              WEB_PRINTF(pReq, "      </td>\n");
+ 827   1      
+ 828   1              WEB_PRINTF(pReq, "  </tr>\n");
+ 829   1              WEB_PRINTF(pReq, "</table>\n");
+ 830   1              WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 831   1              WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+ 832   1              WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"sel_act\">\n");
+ 833   1              WEB_PRINTF(pReq, "</form>\n");
+ 834   1              WEB_PRINTF(pReq, "</fieldset>\n");
+ 835   1              WEB_PRINTF(pReq, "</center>\n");
+ 836   1      
+ 837   1      
+ 838   1          WEB_PRINTF(pReq, "<center>\n");
+ 839   1          WEB_PRINTF(pReq, "\n");
+ 840   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 841   1          WEB_PRINTF(pReq, "<legend>MAC Constraint Setting</legend>\n");
+ 842   1      
+ 843   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/mac_constraint.cgi\">\n");
+ 844   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 845   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 846   1          WEB_PRINTF(pReq, "      <th>Port</th>\n");
+ 847   1          WEB_PRINTF(pReq, "      <th>State</th>\n");
+ 848   1          WEB_PRINTF(pReq, "      <th nowrap>Entry Limits</th>\n");
+ 849   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 850   1      
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 15  
+
+ 851   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 852   1          WEB_PRINTF(pReq, "      <td>\n");
+ 853   1          WEB_PRINTF(pReq, "        <select name=\"portid\" multiple size=\"6\">\n");
+ 854   1      
+ 855   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 856   2              if (!(sal_trunk_logicId_exist(port))) {
+ 857   3                  continue;
+ 858   3              }
+ 859   2      
+ 860   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 861   2              WEB_PRINTF(pReq, "          <option value=\"%d\">%s\n", (uint16)port, logicPortStr);
+ 862   2          }
+ 863   1          WEB_PRINTF(pReq, "        </select>\n");
+ 864   1          WEB_PRINTF(pReq, "      </td>\n");
+ 865   1      
+ 866   1          WEB_PRINTF(pReq, "      <td>\n");
+ 867   1          WEB_PRINTF(pReq, "        <select name=\"state\" onload=\"chkEnable(this.value)\" onchange=\"chkEnable
+             -(this.value)\">\n");
+ 868   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Disable\n", (uint16)DISABLE);
+ 869   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Enable\n", (uint16)ENABLE);
+ 870   1          WEB_PRINTF(pReq, "        </select>\n");
+ 871   1          WEB_PRINTF(pReq, "      </td>\n");
+ 872   1      
+ 873   1          WEB_PRINTF(pReq, "      <td><input type=\"text\" size=\"6\" name=\"limit\" id=\"limit\" value=\'Unlimi
+             -ted\' disabled = true>"
+ 874   1              "(0-%lu)</td>\n",rtk_switch_maxLutAddrNumber_get());
+ 875   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 876   1      
+ 877   1          WEB_PRINTF(pReq, "  </table>\n");
+ 878   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 879   1          WEB_PRINTF(pReq, "  <input type=\"submit\" name=\"submit\" value=\"   Apply   \">\n");
+ 880   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"mac_constraint\">\n");
+ 881   1          WEB_PRINTF(pReq, "</form>\n");
+ 882   1          WEB_PRINTF(pReq, "<hr>");
+ 883   1          WEB_PRINTF(pReq, "<br>\n");
+ 884   1      
+ 885   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 886   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 887   1          WEB_PRINTF(pReq, "      <th width=\"90\">Port</th>\n");
+ 888   1          WEB_PRINTF(pReq, "      <th width=\"120\">Entry Limits</th>\n");
+ 889   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 890   1      
+ 891   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 892   2              if (!(sal_trunk_logicId_exist(port))) {
+ 893   3                  continue;
+ 894   3              }
+ 895   2      
+ 896   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 897   2      
+ 898   2              if ((ret = sal_l2_limitLearningCnt_get(port, &limits)) != SAL_ERR_SUCCESS)
+ 899   2                  printerr(pReq, ret);
+ 900   2              WEB_PRINTF(pReq, "  <tr>\n");
+ 901   2              WEB_PRINTF(pReq, "    <td>%s</td>\n", logicPortStr);
+ 902   2      
+ 903   2              WEB_PRINTF(pReq, "    <td>");
+ 904   2      
+ 905   2              if (limits == rtk_switch_maxLutAddrNumber_get()) 
+ 906   2                  WEB_PRINTF(pReq, "Unlimited");
+ 907   2              else
+ 908   2                  WEB_PRINTF(pReq, "%ld", limits);
+ 909   2      
+ 910   2              WEB_PRINTF(pReq, "    </td>\n");
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 16  
+
+ 911   2      
+ 912   2              WEB_PRINTF(pReq, "    <td>");
+ 913   2              WEB_PRINTF(pReq, "    </td>\n");
+ 914   2              WEB_PRINTF(pReq, "  </tr>\n");
+ 915   2          }
+ 916   1      
+ 917   1          WEB_PRINTF(pReq, "</table>\n");
+ 918   1          WEB_PRINTF(pReq, "<br>\n");
+ 919   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 920   1          WEB_PRINTF(pReq, "</center>\n");
+ 921   1          
+ 922   1          WEB_PRINTF(pReq, "<br>\n");
+ 923   1          WEB_PRINTF(pReq, "</body>\n");
+ 924   1          WEB_PRINTF(pReq, "</html>\n");
+ 925   1      
+ 926   1          WEB_END(pReq);
+ 927   1      
+ 928   1          return SUCCESS;
+ 929   1      }
+ 930          
+ 931          /*
+ 932           * Function: post_mac_constraint
+ 933           * -----------------------------
+ 934           * Processes MAC learning constraint form submission.
+ 935           * Extracts selected ports, enable/disable state, and limit value.
+ 936           * Sets entry limit for each selected port using sal_l2_limitLearningCnt_set().
+ 937           * Unlimited limit is represented by MAX_LUT_ADDR_NUMBER.
+ 938           * Refreshes constraint page after applying settings.
+ 939           */
+ 940          int32 post_mac_constraint(struct http_request_s *pReq)
+ 941          {
+ 942   1          int32   ret;
+ 943   1          int16   i;
+ 944   1          uint8   *pValue;
+ 945   1          uint8   port[SAL_MAX_LOGIC_COMBO_PORT];
+ 946   1          uint8   settingCnt;     // the total port numbers to set
+ 947   1          Tbool   enable;
+ 948   1          uint32  limits;
+ 949   1          settingCnt = 0;
+ 950   1          enable = DISABLE;
+ 951   1      
+ 952   1          WEB_VAR(pReq, "portid", &pValue);
+ 953   1          if (pValue) {
+ 954   2              port[settingCnt++] = atoi(pValue);
+ 955   2          }
+ 956   1      
+ 957   1          while(pValue != NULL)
+ 958   1          {
+ 959   2              WEB_VAR(pReq, NULL, &pValue);
+ 960   2              if (pValue) {
+ 961   3                  port[settingCnt++] = atoi(pValue);
+ 962   3              }
+ 963   2          }
+ 964   1      
+ 965   1          WEB_VAR(pReq, "state", &pValue);
+ 966   1          if (pValue) {
+ 967   2              enable = atoi(pValue);
+ 968   2          }
+ 969   1      
+ 970   1          if (enable != DISABLE)
+ 971   1          {
+ 972   2              WEB_VAR(pReq, "limit", &pValue);
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 17  
+
+ 973   2              if (pValue) {
+ 974   3                  limits = atol(pValue);
+ 975   3      
+ 976   3                  if (limits < 0 || limits > rtk_switch_maxLutAddrNumber_get())
+ 977   3                  {
+ 978   4                      printmsg(pReq, "Invalid Entry limits !!");
+ 979   4                      return SUCCESS;
+ 980   4                  }
+ 981   3              }
+ 982   2          }
+ 983   1      
+ 984   1          for (i = 0; i < settingCnt; ++i) {
+ 985   2      
+ 986   2              if (!(sal_trunk_logicId_exist(port[i]))) {
+ 987   3                  continue;
+ 988   3              }
+ 989   2              
+ 990   2              if (enable == DISABLE)
+ 991   2              {
+ 992   3                  limits = rtk_switch_maxLutAddrNumber_get();
+ 993   3              }
+ 994   2             
+ 995   2              if ((ret = sal_l2_limitLearningCnt_set(port[i], limits)) != SAL_ERR_SUCCESS) 
+ 996   2              {
+ 997   3                  printerr(pReq, ret);
+ 998   3                  return SUCCESS;
+ 999   3              }
+1000   2          }
+1001   1      
+1002   1              
+1003   1          get_mac_constraint(pReq);
+1004   1                  return SUCCESS;
+1005   1              }
+1006                  
+1007          /*
+1008           * Function: post_mac_constraint_action
+1009           * ------------------------------------
+1010           * Processes learn-over action setting from form submission.
+1011           * Extracts selected action (Drop/Flooding) from POST data.
+1012           * Calls sal_l2_limitLearningCntAction_set() to apply globally.
+1013           * Refreshes constraint page after applying action.
+1014           */
+1015          int32 post_mac_constraint_action(struct http_request_s *pReq)
+1016          {
+1017   1          int32   ret;
+1018   1          uint8   *pValue;
+1019   1          sal_l2_limitLearnCntAction_t  act;
+1020   1      
+1021   1          WEB_VAR(pReq, "select_action", &pValue);
+1022   1          if (pValue) {
+1023   2              act = atol(pValue);
+1024   2          }
+1025   1          if ((ret = sal_l2_limitLearningCntAction_set(SAL_WHOLE_SYSTEM, act)) != SAL_ERR_SUCCESS) 
+1026   1          {
+1027   2              printerr(pReq, ret);
+1028   2              return SUCCESS;
+1029   2          }
+1030   1      
+1031   1      
+1032   1          get_mac_constraint(pReq);
+1033   1          return SUCCESS;
+1034   1      }
+C51 COMPILER V9.60.0.0   WEB_MAC                                                           11/02/2026 17:57:34 PAGE 18  
+
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =  10036    ----
+   CONSTANT SIZE    =   4318    ----
+   XDATA SIZE       =   ----    1355
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   4318    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

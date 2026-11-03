@@ -1,0 +1,1634 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_VLAN
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_vlan.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_vlan.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWS
+                    -E INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\
+                    -sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,R
+                    -TK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIB
+                    -LE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_vlan.lst) TABS(2) OBJECT(.\objects\rtl836
+                    -7c_asicdrv_vlan.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 64755 $
+  13           * $Date: 2016-01-04 17:17:13 +0800 (?Ÿæ?ä¸€, 04 ä¸€??2016) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : VLAN related functions
+  17           *
+  18           */
+  19          #include <string.h>
+  20          #include <stdio.h>
+  21          #include <rtl8367c_asicdrv_vlan.h>
+  22          
+  23          #include <string.h>
+  24          
+  25          #if defined(CONFIG_RTL8367C_ASICDRV_TEST)
+              rtl8367c_user_vlan4kentry Rtl8370sVirtualVlanTable[RTL8367C_VIDMAX + 1];
+              #endif
+  28          
+  29          static void _rtl8367c_VlanMCStUser2Smi(rtl8367c_vlanconfiguser *pVlanCg, uint16 *pSmiVlanCfg)
+  30          {
+  31   1          pSmiVlanCfg[0] |= pVlanCg->mbr & 0x07FF;
+  32   1      
+  33   1          pSmiVlanCfg[1] |= pVlanCg->fid_msti & 0x000F;
+  34   1      
+  35   1          pSmiVlanCfg[2] |= pVlanCg->vbpen & 0x0001;
+  36   1          pSmiVlanCfg[2] |= (pVlanCg->vbpri & 0x0007) << 1;
+  37   1          pSmiVlanCfg[2] |= (pVlanCg->envlanpol & 0x0001) << 4;
+  38   1          pSmiVlanCfg[2] |= (pVlanCg->meteridx & 0x003F) << 5;
+  39   1      
+  40   1          pSmiVlanCfg[3] |= pVlanCg->evid & 0x1FFF;
+  41   1      }
+  42          
+  43          static void _rtl8367c_VlanMCStSmi2User(uint16 *pSmiVlanCfg, rtl8367c_vlanconfiguser *pVlanCg)
+  44          {
+  45   1          pVlanCg->mbr            = pSmiVlanCfg[0] & 0x07FF;
+  46   1          pVlanCg->fid_msti       = pSmiVlanCfg[1] & 0x000F;
+  47   1          pVlanCg->meteridx       = (pSmiVlanCfg[2] >> 5) & 0x003F;
+  48   1          pVlanCg->envlanpol      = (pSmiVlanCfg[2] >> 4) & 0x0001;
+  49   1          pVlanCg->vbpri          = (pSmiVlanCfg[2] >> 1) & 0x0007;
+  50   1          pVlanCg->vbpen          = pSmiVlanCfg[2] & 0x0001;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 2   
+
+  51   1          pVlanCg->evid           = pSmiVlanCfg[3] & 0x1FFF;
+  52   1      }
+  53          
+  54          static void _rtl8367c_Vlan4kStUser2Smi(rtl8367c_user_vlan4kentry *pUserVlan4kEntry, uint16 *pSmiVlan4kEntr
+             -y)
+  55          {
+  56   1          pSmiVlan4kEntry[0] |= (pUserVlan4kEntry->mbr & 0x00FF);
+  57   1          pSmiVlan4kEntry[0] |= (pUserVlan4kEntry->untag & 0x00FF) << 8;
+  58   1      
+  59   1          pSmiVlan4kEntry[1] |= (pUserVlan4kEntry->fid_msti & 0x000F);
+  60   1          pSmiVlan4kEntry[1] |= (pUserVlan4kEntry->vbpen & 0x0001) << 4;
+  61   1          pSmiVlan4kEntry[1] |= (pUserVlan4kEntry->vbpri & 0x0007) << 5;
+  62   1          pSmiVlan4kEntry[1] |= (pUserVlan4kEntry->envlanpol & 0x0001) << 8;
+  63   1          pSmiVlan4kEntry[1] |= (pUserVlan4kEntry->meteridx & 0x001F) << 9;
+  64   1          pSmiVlan4kEntry[1] |= (pUserVlan4kEntry->ivl_svl & 0x0001) << 14;
+  65   1      
+  66   1          pSmiVlan4kEntry[2] |= ((pUserVlan4kEntry->mbr & 0x0700) >> 8);
+  67   1          pSmiVlan4kEntry[2] |= ((pUserVlan4kEntry->untag & 0x0700) >> 8) << 3;
+  68   1          pSmiVlan4kEntry[2] |= ((pUserVlan4kEntry->meteridx & 0x0020) >> 5) << 6;
+  69   1      }
+  70          
+  71          
+  72          static void _rtl8367c_Vlan4kStSmi2User(uint16 *pSmiVlan4kEntry, rtl8367c_user_vlan4kentry *pUserVlan4kEntr
+             -y)
+  73          {
+  74   1          pUserVlan4kEntry->mbr = (pSmiVlan4kEntry[0] & 0x00FF) | ((pSmiVlan4kEntry[2] & 0x0007) << 8);
+  75   1          pUserVlan4kEntry->untag = ((pSmiVlan4kEntry[0] & 0xFF00) >> 8) | (((pSmiVlan4kEntry[2] & 0x0038) >> 3)
+             - << 8);
+  76   1          pUserVlan4kEntry->fid_msti = pSmiVlan4kEntry[1] & 0x000F;
+  77   1          pUserVlan4kEntry->vbpen = (pSmiVlan4kEntry[1] & 0x0010) >> 4;
+  78   1          pUserVlan4kEntry->vbpri = (pSmiVlan4kEntry[1] & 0x00E0) >> 5;
+  79   1          pUserVlan4kEntry->envlanpol = (pSmiVlan4kEntry[1] & 0x0100) >> 8;
+  80   1          pUserVlan4kEntry->meteridx = ((pSmiVlan4kEntry[1] & 0x3E00) >> 9) | (((pSmiVlan4kEntry[2] & 0x0040) >>
+             - 6) << 5);
+  81   1          pUserVlan4kEntry->ivl_svl = (pSmiVlan4kEntry[1] & 0x4000) >> 14;
+  82   1      }
+  83          
+  84          /* Function Name:
+  85           *      rtl8367c_setAsicVlanMemberConfig
+  86           * Description:
+  87           *      Set 32 VLAN member configurations
+  88           * Input:
+  89           *      index       - VLAN member configuration index (0~31)
+  90           *      pVlanCg - VLAN member configuration
+  91           * Output:
+  92           *      None
+  93           * Return:
+  94           *      RT_ERR_OK                   - Success
+  95           *      RT_ERR_SMI                  - SMI access error
+  96           *      RT_ERR_INPUT                - Invalid input parameter
+  97           *      RT_ERR_L2_FID               - Invalid FID
+  98           *      RT_ERR_PORT_MASK            - Invalid portmask
+  99           *      RT_ERR_FILTER_METER_ID      - Invalid meter
+ 100           *      RT_ERR_QOS_INT_PRIORITY     - Invalid priority
+ 101           *      RT_ERR_VLAN_ENTRY_NOT_FOUND - Invalid VLAN member configuration index
+ 102           * Note:
+ 103           *      None
+ 104           */
+ 105          ret_t rtl8367c_setAsicVlanMemberConfig(uint32 index, rtl8367c_vlanconfiguser *pVlanCg)
+ 106          {
+ 107   1          ret_t  retVal;
+ 108   1          uint32 regAddr;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 3   
+
+ 109   1          uint32 regData;
+ 110   1          uint16 *tableAddr;
+ 111   1          uint32 page_idx;
+ 112   1          uint16 smi_vlancfg[RTL8367C_VLAN_MBRCFG_LEN];
+ 113   1      
+ 114   1          /* Error Checking  */
+ 115   1          if(index > RTL8367C_CVIDXMAX)
+ 116   1              return RT_ERR_VLAN_ENTRY_NOT_FOUND;
+ 117   1      
+ 118   1          if(pVlanCg->evid > RTL8367C_EVIDMAX)
+ 119   1              return RT_ERR_INPUT;
+ 120   1      
+ 121   1      
+ 122   1          if(pVlanCg->mbr > RTL8367C_PORTMASK)
+ 123   1              return RT_ERR_PORT_MASK;
+ 124   1      
+ 125   1          if(pVlanCg->fid_msti > RTL8367C_FIDMAX)
+ 126   1              return RT_ERR_L2_FID;
+ 127   1      
+ 128   1          if(pVlanCg->meteridx > RTL8367C_METERMAX)
+ 129   1              return RT_ERR_FILTER_METER_ID;
+ 130   1      
+ 131   1          if(pVlanCg->vbpri > RTL8367C_PRIMAX)
+ 132   1              return RT_ERR_QOS_INT_PRIORITY;
+ 133   1      
+ 134   1          memset(smi_vlancfg, 0x00, sizeof(uint16) * RTL8367C_VLAN_MBRCFG_LEN);
+ 135   1          _rtl8367c_VlanMCStUser2Smi(pVlanCg, smi_vlancfg);
+ 136   1          tableAddr = smi_vlancfg;
+ 137   1      
+ 138   1          for(page_idx = 0; page_idx < 4; page_idx++)  /* 4 pages per VLAN Member Config */
+ 139   1          {
+ 140   2              regAddr = RTL8367C_VLAN_MEMBER_CONFIGURATION_BASE + (index * 4) + page_idx;
+ 141   2              regData = *tableAddr;
+ 142   2      
+ 143   2              retVal = rtl8367c_setAsicReg(regAddr, regData);
+ 144   2              if(retVal != RT_ERR_OK)
+ 145   2                  return retVal;
+ 146   2      
+ 147   2              tableAddr++;
+ 148   2          }
+ 149   1      
+ 150   1          return RT_ERR_OK;
+ 151   1      }
+ 152          /* Function Name:
+ 153           *      rtl8367c_getAsicVlanMemberConfig
+ 154           * Description:
+ 155           *      Get 32 VLAN member configurations
+ 156           * Input:
+ 157           *      index       - VLAN member configuration index (0~31)
+ 158           *      pVlanCg - VLAN member configuration
+ 159           * Output:
+ 160           *      None
+ 161           * Return:
+ 162           *      RT_ERR_OK                   - Success
+ 163           *      RT_ERR_SMI                  - SMI access error
+ 164           *      RT_ERR_INPUT                - Invalid input parameter
+ 165           *      RT_ERR_VLAN_ENTRY_NOT_FOUND - Invalid VLAN member configuration index
+ 166           * Note:
+ 167           *      None
+ 168           */
+ 169          ret_t rtl8367c_getAsicVlanMemberConfig(uint32 index, rtl8367c_vlanconfiguser *pVlanCg)
+ 170          {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 4   
+
+ 171   1          ret_t  retVal;
+ 172   1          uint32 page_idx;
+ 173   1          uint32 regAddr;
+ 174   1          uint32 regData;
+ 175   1          uint16 *tableAddr;
+ 176   1          uint16 smi_vlancfg[RTL8367C_VLAN_MBRCFG_LEN];
+ 177   1      
+ 178   1          if(index > RTL8367C_CVIDXMAX)
+ 179   1              return RT_ERR_VLAN_ENTRY_NOT_FOUND;
+ 180   1      
+ 181   1          memset(smi_vlancfg, 0x00, sizeof(uint16) * RTL8367C_VLAN_MBRCFG_LEN);
+ 182   1          tableAddr  = smi_vlancfg;
+ 183   1      
+ 184   1          for(page_idx = 0; page_idx < 4; page_idx++)  /* 4 pages per VLAN Member Config */
+ 185   1          {
+ 186   2              regAddr = RTL8367C_VLAN_MEMBER_CONFIGURATION_BASE + (index * 4) + page_idx;
+ 187   2      
+ 188   2              retVal = rtl8367c_getAsicReg(regAddr, &regData);
+ 189   2              if(retVal != RT_ERR_OK)
+ 190   2                  return retVal;
+ 191   2      
+ 192   2              *tableAddr = (uint16)regData;
+ 193   2              tableAddr++;
+ 194   2          }
+ 195   1      
+ 196   1          _rtl8367c_VlanMCStSmi2User(smi_vlancfg, pVlanCg);
+ 197   1          return RT_ERR_OK;
+ 198   1      }
+ 199          /* Function Name:
+ 200           *      rtl8367c_setAsicVlan4kEntry
+ 201           * Description:
+ 202           *      Set VID mapped entry to 4K VLAN table
+ 203           * Input:
+ 204           *      pVlan4kEntry - 4K VLAN configuration
+ 205           * Output:
+ 206           *      None
+ 207           * Return:
+ 208           *      RT_ERR_OK                   - Success
+ 209           *      RT_ERR_SMI                  - SMI access error
+ 210           *      RT_ERR_INPUT                - Invalid input parameter
+ 211           *      RT_ERR_L2_FID               - Invalid FID
+ 212           *      RT_ERR_VLAN_VID             - Invalid VID parameter (0~4095)
+ 213           *      RT_ERR_PORT_MASK            - Invalid portmask
+ 214           *      RT_ERR_FILTER_METER_ID      - Invalid meter
+ 215           *      RT_ERR_QOS_INT_PRIORITY     - Invalid priority
+ 216           * Note:
+ 217           *      None
+ 218           */
+ 219          ret_t rtl8367c_setAsicVlan4kEntry(rtl8367c_user_vlan4kentry *pVlan4kEntry )
+ 220          {
+ 221   1          uint16              vlan_4k_entry[RTL8367C_VLAN_4KTABLE_LEN];
+ 222   1          uint32                  page_idx;
+ 223   1          uint16                  *tableAddr;
+ 224   1          ret_t                   retVal;
+ 225   1          uint32                  regData;
+ 226   1      
+ 227   1          if(pVlan4kEntry->vid > RTL8367C_VIDMAX)
+ 228   1              return RT_ERR_VLAN_VID;
+ 229   1      
+ 230   1          if(pVlan4kEntry->mbr > RTL8367C_PORTMASK)
+ 231   1              return RT_ERR_PORT_MASK;
+ 232   1      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 5   
+
+ 233   1          if(pVlan4kEntry->untag > RTL8367C_PORTMASK)
+ 234   1              return RT_ERR_PORT_MASK;
+ 235   1      
+ 236   1          if(pVlan4kEntry->fid_msti > RTL8367C_FIDMAX)
+ 237   1              return RT_ERR_L2_FID;
+ 238   1      
+ 239   1          if(pVlan4kEntry->meteridx > RTL8367C_METERMAX)
+ 240   1              return RT_ERR_FILTER_METER_ID;
+ 241   1      
+ 242   1          if(pVlan4kEntry->vbpri > RTL8367C_PRIMAX)
+ 243   1              return RT_ERR_QOS_INT_PRIORITY;
+ 244   1      
+ 245   1          memset(vlan_4k_entry, 0x00, sizeof(uint16) * RTL8367C_VLAN_4KTABLE_LEN);
+ 246   1          _rtl8367c_Vlan4kStUser2Smi(pVlan4kEntry, vlan_4k_entry);
+ 247   1      
+ 248   1          /* Prepare Data */
+ 249   1          tableAddr = vlan_4k_entry;
+ 250   1          for(page_idx = 0; page_idx < RTL8367C_VLAN_4KTABLE_LEN; page_idx++)
+ 251   1          {
+ 252   2              regData = *tableAddr;
+ 253   2              retVal = rtl8367c_setAsicReg(RTL8367C_TABLE_ACCESS_WRDATA_BASE + page_idx, regData);
+ 254   2              if(retVal != RT_ERR_OK)
+ 255   2                  return retVal;
+ 256   2      
+ 257   2              tableAddr++;
+ 258   2          }
+ 259   1      
+ 260   1          /* Write Address (VLAN_ID) */
+ 261   1          regData = pVlan4kEntry->vid;
+ 262   1          retVal = rtl8367c_setAsicReg(RTL8367C_TABLE_ACCESS_ADDR_REG, regData);
+ 263   1          if(retVal != RT_ERR_OK)
+ 264   1              return retVal;
+ 265   1      
+ 266   1          /* Write Command */
+ 267   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_TABLE_ACCESS_CTRL_REG, RTL8367C_TABLE_TYPE_MASK | RTL8367C_C
+             -OMMAND_TYPE_MASK,RTL8367C_TABLE_ACCESS_REG_DATA(TB_OP_WRITE,TB_TARGET_CVLAN));
+ 268   1          if(retVal != RT_ERR_OK)
+ 269   1              return retVal;
+ 270   1      
+ 271   1      #if defined(CONFIG_RTL8367C_ASICDRV_TEST)
+                  memcpy(&Rtl8370sVirtualVlanTable[pVlan4kEntry->vid], pVlan4kEntry, sizeof(rtl8367c_user_vlan4kentry));
+              #endif
+ 274   1      
+ 275   1          return RT_ERR_OK;
+ 276   1      }
+ 277          /* Function Name:
+ 278           *      rtl8367c_getAsicVlan4kEntry
+ 279           * Description:
+ 280           *      Get VID mapped entry to 4K VLAN table
+ 281           * Input:
+ 282           *      pVlan4kEntry - 4K VLAN configuration
+ 283           * Output:
+ 284           *      None
+ 285           * Return:
+ 286           *      RT_ERR_OK               - Success
+ 287           *      RT_ERR_SMI              - SMI access error
+ 288           *      RT_ERR_VLAN_VID         - Invalid VID parameter (0~4095)
+ 289           *      RT_ERR_BUSYWAIT_TIMEOUT - LUT is busy at retrieving
+ 290           * Note:
+ 291           *      None
+ 292           */
+ 293          ret_t rtl8367c_getAsicVlan4kEntry(rtl8367c_user_vlan4kentry *pVlan4kEntry )
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 6   
+
+ 294          {
+ 295   1          uint16                  vlan_4k_entry[RTL8367C_VLAN_4KTABLE_LEN];
+ 296   1          uint32                  page_idx;
+ 297   1          uint16                  *tableAddr;
+ 298   1          ret_t                       retVal;
+ 299   1          uint32                  regData;
+ 300   1          uint32                  busyCounter;
+ 301   1      
+ 302   1          if(pVlan4kEntry->vid > RTL8367C_VIDMAX)
+ 303   1              return RT_ERR_VLAN_VID;
+ 304   1      
+ 305   1          /* Polling status */
+ 306   1          busyCounter = RTL8367C_VLAN_BUSY_CHECK_NO;
+ 307   1          while(busyCounter)
+ 308   1          {
+ 309   2              retVal = rtl8367c_getAsicRegBit(RTL8367C_TABLE_ACCESS_STATUS_REG, RTL8367C_TABLE_LUT_ADDR_BUSY_FLA
+             -G_OFFSET,&regData);
+ 310   2              if(retVal != RT_ERR_OK)
+ 311   2                  return retVal;
+ 312   2      
+ 313   2              if(regData == 0)
+ 314   2                  break;
+ 315   2      
+ 316   2              busyCounter --;
+ 317   2              if(busyCounter == 0)
+ 318   2                  return RT_ERR_BUSYWAIT_TIMEOUT;
+ 319   2          }
+ 320   1      
+ 321   1          /* Write Address (VLAN_ID) */
+ 322   1          regData = pVlan4kEntry->vid;
+ 323   1          retVal = rtl8367c_setAsicReg(RTL8367C_TABLE_ACCESS_ADDR_REG, regData);
+ 324   1          if(retVal != RT_ERR_OK)
+ 325   1              return retVal;
+ 326   1      
+ 327   1          /* Read Command */
+ 328   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_TABLE_ACCESS_CTRL_REG, RTL8367C_TABLE_TYPE_MASK | RTL8367C_C
+             -OMMAND_TYPE_MASK, RTL8367C_TABLE_ACCESS_REG_DATA(TB_OP_READ,TB_TARGET_CVLAN));
+ 329   1          if(retVal != RT_ERR_OK)
+ 330   1              return retVal;
+ 331   1      
+ 332   1          /* Polling status */
+ 333   1          busyCounter = RTL8367C_VLAN_BUSY_CHECK_NO;
+ 334   1          while(busyCounter)
+ 335   1          {
+ 336   2              retVal = rtl8367c_getAsicRegBit(RTL8367C_TABLE_ACCESS_STATUS_REG, RTL8367C_TABLE_LUT_ADDR_BUSY_FLA
+             -G_OFFSET,&regData);
+ 337   2              if(retVal != RT_ERR_OK)
+ 338   2                  return retVal;
+ 339   2      
+ 340   2              if(regData == 0)
+ 341   2                  break;
+ 342   2      
+ 343   2              busyCounter --;
+ 344   2              if(busyCounter == 0)
+ 345   2                  return RT_ERR_BUSYWAIT_TIMEOUT;
+ 346   2          }
+ 347   1      
+ 348   1          /* Read VLAN data from register */
+ 349   1          tableAddr = vlan_4k_entry;
+ 350   1          for(page_idx = 0; page_idx < RTL8367C_VLAN_4KTABLE_LEN; page_idx++)
+ 351   1          {
+ 352   2              retVal = rtl8367c_getAsicReg(RTL8367C_TABLE_ACCESS_RDDATA_BASE + page_idx, &regData);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 7   
+
+ 353   2              if(retVal != RT_ERR_OK)
+ 354   2                  return retVal;
+ 355   2      
+ 356   2              *tableAddr = regData;
+ 357   2              tableAddr++;
+ 358   2          }
+ 359   1      
+ 360   1          _rtl8367c_Vlan4kStSmi2User(vlan_4k_entry, pVlan4kEntry);
+ 361   1      
+ 362   1      #if defined(CONFIG_RTL8367C_ASICDRV_TEST)
+                  memcpy(pVlan4kEntry, &Rtl8370sVirtualVlanTable[pVlan4kEntry->vid], sizeof(rtl8367c_user_vlan4kentry));
+              #endif
+ 365   1      
+ 366   1          return RT_ERR_OK;
+ 367   1      }
+ 368          /* Function Name:
+ 369           *      rtl8367c_setAsicVlanAccpetFrameType
+ 370           * Description:
+ 371           *      Set per-port acceptable frame type
+ 372           * Input:
+ 373           *      port        - Physical port number (0~10)
+ 374           *      frameType   - The acceptable frame type
+ 375           * Output:
+ 376           *      None
+ 377           * Return:
+ 378           *      RT_ERR_OK                       - Success
+ 379           *      RT_ERR_SMI                      - SMI access error
+ 380           *      RT_ERR_PORT_ID                  - Invalid port number
+ 381           *      RT_ERR_VLAN_ACCEPT_FRAME_TYPE   - Invalid frame type
+ 382           * Note:
+ 383           *      None
+ 384           */
+ 385          ret_t rtl8367c_setAsicVlanAccpetFrameType(uint32 port, rtl8367c_accframetype frameType)
+ 386          {
+ 387   1          if(port > RTL8367C_PORTIDMAX)
+ 388   1              return RT_ERR_PORT_ID;
+ 389   1      
+ 390   1          if(frameType >= FRAME_TYPE_MAX_BOUND)
+ 391   1              return RT_ERR_VLAN_ACCEPT_FRAME_TYPE;
+ 392   1      
+ 393   1          return rtl8367c_setAsicRegBits(RTL8367C_VLAN_ACCEPT_FRAME_TYPE_REG(port), RTL8367C_VLAN_ACCEPT_FRAME_T
+             -YPE_MASK(port), frameType);
+ 394   1      }
+ 395          /* Function Name:
+ 396           *      rtl8367c_getAsicVlanAccpetFrameType
+ 397           * Description:
+ 398           *      Get per-port acceptable frame type
+ 399           * Input:
+ 400           *      port        - Physical port number (0~10)
+ 401           *      pFrameType  - The acceptable frame type
+ 402           * Output:
+ 403           *      None
+ 404           * Return:
+ 405           *      RT_ERR_OK                       - Success
+ 406           *      RT_ERR_SMI                      - SMI access error
+ 407           *      RT_ERR_PORT_ID                  - Invalid port number
+ 408           *      RT_ERR_VLAN_ACCEPT_FRAME_TYPE   - Invalid frame type
+ 409           * Note:
+ 410           *      None
+ 411           */
+ 412          ret_t rtl8367c_getAsicVlanAccpetFrameType(uint32 port, rtl8367c_accframetype *pFrameType)
+ 413          {
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 8   
+
+ 414   1          uint32 regData;
+ 415   1          ret_t  retVal;
+ 416   1      
+ 417   1          if(port > RTL8367C_PORTIDMAX)
+ 418   1              return RT_ERR_PORT_ID;
+ 419   1      
+ 420   1          if((retVal = rtl8367c_getAsicRegBits(RTL8367C_VLAN_ACCEPT_FRAME_TYPE_REG(port), RTL8367C_VLAN_ACCEPT_F
+             -RAME_TYPE_MASK(port), &regData)) != RT_ERR_OK)
+ 421   1              return retVal;
+ 422   1      
+ 423   1          *pFrameType = (rtl8367c_accframetype)regData;
+ 424   1          return RT_ERR_OK;
+ 425   1      }
+ 426          /* Function Name:
+ 427           *      rtl8367c_setAsicVlanIngressFilter
+ 428           * Description:
+ 429           *      Set VLAN Ingress Filter
+ 430           * Input:
+ 431           *      port        - Physical port number (0~10)
+ 432           *      enabled     - Enable or disable Ingress filter
+ 433           * Output:
+ 434           *      None
+ 435           * Return:
+ 436           *      RT_ERR_OK       - Success
+ 437           *      RT_ERR_SMI      - SMI access error
+ 438           *      RT_ERR_PORT_ID  - Invalid port number
+ 439           * Note:
+ 440           *      None
+ 441           */
+ 442          ret_t rtl8367c_setAsicVlanIngressFilter(uint32 port, uint32 enabled)
+ 443          {
+ 444   1          if(port > RTL8367C_PORTIDMAX)
+ 445   1              return RT_ERR_PORT_ID;
+ 446   1      
+ 447   1          return rtl8367c_setAsicRegBit(RTL8367C_VLAN_INGRESS_REG, port, enabled);
+ 448   1      }
+ 449          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicVlanIngressFilter
+               * Description:
+               *      Get VLAN Ingress Filter
+               * Input:
+               *      port        - Physical port number (0~10)
+               *      pEnable     - Enable or disable Ingress filter
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanIngressFilter(uint32 port, uint32 *pEnable)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_VLAN_INGRESS_REG, port, pEnable);
+              }
+              #endif
+ 474          /* Function Name:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 9   
+
+ 475           *      rtl8367c_setAsicVlanEgressTagMode
+ 476           * Description:
+ 477           *      Set CVLAN egress tag mode
+ 478           * Input:
+ 479           *      port        - Physical port number (0~10)
+ 480           *      tagMode     - The egress tag mode. Including Original mode, Keep tag mode and Priority tag mode
+ 481           * Output:
+ 482           *      None
+ 483           * Return:
+ 484           *      RT_ERR_OK       - Success
+ 485           *      RT_ERR_SMI      - SMI access error
+ 486           *      RT_ERR_INPUT    - Invalid input parameter
+ 487           *      RT_ERR_PORT_ID  - Invalid port number
+ 488           * Note:
+ 489           *      None
+ 490           */
+ 491          ret_t rtl8367c_setAsicVlanEgressTagMode(uint32 port, rtl8367c_egtagmode tagMode)
+ 492          {
+ 493   1          if(port > RTL8367C_PORTIDMAX)
+ 494   1              return RT_ERR_PORT_ID;
+ 495   1      
+ 496   1          if(tagMode >= EG_TAG_MODE_END)
+ 497   1              return RT_ERR_INPUT;
+ 498   1      
+ 499   1          return rtl8367c_setAsicRegBits(RTL8367C_PORT_MISC_CFG_REG(port), RTL8367C_VLAN_EGRESS_MDOE_MASK, tagMo
+             -de);
+ 500   1      }
+ 501          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicVlanEgressTagMode
+               * Description:
+               *      Get CVLAN egress tag mode
+               * Input:
+               *      port        - Physical port number (0~10)
+               *      pTagMode    - The egress tag mode. Including Original mode, Keep tag mode and Priority tag mode
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanEgressTagMode(uint32 port, rtl8367c_egtagmode *pTagMode)
+              {
+                  uint32 regData;
+                  ret_t  retVal;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if((retVal = rtl8367c_getAsicRegBits(RTL8367C_PORT_MISC_CFG_REG(port), RTL8367C_VLAN_EGRESS_MDOE_MASK,
+             - &regData)) != RT_ERR_OK)
+                      return retVal;
+              
+                  *pTagMode = (rtl8367c_egtagmode)regData;
+                  return RT_ERR_OK;
+              }
+              #endif
+ 533          /* Function Name:
+ 534           *      rtl8367c_setAsicVlanPortBasedVID
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 10  
+
+ 535           * Description:
+ 536           *      Set port based VID which is indexed to 32 VLAN member configurations
+ 537           * Input:
+ 538           *      port    - Physical port number (0~10)
+ 539           *      index   - Index to VLAN member configuration
+ 540           *      pri     - 1Q Port based VLAN priority
+ 541           * Output:
+ 542           *      None
+ 543           * Return:
+ 544           *      RT_ERR_OK                   - Success
+ 545           *      RT_ERR_SMI                  - SMI access error
+ 546           *      RT_ERR_PORT_ID              - Invalid port number
+ 547           *      RT_ERR_QOS_INT_PRIORITY     - Invalid priority
+ 548           *      RT_ERR_VLAN_ENTRY_NOT_FOUND - Invalid VLAN member configuration index
+ 549           * Note:
+ 550           *      None
+ 551           */
+ 552          ret_t rtl8367c_setAsicVlanPortBasedVID(uint32 port, uint32 index, uint32 pri)
+ 553          {
+ 554   1          uint32 regAddr, bit_mask;
+ 555   1          ret_t  retVal;
+ 556   1      
+ 557   1          if(port > RTL8367C_PORTIDMAX)
+ 558   1              return RT_ERR_PORT_ID;
+ 559   1      
+ 560   1          if(index > RTL8367C_CVIDXMAX)
+ 561   1              return RT_ERR_VLAN_ENTRY_NOT_FOUND;
+ 562   1      
+ 563   1          if(pri > RTL8367C_PRIMAX)
+ 564   1              return RT_ERR_QOS_INT_PRIORITY;
+ 565   1      
+ 566   1          regAddr = RTL8367C_VLAN_PVID_CTRL_REG(port);
+ 567   1          bit_mask = RTL8367C_PORT_VIDX_MASK(port);
+ 568   1          retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, index);
+ 569   1          if(retVal != RT_ERR_OK)
+ 570   1              return retVal;
+ 571   1      
+ 572   1          regAddr = RTL8367C_VLAN_PORTBASED_PRIORITY_REG(port);
+ 573   1          bit_mask = RTL8367C_VLAN_PORTBASED_PRIORITY_MASK(port);
+ 574   1          retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, pri);
+ 575   1          if(retVal != RT_ERR_OK)
+ 576   1              return retVal;
+ 577   1      
+ 578   1          return RT_ERR_OK;
+ 579   1      }
+ 580          /* Function Name:
+ 581           *      rtl8367c_getAsicVlanPortBasedVID
+ 582           * Description:
+ 583           *      Get port based VID which is indexed to 32 VLAN member configurations
+ 584           * Input:
+ 585           *      port    - Physical port number (0~10)
+ 586           *      pIndex  - Index to VLAN member configuration
+ 587           *      pPri    - 1Q Port based VLAN priority
+ 588           * Output:
+ 589           *      None
+ 590           * Return:
+ 591           *      RT_ERR_OK       - Success
+ 592           *      RT_ERR_SMI      - SMI access error
+ 593           *      RT_ERR_PORT_ID  - Invalid port number
+ 594           * Note:
+ 595           *      None
+ 596           */
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 11  
+
+ 597          ret_t rtl8367c_getAsicVlanPortBasedVID(uint32 port, uint32 *pIndex, uint32 *pPri)
+ 598          {
+ 599   1          uint32 regAddr,bit_mask;
+ 600   1          ret_t  retVal;
+ 601   1      
+ 602   1          if(port > RTL8367C_PORTIDMAX)
+ 603   1              return RT_ERR_PORT_ID;
+ 604   1      
+ 605   1          regAddr = RTL8367C_VLAN_PVID_CTRL_REG(port);
+ 606   1          bit_mask = RTL8367C_PORT_VIDX_MASK(port);
+ 607   1          retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, pIndex);
+ 608   1          if(retVal != RT_ERR_OK)
+ 609   1              return retVal;
+ 610   1      
+ 611   1          regAddr = RTL8367C_VLAN_PORTBASED_PRIORITY_REG(port);
+ 612   1          bit_mask = RTL8367C_VLAN_PORTBASED_PRIORITY_MASK(port);
+ 613   1          retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, pPri);
+ 614   1          if(retVal != RT_ERR_OK)
+ 615   1              return retVal;
+ 616   1      
+ 617   1          return RT_ERR_OK;
+ 618   1      }
+ 619          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_setAsicVlanProtocolBasedGroupData
+               * Description:
+               *      Set protocol and port based group database
+               * Input:
+               *      index       - Index to VLAN member configuration
+               *      pPbCfg  - Protocol and port based group database entry
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_INPUT                - Invalid input parameter
+               *      RT_ERR_VLAN_PROTO_AND_PORT  - Invalid protocol base group database index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicVlanProtocolBasedGroupData(uint32 index, rtl8367c_protocolgdatacfg *pPbCfg)
+              {
+                  uint32  frameType;
+                  uint32  etherType;
+                  ret_t   retVal;
+              
+                  /* Error Checking */
+                  if(index > RTL8367C_PROTOVLAN_GIDX_MAX)
+                      return RT_ERR_VLAN_PROTO_AND_PORT;
+              
+                  if(pPbCfg->frameType >= PPVLAN_FRAME_TYPE_END )
+                      return RT_ERR_INPUT;
+              
+                  frameType = pPbCfg->frameType;
+                  etherType = pPbCfg->etherType;
+              
+                  /* Frame type */
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_VLAN_PPB_FRAMETYPE_REG(index), RTL8367C_VLAN_PPB_FRAMETYPE_M
+             -ASK, frameType);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 12  
+
+                  /* Ether type */
+                  retVal = rtl8367c_setAsicReg(RTL8367C_VLAN_PPB_ETHERTYPR_REG(index), etherType);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicVlanProtocolBasedGroupData
+               * Description:
+               *      Get protocol and port based group database
+               * Input:
+               *      index       - Index to VLAN member configuration
+               *      pPbCfg  - Protocol and port based group database entry
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_INPUT                - Invalid input parameter
+               *      RT_ERR_VLAN_PROTO_AND_PORT  - Invalid protocol base group database index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanProtocolBasedGroupData(uint32 index, rtl8367c_protocolgdatacfg *pPbCfg)
+              {
+                  uint32  frameType;
+                  uint32  etherType;
+                  ret_t   retVal;
+              
+                  /* Error Checking */
+                  if(index > RTL8367C_PROTOVLAN_GIDX_MAX)
+                      return RT_ERR_VLAN_PROTO_AND_PORT;
+              
+                  /* Read Frame type */
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_VLAN_PPB_FRAMETYPE_REG(index), RTL8367C_VLAN_PPB_FRAMETYPE_M
+             -ASK, &frameType);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  /* Read Ether type */
+                  retVal = rtl8367c_getAsicReg(RTL8367C_VLAN_PPB_ETHERTYPR_REG(index), &etherType);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+              
+                  pPbCfg->frameType = frameType;
+                  pPbCfg->etherType = etherType;
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicVlanPortAndProtocolBased
+               * Description:
+               *      Set protocol and port based VLAN configuration
+               * Input:
+               *      port        - Physical port number (0~10)
+               *      index       - Index of protocol and port based database index
+               *      pPpbCfg     - Protocol and port based VLAN configuration
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 13  
+
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_INPUT                - Invalid input parameter
+               *      RT_ERR_PORT_ID              - Invalid port number
+               *      RT_ERR_QOS_INT_PRIORITY     - Invalid priority
+               *      RT_ERR_VLAN_PROTO_AND_PORT  - Invalid protocol base group database index
+               *      RT_ERR_VLAN_ENTRY_NOT_FOUND - Invalid VLAN member configuration index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicVlanPortAndProtocolBased(uint32 port, uint32 index, rtl8367c_protocolvlancfg *pPpbCf
+             -g)
+              {
+                  uint32  reg_addr, bit_mask, bit_value;
+                  ret_t   retVal;
+              
+                  /* Error Checking */
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(index > RTL8367C_PROTOVLAN_GIDX_MAX)
+                      return RT_ERR_VLAN_PROTO_AND_PORT;
+              
+                  if( (pPpbCfg->valid != FALSE) && (pPpbCfg->valid != TRUE) )
+                      return RT_ERR_INPUT;
+              
+                  if(pPpbCfg->vlan_idx > RTL8367C_CVIDXMAX)
+                      return RT_ERR_VLAN_ENTRY_NOT_FOUND;
+              
+                  if(pPpbCfg->priority > RTL8367C_PRIMAX)
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  /* Valid bit */
+                  reg_addr  = RTL8367C_VLAN_PPB_VALID_REG(index);
+                  bit_mask  = 0x0001 << port;
+                  bit_value = ((TRUE == pPpbCfg->valid) ? 0x1 : 0x0);
+                  retVal    = rtl8367c_setAsicRegBits(reg_addr, bit_mask, bit_value);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  /* Calculate the actual register address for CVLAN index*/
+                  if(port < 8)
+                  {
+                      reg_addr = RTL8367C_VLAN_PPB_CTRL_REG(index, port);
+                      bit_mask = RTL8367C_VLAN_PPB_CTRL_MASK(port);
+                  }
+                  else if(port == 8)
+                  {
+                      reg_addr = RTL8367C_REG_VLAN_PPB0_CTRL4;
+                      bit_mask = RTL8367C_VLAN_PPB0_CTRL4_PORT8_INDEX_MASK;
+                  }
+                  else if(port == 9)
+                  {
+                      reg_addr = RTL8367C_REG_VLAN_PPB0_CTRL4;
+                      bit_mask = RTL8367C_VLAN_PPB0_CTRL4_PORT9_INDEX_MASK;
+                  }
+                  else if(port == 10)
+                  {
+                      reg_addr = RTL8367C_REG_VLAN_PPB0_CTRL4;
+                      bit_mask = RTL8367C_VLAN_PPB0_CTRL4_PORT10_INDEX_MASK;
+                  }
+              
+                  bit_value = pPpbCfg->vlan_idx;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 14  
+
+                  retVal  = rtl8367c_setAsicRegBits(reg_addr, bit_mask, bit_value);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  /* write priority */
+                  reg_addr  = RTL8367C_VLAN_PPB_PRIORITY_ITEM_REG(port, index);
+                  bit_mask  = RTL8367C_VLAN_PPB_PRIORITY_ITEM_MASK(port);
+                  bit_value = pPpbCfg->priority;
+                  retVal    = rtl8367c_setAsicRegBits(reg_addr, bit_mask, bit_value);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicVlanPortAndProtocolBased
+               * Description:
+               *      Get protocol and port based VLAN configuration
+               * Input:
+               *      port        - Physical port number (0~7)
+               *      index       - Index of protocol and port based database index
+               *      pPpbCfg     - Protocol and port based VLAN configuration
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK                   - Success
+               *      RT_ERR_SMI                  - SMI access error
+               *      RT_ERR_INPUT                - Invalid input parameter
+               *      RT_ERR_PORT_ID              - Invalid port number
+               *      RT_ERR_VLAN_PROTO_AND_PORT  - Invalid protocol base group database index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanPortAndProtocolBased(uint32 port, uint32 index, rtl8367c_protocolvlancfg *pPpbCf
+             -g)
+              {
+                  uint32  reg_addr, bit_mask, bit_value;
+                  ret_t   retVal;
+              
+                  /* Error Checking */
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(index > RTL8367C_PROTOVLAN_GIDX_MAX)
+                      return RT_ERR_VLAN_PROTO_AND_PORT;
+              
+                  if(pPpbCfg == NULL)
+                      return RT_ERR_INPUT;
+              
+                  /* Valid bit */
+                  reg_addr  = RTL8367C_VLAN_PPB_VALID_REG(index);
+                  bit_mask  = 0x0001 << port;
+                  retVal    = rtl8367c_getAsicRegBits(reg_addr, bit_mask, &bit_value);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pPpbCfg->valid = bit_value;
+              
+                  /* CVLAN index */
+                  if(port < 8)
+                  {
+                      reg_addr = RTL8367C_VLAN_PPB_CTRL_REG(index, port);
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 15  
+
+                      bit_mask = RTL8367C_VLAN_PPB_CTRL_MASK(port);
+                  }
+                  else if(port == 8)
+                  {
+                      reg_addr = RTL8367C_REG_VLAN_PPB0_CTRL4;
+                      bit_mask = RTL8367C_VLAN_PPB0_CTRL4_PORT8_INDEX_MASK;
+                  }
+                  else if(port == 9)
+                  {
+                      reg_addr = RTL8367C_REG_VLAN_PPB0_CTRL4;
+                      bit_mask = RTL8367C_VLAN_PPB0_CTRL4_PORT9_INDEX_MASK;
+                  }
+                  else if(port == 10)
+                  {
+                      reg_addr = RTL8367C_REG_VLAN_PPB0_CTRL4;
+                      bit_mask = RTL8367C_VLAN_PPB0_CTRL4_PORT10_INDEX_MASK;
+                  }
+              
+                  retVal = rtl8367c_getAsicRegBits(reg_addr, bit_mask, &bit_value);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pPpbCfg->vlan_idx = bit_value;
+              
+              
+                  /* priority */
+                  reg_addr = RTL8367C_VLAN_PPB_PRIORITY_ITEM_REG(port,index);
+                  bit_mask = RTL8367C_VLAN_PPB_PRIORITY_ITEM_MASK(port);
+                  retVal = rtl8367c_getAsicRegBits(reg_addr, bit_mask, &bit_value);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pPpbCfg->priority = bit_value;
+                  return RT_ERR_OK;
+              }
+              #endif
+ 877          /* Function Name:
+ 878           *      rtl8367c_setAsicVlanFilter
+ 879           * Description:
+ 880           *      Set enable CVLAN filtering function
+ 881           * Input:
+ 882           *      enabled - 1: enabled, 0: disabled
+ 883           * Output:
+ 884           *      None
+ 885           * Return:
+ 886           *      RT_ERR_OK       - Success
+ 887           *      RT_ERR_SMI      - SMI access error
+ 888           * Note:
+ 889           *      None
+ 890           */
+ 891          ret_t rtl8367c_setAsicVlanFilter(uint32 enabled)
+ 892          {
+ 893   1          return rtl8367c_setAsicRegBit(RTL8367C_REG_VLAN_CTRL, RTL8367C_VLAN_CTRL_OFFSET, enabled);
+ 894   1      }
+ 895          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicVlanFilter
+               * Description:
+               *      Get enable CVLAN filtering function
+               * Input:
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 16  
+
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanFilter(uint32* pEnabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_VLAN_CTRL, RTL8367C_VLAN_CTRL_OFFSET, pEnabled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicVlanUntagDscpPriorityEn
+               * Description:
+               *      Set enable Dscp to untag 1Q priority
+               * Input:
+               *      enabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicVlanUntagDscpPriorityEn(uint32 enabled)
+              {
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_UNTAG_DSCP_PRI_CFG, RTL8367C_UNTAG_DSCP_PRI_CFG_OFFSET, ena
+             -bled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicVlanUntagDscpPriorityEn
+               * Description:
+               *      Get enable Dscp to untag 1Q priority
+               * Input:
+               *      enabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanUntagDscpPriorityEn(uint32* enabled)
+              {
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_UNTAG_DSCP_PRI_CFG, RTL8367C_UNTAG_DSCP_PRI_CFG_OFFSET, ena
+             -bled);
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicPortBasedFid
+               * Description:
+               *      Set port based FID
+               * Input:
+               *      port    - Physical port number (0~10)
+               *      fid     - Port based fid
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_L2_FID   - Invalid FID
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 17  
+
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortBasedFid(uint32 port, uint32 fid)
+              {
+                  uint32  reg_addr;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(fid > RTL8367C_FIDMAX)
+                      return RT_ERR_L2_FID;
+              
+                  if(port < 8)
+                      return rtl8367c_setAsicReg(RTL8367C_PORT_PBFID_REG(port),fid);
+                  else {
+                      reg_addr = RTL8367C_REG_PORT8_PBFID + port-8;
+                      return rtl8367c_setAsicReg(reg_addr, fid);
+                  }
+              
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortBasedFid
+               * Description:
+               *      Get port based FID
+               * Input:
+               *      port    - Physical port number (0~7)
+               *      pFid    - Port based fid
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortBasedFid(uint32 port, uint32* pFid)
+              {
+                  uint32  reg_addr;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(port < 8)
+                      return rtl8367c_getAsicReg(RTL8367C_PORT_PBFID_REG(port), pFid);
+                  else{
+                      reg_addr = RTL8367C_REG_PORT8_PBFID + port-8;
+                      return rtl8367c_getAsicReg(reg_addr, pFid);
+                  }
+              }
+              /* Function Name:
+               *      rtl8367c_setAsicPortBasedFidEn
+               * Description:
+               *      Set port based FID selection enable
+               * Input:
+               *      port    - Physical port number (0~10)
+               *      enabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 18  
+
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicPortBasedFidEn(uint32 port, uint32 enabled)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_setAsicRegBit(RTL8367C_REG_PORT_PBFIDEN,port, enabled);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicPortBasedFidEn
+               * Description:
+               *      Get port based FID selection enable
+               * Input:
+               *      port    - Physical port number (0~10)
+               *      pEnabled - 1: enabled, 0: disabled
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicPortBasedFidEn(uint32 port, uint32* pEnabled)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBit(RTL8367C_REG_PORT_PBFIDEN,port, pEnabled);
+              }
+              #endif
+1062          /* Function Name:
+1063           *      rtl8367c_setAsicSpanningTreeStatus
+1064           * Description:
+1065           *      Set spanning tree state per each port
+1066           * Input:
+1067           *      port    - Physical port number (0~10)
+1068           *      msti    - Multiple spanning tree instance
+1069           *      state   - Spanning tree state for msti
+1070           * Output:
+1071           *      None
+1072           * Return:
+1073           *      RT_ERR_OK           - Success
+1074           *      RT_ERR_SMI          - SMI access error
+1075           *      RT_ERR_MSTI         - Invalid msti parameter
+1076           *      RT_ERR_PORT_ID      - Invalid port number
+1077           *      RT_ERR_MSTP_STATE   - Invalid port number
+1078           * Note:
+1079           *      None
+1080           */
+1081          ret_t rtl8367c_setAsicSpanningTreeStatus(uint32 port, uint32 msti, uint32 state)
+1082          {
+1083   1        uint32  reg_addr,bits_msk;
+1084   1      
+1085   1          if(port > RTL8367C_PORTIDMAX)
+1086   1              return RT_ERR_PORT_ID;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 19  
+
+1087   1      
+1088   1          if(msti > RTL8367C_MSTIMAX)
+1089   1              return RT_ERR_MSTI;
+1090   1      
+1091   1          if(state > STPST_FORWARDING)
+1092   1              return RT_ERR_MSTP_STATE;
+1093   1      
+1094   1          if(port < 8)
+1095   1              return rtl8367c_setAsicRegBits(RTL8367C_VLAN_MSTI_REG(msti,port), RTL8367C_VLAN_MSTI_MASK(port),st
+             -ate);
+1096   1          else{
+1097   2              reg_addr = RTL8367C_VLAN_MSTI_REG(msti,port);
+1098   2              switch(port){
+1099   3                  case 8: bits_msk = RTL8367C_VLAN_MSTI0_CTRL1_PORT8_STATE_MASK;break;
+1100   3                  case 9: bits_msk = RTL8367C_VLAN_MSTI0_CTRL1_PORT9_STATE_MASK;break;
+1101   3                  case 10: bits_msk = RTL8367C_VLAN_MSTI0_CTRL1_PORT10_STATE_MASK;break;
+1102   3              }
+1103   2              return rtl8367c_setAsicRegBits(reg_addr, bits_msk,state);
+1104   2          }
+1105   1      }
+1106          #if 0 //NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicSpanningTreeStatus
+               * Description:
+               *      Set spanning tree state per each port
+               * Input:
+               *      port    - Physical port number (0~10)
+               *      msti    - Multiple spanning tree instance
+               *      pState  - Spanning tree state for msti
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_MSTI         - Invalid msti parameter
+               *      RT_ERR_PORT_ID      - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicSpanningTreeStatus(uint32 port, uint32 msti, uint32* pState)
+              {
+                  uint32  reg_addr,bits_msk;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(msti > RTL8367C_MSTIMAX)
+                      return RT_ERR_MSTI;
+              
+                  if(port < 8)
+                      return rtl8367c_getAsicRegBits(RTL8367C_VLAN_MSTI_REG(msti,port), RTL8367C_VLAN_MSTI_MASK(port), p
+             -State);
+                  else{
+                      reg_addr = RTL8367C_VLAN_MSTI_REG(msti,port);
+                      switch(port){
+                          case 8: bits_msk = RTL8367C_VLAN_MSTI0_CTRL1_PORT8_STATE_MASK;break;
+                          case 9: bits_msk = RTL8367C_VLAN_MSTI0_CTRL1_PORT9_STATE_MASK;break;
+                          case 10: bits_msk = RTL8367C_VLAN_MSTI0_CTRL1_PORT10_STATE_MASK;break;
+                      }
+                      return rtl8367c_getAsicRegBits(reg_addr, bits_msk, pState);
+                  }
+              
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 20  
+
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicVlanTransparent
+               * Description:
+               *      Set VLAN transparent
+               * Input:
+               *      port        - Physical port number (0~10)
+               *      portmask    - portmask(0~0xFF)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_MASK    - Invalid portmask
+               *      RT_ERR_PORT_ID      - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicVlanTransparent(uint32 port, uint32 portmask)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(portmask > RTL8367C_PORTMASK)
+                      return RT_ERR_PORT_MASK;
+              
+                  return rtl8367c_setAsicRegBits(RTL8367C_REG_VLAN_EGRESS_TRANS_CTRL0 + port, RTL8367C_VLAN_EGRESS_TRANS
+             -_CTRL0_MASK, portmask);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicVlanTransparent
+               * Description:
+               *      Get VLAN transparent
+               * Input:
+               *      port        - Physical port number (0~10)
+               * Output:
+               *      pPortmask   - Ingress port mask
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_MASK    - Invalid portmask
+               *      RT_ERR_PORT_ID      - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanTransparent(uint32 port, uint32 *pPortmask)
+              {
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  return rtl8367c_getAsicRegBits(RTL8367C_REG_VLAN_EGRESS_TRANS_CTRL0 + port, RTL8367C_VLAN_EGRESS_TRANS
+             -_CTRL0_MASK, pPortmask);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicVlanEgressKeep
+               * Description:
+               *      Set per egress port VLAN keep mode
+               * Input:
+               *      port        - Physical port number (0~10)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 21  
+
+               *      portmask    - portmask(0~0xFF)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_PORT_MASK    - Invalid portmask
+               *      RT_ERR_PORT_ID      - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicVlanEgressKeep(uint32 port, uint32 portmask)
+              {
+                  uint32 regAddr, bit_mask;
+                  ret_t  retVal;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(portmask > RTL8367C_PORTMASK)
+                      return RT_ERR_PORT_MASK;
+              
+                  if(port < 8){
+                      retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL0 + (port>>1),RTL8367C_PORT0_VL
+             -AN_KEEP_MASK_MASK<<((port&1)*8),portmask & 0xff);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                      regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL0_EXT + (port>>1);
+                      bit_mask = RTL8367C_PORT0_VLAN_KEEP_MASK_EXT_MASK;
+                      bit_mask <<= (port&1)*3;
+                      retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, (portmask>>8)&0x7);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                  }
+                  else{
+                      switch(port){
+                          case 8:
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4;
+                              bit_mask = RTL8367C_PORT8_VLAN_KEEP_MASK_MASK;
+                              retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, portmask & 0xff);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4_EXT;
+                              bit_mask = RTL8367C_PORT8_VLAN_KEEP_MASK_EXT_MASK;
+                              retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, (portmask>>8)&0x7);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              break;
+              
+                          case 9:
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4;
+                              bit_mask = RTL8367C_PORT9_VLAN_KEEP_MASK_MASK;
+                              retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, portmask & 0xff);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4_EXT;
+                              bit_mask = RTL8367C_PORT9_VLAN_KEEP_MASK_EXT_MASK;
+                              retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, (portmask>>8)&0x7);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              break;
+              
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 22  
+
+                          case 10:
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL5;
+                              bit_mask = RTL8367C_VLAN_EGRESS_KEEP_CTRL5_MASK;
+                              retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, portmask & 0xff);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL5_EXT;
+                              bit_mask = RTL8367C_VLAN_EGRESS_KEEP_CTRL5_EXT_MASK;
+                              retVal = rtl8367c_setAsicRegBits(regAddr, bit_mask, (portmask>>8)&0x7);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              break;
+                      }
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicVlanEgressKeep
+               * Description:
+               *      Get per egress port VLAN keep mode
+               * Input:
+               *      port        - Physical port number (0~7)
+               *      pPortmask   - portmask(0~0xFF)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_PORT_ID  - Invalid port number
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicVlanEgressKeep(uint32 port, uint32* pPortmask)
+              {
+                  uint32 regAddr, bit_mask, regval_l, regval_h;
+                  ret_t  retVal;
+              
+                  if(port > RTL8367C_PORTIDMAX)
+                      return RT_ERR_PORT_ID;
+              
+                  if(port < 8){
+                      retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL0 + (port>>1),RTL8367C_PORT0_VL
+             -AN_KEEP_MASK_MASK<<((port&1)*8),&regval_l);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                      regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL0_EXT + (port>>1);
+                      bit_mask = RTL8367C_PORT0_VLAN_KEEP_MASK_EXT_MASK;
+                      bit_mask <<= (port&1)*3;
+                      retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_h);
+                      if(retVal != RT_ERR_OK)
+                          return retVal;
+                      *pPortmask = (regval_h << 8) | regval_l;
+                  }
+                  else{
+                      switch(port){
+                          case 8:
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4;
+                              bit_mask = RTL8367C_PORT8_VLAN_KEEP_MASK_MASK;
+                              retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_l);
+                              if(retVal != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 23  
+
+                                  return retVal;
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4_EXT;
+                              bit_mask = RTL8367C_PORT8_VLAN_KEEP_MASK_EXT_MASK;
+                              retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_h);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+              
+                              *pPortmask = (regval_h << 8) | regval_l;
+                              break;
+              
+                          case 9:
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4;
+                              bit_mask = RTL8367C_PORT9_VLAN_KEEP_MASK_MASK;
+                              retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_l);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL4_EXT;
+                              bit_mask = RTL8367C_PORT9_VLAN_KEEP_MASK_EXT_MASK;
+                              retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_h);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+              
+                              *pPortmask = (regval_h << 8) | regval_l;
+                              break;
+              
+                          case 10:
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL5;
+                              bit_mask = RTL8367C_VLAN_EGRESS_KEEP_CTRL5_MASK;
+                              retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_l);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+                              regAddr = RTL8367C_REG_VLAN_EGRESS_KEEP_CTRL5_EXT;
+                              bit_mask = RTL8367C_VLAN_EGRESS_KEEP_CTRL5_EXT_MASK;
+                              retVal = rtl8367c_getAsicRegBits(regAddr, bit_mask, &regval_h);
+                              if(retVal != RT_ERR_OK)
+                                  return retVal;
+              
+                              *pPortmask = (regval_h << 8) | regval_l;
+                              break;
+                      }
+                  }
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setReservedVidAction
+               * Description:
+               *      Set reserved VID action
+               * Input:
+               *      vid0Action      - VID 0 action
+               *      vid4095Action   - VID 4095 action
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_INPUT    - Error input
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setReservedVidAction(uint32 vid0Action, uint32 vid4095Action)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 24  
+
+              {
+                  ret_t   retVal;
+              
+                  if(vid0Action >= RES_VID_ACT_END)
+                      return RT_ERR_INPUT;
+              
+                  if(vid4095Action >= RES_VID_ACT_END)
+                      return RT_ERR_INPUT;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL, RTL8367C_VLAN_VID0_TYPE_OFFSET, vid0Ac
+             -tion)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL, RTL8367C_VLAN_VID4095_TYPE_OFFSET, vid
+             -4095Action)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getReservedVidAction
+               * Description:
+               *      Get reserved VID action
+               * Input:
+               *      pVid0Action     - VID 0 action
+               *      pVid4095Action  - VID 4095 action
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               *      RT_ERR_NULL_POINTER - Null pointer
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getReservedVidAction(uint32 *pVid0Action, uint32 *pVid4095Action)
+              {
+                  ret_t   retVal;
+              
+                  if(pVid0Action == NULL)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(pVid4095Action == NULL)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL, RTL8367C_VLAN_VID0_TYPE_OFFSET, pVid0A
+             -ction)) != RT_ERR_OK)
+                      return retVal;
+              
+                  if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL, RTL8367C_VLAN_VID4095_TYPE_OFFSET, pVi
+             -d4095Action)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setRealKeepRemarkEn
+               * Description:
+               *      Set Real Keep Remark
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 25  
+
+               * Input:
+               *      enabled         - 0: 1P remarking is forbidden at real keep packet, 1: 1P remarking is enabled at 
+             -real keep packet
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_INPUT    - Error input
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setRealKeepRemarkEn(uint32 enabled)
+              {
+                  ret_t   retVal;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL, RTL8367C_VLAN_1P_REMARK_BYPASS_REALKEE
+             -P_OFFSET, enabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getRealKeepRemarkEn
+               * Description:
+               *      Get Real Keep Remark
+               * Input:
+               *      None
+               * Output:
+               *      pEnabled        - 0: 1P remarking is forbidden at real keep packet, 1: 1P remarking is enabled at 
+             -real keep packet
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_INPUT    - Error input
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getRealKeepRemarkEn(uint32 *pEnabled)
+              {
+                  ret_t   retVal;
+              
+                  if((retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL, RTL8367C_VLAN_1P_REMARK_BYPASS_REALKEE
+             -P_OFFSET, pEnabled)) != RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_resetVlan
+               * Description:
+               *      Reset VLAN table
+               * Input:
+               *      None.
+               * Output:
+               *      None.
+               * Return:
+               *      RT_ERR_OK       - Success
+               *      RT_ERR_SMI      - SMI access error
+               * Note:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_VLAN                                             11/02/2026 17:57:28 PAGE 26  
+
+               *      None
+               */
+              ret_t rtl8367c_resetVlan(void)
+              {
+                  ret_t   retVal;
+              
+                  if((retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_VLAN_EXT_CTRL2, RTL8367C_VLAN_EXT_CTRL2_OFFSET, 1)) !
+             -= RT_ERR_OK)
+                      return retVal;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+1519          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   5023    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----     219
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

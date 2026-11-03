@@ -1,0 +1,382 @@
+C51 COMPILER V9.60.0.0   SALFWUG                                                           08/20/2025 22:07:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALFWUG
+OBJECT MODULE PLACED IN .\objects\salfwug.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salfwug.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include
+                    -;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\includ
+                    -e\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CL
+                    -K_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\salfwug.lst) TABS(2) OBJECT(.\objects\salfwug.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2009 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 7002 $
+  13           * $Date: 2009-11-13 14:40:24 +0800 (Fri, 13 Nov 2009) $
+  14           *
+  15           * Purpose : System abstraction layer API for wrapping chip driver
+  16           * Feature : Firmware upgrade related function
+  17           *
+  18           */
+  19          
+  20          /* 
+  21           * Include Files 
+  22           */
+  23          #include <salfwug.h>
+  24          #include <salerror.h>
+  25          
+  26          #include <tftpd/tftpc.h>
+  27          
+  28          #include <stdio.h>
+  29          
+  30          #include <local/flash_config.h>
+  31          #include <common.h>
+  32          #include <SPIFlashDrv.h>
+  33          #include <image.h>
+  34          
+  35          #include <stdio.h>
+  36          #include <runtime_loader_msg.h>
+  37          
+  38          /* 
+  39           * Symbol and Data Type Definition 
+  40           */
+  41           
+  42          /* 
+  43           * Data Declaration 
+  44           */
+  45          static sal_fwug_status_t      fwug_status;
+  46          static uint8                  header_get;
+  47          static uint8                  reboot_after_upload;
+  48          static uint32                 image_length;
+  49          
+  50          /* 
+  51           * Macro Declaration 
+  52           */
+C51 COMPILER V9.60.0.0   SALFWUG                                                           08/20/2025 22:07:56 PAGE 2   
+
+  53          #define IMAGE_HDR_LEN                       20
+  54          #define IMAGE_IROM_LEN                      (12 * 1024UL - 2)
+  55          #define RUNTIME_IROM_IN_FLASH_ADDR          (4 * 1024 + 2)
+  56          #define RUNTIME_BANK_IN_FLASH_ADDR          ((16 + 48 * 2) * 1024UL)
+  57          #define FLASH_ERASE(block_addr)             spi_flash_erase(block_addr, SPI_ERASE_BLOCK)
+  58          #define FLASH_WRITE(start_addr, buf, len)   spi_flash_write(start_addr, buf, len)
+  59          #define FLASH_READ(start_addr, buf, len)    spi_flash_read(start_addr, buf, len)
+  60          #define RUN_TIME_BANK_END(bankNumber)       (RUN_TIME_BANK_START  + bankNumber * BANK_SIZE)
+  61          #define FLASH_BLOCK_OFFSET(addr)            ((addr) & (FLASH_BLOCK_SIZE - 1))
+  62          #define FLASH_MAGICNUMBER_ADDR              ((RUNTIME_HEADER_BANK - 1) * BANK_SIZE + IROM_SIZE + (RUNTIME_
+             -HEADER_ADDRESS & 0xFFFF) - IROM_SIZE)
+  63          
+  64           
+  65          /* 
+  66           * Function Declaration 
+  67           */
+  68          
+  69          /* Function Name:
+  70           *      sal_fwug_http_init
+  71           * Description:
+  72           *      Initialize connection for TFTP firmware upgrade
+  73           * Input:
+  74           *      None
+  75           * Output:
+  76           *      None
+  77           * Return:
+  78           *      SAL_ERR_SUCCESS
+  79           *      SAL_ERR_FAILED - socket allocation fail
+  80           * Note:
+  81           *      None
+  82           */
+  83          int32 sal_fwug_http_init()
+  84          {
+  85   1          header_get = FALSE;
+  86   1      
+  87   1          return SAL_ERR_SUCCESS;
+  88   1      }
+  89          #if defined(UPGRADE_TFTP)
+              /* Function Name:
+               *      sal_fwug_tftp_init
+               * Description:
+               *      Initialize connection for TFTP firmware upgrade
+               * Input:
+               *      servIp    - Server IP
+               *      pFileName - Pointer to file name.
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_FAILED - socket allocation fail
+               * Note:
+               *      None
+               */
+              int32 sal_fwug_tftp_init(sal_ipaddr_t servIp, char *pFileName)
+              {
+                  uint8 ipAddr[4];
+                  int32 ret;
+              
+                  ipAddr[0] = (uint8)((servIp >> 24) & 0xFF);
+                  ipAddr[1] = (uint8)((servIp >> 16) & 0xFF);
+                  ipAddr[2] = (uint8)((servIp >> 8)  & 0xFF);
+                  ipAddr[3] = (uint8)  servIp        & 0xFF;
+              
+C51 COMPILER V9.60.0.0   SALFWUG                                                           08/20/2025 22:07:56 PAGE 3   
+
+                  header_get = FALSE;
+              
+                  ret = tftpc_read(ipAddr, pFileName, 0, FLASH_SIZE);
+              
+                  if(ret < 0)
+                  {
+                      fwug_status = SAL_FWUG_STATUS_SOCKET_ALLOCATE_FAIL;
+                      return SAL_ERR_FAILED;
+                  }
+              
+                  fwug_status = SAL_FWUG_STATUS_SEARCHING_SERVER;
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name:
+               *      sal_fwug_tftpStatus_set
+               * Description:
+               *      Set status of TFTP client
+               * Input:
+               *      None
+               * Output:
+               *      status - TFTP client status
+               * Return:
+               *      SAL_ERR_SUCCESS
+               * Note:
+               *      None
+               */
+              int32 sal_fwug_status_set(sal_fwug_status_t status)
+              {
+                  fwug_status = status;
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name:
+               *      sal_fwug_tftpStatus_get
+               * Description:
+               *      Get status of TFTP client
+               * Input:
+               *      None
+               * Output:
+               *      pStatus - pointer to TFTP client status
+               * Return:
+               *      SAL_ERR_SUCCES
+               * Note:
+               *      None
+               */
+              int32 sal_fwug_status_get(sal_fwug_status_t *pStatus)
+              {
+                  *pStatus = fwug_status;
+              
+                  return SAL_ERR_SUCCESS;    
+              }
+              #endif
+ 169          /* Function Name:
+ 170           *      sal_fwug_image_write
+ 171           * Description:
+ 172           *      Write image to chip
+ 173           * Input:
+ 174           *      pBuf   - pointer to palyload of tftp packet.
+ 175           *      length - length of tftp packet
+C51 COMPILER V9.60.0.0   SALFWUG                                                           08/20/2025 22:07:56 PAGE 4   
+
+ 176           * Output:
+ 177           *      None
+ 178           * Return:
+ 179           *      SAL_ERR_SUCCES
+ 180           * Note:
+ 181           *      None
+ 182           */
+ 183          int32 sal_fwug_image_write(uint8 *pBuf, uint16 length)
+ 184          {
+ 185   1          static uint8         write_enable, write_to_bank;
+ 186   1          uint16               truncateLength;
+ 187   1          static uint32        writeLen, writeStartAddr;
+ 188   1          runTimeImageHeader_t *hdrPtr;
+ 189   1      
+ 190   1          if(FALSE == header_get)
+ 191   1          {
+ 192   2              if(!check_header(pBuf))
+ 193   2              {
+ 194   3                  header_get = TRUE;
+ 195   3                  reboot_after_upload = TRUE;
+ 196   3                  fwug_status = SAL_FWUG_STATUS_TRANSMITTING;
+ 197   3              
+ 198   3                  /* image header correct */
+ 199   3                  write_enable = TRUE;
+ 200   3      
+ 201   3                  /* get image length */
+ 202   3                  hdrPtr = (runTimeImageHeader_t*)pBuf;
+ 203   3                  /* image length excluding header length */
+ 204   3                  image_length = hdrPtr->length - sizeof(runTimeImageHeader_t);
+ 205   3      
+ 206   3      
+ 207   3                  /* move pointer */ 
+ 208   3                  pBuf += sizeof(runTimeImageHeader_t);
+ 209   3                  length -= sizeof(runTimeImageHeader_t);
+ 210   3      
+ 211   3                  /* erase run time IROM section in flash */
+ 212   3                  FLASH_ERASE(RUN_TIME_IROM_START);
+ 213   3                  FLASH_ERASE(RUN_TIME_IROM_START + FLASH_BLOCK_SIZE);
+ 214   3                  FLASH_ERASE(RUN_TIME_IROM_START + FLASH_BLOCK_SIZE * 2);
+ 215   3      
+ 216   3                  /* initialize write address */
+ 217   3                  writeLen = 0;
+ 218   3      
+ 219   3                  write_to_bank = FALSE;
+ 220   3              }
+ 221   2              else
+ 222   2              {
+ 223   3                  /* image header error */
+ 224   3                  fwug_status = SAL_FWUG_STATUS_IMAGE_ERR;
+ 225   3                  reboot_after_upload = FALSE;
+ 226   3                  write_enable = FALSE;
+ 227   3                  return SAL_ERR_SUCCESS;            
+ 228   3              }
+ 229   2          }
+ 230   1      
+ 231   1          if(write_enable)
+ 232   1          {
+ 233   2              /* write buf to IROM section in flash */
+ 234   2              if(writeLen + length <= IMAGE_IROM_LEN)
+ 235   2              {
+ 236   3                  FLASH_WRITE(RUNTIME_IROM_IN_FLASH_ADDR + writeLen, pBuf, length);
+ 237   3                  writeLen += length;
+C51 COMPILER V9.60.0.0   SALFWUG                                                           08/20/2025 22:07:56 PAGE 5   
+
+ 238   3              }
+ 239   2              else
+ 240   2              {
+ 241   3                  /* parts of buf need to be wirtten to IROM section,
+ 242   3                     and parts of buf need to be written to bank section */
+ 243   3                  if(write_to_bank == FALSE)
+ 244   3                  {
+ 245   4                      /* write front parts of buf to IROM section in flash */
+ 246   4                      truncateLength = IMAGE_IROM_LEN - writeLen;
+ 247   4                      FLASH_WRITE(RUNTIME_IROM_IN_FLASH_ADDR + writeLen, pBuf, truncateLength);
+ 248   4      
+ 249   4                      /* move pointer */
+ 250   4                      pBuf += truncateLength;
+ 251   4                      length -= truncateLength;
+ 252   4      
+ 253   4                      /* erase first block of run time bank area in flash */
+ 254   4                      FLASH_ERASE(RUN_TIME_BANK_START);
+ 255   4                      
+ 256   4                      /* write rear parts of buf to bank section */
+ 257   4                      FLASH_WRITE(RUNTIME_BANK_IN_FLASH_ADDR, pBuf, length);
+ 258   4                      writeLen  = IMAGE_IROM_LEN + length;
+ 259   4                      
+ 260   4                      write_to_bank = TRUE;
+ 261   4                  }
+ 262   3                  /* write all of buf to bank in flash */
+ 263   3                  else
+ 264   3                  {
+ 265   4                      writeStartAddr = writeLen + RUNTIME_BANK_IN_FLASH_ADDR - IMAGE_IROM_LEN;
+ 266   4      
+ 267   4                      /* if this block is not erased, erase current block */
+ 268   4                      if(FLASH_BLOCK_OFFSET(writeStartAddr) == 0)
+ 269   4                          FLASH_ERASE(writeStartAddr);
+ 270   4      
+ 271   4                      /* if data in buf cross block, erase next block */
+ 272   4                      /* erase should be block size aliged */                
+ 273   4                      if(FLASH_BLOCK_OFFSET(writeStartAddr) > FLASH_BLOCK_OFFSET(writeStartAddr + length))
+ 274   4                          FLASH_ERASE((writeStartAddr + length) & (~(FLASH_BLOCK_SIZE - 1)));
+ 275   4                  
+ 276   4                      FLASH_WRITE(writeLen + RUNTIME_BANK_IN_FLASH_ADDR - IMAGE_IROM_LEN, pBuf, length);
+ 277   4      
+ 278   4                      writeLen += length;
+ 279   4                 }
+ 280   3              }
+ 281   2          }
+ 282   1      
+ 283   1        return SAL_ERR_SUCCESS;
+ 284   1      }
+ 285          
+ 286          /* Function Name:
+ 287           *      sal_fwug_termination_set
+ 288           * Description:
+ 289           *      Action for termination of firmware upgrade
+ 290           * Input:
+ 291           *      None
+ 292           * Output:
+ 293           *      None
+ 294           * Return:
+ 295           *      SAL_ERR_SUCCES
+ 296           * Note:
+ 297           *      None
+ 298           */
+ 299          int32 sal_fwug_termination_set()
+C51 COMPILER V9.60.0.0   SALFWUG                                                           08/20/2025 22:07:56 PAGE 6   
+
+ 300          {
+ 301   1          if(reboot_after_upload == TRUE)
+ 302   1        {
+ 303   2            fwug_status = SAL_FWUG_STATUS_COMPLETE;
+ 304   2              setReg(0x1322, 1);
+ 305   2        }
+ 306   1      
+ 307   1        return SAL_ERR_SUCCESS;
+ 308   1      }
+ 309          
+ 310          /* Function Name:
+ 311           *      sal_fwug_startState_get
+ 312           * Description:
+ 313           *      Get start state of firmware upgrade
+ 314           * Input:
+ 315           *      None
+ 316           * Output:
+ 317           *      *pState - pointer to start state;
+ 318           * Return:
+ 319           *      SAL_ERR_SUCCES
+ 320           * Note:
+ 321           *      None
+ 322           */
+ 323          int32 sal_fwug_startState_get(sal_fwug_startState_t *pState)
+ 324          {
+ 325   1          uint8 start_state;
+ 326   1      
+ 327   1        loader_start_mode_get(&start_state);
+ 328   1      
+ 329   1          if(START_MODE_WARM == start_state)
+ 330   1          {
+ 331   2              *pState = SAL_FWUG_STARTSTATE_WARM;    
+ 332   2          }
+ 333   1          else
+ 334   1          {
+ 335   2              *pState = SAL_FWUG_STARTSTATE_COLD;    
+ 336   2          }
+ 337   1      
+ 338   1          return SAL_ERR_SUCCESS;
+ 339   1      }
+ 340          
+ 341          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    759    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     17      11
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

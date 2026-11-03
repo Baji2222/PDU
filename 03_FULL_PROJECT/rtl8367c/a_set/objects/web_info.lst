@@ -1,0 +1,374 @@
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_INFO
+OBJECT MODULE PLACED IN .\objects\web_info.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_info.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_info.lst) TABS(2) OBJECT(.\objects\web_info.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <stdio.h>
+   4          #include <string.h>
+   5          
+   6          #include <local/web_config.h>
+   7          
+   8          
+   9          #include <salsys.h>
+  10          #include <saltrunk.h>
+  11          #include <salerror.h>
+  12          #include <salutil.h>
+  13          
+  14          
+  15          #include <web/web_api.h>
+  16          #include <web/http_debug.h>
+  17          
+  18          #include "web_info.h"
+  19          #include "web_util.h"
+  20          
+  21          /*
+  22           * Function: get_info
+  23           * ------------------
+  24           * Displays system information page with device, network, and software details.
+  25           * Retrieves MAC, IP, netmask, gateway, firmware version, and hardware info.
+  26           * Renders responsive HTML cards with badges and styled layout.
+  27           * Uses modern CSS with flexbox for clean, professional appearance.
+  28           */
+  29          int32 get_info(struct http_request_s *pReq)
+  30          {
+  31   1          sal_mac_t       mac;
+  32   1          uint8           macStr[18];
+  33   1          uint8           firmVer[SAL_SYS_STRING_LEN];
+  34   1          uint8           firmDate[FIRMWARE_DATE_LEN];
+  35   1          uint8           hdrVer[SAL_SYS_STRING_LEN];
+  36   1          uint8           devDesc[SAL_SYS_STRING_LEN];    
+  37   1          sal_ipaddr_t    ip, netmask, gateway;
+  38   1          uint8           ipStr[16], netMaskStr[16], gatewayStr[16];
+  39   1      
+  40   1          DBG_LWPS_HTTP_PRINTF(("-------get_info()-------\n"));
+  41   1      
+  42   1          sal_sys_mac_get(&mac);    
+  43   1          mac_to_str(macStr, mac.octet);    
+  44   1          sal_sys_ip_get(&ip, &netmask);
+  45   1          ip_to_str(ipStr, (uint8 *)&ip);
+  46   1          ip_to_str(netMaskStr, (uint8 *)&netmask);
+  47   1          sal_sys_gateway_get(&gateway);
+  48   1          ip_to_str(gatewayStr, (uint8 *)&gateway);
+  49   1      
+  50   1          sal_sys_firmVersion_get(firmVer);
+  51   1          sal_sys_firmDate_get(firmDate);
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 2   
+
+  52   1          sal_sys_hardwareVersion_get(hdrVer);
+  53   1          sal_sys_dev_type_get(devDesc);
+  54   1      
+  55   1          WEB_BEGIN(pReq);
+  56   1      
+  57   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  58   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  59   1      
+  60   1          WEB_PRINTF(pReq, "<html lang=\"en\">\n");
+  61   1          WEB_PRINTF(pReq, "<head>\n");
+  62   1          WEB_PRINTF(pReq, "<meta charset=\"UTF-8\">\n");
+  63   1          WEB_PRINTF(pReq, "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n");
+  64   1          WEB_PRINTF(pReq, "<title>System Information</title>\n");
+  65   1          WEB_PRINTF(pReq, "<style>\n");
+  66   1          WEB_PRINTF(pReq, "* { box-sizing: border-box; margin: 0; padding: 0; }\n");
+  67   1          WEB_PRINTF(pReq, "body { font-family: Arial, sans-serif; background-color: #f4f7fa; }\n");
+  68   1          WEB_PRINTF(pReq, ".container { max-width: 900px; margin: 20px auto; padding: 20px; }\n");
+  69   1          WEB_PRINTF(pReq, ".page-title { text-align: center; margin-bottom: 30px; color: #333; font-size: 28px;
+             - }\n");
+  70   1          WEB_PRINTF(pReq, ".dashboard { display: flex; flex-wrap: wrap; gap: 20px; justify-content: center; }\n
+             -");
+  71   1          WEB_PRINTF(pReq, ".card { background: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.
+             -08); padding: 20px; flex: 1 1 300px; margin-bottom: 20px; }\n");
+  72   1          WEB_PRINTF(pReq, ".card-header { margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid #
+             -eee; display: flex; justify-content: space-between; align-items: center; }\n");
+  73   1          WEB_PRINTF(pReq, ".card-title { font-size: 18px; font-weight: 600; color: #333; }\n");
+  74   1          WEB_PRINTF(pReq, ".card-content { display: flex; flex-direction: column; gap: 15px; }\n");
+  75   1          WEB_PRINTF(pReq, ".info-row { display: flex; align-items: baseline; margin-bottom: 10px; }\n");
+  76   1          WEB_PRINTF(pReq, ".info-label { font-weight: bold; width: 140px; color: #555; }\n");
+  77   1          WEB_PRINTF(pReq, ".info-value { color: #333; flex-grow: 1; }\n");
+  78   1          WEB_PRINTF(pReq, ".badge { display: inline-block; padding: 5px 10px; border-radius: 20px; font-size: 1
+             -4px; font-weight: 500; background-color: #e0e0e0; color: #333; }\n");
+  79   1          WEB_PRINTF(pReq, ".badge-primary { background-color: #e3f2fd; color: #1565c0; }\n");
+  80   1          WEB_PRINTF(pReq, ".badge-success { background-color: #e8f5e9; color: #2e7d32; }\n");
+  81   1          WEB_PRINTF(pReq, ".badge-info { background-color: #e0f7fa; color: #00838f; }\n");
+  82   1          WEB_PRINTF(pReq, "</style>\n");
+  83   1          WEB_PRINTF(pReq, "</head>\n");
+  84   1          WEB_PRINTF(pReq, "<body>\n");
+  85   1          WEB_PRINTF(pReq, "<div class=\"container\">\n");
+  86   1          WEB_PRINTF(pReq, "  <h1 class=\"page-title\">System Information</h1>\n");
+  87   1          
+  88   1          WEB_PRINTF(pReq, "  <div class=\"dashboard\">\n");
+  89   1          
+  90   1          // Device Card
+  91   1          WEB_PRINTF(pReq, "    <div class=\"card\">\n");
+  92   1          WEB_PRINTF(pReq, "      <div class=\"card-header\">\n");
+  93   1          WEB_PRINTF(pReq, "        <h2 class=\"card-title\">Device Information</h2>\n");
+  94   1          WEB_PRINTF(pReq, "      </div>\n");
+  95   1          WEB_PRINTF(pReq, "      <div class=\"card-content\">\n");
+  96   1          
+  97   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+  98   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Device Type</div>\n");
+  99   1          WEB_PRINTF(pReq, "          <div class=\"info-value\"><span class=\"badge badge-primary\">OPL SMART PD
+             -U RACK</span></div>\n");
+ 100   1          WEB_PRINTF(pReq, "        </div>\n");
+ 101   1          
+ 102   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+ 103   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">MAC Address</div>\n");
+ 104   1          WEB_PRINTF(pReq, "          <div class=\"info-value\">%s</div>\n", macStr);
+ 105   1          WEB_PRINTF(pReq, "        </div>\n");
+ 106   1          
+ 107   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 3   
+
+ 108   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Hardware Version</div>\n");
+ 109   1          WEB_PRINTF(pReq, "          <div class=\"info-value\">06062025</div>\n");
+ 110   1          WEB_PRINTF(pReq, "        </div>\n");
+ 111   1          
+ 112   1          WEB_PRINTF(pReq, "      </div>\n");
+ 113   1          WEB_PRINTF(pReq, "    </div>\n");
+ 114   1          
+ 115   1          // Network Card
+ 116   1          WEB_PRINTF(pReq, "    <div class=\"card\">\n");
+ 117   1          WEB_PRINTF(pReq, "      <div class=\"card-header\">\n");
+ 118   1          WEB_PRINTF(pReq, "        <h2 class=\"card-title\">Network Configuration</h2>\n");
+ 119   1          WEB_PRINTF(pReq, "      </div>\n");
+ 120   1          WEB_PRINTF(pReq, "      <div class=\"card-content\">\n");
+ 121   1          
+ 122   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+ 123   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">IP Address</div>\n");
+ 124   1          WEB_PRINTF(pReq, "          <div class=\"info-value\"><span class=\"badge badge-info\">%s</span></div>
+             -\n", ipStr);
+ 125   1          WEB_PRINTF(pReq, "        </div>\n");
+ 126   1          
+ 127   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+ 128   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Netmask</div>\n");
+ 129   1          WEB_PRINTF(pReq, "          <div class=\"info-value\">%s</div>\n", netMaskStr);
+ 130   1          WEB_PRINTF(pReq, "        </div>\n");
+ 131   1          
+ 132   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+ 133   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Gateway</div>\n");
+ 134   1          WEB_PRINTF(pReq, "          <div class=\"info-value\">%s</div>\n", gatewayStr);
+ 135   1          WEB_PRINTF(pReq, "        </div>\n");
+ 136   1          
+ 137   1          WEB_PRINTF(pReq, "      </div>\n");
+ 138   1          WEB_PRINTF(pReq, "    </div>\n");
+ 139   1          
+ 140   1          // Firmware Card
+ 141   1          WEB_PRINTF(pReq, "    <div class=\"card\">\n");
+ 142   1          WEB_PRINTF(pReq, "      <div class=\"card-header\">\n");
+ 143   1          WEB_PRINTF(pReq, "        <h2 class=\"card-title\">Software Information</h2>\n");
+ 144   1          WEB_PRINTF(pReq, "      </div>\n");
+ 145   1          WEB_PRINTF(pReq, "      <div class=\"card-content\">\n");
+ 146   1          
+ 147   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+ 148   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Firmware Version</div>\n");
+ 149   1          WEB_PRINTF(pReq, "          <div class=\"info-value\"><span class=\"badge badge-success\">%s</span></d
+             -iv>\n", firmVer);
+ 150   1          WEB_PRINTF(pReq, "        </div>\n");
+ 151   1          
+ 152   1          WEB_PRINTF(pReq, "        <div class=\"info-row\">\n");
+ 153   1          WEB_PRINTF(pReq, "          <div class=\"info-label\">Firmware Date</div>\n");
+ 154   1          WEB_PRINTF(pReq, "          <div class=\"info-value\">%s</div>\n", firmDate);
+ 155   1          WEB_PRINTF(pReq, "        </div>\n");
+ 156   1          
+ 157   1          WEB_PRINTF(pReq, "      </div>\n");
+ 158   1          WEB_PRINTF(pReq, "    </div>\n");
+ 159   1          
+ 160   1          WEB_PRINTF(pReq, "  </div>\n"); // End of dashboard
+ 161   1          WEB_PRINTF(pReq, "</div>\n"); // End of container
+ 162   1          WEB_PRINTF(pReq, "</body>\n");
+ 163   1          WEB_PRINTF(pReq, "</html>\n");
+ 164   1      
+ 165   1          WEB_END(pReq);
+ 166   1      
+ 167   1          return SUCCESS;
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 4   
+
+ 168   1      }
+ 169          
+ 170          #if __WEB_CABLE_DIAGNOSTIC__
+ 171          
+ 172          /*
+ 173           * Function: get_cable_diag
+ 174           * ------------------------
+ 175           * Performs cable diagnostic test on selected ports.
+ 176           * Reads checkbox values to determine which ports to test.
+ 177           * Starts RTCT (Real-Time Cable Test) on selected ports.
+ 178           * Displays test results: Normal, Open, Short, or Mismatch.
+ 179           * Shows cable fault distance in meters for each pair (A, B, C, D).
+ 180           */
+ 181          int32 get_cable_diag(http_request_t *pReq)
+ 182          {
+ 183   1          int8                i;
+ 184   1        char                strPort[4];
+ 185   1          char                strCheck[48];
+ 186   1          char                strResult[12];
+ 187   1          char                strDescription[80];
+ 188   1          uint8               *pValue;
+ 189   1          sal_rtctResult_t    rtctResult;
+ 190   1          sal_pPortmask_t     selectPmsk;
+ 191   1          int32               ret;
+ 192   1          uint32 j;
+ 193   1      
+ 194   1          /* get selected portmask */
+ 195   1          selectPmsk.bits[0] = 0;
+ 196   1          for (i = 0; i < (MAX_PORT_ONBOARD - SAL_MAX_EXT_PORT); i++)
+ 197   1          {
+ 198   2              sprintf(strPort, "P%d", (int16)(i+1));    
+ 199   2              WEB_VAR(pReq, strPort, &pValue);
+ 200   2              if (pValue) /* enable */
+ 201   2                  selectPmsk.bits[0] |= 1UL << i;
+ 202   2          }
+ 203   1      
+ 204   1          WEB_BEGIN(pReq);
+ 205   1      
+ 206   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 207   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 208   1      
+ 209   1          WEB_PRINTF(pReq, "<html>\n");
+ 210   1          WEB_PRINTF(pReq, "<head>\n");
+ 211   1          WEB_PRINTF(pReq, "<title>Port Setting</title>\n");
+ 212   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 213   1          WEB_PRINTF(pReq, "</head>\n");
+ 214   1          WEB_PRINTF(pReq, "<body>\n");
+ 215   1          WEB_PRINTF(pReq, "<center>\n");
+ 216   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 217   1          WEB_PRINTF(pReq, "<legend>Cable Diagnostic</legend>\n");
+ 218   1          WEB_PRINTF(pReq, "<form method=\"get\" action=\"poe.cgi\">\n");
+ 219   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 220   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 221   1          WEB_PRINTF(pReq, "    <th width=\"60\">Check</th>\n");
+ 222   1          WEB_PRINTF(pReq, "    <th width=\"80\">Port</th>\n");
+ 223   1          WEB_PRINTF(pReq, "    <th width=\"100\">Test Result</th>\n");
+ 224   1          WEB_PRINTF(pReq, "    <th width=\"440\">Cable Fault Distance</th>\n");
+ 225   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 226   1      
+ 227   1          for (i = 0; i < (MAX_PORT_ONBOARD - SAL_MAX_EXT_PORT); i++)
+ 228   1          {
+ 229   2              if (selectPmsk.bits[0] & (1UL << i))
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 5   
+
+ 230   2              {
+ 231   3                  sal_port_rtct_start(i);
+ 232   3      
+ 233   3              }
+ 234   2          }
+ 235   1          if(selectPmsk.bits[0] != 0)
+ 236   1          {
+ 237   2              for(j=0;j<0x9ffff;j++);
+ 238   2          }
+ 239   1      
+ 240   1          for (i = 0; i < (MAX_PORT_ONBOARD - SAL_MAX_EXT_PORT); i++)
+ 241   1          {
+ 242   2              if (selectPmsk.bits[0] & (1UL << i))
+ 243   2              {
+ 244   3                  memset(&rtctResult, 0, sizeof(sal_rtctResult_t));
+ 245   3                  
+ 246   3                  ret = sal_port_rtctResult_get(i, &rtctResult);
+ 247   3      
+ 248   3                  sprintf(strCheck, "<input type=checkbox name=P%d checked>", (int16)(i+1));
+ 249   3      
+ 250   3                  if (SAL_ERR_FAILED == ret)
+ 251   3                  {
+ 252   4                      sprintf(strResult, "ERROR");
+ 253   4                      sprintf(strDescription, "Failed");
+ 254   4                  }
+ 255   3                  else if (SAL_ERR_NOT_SUPPORT == ret)
+ 256   3                  {
+ 257   4                      sprintf(strResult, "-");
+ 258   4                      sprintf(strDescription, "Not support.");
+ 259   4                  }
+ 260   3                  else
+ 261   3                  {
+ 262   4                      if (SAL_PORT_SPEED_1000 == rtctResult.linkType)
+ 263   4                      {
+ 264   5                          if (rtctResult.ge_result.channelAShort | \
+ 265   5                              rtctResult.ge_result.channelBShort)
+ 266   5                          {
+ 267   6                              sprintf(strResult, "Short");
+ 268   6                          }
+ 269   5                          else if (rtctResult.ge_result.channelAOpen | \
+ 270   5                                   rtctResult.ge_result.channelBOpen)
+ 271   5                          {
+ 272   6                              sprintf(strResult, "Open");
+ 273   6                          }
+ 274   5                          else if (rtctResult.ge_result.channelAMismatch | \
+ 275   5                                   rtctResult.ge_result.channelBMismatch)
+ 276   5                          {
+ 277   6                              sprintf(strResult, "Mismatch");
+ 278   6                          }
+ 279   5                          else
+ 280   5                          {
+ 281   6                              sprintf(strResult, "Normal");
+ 282   6                          }
+ 283   5                          sprintf(strDescription, "PairA:%u(M), PairB:%u(M), PairC:%u(M), PairD:%u(M)\n", \
+ 284   5                              (rtctResult.ge_result.channelALen / 40), \
+ 285   5                              (rtctResult.ge_result.channelBLen / 40), \
+ 286   5                              (rtctResult.ge_result.channelCLen / 40), \
+ 287   5                              (rtctResult.ge_result.channelDLen / 40));
+ 288   5                      }
+ 289   4                  }
+ 290   3              }
+ 291   2              else
+C51 COMPILER V9.60.0.0   WEB_INFO                                                          11/02/2026 17:57:33 PAGE 6   
+
+ 292   2              {
+ 293   3                  sprintf(strCheck, "<input type=checkbox name=P%d>", (uint16)(i+1));
+ 294   3                  sprintf(strResult, "-");
+ 295   3                  sprintf(strDescription, "-");
+ 296   3              }
+ 297   2      
+ 298   2              /* Display */
+ 299   2              WEB_PRINTF(pReq, "  <tr>\n");
+ 300   2              WEB_PRINTF(pReq, "    <td>%s</td>\n", strCheck);
+ 301   2              WEB_PRINTF(pReq, "    <td>Port %d</td>\n", (int16)(i + 1));
+ 302   2              WEB_PRINTF(pReq, "    <td>%s</td>\n", strResult);
+ 303   2              WEB_PRINTF(pReq, "    <td>%s</td>\n", strDescription);
+ 304   2              WEB_PRINTF(pReq, "  </tr>\n");
+ 305   2          }
+ 306   1      
+ 307   1          WEB_PRINTF(pReq, "</table>\n");
+ 308   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 309   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+ 310   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"page\" value=\"cable_diag\">\n");
+ 311   1          WEB_PRINTF(pReq, "</form>\n");
+ 312   1          WEB_PRINTF(pReq, "<br>\n");
+ 313   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 314   1          WEB_PRINTF(pReq, "</center>\n");
+ 315   1          WEB_PRINTF(pReq, "</body>\n");
+ 316   1          WEB_PRINTF(pReq, "</html>\n");
+ 317   1      
+ 318   1          WEB_END(pReq);
+ 319   1      
+ 320   1          return SUCCESS;
+ 321   1      }
+ 322          
+ 323          #endif
+ 324          
+ 325          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3765    ----
+   CONSTANT SIZE    =   3578    ----
+   XDATA SIZE       =   ----     389
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   3578    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

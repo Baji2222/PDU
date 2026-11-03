@@ -1,0 +1,474 @@
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     1
+
+
+MACRO ASSEMBLER AX51 V3.15.3.0
+OBJECT MODULE PLACED IN .\objects\reg_acc.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\AX51.EXE ..\src\reg_acc.A51 SET(LARGE) DEBUG PRINT(.\objects\reg_acc.lst) OBJEC
+                      T(.\objects\reg_acc.obj) EP
+
+LOC    OBJ             LINE     SOURCE
+
+                          1     ; .\reg_acc.SRC generated from: reg_acc.c
+                          2     ; COMPILER INVOKED BY:
+                          3     ;        C:\Keil\C51\BIN\C51.EXE reg_acc.c OMF2 BROWSE DEFINE(RTL8370Ss) DEBUG SRC(.\reg
+                               _acc.SRC)
+                          4     
+                          5     $nomod51 
+                          6     
+                          7     NAME    REG_ACC
+                          8     
+ 00C0.3                   9     TB81    BIT     0C0H.3
+ 0080                    10     P0      DATA    080H
+ 0090                    11     P1      DATA    090H
+ 00C0.7                  12     SM01    BIT     0C0H.7
+ 00A0                    13     P2      DATA    0A0H
+ 00C0.6                  14     SM11    BIT     0C0H.6
+ 00B0                    15     P3      DATA    0B0H
+ 00C0.5                  16     SM21    BIT     0C0H.5
+ 00B0.4                  17     T0      BIT     0B0H.4
+ 00D0.6                  18     AC      BIT     0D0H.6
+ 00B0.5                  19     T1      BIT     0B0H.5
+ 0090.0                  20     T2      BIT     090H.0
+ 00A8.7                  21     EA      BIT     0A8H.7
+ 0085                    22     DPH1    DATA    085H
+ 00A8                    23     IE      DATA    0A8H
+ 00D0.1                  24     FL      BIT     0D0H.1
+ 0084                    25     DPL1    DATA    084H
+ 00C7                    26     TA      DATA    0C7H
+ 00C8.6                  27     EXF2    BIT     0C8H.6
+ 00B0.7                  28     RD      BIT     0B0H.7
+ 00C0.4                  29     REN1    BIT     0C0H.4
+ 00B8                    30     IP      DATA    0B8H
+ 00A6                    31     INDACC_RDATA_H  DATA    0A6H
+ 0098.0                  32     RI      BIT     098H.0
+ 00B0.2                  33     INT0    BIT     0B0H.2
+ 00D0.7                  34     CY      BIT     0D0H.7
+ 0098.1                  35     TI      BIT     098H.1
+ 00B0.3                  36     INT1    BIT     0B0H.3
+ 00B9                    37     SADEN0  DATA    0B9H
+ 0090.4                  38     INT2    BIT     090H.4
+ 00BA                    39     SADEN1  DATA    0BAH
+ 00A7                    40     INDACC_RDATA_L  DATA    0A7H
+ 00B0.0                  41     RXD0    BIT     0B0H.0
+ 0090.5                  42     INT3    BIT     090H.5
+ 00A4                    43     INDACC_WDATA_H  DATA    0A4H
+ 0090.2                  44     RXD1    BIT     090H.2
+ 0090.6                  45     INT4    BIT     090H.6
+ 00A9                    46     SADDR0  DATA    0A9H
+ 00B0.1                  47     TXD0    BIT     0B0H.1
+ 0090.7                  48     INT5    BIT     090H.7
+ 00AA                    49     SADDR1  DATA    0AAH
+ 0090.3                  50     TXD1    BIT     090H.3
+ 00CB                    51     RCAP2H  DATA    0CBH
+ 0081                    52     SP      DATA    081H
+ 00A5                    53     INDACC_WDATA_L  DATA    0A5H
+ 0090.1                  54     T2EX    BIT     090H.1
+ 00D8.5                  55     EPFI    BIT     0D8H.5
+ 00D0.2                  56     OV      BIT     0D0H.2
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     2
+
+ 00CA                    57     RCAP2L  DATA    0CAH
+ 00C8.1                  58     C_T2    BIT     0C8H.1
+ 00B0.6                  59     WR      BIT     0B0H.6
+ 00E8.4                  60     EWDI    BIT     0E8H.4
+ 00D8.3                  61     WDIF    BIT     0D8H.3
+ 00C8.5                  62     RCLK    BIT     0C8H.5
+ 0091                    63     EXIF    DATA    091H
+ 00C8.4                  64     TCLK    BIT     0C8H.4
+ 0087                    65     PCON    DATA    087H
+ 0096                    66     FLASH_MSB       DATA    096H
+ 00F8.4                  67     PWDI    BIT     0F8H.4
+ 0089                    68     TMOD    DATA    089H
+ 0088                    69     TCON    DATA    088H
+ 0088.1                  70     IE0     BIT     088H.1
+ 0088.3                  71     IE1     BIT     088H.3
+ 00F0                    72     B       DATA    0F0H
+ 00D8.2                  73     WTRF    BIT     0D8H.2
+ 00C8.0                  74     CP_RL2  BIT     0C8H.0
+ 00D8.7                  75     SMOD_1  BIT     0D8H.7
+ 00E0                    76     ACC     DATA    0E0H
+ 00A8.4                  77     ES0     BIT     0A8H.4
+ 00A2                    78     INDACC_ADDR_H   DATA    0A2H
+ 00A8.1                  79     ET0     BIT     0A8H.1
+ 00A8.6                  80     ES1     BIT     0A8H.6
+ 00A8.3                  81     ET1     BIT     0A8H.3
+ 0088.5                  82     TF0     BIT     088H.5
+ 00A8.5                  83     ET2     BIT     0A8H.5
+ 0088.7                  84     TF1     BIT     088H.7
+ 00C8.7                  85     TF2     BIT     0C8H.7
+ 00C0.0                  86     RI1     BIT     0C0H.0
+ 0098.2                  87     RB8     BIT     098H.2
+ 008C                    88     TH0     DATA    08CH
+ 00A3                    89     INDACC_ADDR_L   DATA    0A3H
+ 00A8.0                  90     EX0     BIT     0A8H.0
+ 0088.0                  91     IT0     BIT     088H.0
+ 008D                    92     TH1     DATA    08DH
+ 00C0.1                  93     TI1     BIT     0C0H.1
+ 0098.3                  94     TB8     BIT     098H.3
+ 00A8.2                  95     EX1     BIT     0A8H.2
+ 0088.2                  96     IT1     BIT     088H.2
+ 00CD                    97     TH2     DATA    0CDH
+ 00E8.0                  98     EX2     BIT     0E8H.0
+ 00D0.0                  99     P       BIT     0D0H.0
+ 00E8.1                 100     EX3     BIT     0E8H.1
+ 0098.7                 101     SM0     BIT     098H.7
+ 008A                   102     TL0     DATA    08AH
+ 00E8.2                 103     EX4     BIT     0E8H.2
+ 0098.6                 104     SM1     BIT     098H.6
+ 008B                   105     TL1     DATA    08BH
+ 00E8.3                 106     EX5     BIT     0E8H.3
+ 0098.5                 107     SM2     BIT     098H.5
+ 00CC                   108     TL2     DATA    0CCH
+ 00B8.4                 109     PS0     BIT     0B8H.4
+ 00E8                   110     EIE     DATA    0E8H
+ 00B8.1                 111     PT0     BIT     0B8H.1
+ 00B8.6                 112     PS1     BIT     0B8H.6
+ 008E                   113     SYNC_CTRL       DATA    08EH
+ 0093                   114     GPIO_E  DATA    093H
+ 00B8.3                 115     PT1     BIT     0B8H.3
+ 00D0.3                 116     RS0     BIT     0D0H.3
+ 00B8.5                 117     PT2     BIT     0B8H.5
+ 0088.4                 118     TR0     BIT     088H.4
+ 00D0.4                 119     RS1     BIT     0D0H.4
+ 0088.6                 120     TR1     BIT     088H.6
+ 00C8.2                 121     TR2     BIT     0C8H.2
+ 00B8.0                 122     PX0     BIT     0B8H.0
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     3
+
+ 00A0                   123     INDACC_CMD      DATA    0A0H
+ 0095                   124     GPIO_I  DATA    095H
+ 00B8.2                 125     PX1     BIT     0B8H.2
+ 00F8.0                 126     PX2     BIT     0F8H.0
+ 00F8.1                 127     PX3     BIT     0F8H.1
+ 00F8.2                 128     PX4     BIT     0F8H.2
+ 0083                   129     DPH     DATA    083H
+ 00F8.3                 130     PX5     BIT     0F8H.3
+ 00F8                   131     EIP     DATA    0F8H
+ 0094                   132     GPIO_O  DATA    094H
+ 00D8.4                 133     PFI     BIT     0D8H.4
+ 0082                   134     DPL     DATA    082H
+ 0099                   135     SBUF0   DATA    099H
+ 00C1                   136     SBUF1   DATA    0C1H
+ 00C8.3                 137     EXEN2   BIT     0C8H.3
+ 0098                   138     SCON0   DATA    098H
+ 0098.4                 139     REN     BIT     098H.4
+ 00C0                   140     SCON1   DATA    0C0H
+ 00C5                   141     STATUS  DATA    0C5H
+ 00C9                   142     T2MOD   DATA    0C9H
+ 00C8                   143     T2CON   DATA    0C8H
+ 0086                   144     DPS     DATA    086H
+ 00A1                   145     INDACC_STATUS   DATA    0A1H
+ 008E                   146     CKCON   DATA    08EH
+ 00D8.1                 147     EWT     BIT     0D8H.1
+ 00D8.6                 148     POR     BIT     0D8H.6
+ 00D0.5                 149     F0      BIT     0D0H.5
+ 00D0                   150     PSW     DATA    0D0H
+ 00D8                   151     WDCON   DATA    0D8H
+ 00D8.0                 152     RWT     BIT     0D8H.0
+ 00C0.2                 153     RB81    BIT     0C0H.2
+------                  154     ?PR?_getReg?REG_ACC  SEGMENT CODE 
+------                  155     ?PR?_setReg?REG_ACC  SEGMENT CODE 
+------                  156     ?DT?_setReg?REG_ACC  SEGMENT DATA OVERLAYABLE
+                        157             PUBLIC  _setReg
+                        158             PUBLIC  _getReg
+                        159     
+------                  160             RSEG  ?DT?_setReg?REG_ACC
+000000                  161     ?_setReg?BYTE:
+000000                  162             tmp?144:   DS   2
+                        163     ; #include "rtl_types.h"
+                        164     ; #include "reg320.h"
+                        165     ; 
+                        166     ; uint16 getReg(uint16 address)
+                        167     
+------                  168             RSEG  ?PR?_getReg?REG_ACC
+000000                  169     _getReg:
+                        170             USING   0
+                        171                             ; SOURCE LINE # 4
+                        172     ;---- Variable 'address?040' assigned to Register 'R4/R5' ----
+000000 C2AF             173       CLR   EA
+000002 AD07             174             MOV     R5,AR7
+000004 AC06             175             MOV     R4,AR6
+                        176     ; {
+                        177                             ; SOURCE LINE # 5
+                        178     ;       uint16 tmp;
+                        179     ;       
+                        180     ;     INDACC_ADDR_H = address / 0x100;
+                        181                             ; SOURCE LINE # 8
+000006 8CA2             182             MOV     INDACC_ADDR_H,R4
+                        183     ;     INDACC_ADDR_L = address & 0xFF;
+                        184                             ; SOURCE LINE # 9
+                        185     
+000008 8DA3             186       MOV   INDACC_ADDR_L,R5
+                        187     
+                        188     ;       INDACC_CMD = 0x01;
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     4
+
+                        189                             ; SOURCE LINE # 10
+00000A 75A001           190             MOV     INDACC_CMD,#01H
+00000D                  191     ?C0001:
+00000D 00               192       NOP
+00000E 00               193       NOP
+00000F 00               194       NOP
+000010 00               195       NOP
+000011 00               196       NOP
+000012 00               197       NOP
+000013 00               198       NOP
+000014 00               199       NOP
+000015 00               200       NOP
+000016 00               201       NOP
+000017 00               202       NOP
+                        203     ; 
+                        204     ;     while(INDACC_STATUS);
+                        205                             ; SOURCE LINE # 12
+000018 AEA1             206             MOV     R6,INDACC_STATUS
+00001A BE00F0           207             CJNE  R6,#0,?C0001
+00001D                  208     ?C0002:
+                        209     ; 
+                        210     ;       tmp = (uint16)((uint16)(INDACC_RDATA_H) << ((uint16)8)) | (uint16)INDACC_RDATA_L;
+                        211                             ; SOURCE LINE # 14
+00001D AEA6             212             MOV     R6,INDACC_RDATA_H
+00001F AFA7             213             MOV     R7,INDACC_RDATA_L
+                        214     ;---- Variable 'tmp?041' assigned to Register 'R6/R7' ----
+                        215     ;       return tmp;
+                        216                             ; SOURCE LINE # 15
+                        217     ; }
+                        218                             ; SOURCE LINE # 16
+000021                  219     ?C0003:
+000021 D2AF             220       SETB  EA
+000023 22               221             RET     
+                        222     ; END OF _getReg
+                        223     
+                        224     ; 
+                        225     ; void setReg(uint16 address, uint16 value)
+                        226     
+------                  227             RSEG  ?PR?_setReg?REG_ACC
+000000                  228     _setReg:
+                        229             USING   0
+                        230                             ; SOURCE LINE # 18
+                        231     ;---- Variable 'value?143' assigned to Register 'R4/R5' ----
+                        232     ;---- Variable 'address?142' assigned to Register 'R2/R3' ----
+000000 C2AF             233       CLR   EA
+000002 AB07             234             MOV     R3,AR7
+000004 AA06             235             MOV     R2,AR6
+                        236     ; {
+                        237                             ; SOURCE LINE # 19
+                        238     ;     uint16 tmp = 0;
+                        239                             ; SOURCE LINE # 20
+                        240     ; 
+                        241     ;     INDACC_ADDR_H = (uint8)(address / 0x100);
+                        242                             ; SOURCE LINE # 22
+000006 8AA2             243             MOV     INDACC_ADDR_H,R2
+                        244     ;     INDACC_ADDR_L = (uint8)(address & 0xFF);
+                        245                             ; SOURCE LINE # 23
+000008 8BA3             246             MOV     INDACC_ADDR_L,R3
+                        247     ;     INDACC_WDATA_H = (uint8)(value / 0x100);
+                        248                             ; SOURCE LINE # 24
+00000A 8CA4             249             MOV     INDACC_WDATA_H,R4
+                        250     ;     INDACC_WDATA_L = (uint8)(value & 0xFF);
+                        251                             ; SOURCE LINE # 25
+00000C 8DA5             252             MOV     INDACC_WDATA_L,R5
+00000E 75A003           253             MOV     INDACC_CMD,#03H
+000011                  254     ?C0004:
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     5
+
+                        255     ;     while(INDACC_STATUS);
+000011 00               256       NOP
+000012 00               257       NOP
+000013 00               258       NOP
+                        259                             ; SOURCE LINE # 26
+000014 AAA1             260             MOV     R2,INDACC_STATUS
+000016 BA00F8           261             CJNE  R2,#0,?C0004
+000019                  262     ?C0005:
+                        263     ; 
+                        264     ;     INDACC_CMD = 0x03;
+                        265                             ; SOURCE LINE # 28
+                        266             
+                        267     ;               
+                        268     ;       return;
+                        269     ; }
+                        270                             ; SOURCE LINE # 31
+000019                  271     ?C0006:
+000019 D2AF             272       SETB  EA
+00001B 22               273             RET     
+                        274     ; END OF _setReg
+                        275     
+                        276             END
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     6
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E                              T Y P E  V A L U E     ATTRIBUTES
+
+?_SETREG?BYTE . . . . . . . . . . .  D  ADDR  0000H     R   SEG=?DT?_SETREG?REG_ACC
+?C0001. . . . . . . . . . . . . . .  C  ADDR  000DH     R   SEG=?PR?_GETREG?REG_ACC
+?C0002. . . . . . . . . . . . . . .  C  ADDR  001DH     R   SEG=?PR?_GETREG?REG_ACC
+?C0003. . . . . . . . . . . . . . .  C  ADDR  0021H     R   SEG=?PR?_GETREG?REG_ACC
+?C0004. . . . . . . . . . . . . . .  C  ADDR  0011H     R   SEG=?PR?_SETREG?REG_ACC
+?C0005. . . . . . . . . . . . . . .  C  ADDR  0019H     R   SEG=?PR?_SETREG?REG_ACC
+?C0006. . . . . . . . . . . . . . .  C  ADDR  0019H     R   SEG=?PR?_SETREG?REG_ACC
+?DT?_SETREG?REG_ACC . . . . . . . .  D  SEG   000002H       REL=UNIT, ALN=BYTE
+?PR?_GETREG?REG_ACC . . . . . . . .  C  SEG   000024H       REL=UNIT, ALN=BYTE
+?PR?_SETREG?REG_ACC . . . . . . . .  C  SEG   00001CH       REL=UNIT, ALN=BYTE
+_GETREG . . . . . . . . . . . . . .  C  ADDR  0000H     R   SEG=?PR?_GETREG?REG_ACC
+_SETREG . . . . . . . . . . . . . .  C  ADDR  0000H     R   SEG=?PR?_SETREG?REG_ACC
+AC. . . . . . . . . . . . . . . . .  B  ADDR  00D0H.6   A   
+ACC . . . . . . . . . . . . . . . .  D  ADDR  00E0H     A   
+AR6 . . . . . . . . . . . . . . . .  D  ADDR  0006H     A   
+AR7 . . . . . . . . . . . . . . . .  D  ADDR  0007H     A   
+B . . . . . . . . . . . . . . . . .  D  ADDR  00F0H     A   
+C_T2. . . . . . . . . . . . . . . .  B  ADDR  00C8H.1   A   
+CKCON . . . . . . . . . . . . . . .  D  ADDR  008EH     A   
+CP_RL2. . . . . . . . . . . . . . .  B  ADDR  00C8H.0   A   
+CY. . . . . . . . . . . . . . . . .  B  ADDR  00D0H.7   A   
+DPH . . . . . . . . . . . . . . . .  D  ADDR  0083H     A   
+DPH1. . . . . . . . . . . . . . . .  D  ADDR  0085H     A   
+DPL . . . . . . . . . . . . . . . .  D  ADDR  0082H     A   
+DPL1. . . . . . . . . . . . . . . .  D  ADDR  0084H     A   
+DPS . . . . . . . . . . . . . . . .  D  ADDR  0086H     A   
+EA. . . . . . . . . . . . . . . . .  B  ADDR  00A8H.7   A   
+EIE . . . . . . . . . . . . . . . .  D  ADDR  00E8H     A   
+EIP . . . . . . . . . . . . . . . .  D  ADDR  00F8H     A   
+EPFI. . . . . . . . . . . . . . . .  B  ADDR  00D8H.5   A   
+ES0 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.4   A   
+ES1 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.6   A   
+ET0 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.1   A   
+ET1 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.3   A   
+ET2 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.5   A   
+EWDI. . . . . . . . . . . . . . . .  B  ADDR  00E8H.4   A   
+EWT . . . . . . . . . . . . . . . .  B  ADDR  00D8H.1   A   
+EX0 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.0   A   
+EX1 . . . . . . . . . . . . . . . .  B  ADDR  00A8H.2   A   
+EX2 . . . . . . . . . . . . . . . .  B  ADDR  00E8H.0   A   
+EX3 . . . . . . . . . . . . . . . .  B  ADDR  00E8H.1   A   
+EX4 . . . . . . . . . . . . . . . .  B  ADDR  00E8H.2   A   
+EX5 . . . . . . . . . . . . . . . .  B  ADDR  00E8H.3   A   
+EXEN2 . . . . . . . . . . . . . . .  B  ADDR  00C8H.3   A   
+EXF2. . . . . . . . . . . . . . . .  B  ADDR  00C8H.6   A   
+EXIF. . . . . . . . . . . . . . . .  D  ADDR  0091H     A   
+F0. . . . . . . . . . . . . . . . .  B  ADDR  00D0H.5   A   
+FL. . . . . . . . . . . . . . . . .  B  ADDR  00D0H.1   A   
+FLASH_MSB . . . . . . . . . . . . .  D  ADDR  0096H     A   
+GPIO_E. . . . . . . . . . . . . . .  D  ADDR  0093H     A   
+GPIO_I. . . . . . . . . . . . . . .  D  ADDR  0095H     A   
+GPIO_O. . . . . . . . . . . . . . .  D  ADDR  0094H     A   
+IE. . . . . . . . . . . . . . . . .  D  ADDR  00A8H     A   
+IE0 . . . . . . . . . . . . . . . .  B  ADDR  0088H.1   A   
+IE1 . . . . . . . . . . . . . . . .  B  ADDR  0088H.3   A   
+INDACC_ADDR_H . . . . . . . . . . .  D  ADDR  00A2H     A   
+INDACC_ADDR_L . . . . . . . . . . .  D  ADDR  00A3H     A   
+INDACC_CMD. . . . . . . . . . . . .  D  ADDR  00A0H     A   
+INDACC_RDATA_H. . . . . . . . . . .  D  ADDR  00A6H     A   
+INDACC_RDATA_L. . . . . . . . . . .  D  ADDR  00A7H     A   
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     7
+
+INDACC_STATUS . . . . . . . . . . .  D  ADDR  00A1H     A   
+INDACC_WDATA_H. . . . . . . . . . .  D  ADDR  00A4H     A   
+INDACC_WDATA_L. . . . . . . . . . .  D  ADDR  00A5H     A   
+INT0. . . . . . . . . . . . . . . .  B  ADDR  00B0H.2   A   
+INT1. . . . . . . . . . . . . . . .  B  ADDR  00B0H.3   A   
+INT2. . . . . . . . . . . . . . . .  B  ADDR  0090H.4   A   
+INT3. . . . . . . . . . . . . . . .  B  ADDR  0090H.5   A   
+INT4. . . . . . . . . . . . . . . .  B  ADDR  0090H.6   A   
+INT5. . . . . . . . . . . . . . . .  B  ADDR  0090H.7   A   
+IP. . . . . . . . . . . . . . . . .  D  ADDR  00B8H     A   
+IT0 . . . . . . . . . . . . . . . .  B  ADDR  0088H.0   A   
+IT1 . . . . . . . . . . . . . . . .  B  ADDR  0088H.2   A   
+OV. . . . . . . . . . . . . . . . .  B  ADDR  00D0H.2   A   
+P . . . . . . . . . . . . . . . . .  B  ADDR  00D0H.0   A   
+P0. . . . . . . . . . . . . . . . .  D  ADDR  0080H     A   
+P1. . . . . . . . . . . . . . . . .  D  ADDR  0090H     A   
+P2. . . . . . . . . . . . . . . . .  D  ADDR  00A0H     A   
+P3. . . . . . . . . . . . . . . . .  D  ADDR  00B0H     A   
+PCON. . . . . . . . . . . . . . . .  D  ADDR  0087H     A   
+PFI . . . . . . . . . . . . . . . .  B  ADDR  00D8H.4   A   
+POR . . . . . . . . . . . . . . . .  B  ADDR  00D8H.6   A   
+PS0 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.4   A   
+PS1 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.6   A   
+PSW . . . . . . . . . . . . . . . .  D  ADDR  00D0H     A   
+PT0 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.1   A   
+PT1 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.3   A   
+PT2 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.5   A   
+PWDI. . . . . . . . . . . . . . . .  B  ADDR  00F8H.4   A   
+PX0 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.0   A   
+PX1 . . . . . . . . . . . . . . . .  B  ADDR  00B8H.2   A   
+PX2 . . . . . . . . . . . . . . . .  B  ADDR  00F8H.0   A   
+PX3 . . . . . . . . . . . . . . . .  B  ADDR  00F8H.1   A   
+PX4 . . . . . . . . . . . . . . . .  B  ADDR  00F8H.2   A   
+PX5 . . . . . . . . . . . . . . . .  B  ADDR  00F8H.3   A   
+RB8 . . . . . . . . . . . . . . . .  B  ADDR  0098H.2   A   
+RB81. . . . . . . . . . . . . . . .  B  ADDR  00C0H.2   A   
+RCAP2H. . . . . . . . . . . . . . .  D  ADDR  00CBH     A   
+RCAP2L. . . . . . . . . . . . . . .  D  ADDR  00CAH     A   
+RCLK. . . . . . . . . . . . . . . .  B  ADDR  00C8H.5   A   
+RD. . . . . . . . . . . . . . . . .  B  ADDR  00B0H.7   A   
+REG_ACC . . . . . . . . . . . . . .  -- ----  -------       
+REN . . . . . . . . . . . . . . . .  B  ADDR  0098H.4   A   
+REN1. . . . . . . . . . . . . . . .  B  ADDR  00C0H.4   A   
+RI. . . . . . . . . . . . . . . . .  B  ADDR  0098H.0   A   
+RI1 . . . . . . . . . . . . . . . .  B  ADDR  00C0H.0   A   
+RS0 . . . . . . . . . . . . . . . .  B  ADDR  00D0H.3   A   
+RS1 . . . . . . . . . . . . . . . .  B  ADDR  00D0H.4   A   
+RWT . . . . . . . . . . . . . . . .  B  ADDR  00D8H.0   A   
+RXD0. . . . . . . . . . . . . . . .  B  ADDR  00B0H.0   A   
+RXD1. . . . . . . . . . . . . . . .  B  ADDR  0090H.2   A   
+SADDR0. . . . . . . . . . . . . . .  D  ADDR  00A9H     A   
+SADDR1. . . . . . . . . . . . . . .  D  ADDR  00AAH     A   
+SADEN0. . . . . . . . . . . . . . .  D  ADDR  00B9H     A   
+SADEN1. . . . . . . . . . . . . . .  D  ADDR  00BAH     A   
+SBUF0 . . . . . . . . . . . . . . .  D  ADDR  0099H     A   
+SBUF1 . . . . . . . . . . . . . . .  D  ADDR  00C1H     A   
+SCON0 . . . . . . . . . . . . . . .  D  ADDR  0098H     A   
+SCON1 . . . . . . . . . . . . . . .  D  ADDR  00C0H     A   
+SM0 . . . . . . . . . . . . . . . .  B  ADDR  0098H.7   A   
+SM01. . . . . . . . . . . . . . . .  B  ADDR  00C0H.7   A   
+SM1 . . . . . . . . . . . . . . . .  B  ADDR  0098H.6   A   
+SM11. . . . . . . . . . . . . . . .  B  ADDR  00C0H.6   A   
+SM2 . . . . . . . . . . . . . . . .  B  ADDR  0098H.5   A   
+SM21. . . . . . . . . . . . . . . .  B  ADDR  00C0H.5   A   
+SMOD_1. . . . . . . . . . . . . . .  B  ADDR  00D8H.7   A   
+SP. . . . . . . . . . . . . . . . .  D  ADDR  0081H     A   
+AX51 MACRO ASSEMBLER  REG_ACC                                                               08/20/25 22:07:54 PAGE     8
+
+STATUS. . . . . . . . . . . . . . .  D  ADDR  00C5H     A   
+SYNC_CTRL . . . . . . . . . . . . .  D  ADDR  008EH     A   
+T0. . . . . . . . . . . . . . . . .  B  ADDR  00B0H.4   A   
+T1. . . . . . . . . . . . . . . . .  B  ADDR  00B0H.5   A   
+T2. . . . . . . . . . . . . . . . .  B  ADDR  0090H.0   A   
+T2CON . . . . . . . . . . . . . . .  D  ADDR  00C8H     A   
+T2EX. . . . . . . . . . . . . . . .  B  ADDR  0090H.1   A   
+T2MOD . . . . . . . . . . . . . . .  D  ADDR  00C9H     A   
+TA. . . . . . . . . . . . . . . . .  D  ADDR  00C7H     A   
+TB8 . . . . . . . . . . . . . . . .  B  ADDR  0098H.3   A   
+TB81. . . . . . . . . . . . . . . .  B  ADDR  00C0H.3   A   
+TCLK. . . . . . . . . . . . . . . .  B  ADDR  00C8H.4   A   
+TCON. . . . . . . . . . . . . . . .  D  ADDR  0088H     A   
+TF0 . . . . . . . . . . . . . . . .  B  ADDR  0088H.5   A   
+TF1 . . . . . . . . . . . . . . . .  B  ADDR  0088H.7   A   
+TF2 . . . . . . . . . . . . . . . .  B  ADDR  00C8H.7   A   
+TH0 . . . . . . . . . . . . . . . .  D  ADDR  008CH     A   
+TH1 . . . . . . . . . . . . . . . .  D  ADDR  008DH     A   
+TH2 . . . . . . . . . . . . . . . .  D  ADDR  00CDH     A   
+TI. . . . . . . . . . . . . . . . .  B  ADDR  0098H.1   A   
+TI1 . . . . . . . . . . . . . . . .  B  ADDR  00C0H.1   A   
+TL0 . . . . . . . . . . . . . . . .  D  ADDR  008AH     A   
+TL1 . . . . . . . . . . . . . . . .  D  ADDR  008BH     A   
+TL2 . . . . . . . . . . . . . . . .  D  ADDR  00CCH     A   
+TMOD. . . . . . . . . . . . . . . .  D  ADDR  0089H     A   
+TMP?144 . . . . . . . . . . . . . .  D  ADDR  0000H     R   SEG=?DT?_SETREG?REG_ACC
+TR0 . . . . . . . . . . . . . . . .  B  ADDR  0088H.4   A   
+TR1 . . . . . . . . . . . . . . . .  B  ADDR  0088H.6   A   
+TR2 . . . . . . . . . . . . . . . .  B  ADDR  00C8H.2   A   
+TXD0. . . . . . . . . . . . . . . .  B  ADDR  00B0H.1   A   
+TXD1. . . . . . . . . . . . . . . .  B  ADDR  0090H.3   A   
+WDCON . . . . . . . . . . . . . . .  D  ADDR  00D8H     A   
+WDIF. . . . . . . . . . . . . . . .  B  ADDR  00D8H.3   A   
+WR. . . . . . . . . . . . . . . . .  B  ADDR  00B0H.6   A   
+WTRF. . . . . . . . . . . . . . . .  B  ADDR  00D8H.2   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S).

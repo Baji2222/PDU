@@ -1,0 +1,118 @@
+C51 COMPILER V9.60.0.0   SALGREENETH                                                       11/02/2026 17:57:06 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALGREENETH
+OBJECT MODULE PLACED IN .\objects\salgreeneth.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salgreeneth.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X
+                    -1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\comm
+                    -on\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SA
+                    -L_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,
+                    -SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salgreeneth.lst) TABS(2) OBJECT(.\objects\salgreeneth.obj)
+
+line level    source
+
+   1          #include <saltype.h>
+   2          #include <salflash.h>
+   3          #include <salgreeneth.h>
+   4          #include <salerror.h>
+   5          
+   6          #include <common.h>
+   7          #include <rtl8367c_asicdrv_green.h>
+   8          #include <rtk_switch.h>
+   9          
+  10          static uint8 green_enable;
+  11          
+  12          /* Function Name:
+  13           *      sal_greenEth_config_restore
+  14           * Description:
+  15           *      Restore Green Ethernet configuration
+  16           * Input:
+  17           *      None
+  18           * Output:
+  19           *      None
+  20           * Return:
+  21           *      SAL_ERR_SUCCESS
+  22           * Note:
+  23           *      None
+  24           */
+  25          int32 sal_greenEth_config_restore()
+  26          {
+  27   1          sal_enable_t    enable;
+  28   1          
+  29   1          sal_flash_greenEth_port_enable_get(&enable);
+  30   1          sal_greenEth_enable_set(enable);
+  31   1              
+  32   1         return SAL_ERR_SUCCESS;
+  33   1      }
+  34          
+  35          /* Function Name:
+  36           *      sal_greenEth_enable_set
+  37           * Description:
+  38           *      Enable/Disable Green Ethernet function
+  39           * Input:
+  40           *      enable - enable Green Ethernet function
+  41           * Output:
+  42           *      None
+  43           * Return:
+  44           *      SAL_ERR_SUCCESS
+  45           *      SAL_ERR_PARAMETER
+  46           * Note:
+  47           *      None
+  48           */
+  49          int32 sal_greenEth_enable_set(sal_enable_t enable)
+  50          {
+  51   1      //    uint16 i;
+C51 COMPILER V9.60.0.0   SALGREENETH                                                       11/02/2026 17:57:06 PAGE 2   
+
+  52   1      
+  53   1          if(enable >= SAL_ENABLE_END)    
+  54   1              return SAL_ERR_PARAMETER;
+  55   1              
+  56   1        rtk_switch_greenEthernet_set(enable);
+  57   1          green_enable = enable;
+  58   1      
+  59   1          return sal_flash_greenEth_port_enable_set(enable);
+  60   1      }
+  61          
+  62          /* Function Name:
+  63           *      sal_greenEth_enable_get
+  64           * Description:
+  65           *      Get Green Ethernet function state
+  66           * Input:
+  67           *      None
+  68           * Output:
+  69           *      pEnable - pointer to Green Ethernet function
+  70           * Return:
+  71           *      SAL_ERR_SUCCESS
+  72           *      SAL_ERR_NULL_POINTER
+  73           * Note:
+  74           *      None
+  75           */
+  76          //int32 sal_greenEth_enable_get(sal_enable_t *pEnable)
+  77          //{
+  78          //    if(NULL == pEnable)
+  79          //        return SAL_ERR_PARAMETER;
+  80          
+  81          //    *pEnable = green_enable;
+  82          
+  83          //  return SAL_ERR_SUCCESS;
+  84          //}
+  85          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     66    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =      1       2
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

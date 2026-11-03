@@ -1,0 +1,159 @@
+C51 COMPILER V9.60.0.0   MIB_GENERIC                                                       11/02/2026 17:57:44 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE MIB_GENERIC
+OBJECT MODULE PLACED IN .\objects\mib_generic.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\snmp\mib\mib_generic.c LARGE OMF2 OPTIMIZE(8,SIZE) 
+                    -BROWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\co
+                    -mmon\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPP
+                    -ORT,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COM
+                    -PATIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\mib_generic.lst) TABS(2) OBJECT(.\objects\mib_generic
+                    -.obj)
+
+line level    source
+
+   1          #include "local/config.h"
+   2          
+   3          
+   4          #if MIB_ENABLE
+   5          
+   6          #include "snmp/snmp.h"
+   7          #include "snmp/mib/mib.h"
+   8          
+   9          #if !defined(SAL_REPLACE)
+              #include <local/rtk_sal_mib.h>
+              #else
+  12          #include <snmp/mib_glue.h>
+*** WARNING C322 IN LINE 165 OF ..\..\common\include\snmp/mib_glue.h: unknown identifier
+  13          #endif
+  14          
+  15          
+  16          /*
+  17           * Function: uncpy
+  18           * ---------------
+  19           * Copies n 32-bit values from source to destination.
+  20           * Used for copying 64-bit counter values (two 32-bit words).
+  21           * Decrements n while copying each word.
+  22           */
+  23          void uncpy(u32_t * dst, u32_t * src, u8_t n)
+  24          {
+  25   1          while (n > 0)
+  26   1          {
+  27   2              n--;
+  28   2              *dst++ = *src++;
+  29   2          }
+  30   1      }
+  31          
+  32          /**
+  33           * Copy octet string.
+  34           *
+  35           * @param dst points to destination
+  36           * @param src points to source
+  37           * @param n number of octets to copy.
+  38           */
+  39          /*
+  40           * Function: ocstrncpy
+  41           * -------------------
+  42           * Copies n octets (bytes) from source to destination.
+  43           * Used for SNMP octet string (OCTET STRING) data types.
+  44           * Decrements n while copying each byte.
+  45           */
+  46          void ocstrncpy(u8_t *dst, u8_t *src, u8_t n)
+  47          {
+  48   1        while (n > 0)
+  49   1        {
+C51 COMPILER V9.60.0.0   MIB_GENERIC                                                       11/02/2026 17:57:44 PAGE 2   
+
+  50   2          n--;
+  51   2          *dst++ = *src++;
+  52   2        }
+  53   1      }
+  54          
+  55          /**
+  56           * Copy object identifier (s32_t) array.
+  57           *
+  58           * @param dst points to destination
+  59           * @param src points to source
+  60           * @param n number of sub identifiers to copy.
+  61           */
+  62          /*
+  63           * Function: objectidncpy
+  64           * ----------------------
+  65           * Copies n 32-bit OID sub-identifiers from source to destination.
+  66           * Used for SNMP object identifier (OBJECT IDENTIFIER) data types.
+  67           * Decrements n while copying each sub-identifier.
+  68           */
+  69          void objectidncpy(s32_t *dst, s32_t *src, u8_t n)
+  70          {
+  71   1        while(n > 0)
+  72   1        {
+  73   2          n--;
+  74   2          *dst++ = *src++;
+  75   2        }
+  76   1      }
+  77          
+  78          /*
+  79           * Function: mib_init
+  80           * ------------------
+  81           * Initializes all SNMP MIB tables during system startup.
+  82           * For each port, inserts entries into ifTable, dot3StatsTable, dot3ControlTable,
+  83           * dot3PauseTable, ifXTable, and bridgeXTable.
+  84           * Also initializes RMON MIB globally.
+  85           */
+  86          void mib_init(void)
+  87          {
+  88   1        uint16 xdata i;
+  89   1      
+  90   1        /* Per Port Init */
+  91   1        for(i=0; i<INTERFACE_NUMBER; i++)
+  92   1        {
+  93   2      #if LWPS_SNMP_IFTABLE
+  94   2          snmp_inc_iflist();    /*do not support mib2-interface group*/
+  95   2      #endif
+  96   2              
+  97   2      #if LWPS_SNMP_ETHERNET_LIKE
+  98   2          snmp_inc_dot3StatsTable();
+  99   2          //snmp_insert_dot3CollTable_tree(i+1, 1);
+ 100   2          snmp_inc_dot3ControlTable();
+ 101   2          snmp_inc_dot3PauseTable();
+ 102   2          //snmp_inc_dot3HCStatsTable(); /*not support 64bit*/
+ 103   2      #endif /* end of LWPS_SNMP_ETHERNET_LIKE */
+ 104   2      
+ 105   2      #if LWPS_SNMP_INTERFACE_GROUP
+ 106   2              snmp_inc_ifXTable();
+ 107   2              ifPromiscuousMode[i] = 2;
+ 108   2          ifAliasLen[i] = 0;
+ 109   2      #endif /* end of LWPS_SNMP_INTERFACE_GROUP */
+ 110   2      
+ 111   2      #if LWPS_SNMP_BRIDGE_MIB
+C51 COMPILER V9.60.0.0   MIB_GENERIC                                                       11/02/2026 17:57:44 PAGE 3   
+
+ 112   2          snmp_inc_bridgeXTable();
+ 113   2      #endif
+ 114   2      
+ 115   2        }
+ 116   1        /* Global Init */
+ 117   1      #if LWPS_SNMP_RMON
+ 118   1        mib2_rmon_init();
+ 119   1      #endif /* end of LWPS_SNMP_RMON */
+ 120   1      }
+ 121          
+ 122          #endif /* end of MIB_ENABLE */
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    279    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      23
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,319 @@
+C51 COMPILER V9.60.0.0   SALSYS                                                            08/20/2025 22:07:56 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALSYS
+OBJECT MODULE PLACED IN .\objects\salsys.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE src\sal\salsys.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INCDIR(.\include;..\
+                    -include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\include\sal;.\include\lo
+                    -cal;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_CLK_62
+                    -5,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\salsys.lst) TABS(2) OBJECT(.\objects\salsys.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          #include <salerror.h>
+   3          #include <salsys.h>
+   4          #include <salflash.h>
+   5          
+   6          #include <local/flash_config.h>
+   7          #include <SPIFlashDrv.h>
+   8          #include <common.h>
+   9          #include <runtime_loader_msg.h>
+  10          
+  11          #include <stdio.h>
+  12          #include <string.h>
+  13          
+  14          typedef void (*rt_entry)(void);
+  15          #define FLASH_READ(start_addr, buf, len)    spi_flash_read(start_addr, buf, len)
+  16          
+  17          ConfigCache configCache;
+  18          extern uint8     xdata this_mac[];
+  19          extern uint8     xdata this_ip[];   
+  20          extern uint8     xdata netmask[];
+  21          extern ip_addr_t xdata default_gateway;
+  22          
+  23          static uint8     runtime_crc_error = 0;
+  24          
+  25          int32 sal_sys_runtime_crc_get(uint8 *error)large
+  26          {
+  27   1      
+  28   1          *error = runtime_crc_error;
+  29   1          return SAL_ERR_SUCCESS;
+  30   1      }
+  31          
+  32          int32 sal_sys_runtime_crc_set(uint8 error)large
+  33          {
+  34   1      
+  35   1          runtime_crc_error = error;
+  36   1          return SAL_ERR_SUCCESS;
+  37   1      }
+  38          
+  39          void sal_sys_config_restore ()
+  40          {
+  41   1          sal_ipaddr_t ip;
+  42   1          sal_ipaddr_t netmask;
+  43   1          sal_ipaddr_t gateway;
+  44   1          sal_mac_t sysMac;
+  45   1      
+  46   1          sal_flash_sysMac_get(&sysMac);
+  47   1          if(((sysMac.octet[0] == 0xff) && (sysMac.octet[1] == 0xff) && (sysMac.octet[2] == 0xff) && 
+  48   1          (sysMac.octet[3] == 0xff) && (sysMac.octet[4] == 0xff) && (sysMac.octet[5] == 0xff)) ||
+  49   1          ((sysMac.octet[0] == 0) && (sysMac.octet[1] == 0) && (sysMac.octet[2] == 0) && 
+  50   1          (sysMac.octet[3] == 0) && (sysMac.octet[4] == 0) && (sysMac.octet[5] == 0))
+  51   1          )
+  52   1          {
+C51 COMPILER V9.60.0.0   SALSYS                                                            08/20/2025 22:07:56 PAGE 2   
+
+  53   2              sysMac.octet[5] = 0;
+  54   2              sysMac.octet[4] = 0x23;
+  55   2              sysMac.octet[3] = 0x79;
+  56   2              sysMac.octet[2] = 0;
+  57   2              sysMac.octet[1] = 0x23;
+  58   2              sysMac.octet[0] = 0x79;
+  59   2              
+  60   2          }
+  61   1          sal_sys_mac_set(&sysMac);
+  62   1          sal_flash_sysIp_get(&ip, &netmask);
+  63   1          if((ip == 0) || (ip == 0xffffffff))
+  64   1          {
+  65   2              ip = 0xC0A80101; /* 192.168.1.1 */
+  66   2              netmask = 0xFFFFFF00; /*255.255.255.0*/
+  67   2          }
+  68   1          sal_sys_ip_set(ip, netmask);
+  69   1          sal_flash_sysGateway_get(&gateway);
+  70   1          sal_sys_gateway_set(gateway);
+  71   1      }
+  72          
+  73          
+  74          int32 sal_flash_config_init(void)
+  75          {
+  76   1          uint32 ulMark;
+  77   1          uint8 error;
+  78   1          uint8 magic[4];
+  79   1      
+  80   1          ulMark = FLSH_MARK_INIT_NO;
+  81   1      
+  82   1          SalFlshGetInitOKMark(&ulMark);
+  83   1      
+  84   1          if (ulMark != FLSH_MARK_INIT_OK) 
+  85   1          {
+  86   2              sal_sys_runtime_crc_get(&error);
+  87   2              
+  88   2              if(error)
+  89   2              {
+  90   3                  FLASH_READ((uint32)(FLSH_CONFIG_ADDR_START), (int8 *)&magic, 4);
+  91   3                  
+  92   3                  if((magic[0]== 0x23) && (magic[1]== 0x79) && (magic[2]== 0x23) &&(magic[3]== 0x79))
+  93   3                  {
+  94   4                      //if()
+  95   4                      SalFlshCopyFlshToCache();
+  96   4                      sal_sys_config_restore();
+  97   4                  }
+  98   3                  
+  99   3              }
+ 100   2              else
+ 101   2              {
+ 102   3              printf("Use default IP and MAC\n");    
+ 103   3              /* configuration is invalid, set MAC address and ip setting as default */
+ 104   3              /* default value is defined in global_variable.c */
+ 105   3              /* no change to ip */
+ 106   3          }
+ 107   2          }
+ 108   1          else
+ 109   1          {
+ 110   2              printf("Get information IP and MAC form flash\n");            
+ 111   2              SalFlshCopyFlshToCache();
+ 112   2              sal_sys_config_restore();
+ 113   2          }   
+ 114   1      
+C51 COMPILER V9.60.0.0   SALSYS                                                            08/20/2025 22:07:56 PAGE 3   
+
+ 115   1          return SAL_ERR_SUCCESS;
+ 116   1      }
+ 117          
+ 118          int32 sal_sys_mac_set (
+ 119              sal_mac_t *pSysMac
+ 120              )
+ 121          {
+ 122   1          if(pSysMac == NULL)
+ 123   1              return SAL_ERR_PARAMETER;
+ 124   1      
+ 125   1          memcpy(this_mac, pSysMac->octet, SAL_ETHER_ADDR_LEN);
+ 126   1      
+ 127   1          return SAL_ERR_SUCCESS;
+ 128   1      }
+ 129          
+ 130          
+ 131          int32
+ 132          sal_sys_gateway_set (
+ 133              sal_ipaddr_t gateway
+ 134              )
+ 135          {
+ 136   1      
+ 137   1          default_gateway.addr[0] = (gateway & 0xFF000000) >> 24;
+ 138   1          default_gateway.addr[1] = (gateway & 0x00FF0000) >> 16;
+ 139   1          default_gateway.addr[2] = (gateway & 0x0000FF00) >> 8;
+ 140   1          default_gateway.addr[3] = (gateway & 0x000000FF) >> 0;
+ 141   1      
+ 142   1          return SAL_ERR_SUCCESS;
+ 143   1      }
+ 144          
+ 145          
+ 146          int32
+ 147          sal_sys_ip_set (
+ 148              sal_ipaddr_t ip,
+ 149              sal_ipaddr_t net_mask
+ 150              )
+ 151          {
+ 152   1          this_ip[0] = (ip & 0xFF000000) >> 24;
+ 153   1          this_ip[1] = (ip & 0x00FF0000) >> 16;
+ 154   1          this_ip[2] = (ip & 0x0000FF00) >> 8;
+ 155   1          this_ip[3] = (ip & 0x000000FF) >> 0;
+ 156   1          netmask[0] = (net_mask & 0xFF000000) >> 24;
+ 157   1          netmask[1] = (net_mask & 0x00FF0000) >> 16;
+ 158   1          netmask[2] = (net_mask & 0x0000FF00) >> 8;
+ 159   1          netmask[3] = (net_mask & 0x000000FF) >> 0;
+ 160   1      
+ 161   1          return SAL_ERR_SUCCESS;
+ 162   1      }
+ 163          
+ 164          
+ 165          /* Function Name: 
+ 166           *      sal_sys_system_reboot 
+ 167           * Description: 
+ 168           *      Reboot the system. 
+ 169           * Input: 
+ 170           *      None 
+ 171           * Output:
+ 172           *      None 
+ 173           * Return: 
+ 174           *      SAL_ERR_SUCCESS
+ 175           * Note: 
+ 176           *      None 
+C51 COMPILER V9.60.0.0   SALSYS                                                            08/20/2025 22:07:56 PAGE 4   
+
+ 177           */
+ 178          int32 sal_sys_system_reboot(void)
+ 179          {
+ 180   1          setReg(0x1322, 1);
+ 181   1      
+ 182   1          return SAL_ERR_SUCCESS;
+ 183   1      }
+ 184          
+ 185          #if 0
+              /* Function Name:
+               *      sal_sys_runtimeMode_set
+               * Description:
+               *      Enter runtime mode. Note that after this function is called,
+               *      the system will switched from loader mode to runtime mode.
+               *      This function is only available in loader mode.
+               * Input:
+               *      None
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS
+               * Note:
+               *      None
+               */
+              int32 sal_sys_runtimeMode_set()
+              {
+                  rt_entry fp;
+              
+                  runtime_start_mode_set(START_MODE_WARM);
+                  loader_start_mode_set(START_MODE_COLD);
+                  loader_isr_set(FALSE);    
+                  setReg(0x1336, 0x71);
+                  fp = (rt_entry)(0);
+                  fp();
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 215          
+ 216          #if 0
+              /* Function Name:
+               *      sal_sys_loaderBootMode_get
+               * Description:
+               *      Get Boot mode of runtime code. 
+               * Input:
+               *      None
+               * Output:
+               *      *pBootMode - pointer to boot mode
+               * Return:
+               *      SAL_ERR_SUCCESS
+               * Note:
+               *      None
+               */
+              int32 sal_sys_loaderBootMode_get(sal_sys_boot_mode_t *pBootMode)
+              {
+                  uint8 loaderMode;
+              
+                  loader_start_mode_get(&loaderMode);
+              
+                  if(START_MODE_WARM == loaderMode)
+                      *pBootMode = SAL_SYS_BOOT_MODE_WARM;
+                  else
+C51 COMPILER V9.60.0.0   SALSYS                                                            08/20/2025 22:07:56 PAGE 5   
+
+                      *pBootMode = SAL_SYS_BOOT_MODE_COLD;
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              int32 sal_sys_ip_get(sal_ipaddr_t *pIp, sal_ipaddr_t *pNetmask)
+              {
+                  if(NULL == pIp || NULL == pNetmask)
+                      return SAL_ERR_NULL_POINTER;
+              
+                  *pIp = ((uint32)this_ip[0] << 24) | ((uint32)this_ip[1] << 16) | ((uint32)this_ip[2] << 8) \
+                      | (uint32)this_ip[3];
+                  *pNetmask = ((uint32)netmask[0] << 24) | ((uint32)netmask[1] << 16) | ((uint32)netmask[2] << 8) \
+                      | (uint32)netmask[3];
+              
+                  return SAL_ERR_SUCCESS;    
+              }
+              
+              int32
+              sal_sys_mac_get (
+                  sal_mac_t *pSysMac
+                  )
+              {
+                  if(pSysMac == NULL)
+                      return SAL_ERR_NULL_POINTER;
+              
+                  memcpy(pSysMac->octet, this_mac, SAL_ETHER_ADDR_LEN);
+                  
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              int32 sal_sys_gateway_get(sal_ipaddr_t *pGateway)
+              {
+                  if(NULL == pGateway)
+                      return SAL_ERR_NULL_POINTER;
+              
+                  *pGateway = ((uint32)default_gateway.addr[0] << 24) | ((uint32)default_gateway.addr[1] << 16) | \
+                      ((uint32)default_gateway.addr[2] << 8) | (uint32)default_gateway.addr[3];
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 281          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    704    ----
+   CONSTANT SIZE    =     63    ----
+   XDATA SIZE       =   2253      42
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     63    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

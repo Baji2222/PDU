@@ -1,0 +1,1325 @@
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     1
+
+
+MACRO ASSEMBLER AX51 V3.15.3.0
+OBJECT MODULE PLACED IN .\objects\SPIFlashDrv.OBJ
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\AX51.EXE .\objects\SPIFlashDrv.src PR(.\objects\SPIFlashDrv.ls1) EP DEBUG
+
+LOC    OBJ             LINE     SOURCE
+
+                          1     ; .\objects\SPIFlashDrv.SRC generated from: ..\src\drivers\SPIFlashDrv.c
+                          2     ; COMPILER INVOKED BY:
+                          3     ;        C:\Keil_v5\C51\BIN\C51.EXE ..\src\drivers\SPIFlashDrv.c LARGE OMF2 OPTIMIZE(8,S
+                               IZE) BROWSE INCDIR(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common
+                               \include;..\..\common\sal;..\..\common\include\sal;.\include\local;..\include\asicDrv;..\
+                               src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MODE_DUAL,DW8051_C
+                               LK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\SPIFlashDrv.lst) TABS
+                               (2) SRC(.\objects\SPIFlashDrv.SRC)
+                          4     
+                          5     $nomod51 
+                          6     
+                          7     NAME    SPIFLASHDRV
+                          8     
+ 0080                     9     P0      DATA    080H
+ 00C0.3                  10     TB81    BIT     0C0H.3
+ 0090                    11     P1      DATA    090H
+ 00A0                    12     P2      DATA    0A0H
+ 00C0.7                  13     SM01    BIT     0C0H.7
+ 00B0                    14     P3      DATA    0B0H
+ 00C0.6                  15     SM11    BIT     0C0H.6
+ 00B0.4                  16     T0      BIT     0B0H.4
+ 00D0.6                  17     AC      BIT     0D0H.6
+ 00C0.5                  18     SM21    BIT     0C0H.5
+ 00B0.5                  19     T1      BIT     0B0H.5
+ 0090.0                  20     T2      BIT     090H.0
+ 00A8.7                  21     EA      BIT     0A8H.7
+ 00C4                    22     GPIO2_E DATA    0C4H
+ 00C3                    23     GPIO2_I DATA    0C3H
+ 00A8                    24     IE      DATA    0A8H
+ 0080.2                  25     SPI_CMD_ISSUE   BIT     080H.2
+ 0085                    26     DPH1    DATA    085H
+ 00D0.1                  27     FL      BIT     0D0H.1
+ 00C2                    28     GPIO2_O DATA    0C2H
+ 0084                    29     DPL1    DATA    084H
+ 00B0.7                  30     RD      BIT     0B0H.7
+ 00C8.6                  31     EXF2    BIT     0C8H.6
+ 00C0.4                  32     REN1    BIT     0C0H.4
+ 00B8                    33     IP      DATA    0B8H
+ 0097                    34     DATA_BANK       DATA    097H
+ 0096                    35     CODE_BANK       DATA    096H
+ 0098.0                  36     RI      BIT     098H.0
+ 0080.1                  37     CACHE_CLEAN     BIT     080H.1
+ 00A6                    38     INDACC_RDATA_H  DATA    0A6H
+ 00B0.2                  39     INT0    BIT     0B0H.2
+ 00D0.7                  40     CY      BIT     0D0H.7
+ 0098.1                  41     TI      BIT     098H.1
+ 00B0.3                  42     INT1    BIT     0B0H.3
+ 0090.4                  43     INT2    BIT     090H.4
+ 009C                    44     SPI_RI_CMD      DATA    09CH
+ 00B0.0                  45     RXD0    BIT     0B0H.0
+ 0090.5                  46     INT3    BIT     090H.5
+ 00A7                    47     INDACC_RDATA_L  DATA    0A7H
+ 008F                    48     SPC_FNC DATA    08FH
+ 0090.2                  49     RXD1    BIT     090H.2
+ 0090.6                  50     INT4    BIT     090H.6
+ 00A4                    51     INDACC_WDATA_H  DATA    0A4H
+ 00B0.1                  52     TXD0    BIT     0B0H.1
+ 0090.7                  53     INT5    BIT     090H.7
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     2
+
+ 0090.3                  54     TXD1    BIT     090H.3
+ 00CB                    55     RCAP2H  DATA    0CBH
+ 0081                    56     SP      DATA    081H
+ 0090.1                  57     T2EX    BIT     090H.1
+ 00A5                    58     INDACC_WDATA_L  DATA    0A5H
+ 00D0.2                  59     OV      BIT     0D0H.2
+ 00CA                    60     RCAP2L  DATA    0CAH
+ 00B1                    61     SPI_S_RCMD      DATA    0B1H
+ 009D                    62     SPI_S_CONF      DATA    09DH
+ 00B0.6                  63     WR      BIT     0B0H.6
+ 00C8.1                  64     C_T2    BIT     0C8H.1
+ 0080.0                  65     SPI_CTRL_BUSY   BIT     080H.0
+ 00B7                    66     PEDMA_LEN       DATA    0B7H
+ 00E8.4                  67     EWDI    BIT     0E8H.4
+ 00C8.5                  68     RCLK    BIT     0C8H.5
+ 00B2                    69     SPI_S_WCMD      DATA    0B2H
+ 0091                    70     EXIF    DATA    091H
+ 00C8.4                  71     TCLK    BIT     0C8H.4
+ 0087                    72     PCON    DATA    087H
+ 0096                    73     FLASH_MSB       DATA    096H
+ 0089                    74     TMOD    DATA    089H
+ 0088                    75     TCON    DATA    088H
+ 00F8.4                  76     PWDI    BIT     0F8H.4
+ 009E                    77     SPI_S_ACCESS    DATA    09EH
+ 00B3                    78     PEDMA_E_ADDR0   DATA    0B3H
+ 00B4                    79     PEDMA_E_ADDR1   DATA    0B4H
+ 0088.1                  80     IE0     BIT     088H.1
+ 0088.3                  81     IE1     BIT     088H.3
+ 00BB                    82     SSIO    DATA    0BBH
+ 00BA                    83     SSPH    DATA    0BAH
+ 00F0                    84     B       DATA    0F0H
+ 00B9                    85     SSPL    DATA    0B9H
+ 00C8.0                  86     CP_RL2  BIT     0C8H.0
+ 00B5                    87     PEDMA_P_ADDR0   DATA    0B5H
+ 00E0                    88     ACC     DATA    0E0H
+ 00B6                    89     PEDMA_P_ADDR1   DATA    0B6H
+ 00A8.4                  90     ES0     BIT     0A8H.4
+ 00A8.1                  91     ET0     BIT     0A8H.1
+ 00A8.6                  92     ES1     BIT     0A8H.6
+ 00BC                    93     SPI_DSEL_CYCLE  DATA    0BCH
+ 00A2                    94     INDACC_ADDR_H   DATA    0A2H
+ 00A8.3                  95     ET1     BIT     0A8H.3
+ 0088.5                  96     TF0     BIT     088H.5
+ 00A8.5                  97     ET2     BIT     0A8H.5
+ 0088.7                  98     TF1     BIT     088H.7
+ 0098.2                  99     RB8     BIT     098H.2
+ 008C                   100     TH0     DATA    08CH
+ 00C0.0                 101     RI1     BIT     0C0H.0
+ 00C8.7                 102     TF2     BIT     0C8H.7
+ 00AC                   103     SPI_S_DATA0     DATA    0ACH
+ 00A8.0                 104     EX0     BIT     0A8H.0
+ 0088.0                 105     IT0     BIT     088H.0
+ 008D                   106     TH1     DATA    08DH
+ 00AD                   107     SPI_S_DATA1     DATA    0ADH
+ 00A9                   108     SPI_S_ADDR0     DATA    0A9H
+ 00A3                   109     INDACC_ADDR_L   DATA    0A3H
+ 0098.3                 110     TB8     BIT     098H.3
+ 00A8.2                 111     EX1     BIT     0A8H.2
+ 0088.2                 112     IT1     BIT     088H.2
+ 00C0.1                 113     TI1     BIT     0C0H.1
+ 00AE                   114     SPI_S_DATA2     DATA    0AEH
+ 00AA                   115     SPI_S_ADDR1     DATA    0AAH
+ 00CD                   116     TH2     DATA    0CDH
+ 00D0.0                 117     P       BIT     0D0H.0
+ 00E8.0                 118     EX2     BIT     0E8H.0
+ 00AF                   119     SPI_S_DATA3     DATA    0AFH
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     3
+
+ 00AB                   120     SPI_S_ADDR2     DATA    0ABH
+ 0098.7                 121     SM0     BIT     098H.7
+ 008A                   122     TL0     DATA    08AH
+ 00E8.1                 123     EX3     BIT     0E8H.1
+ 0098.6                 124     SM1     BIT     098H.6
+ 008B                   125     TL1     DATA    08BH
+ 00E8.2                 126     EX4     BIT     0E8H.2
+ 0098.5                 127     SM2     BIT     098H.5
+ 00E8.3                 128     EX5     BIT     0E8H.3
+ 00CC                   129     TL2     DATA    0CCH
+ 00B8.4                 130     PS0     BIT     0B8H.4
+ 00E8                   131     EIE     DATA    0E8H
+ 00B8.1                 132     PT0     BIT     0B8H.1
+ 00B8.6                 133     PS1     BIT     0B8H.6
+ 00B8.3                 134     PT1     BIT     0B8H.3
+ 00D0.3                 135     RS0     BIT     0D0H.3
+ 008E                   136     SYNC_CTRL       DATA    08EH
+ 0093                   137     GPIO_E  DATA    093H
+ 00B8.5                 138     PT2     BIT     0B8H.5
+ 0088.4                 139     TR0     BIT     088H.4
+ 00D0.4                 140     RS1     BIT     0D0H.4
+ 0088.6                 141     TR1     BIT     088H.6
+ 00B8.0                 142     PX0     BIT     0B8H.0
+ 00C8.2                 143     TR2     BIT     0C8H.2
+ 00B8.2                 144     PX1     BIT     0B8H.2
+ 00A0                   145     INDACC_CMD      DATA    0A0H
+ 0095                   146     GPIO_I  DATA    095H
+ 00F8.0                 147     PX2     BIT     0F8H.0
+ 00F8.1                 148     PX3     BIT     0F8H.1
+ 0083                   149     DPH     DATA    083H
+ 00F8.2                 150     PX4     BIT     0F8H.2
+ 00F8.3                 151     PX5     BIT     0F8H.3
+ 00F8                   152     EIP     DATA    0F8H
+ 0094                   153     GPIO_O  DATA    094H
+ 0082                   154     DPL     DATA    082H
+ 0099                   155     SBUF0   DATA    099H
+ 00C1                   156     SBUF1   DATA    0C1H
+ 00C8.3                 157     EXEN2   BIT     0C8H.3
+ 0098                   158     SCON0   DATA    098H
+ 0098.4                 159     REN     BIT     098H.4
+ 00C0                   160     SCON1   DATA    0C0H
+ 00C8                   161     T2CON   DATA    0C8H
+ 0086                   162     DPS     DATA    086H
+ 00A1                   163     INDACC_STATUS   DATA    0A1H
+ 0080                   164     CACHE_CRTL      DATA    080H
+ 009A                   165     SPI_IO_CONF     DATA    09AH
+ 00D8                   166     EICON   DATA    0D8H
+ 008E                   167     CKCON   DATA    08EH
+ 009B                   168     SPI_RI_CONF     DATA    09BH
+ 00D0.5                 169     F0      BIT     0D0H.5
+ 00D0                   170     PSW     DATA    0D0H
+ 00C0.2                 171     RB81    BIT     0C0H.2
+------                  172     ?PR?__spi_flash_drv_init?SPIFLASHDRV     SEGMENT CODE 
+------                  173     ?PR?__spi_flash_drv_entry?SPIFLASHDRV    SEGMENT CODE 
+                        174             EXTRN   XDATA (spi_flash_driver_entry)
+                        175             PUBLIC  __spi_flash_drv_init
+                        176     ; #include <stdio.h>
+                        177     ; #include "SPIFlashDrv.h"
+                        178     ; 
+                        179     ; //#pragma REGPARMS
+                        180     ; 
+                        181     ; #define SPI_WINBOND_SIO  (0)
+                        182     ; #define SPI_WINBOND_DIO  (1)
+                        183     ; #define SPI_WINBOND_QIO  (0)
+                        184     ; 
+                        185     ; 
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     4
+
+                        186     ; #ifdef CONFIG_TO_USE_SCKU_SPI_DRIVER
+                        187     ; // *********************************************
+                        188     ; //              Shan-Chyun Ku's SPI Driver
+                        189     ; // *********************************************
+                        190     ; 
+                        191     ; #ifdef FLASH_MODE_DUAL
+                        192     ; #if (defined(CONFIG_FOR_LOADER) || defined(CONFIG_STANDALONE))
+                        193     ; #define XCALL           LCALL
+                        194     ; #define XJMP            LJMP
+                        195     ; 
+                        196     ; #define M_SPI_C_QPP     0xfa
+                        197     ; #define M_SPI_C_MREAD   0xfb
+                        198     ; #define M_SPI_C_EMIO    0xfd
+                        199     ; #define M_SPI_C_RSTQIO  0xFF
+                        200     ; #define M_SPI_C_READ    0x03
+                        201     ; #define M_SPI_C_FREAD   0x0B
+                        202     ; #define M_SPI_C_RDID    0x9F
+                        203     ; #define M_SPI_C_4RDID   0xAF
+                        204     ; #define M_SPI_C_WREN    0x06
+                        205     ; #define M_SPI_C_WRDI    0x04
+                        206     ; #define M_SPI_C_BE      0xD8
+                        207     ; #define M_SPI_C_CE      0xC7
+                        208     ; #define M_SPI_C_SE      0x20
+                        209     ; #define M_SPI_C_PP      0x02
+                        210     ; #define M_SPI_C_RDSR    0x05
+                        211     ; #define M_SPI_C_WRSR    0x01
+                        212     ; #define M_SPI_C_WBPR    0x42
+                        213     ; #define M_SPI_C_DP      0xB9
+                        214     ; #define M_SPI_C_RES     0xAB
+                        215     ; #define M_SPI_C_AAI     0xAD
+                        216     ; 
+                        217     ; #define M_IO1           (1<<0)
+                        218     ; #define M_IO2           (1<<1)
+                        219     ; #define M_IO4           (1<<2)
+                        220     ; #define M_CIO1          (1<<3)
+                        221     ; #define M_CIO2          (1<<4)
+                        222     ; #define M_CIO4          (1<<5)
+                        223     ; #define M_CMD_IO1       ((1)<<6)
+                        224     ; #define M_CMD_IO2       ((2)<<6)
+                        225     ; #define M_CMD_IO4       ((3)<<6)
+                        226     ; #define M_CMD_IO_Reserved (1<<8)
+                        227     ; #define M_R_ADDR_IO1    ((1)<<9)
+                        228     ; #define M_R_ADDR_IO2    ((2)<<9)
+                        229     ; #define M_R_ADDR_IO4    ((3)<<9)
+                        230     ; #define M_R_ADDR_IO_Reserved (1<<11)
+                        231     ; #define M_W_ADDR_IO1    ((1)<<12)
+                        232     ; #define M_W_ADDR_IO2    ((2)<<12)
+                        233     ; #define M_W_ADDR_IO4    ((3)<<12)
+                        234     ; #define M_W_ADDR_IO_Reserved (1<<14)
+                        235     ; #define M_R_DATA_IO1    ((1)<<15)
+                        236     ; #define M_R_DATA_IO2    ((2)<<15)
+                        237     ; #define M_R_DATA_IO4    ((3)<<15)
+                        238     ; #define M_R_DATA_IO_Reserved (1<<17)
+                        239     ; #define M_W_DATA_IO1    ((1)<<18)
+                        240     ; #define M_W_DATA_IO2    ((2)<<18)
+                        241     ; #define M_W_DATA_IO4    ((3)<<18)
+                        242     ; #define M_W_DATA_IO_Reserved (1<<20)
+                        243     ; #define M_HAVE_EQ_CMD   (1<<29)
+                        244     ; #define M_QE_BIT        (1<<30)
+                        245     ; #define M_MODE_EN       (1<<31)
+                        246     ; 
+                        247     ; uint8 __spi_flash_drv_init(void) large;
+                        248     ; static void __spi_flash_drv_entry(void) large;
+                        249     ; 
+                        250     ; uint8 __spi_flash_drv_init(void) large {
+                        251     
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     5
+
+------                  252             RSEG  ?PR?__spi_flash_drv_init?SPIFLASHDRV
+000000                  253     __spi_flash_drv_init:
+                        254             USING   0
+                        255                             ; SOURCE LINE # 75
+                        256     ;     spi_flash_driver_entry = (spi_flash_driver_entry_t*) &__spi_flash_drv_entry;
+                        257                             ; SOURCE LINE # 76
+000000 900000     E     258             MOV     DPTR,#spi_flash_driver_entry
+000003 7400       F     259             MOV     A,#HIGH (__spi_flash_drv_entry)
+000005 F0               260             MOVX    @DPTR,A
+000006 A3               261             INC     DPTR
+000007 7400       F     262             MOV     A,#LOW (__spi_flash_drv_entry)
+000009 F0               263             MOVX    @DPTR,A
+                        264     ;     
+                        265     ;     SPI_DSEL_CYCLE = 0x09; /* 10 cycles */
+                        266                             ; SOURCE LINE # 78
+00000A 75BC09           267             MOV     SPI_DSEL_CYCLE,#09H
+                        268     ;     SPI_RI_CMD  = spi_chip0_spi_ri_cmd;
+                        269                             ; SOURCE LINE # 79
+00000D 759CBB           270             MOV     SPI_RI_CMD,#0BBH
+                        271     ;     SPI_RI_CONF = spi_chip0_spi_ri_conf;
+                        272                             ; SOURCE LINE # 80
+000010 759B04           273             MOV     SPI_RI_CONF,#04H
+000013                  274     ?C0001:
+                        275     ;     //SPI_S_CONF  = spi_chip0_spi_s_conf;           // be remarked due to override lat
+                               er
+                        276     ;     //SPI_S_RCMD  = spi_chip0_spi_s_rcmd;           // be remarked due to override lat
+                               er
+                        277     ;     //SPI_IO_CONF = spi_chip0_spi_io_config_r;      // be remarked due to override lat
+                               er
+                        278     ; 
+                        279     ;     /* Check Controller Ready */
+                        280     ;     while( 1==SPI_CTRL_BUSY );
+                        281                             ; SOURCE LINE # 86
+000013 2080FD           282             JB      SPI_CTRL_BUSY,?C0001
+                        283     ;     
+                        284     ;     /* Set sfr for ReadSR */
+                        285     ;     SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+                        286                             ; SOURCE LINE # 89
+000016 E4               287             CLR     A
+000017 F59D             288             MOV     SPI_S_CONF,A
+                        289     ;     SPI_IO_CONF   = SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS);
+                        290                             ; SOURCE LINE # 90
+000019 F59A             291             MOV     SPI_IO_CONF,A
+                        292     ;     SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_SKIP_ADR;
+                        293                             ; SOURCE LINE # 91
+00001B 759E19           294             MOV     SPI_S_ACCESS,#019H
+                        295     ;     SPI_S_WCMD    = SPI_C_WRSR;
+                        296                             ; SOURCE LINE # 92
+00001E 75B201           297             MOV     SPI_S_WCMD,#01H
+                        298     ;     SPI_S_DATA0   = 0;                              // new_value=0
+                        299                             ; SOURCE LINE # 93
+000021 F5AC             300             MOV     SPI_S_DATA0,A
+                        301     ;     SPI_CMD_ISSUE = 1;
+                        302                             ; SOURCE LINE # 94
+000023 D282             303             SETB    SPI_CMD_ISSUE
+000025                  304     ?C0003:
+                        305     ;     
+                        306     ;     /* Check Controller Ready */
+                        307     ;     while( 1==SPI_CTRL_BUSY );
+                        308                             ; SOURCE LINE # 97
+000025 2080FD           309             JB      SPI_CTRL_BUSY,?C0003
+                        310     ;     
+                        311     ; #pragma asm
+                        312     ;     //__spi_flash_drv_restore_S_mode_reg();
+                        313               
+                        314     ;     LCALL   __spi_flash_drv_restore_S_mode_reg;
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     6
+
+000028 120000     F     315               LCALL   __spi_flash_drv_restore_S_mode_reg;
+                        316     ; #pragma endasm
+                        317     ;     return SUCCESS;
+                        318                             ; SOURCE LINE # 103
+00002B 7F00             319             MOV     R7,#00H
+                        320     ; }
+                        321                             ; SOURCE LINE # 104
+00002D 22               322             RET     
+                        323     ; END OF __spi_flash_drv_init
+                        324     
+                        325     ; 
+                        326     ; static void __spi_flash_drv_entry(void) large {
+                        327     
+------                  328             RSEG  ?PR?__spi_flash_drv_entry?SPIFLASHDRV
+000000                  329     __spi_flash_drv_entry:
+                        330             USING   0
+                        331                             ; SOURCE LINE # 106
+                        332     ;     // It should be uint8 __spi_flash_drv_entry(uint16 argx), but I have to 
+                        333     ;     // trick C51, which generates the unnecessary to access XDATA
+                        334     ;     // now arg is in R6/R7
+                        335     ; 
+                        336     ; #pragma asm
+                        337     ; //  struct spi_write_flash_argument_t * xdata arg=(struct spi_write_flash_argument_t *
+                               )argx;
+                        338               
+                        339     ; //  if (arg==NULL) return FALSE;
+                        340               
+                        341     ;     MOV     A, R7
+000000 EF               342               MOV     A, R7
+                        343     ;     MOV     DPL, A
+000001 F582             344               MOV     DPL, A
+                        345     ;     MOV     A, R6
+000003 EE               346               MOV     A, R6
+                        347     ;     MOV     DPH, A
+000004 F583             348               MOV     DPH, A
+                        349     ;     ORL     A, R7
+000006 4F               350               ORL     A, R7
+                        351     ;     JZ      ?0034
+000007 603C             352               JZ      ?0034
+                        353     ; 
+                        354               
+                        355     ; //  SPI_S_CONF  = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+                        356               
+                        357     ;     MOV     SPI_S_CONF, #(SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle))
+000009 759D00           358               MOV     SPI_S_CONF, #(((0)))
+                        359     ; 
+                        360               
+                        361     ; //  SPI_IO_CONF = spi_chip0_spi_io_config_w;
+                        362               
+                        363     ;     MOV     SPI_IO_CONF, #(spi_chip0_spi_io_config_w)
+00000C 759A00           364               MOV     SPI_IO_CONF, #((((((0x00))<<3)&(0x1F<<3))))
+                        365     ; 
+                        366               
+                        367     ; //  uint24 start_adr = arg->f_addr; (R0:MSB/R1/R2:LSB)
+                        368               
+                        369     ;     INC     DPTR            // skip first byte of f_addr
+00000F A3               370               INC     DPTR             
+                        371     ;     MOVX    A, @DPTR
+000010 E0               372               MOVX    A, @DPTR
+                        373     ;     MOV     R0, A
+000011 F8               374               MOV     R0, A
+                        375     ;     INC     DPTR
+000012 A3               376               INC     DPTR
+                        377     ;     MOVX    A, @DPTR
+000013 E0               378               MOVX    A, @DPTR
+                        379     ;     MOV     R1, A
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     7
+
+000014 F9               380               MOV     R1, A
+                        381     ;     INC     DPTR
+000015 A3               382               INC     DPTR
+                        383     ;     MOVX    A, @DPTR
+000016 E0               384               MOVX    A, @DPTR
+                        385     ;     MOV     R2, A
+000017 FA               386               MOV     R2, A
+                        387     ; 
+                        388               
+                        389     ; // uint8 op = arg->op; (R5)
+                        390               
+                        391     ;     INC     DPTR
+000018 A3               392               INC     DPTR
+                        393     ;     MOVX    A, @DPTR
+000019 E0               394               MOVX    A, @DPTR
+                        395     ;     MOV     R5, A
+00001A FD               396               MOV     R5, A
+                        397     ;     
+                        398               
+                        399     ;     CJNE    R5, #(SPI_FLASH_OP_ERASE), ?0030
+00001B BD0303           400               CJNE    R5, #((3)), ?0030
+                        401     ;     XJMP    __spi_flash_driver_erase
+00001E 020000     F     402                LJMP    __spi_flash_driver_erase
+                        403     ; ?0030:
+000021                  404               ?0030:
+                        405     ;     CJNE    R5, #(SPI_FLASH_OP_ERASE_BLOCKING), ?0031
+000021 BD0403           406               CJNE    R5, #((4)), ?0031
+                        407     ;     XJMP    __spi_flash_driver_erase
+000024 020000     F     408                LJMP    __spi_flash_driver_erase
+                        409     ; ?0031:
+000027                  410               ?0031:
+                        411     ;     CJNE    R5, #(SPI_FLASH_OP_INIT), ?0032
+000027 BDFF03           412               CJNE    R5, #((0xff)), ?0032
+                        413     ;     LJMP    __spi_flash_drv_init
+00002A 020000     F     414               LJMP    __spi_flash_drv_init
+                        415     ; ?0032:
+00002D                  416               ?0032:
+                        417     ;     
+                        418               
+                        419     ; //  uint8 len=arg->len; (R3)
+                        420               
+                        421     ;     INC     DPTR
+00002D A3               422               INC     DPTR
+                        423     ;     MOVX    A, @DPTR
+00002E E0               424               MOVX    A, @DPTR
+                        425     ;     MOV     R3, A
+00002F FB               426               MOV     R3, A
+                        427     ; 
+                        428               
+                        429     ; //  uint8 *buf=(uint8*)arg->x_addr; (DPTR)
+                        430               
+                        431     ;     INC     DPTR
+000030 A3               432               INC     DPTR
+                        433     ;     MOVX    A, @DPTR
+000031 E0               434               MOVX    A, @DPTR
+                        435     ;     MOV     R7, A
+000032 FF               436               MOV     R7, A
+                        437     ;     INC     DPTR
+000033 A3               438               INC     DPTR
+                        439     ;     MOVX    A, @DPTR
+000034 E0               440               MOVX    A, @DPTR
+                        441     ;     MOV     DPL, A
+000035 F582             442               MOV     DPL, A
+                        443     ;     MOV     A, R7
+000037 EF               444               MOV     A, R7
+                        445     ;     MOV     DPH, A
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     8
+
+000038 F583             446               MOV     DPH, A
+                        447     ; 
+                        448               
+                        449     ;     CJNE    R5, #(SPI_FLASH_OP_WRITE), ?0033
+00003A BD0202           450               CJNE    R5, #((2)), ?0033
+                        451     ;     SJMP    __spi_flash_driver_write
+00003D 803E             452               SJMP    __spi_flash_driver_write
+                        453     ; ?0033:
+00003F                  454               ?0033:
+                        455     ;     CJNE    R5, #(SPI_FLASH_OP_READ), ?0034
+00003F BD0103           456               CJNE    R5, #((1)), ?0034
+                        457     ;     XJMP    __spi_flash_driver_read
+000042 020000     F     458                LJMP    __spi_flash_driver_read
+                        459     ; ?0034:
+000045                  460               ?0034:
+                        461     ;     
+                        462               
+                        463     ;     //  return FALSE;
+                        464               
+                        465     ;     MOV     R7, #FALSE
+000045 7F00             466               MOV     R7, #0
+                        467     ; __spi_flash_drv_restore_S_mode_reg:
+000047                  468               __spi_flash_drv_restore_S_mode_reg:
+                        469     ; //  SPI_IO_CONF =   spi_chip0_spi_io_config_r;
+                        470               
+                        471     ; //  SPI_S_RCMD =    spi_chip0_spi_s_rcmd;
+                        472               
+                        473     ; //  SPI_S_CONF =    spi_chip0_spi_s_conf; 
+                        474               
+                        475     ;     MOV     SPI_IO_CONF, #(spi_chip0_spi_io_config_r)
+000047 759A18           476               MOV     SPI_IO_CONF, #((((((0x03))<<3)&(0x1F<<3))))
+                        477     ;     MOV     SPI_S_RCMD, #(spi_chip0_spi_s_rcmd)
+00004A 75B1BB           478               MOV     SPI_S_RCMD, #((0xBB))
+                        479     ;     MOV     SPI_S_CONF, #(spi_chip0_spi_s_conf)
+00004D 759D04           480               MOV     SPI_S_CONF, #((((4))))
+                        481     ;     RET
+000050 22               482               RET
+                        483     ; 
+                        484               
+                        485     ; __spi_flash_readSR:
+000051                  486               __spi_flash_readSR:
+                        487     ; //  ****Check Controller Ready 
+                        488               
+                        489     ; //  while( 1==SPI_CTRL_BUSY );
+                        490               
+                        491     ; ?0006:
+000051                  492               ?0006:
+                        493     ;     JB      SPI_CTRL_BUSY,?0006
+000051 2080FD           494               JB      SPI_CTRL_BUSY,?0006
+                        495     ; 
+                        496               
+                        497     ;     // assume:
+                        498               
+                        499     ;     //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+                        500               
+                        501     ;     //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+                        502               
+                        503     ; 
+                        504               
+                        505     ; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_READ |  SPI_S_ACCESS_SKIP_ADR;
+                        506               
+                        507     ;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(1) | SPI_S_ACCESS_READ |  SPI_S_ACCESS_S
+                               KIP_ADR)
+000054 759E11           508               MOV     SPI_S_ACCESS, #(((1)<<0) | (0<<3) |  (1<<4))
+                        509     ; 
+                        510               
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE     9
+
+                        511     ; //  SPI_S_RCMD    = SPI_C_RDSR;
+                        512               
+                        513     ;     MOV     SPI_S_RCMD, #(M_SPI_C_RDSR)
+000057 75B105           514               MOV     SPI_S_RCMD, #(0x05)
+                        515     ; 
+                        516               
+                        517     ; //  SPI_CMD_ISSUE = 1;
+                        518               
+                        519     ;     SETB    SPI_CMD_ISSUE
+00005A D282             520               SETB    SPI_CMD_ISSUE
+                        521     ; 
+                        522               
+                        523     ; //  ****Check Controller Ready 
+                        524               
+                        525     ; //  while( 1==SPI_CTRL_BUSY );
+                        526               
+                        527     ; ?0008:
+00005C                  528               ?0008:
+                        529     ;     JB      SPI_CTRL_BUSY,?0008
+00005C 2080FD           530               JB      SPI_CTRL_BUSY,?0008
+                        531     ;     
+                        532               
+                        533     ; //  return SPI_S_DATA0;
+                        534               
+                        535     ;     MOV     R7, SPI_S_DATA0
+00005F AFAC             536               MOV     R7, SPI_S_DATA0
+                        537     ;     RET
+000061 22               538               RET
+                        539     ; 
+                        540               
+                        541     ; __spi_flash_waitRdy:
+000062                  542               __spi_flash_waitRdy:
+                        543     ; //  while( __spi_flash_readSR()&SPI_FLASH_WIP );
+                        544               
+                        545     ; ?0009:
+000062                  546               ?0009:
+                        547     ;     XCALL   __spi_flash_readSR
+000062 120000     F     548                LCALL   __spi_flash_readSR
+                        549     ;     MOV     A,R7
+000065 EF               550               MOV     A,R7
+                        551     ;     JB      ACC.0,?0009
+000066 20E0F9           552               JB      ACC.0,?0009
+                        553     ;     RET
+000069 22               554               RET
+                        555     ; 
+                        556               
+                        557     ; __spi_flash_waitWEL:
+00006A                  558               __spi_flash_waitWEL:
+                        559     ; //  __spi_flash_waitRdy();
+                        560               
+                        561     ;     XCALL   __spi_flash_waitRdy
+00006A 120000     F     562                LCALL   __spi_flash_waitRdy
+                        563     ; 
+                        564               
+                        565     ;     // assume:
+                        566               
+                        567     ;     //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+                        568               
+                        569     ;     //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+                        570               
+                        571     ; 
+                        572               
+                        573     ; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_SKIP_ADR;
+                        574               
+                        575     ;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE | SPI_S_ACCESS_S
+                               KIP_ADR)
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    10
+
+00006D 759E18           576               MOV     SPI_S_ACCESS, #(((0)<<0) | (1<<3) | (1<<4))
+                        577     ; 
+                        578               
+                        579     ; //  SPI_S_WCMD    = SPI_C_WREN;
+                        580               
+                        581     ;     MOV     SPI_S_WCMD, #(M_SPI_C_WREN)
+000070 75B206           582               MOV     SPI_S_WCMD, #(0x06)
+                        583     ; 
+                        584               
+                        585     ; //  SPI_CMD_ISSUE = 1;
+                        586               
+                        587     ;     SETB    SPI_CMD_ISSUE
+000073 D282             588               SETB    SPI_CMD_ISSUE
+                        589     ; 
+                        590               
+                        591     ; //  while (!(__spi_flash_readSR()&SPI_FLASH_WEL));
+                        592               
+                        593     ; ?000A:
+000075                  594               ?000A:
+                        595     ;     XCALL   __spi_flash_readSR
+000075 120000     F     596                LCALL   __spi_flash_readSR
+                        597     ;     MOV     A, R7
+000078 EF               598               MOV     A, R7
+                        599     ;     JNB     ACC.(SPI_FLASH_WEL_SHIFT), ?000A
+000079 30E1F9           600               JNB     ACC.((1)), ?000A
+                        601     ;     RET
+00007C 22               602               RET
+                        603     ;     
+                        604               
+                        605     ; __spi_flash_driver_write:
+00007D                  606               __spi_flash_driver_write:
+                        607     ;     // uint24 start_adr in (R0/R1/R2)
+                        608               
+                        609     ;     // uint8 len is (R3)
+                        610               
+                        611     ;     // uint8 *buf is (DPTR)
+                        612               
+                        613     ; //  while (1){
+                        614               
+                        615     ; ?000D:
+00007D                  616               ?000D:
+                        617     ; //      __spi_flash_waitWEL();
+                        618               
+                        619     ;         XCALL   __spi_flash_waitWEL
+00007D 120000     F     620                LCALL   __spi_flash_waitWEL
+                        621     ; 
+                        622               
+                        623     ;         // assume:
+                        624               
+                        625     ;         //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+                        626               
+                        627     ;         //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+                        628               
+                        629     ; 
+                        630               
+                        631     ; //      SPI_S_WCMD  = spi_chip0_spi_s_wcmd;
+                        632               
+                        633     ;         MOV     SPI_S_WCMD, #(spi_chip0_spi_s_wcmd)
+000080 75B202           634               MOV     SPI_S_WCMD, #((0x02))
+                        635     ; 
+                        636               
+                        637     ; //      clen=4; to_quit=0;  to_quit is in (R5)
+                        638               
+                        639     ; //      if (!((len>4)||(len==0))) {
+                        640               
+                        641     ; //          clen=len; to_quit++;
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    11
+
+                        642               
+                        643     ; //      }
+                        644               
+                        645     ; //      SPI_S_ACCESS = clen  | SPI_S_ACCESS_WRITE ;
+                        646               
+                        647     ;         MOV     SPI_S_ACCESS, #(0x04|(SPI_S_ACCESS_WRITE))
+000083 759E0C           648               MOV     SPI_S_ACCESS, #(0x04|((1<<3)))
+                        649     ;         MOV     R5, #0
+000086 7D00             650               MOV     R5, #0
+                        651     ;         MOV     A, R3
+000088 EB               652               MOV     A, R3
+                        653     ;         JZ      ?000E
+000089 600A             654               JZ      ?000E
+                        655     ;       ADD     A,#0xFB
+00008B 24FB             656               ADD   A,#0xFB
+                        657     ;       JC      ?000E
+00008D 4006             658               JC      ?000E
+                        659     ;       MOV     A, #(SPI_S_ACCESS_WRITE)
+00008F 7408             660               MOV     A, #((1<<3))
+                        661     ;       ORL     A, R3
+000091 4B               662               ORL     A, R3
+                        663     ;         MOV     SPI_S_ACCESS, A
+000092 F59E             664               MOV     SPI_S_ACCESS, A
+                        665     ;         INC     R5
+000094 0D               666               INC     R5
+                        667     ; ?000E:
+000095                  668               ?000E:
+                        669     ; 
+                        670               
+                        671     ; //      SPI_S_ADDR2 = (uint8)( start_adr>>16);
+                        672               
+                        673     ; //      SPI_S_ADDR1 = (uint8)((start_adr>> 8)&0x0000FF);
+                        674               
+                        675     ; //      SPI_S_ADDR0 = (uint8)((start_adr>> 0)&0x0000FF);
+                        676               
+                        677     ;         MOV     A, R0
+000095 E8               678               MOV     A, R0
+                        679     ;         MOV     SPI_S_ADDR2, A
+000096 F5AB             680               MOV     SPI_S_ADDR2, A
+                        681     ;         MOV     A, R1
+000098 E9               682               MOV     A, R1
+                        683     ;         MOV     SPI_S_ADDR1, A
+000099 F5AA             684               MOV     SPI_S_ADDR1, A
+                        685     ;         MOV     A, R2
+00009B EA               686               MOV     A, R2
+                        687     ;         MOV     SPI_S_ADDR0, A
+00009C F5A9             688               MOV     SPI_S_ADDR0, A
+                        689     ; 
+                        690               
+                        691     ; //      SPI_S_DATA0 = *buf++;
+                        692               
+                        693     ; //      SPI_S_DATA1 = *buf++;
+                        694               
+                        695     ; //      SPI_S_DATA2 = *buf++;
+                        696               
+                        697     ; //      SPI_S_DATA3 = *buf++;
+                        698               
+                        699     ;         MOVX    A, @DPTR
+00009E E0               700               MOVX    A, @DPTR
+                        701     ;         MOV     SPI_S_DATA0, A
+00009F F5AC             702               MOV     SPI_S_DATA0, A
+                        703     ;         INC     DPTR
+0000A1 A3               704               INC     DPTR
+                        705     ;         MOVX    A, @DPTR
+0000A2 E0               706               MOVX    A, @DPTR
+                        707     ;         MOV     SPI_S_DATA1, A
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    12
+
+0000A3 F5AD             708               MOV     SPI_S_DATA1, A
+                        709     ;         INC     DPTR
+0000A5 A3               710               INC     DPTR
+                        711     ;         MOVX    A, @DPTR
+0000A6 E0               712               MOVX    A, @DPTR
+                        713     ;         MOV     SPI_S_DATA2, A
+0000A7 F5AE             714               MOV     SPI_S_DATA2, A
+                        715     ;         INC     DPTR
+0000A9 A3               716               INC     DPTR
+                        717     ;         MOVX    A, @DPTR
+0000AA E0               718               MOVX    A, @DPTR
+                        719     ;         MOV     SPI_S_DATA3, A
+0000AB F5AF             720               MOV     SPI_S_DATA3, A
+                        721     ;         INC     DPTR
+0000AD A3               722               INC     DPTR
+                        723     ; 
+                        724               
+                        725     ; //      SPI_CMD_ISSUE = 1;
+                        726               
+                        727     ;         SETB    SPI_CMD_ISSUE
+0000AE D282             728               SETB    SPI_CMD_ISSUE
+                        729     ; 
+                        730               
+                        731     ; //      if (to_quit) break;
+                        732               
+                        733     ;         MOV     A, R5
+0000B0 ED               734               MOV     A, R5
+                        735     ;         JNZ     ?0010
+0000B1 7010             736               JNZ     ?0010
+                        737     ;         
+                        738               
+                        739     ; //      len -= 4;
+                        740               
+                        741     ;         MOV     A, #(0xFC)
+0000B3 74FC             742               MOV     A, #(0xFC)
+                        743     ;         ADD     A, R3
+0000B5 2B               744               ADD     A, R3
+                        745     ;         MOV     R3, A
+0000B6 FB               746               MOV     R3, A
+                        747     ; 
+                        748               
+                        749     ; //      start_adr +=4;
+                        750               
+                        751     ;         MOV     A, #(0x04)
+0000B7 7404             752               MOV     A, #(0x04)
+                        753     ;         ADD     A, R2
+0000B9 2A               754               ADD     A, R2
+                        755     ;         MOV     R2, A
+0000BA FA               756               MOV     R2, A
+                        757     ;         CLR     A
+0000BB E4               758               CLR     A
+                        759     ;         ADDC    A, R1
+0000BC 39               760               ADDC    A, R1
+                        761     ;         MOV     R1, A
+0000BD F9               762               MOV     R1, A
+                        763     ;         CLR     A
+0000BE E4               764               CLR     A
+                        765     ;         ADDC    A, R0
+0000BF 38               766               ADDC    A, R0
+                        767     ;         MOV     R0, A
+0000C0 F8               768               MOV     R0, A
+                        769     ; //  }
+                        770               
+                        771     ;     SJMP    ?000D
+0000C1 80BA             772               SJMP    ?000D
+                        773     ; 
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    13
+
+                        774               
+                        775     ; //    
+                        776               
+                        777     ; ?0010:
+0000C3                  778               ?0010:
+                        779     ; //  __spi_flash_waitRdy();
+                        780               
+                        781     ;     XCALL   __spi_flash_waitRdy
+0000C3 120000     F     782                LCALL   __spi_flash_waitRdy
+                        783     ; 
+                        784               
+                        785     ; //  __spi_flash_drv_restore_S_mode_reg(); 
+                        786               
+                        787     ; //  return SUCCESS
+                        788               
+                        789     ;     MOV     R7, #SUCCESS
+0000C6 7F00             790               MOV     R7, #0
+                        791     ;     XJMP    __spi_flash_drv_restore_S_mode_reg;
+0000C8 020000     F     792                LJMP    __spi_flash_drv_restore_S_mode_reg;
+                        793     ; 
+                        794               
+                        795     ; __spi_flash_driver_read:
+0000CB                  796               __spi_flash_driver_read:
+                        797     ;     // uint24 start_adr in (R0/R1/R2)
+                        798               
+                        799     ;     // uint8 len is (R3)
+                        800               
+                        801     ;     // uint8 *buf is (DPTR)
+                        802               
+                        803     ; 
+                        804               
+                        805     ; //  __spi_flash_waitRdy();
+                        806               
+                        807     ;     XCALL   __spi_flash_waitRdy
+0000CB 120000     F     808                LCALL   __spi_flash_waitRdy
+                        809     ;     
+                        810               
+                        811     ; //  __spi_flash_drv_restore_S_mode_reg();
+                        812               
+                        813     ; //      to get SPI_S_RCMD, SPI_S_CONF, and SPI_IO_CONF
+                        814               
+                        815     ;     XCALL   __spi_flash_drv_restore_S_mode_reg
+0000CE 120000     F     816                LCALL   __spi_flash_drv_restore_S_mode_reg
+                        817     ;     
+                        818               
+                        819     ; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(4) | SPI_S_ACCESS_READ ;
+                        820               
+                        821     ;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(4) | SPI_S_ACCESS_READ)
+0000D1 759E04           822               MOV     SPI_S_ACCESS, #(((4)<<0) | (0<<3))
+                        823     ;    
+                        824               
+                        825     ; //  while(1) {
+                        826               
+                        827     ; ?0021:
+0000D4                  828               ?0021:
+                        829     ; //      SPI_S_ADDR2 = (uint8)( start_adr>>16);
+                        830               
+                        831     ; //      SPI_S_ADDR1 = (uint8)((start_adr>> 8)&0x0000FF);
+                        832               
+                        833     ; //      SPI_S_ADDR0 = (uint8)((start_adr>> 0)&0x0000FF);
+                        834               
+                        835     ;         MOV     A, R0
+0000D4 E8               836               MOV     A, R0
+                        837     ;         MOV     SPI_S_ADDR2, A
+0000D5 F5AB             838               MOV     SPI_S_ADDR2, A
+                        839     ;         MOV     A, R1
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    14
+
+0000D7 E9               840               MOV     A, R1
+                        841     ;         MOV     SPI_S_ADDR1, A
+0000D8 F5AA             842               MOV     SPI_S_ADDR1, A
+                        843     ;         MOV     A, R2
+0000DA EA               844               MOV     A, R2
+                        845     ;         MOV     SPI_S_ADDR0, A
+0000DB F5A9             846               MOV     SPI_S_ADDR0, A
+                        847     ;     
+                        848               
+                        849     ; //      SPI_CMD_ISSUE = 1;
+                        850               
+                        851     ;         SETB    SPI_CMD_ISSUE
+0000DD D282             852               SETB    SPI_CMD_ISSUE
+                        853     ; 
+                        854               
+                        855     ; //      while( 1==SPI_CTRL_BUSY );
+                        856               
+                        857     ; ?0022:
+0000DF                  858               ?0022:
+                        859     ;         JB      SPI_CTRL_BUSY, ?0022
+0000DF 2080FD           860               JB      SPI_CTRL_BUSY, ?0022
+                        861     ;             
+                        862               
+                        863     ; //      *buf++   = SPI_S_DATA0;
+                        864               
+                        865     ; //      if ((--len)==0) break;
+                        866               
+                        867     ;         MOV     A, SPI_S_DATA0
+0000E2 E5AC             868               MOV     A, SPI_S_DATA0
+                        869     ;         MOVX    @DPTR, A
+0000E4 F0               870               MOVX    @DPTR, A
+                        871     ;         INC     DPTR
+0000E5 A3               872               INC     DPTR
+                        873     ;         DEC     R3
+0000E6 1B               874               DEC     R3
+                        875     ;         MOV     A, R3
+0000E7 EB               876               MOV     A, R3
+                        877     ;         JZ      ?0020
+0000E8 6024             878               JZ      ?0020
+                        879     ; 
+                        880               
+                        881     ; //      *buf++   = SPI_S_DATA1;
+                        882               
+                        883     ; //      if ((--len)==0) break;
+                        884               
+                        885     ;         MOV     A, SPI_S_DATA1
+0000EA E5AD             886               MOV     A, SPI_S_DATA1
+                        887     ;         MOVX    @DPTR, A
+0000EC F0               888               MOVX    @DPTR, A
+                        889     ;         INC     DPTR
+0000ED A3               890               INC     DPTR
+                        891     ;         DEC     R3
+0000EE 1B               892               DEC     R3
+                        893     ;         MOV     A, R3
+0000EF EB               894               MOV     A, R3
+                        895     ;         JZ      ?0020
+0000F0 601C             896               JZ      ?0020
+                        897     ; 
+                        898               
+                        899     ; //      *buf++   = SPI_S_DATA2;
+                        900               
+                        901     ; //      if ((--len)==0) break;
+                        902               
+                        903     ;         MOV     A, SPI_S_DATA2
+0000F2 E5AE             904               MOV     A, SPI_S_DATA2
+                        905     ;         MOVX    @DPTR, A
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    15
+
+0000F4 F0               906               MOVX    @DPTR, A
+                        907     ;         INC     DPTR
+0000F5 A3               908               INC     DPTR
+                        909     ;         DEC     R3
+0000F6 1B               910               DEC     R3
+                        911     ;         MOV     A, R3
+0000F7 EB               912               MOV     A, R3
+                        913     ;         JZ      ?0020
+0000F8 6014             914               JZ      ?0020
+                        915     ; 
+                        916               
+                        917     ; //      *buf++   = SPI_S_DATA3;
+                        918               
+                        919     ; //      if ((--len==0)) break;
+                        920               
+                        921     ;         MOV     A, SPI_S_DATA3
+0000FA E5AF             922               MOV     A, SPI_S_DATA3
+                        923     ;         MOVX    @DPTR, A
+0000FC F0               924               MOVX    @DPTR, A
+                        925     ;         INC     DPTR
+0000FD A3               926               INC     DPTR
+                        927     ;         DEC     R3
+0000FE 1B               928               DEC     R3
+                        929     ;         MOV     A, R3
+0000FF EB               930               MOV     A, R3
+                        931     ;         JZ      ?0020
+000100 600C             932               JZ      ?0020
+                        933     ; 
+                        934               
+                        935     ; //      start_adr += 4;
+                        936               
+                        937     ;         MOV     A, #(0x04)
+000102 7404             938               MOV     A, #(0x04)
+                        939     ;         ADD     A, R2
+000104 2A               940               ADD     A, R2
+                        941     ;         MOV     R2, A
+000105 FA               942               MOV     R2, A
+                        943     ;         CLR     A
+000106 E4               944               CLR     A
+                        945     ;         ADDC    A, R1
+000107 39               946               ADDC    A, R1
+                        947     ;         MOV     R1, A
+000108 F9               948               MOV     R1, A
+                        949     ;         CLR     A
+000109 E4               950               CLR     A
+                        951     ;         ADDC    A, R0
+00010A 38               952               ADDC    A, R0
+                        953     ;         MOV     R0, A
+00010B F8               954               MOV     R0, A
+                        955     ; 
+                        956               
+                        957     ; //  }
+                        958               
+                        959     ;     SJMP    ?0021
+00010C 80C6             960               SJMP    ?0021
+                        961     ; 
+                        962               
+                        963     ; ?0020:
+00010E                  964               ?0020:
+                        965     ;     MOV     R7, #SUCCESS
+00010E 7F00             966               MOV     R7, #0
+                        967     ;     RET    
+000110 22               968               RET    
+                        969     ; 
+                        970               
+                        971     ; __spi_flash_driver_erase:
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    16
+
+000111                  972               __spi_flash_driver_erase:
+                        973     ;     // erase_block_adr is in (R0/R1/R2)
+                        974               
+                        975     ;     // blocking mode is in (R5)
+                        976               
+                        977     ;     
+                        978               
+                        979     ; //  __spi_flash_waitWEL();
+                        980               
+                        981     ;     XCALL   __spi_flash_waitWEL
+000111 120000     F     982                LCALL   __spi_flash_waitWEL
+                        983     ; 
+                        984               
+                        985     ;     // assume:
+                        986               
+                        987     ;     //  SPI_S_CONF    = SPI_S_CONF_DUMMY(SPI_S_CONF_DUMMY_00cycle);
+                        988               
+                        989     ;     //  SPI_IO_CONF   = (SPI_IO_CONF_IOMODE(SPI_IO_CONF_IO_SSS));
+                        990               
+                        991     ; 
+                        992               
+                        993     ; //  SPI_S_ACCESS  = SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE ;
+                        994               
+                        995     ;     MOV     SPI_S_ACCESS, #(SPI_S_ACCESS_BYTE(0) | SPI_S_ACCESS_WRITE)
+000114 759E08           996               MOV     SPI_S_ACCESS, #(((0)<<0) | (1<<3))
+                        997     ; 
+                        998               
+                        999     ; //  SPI_S_WCMD    = SPI_C_SE;
+                       1000               
+                       1001     ;     MOV     SPI_S_WCMD, #(M_SPI_C_SE)
+000117 75B220          1002               MOV     SPI_S_WCMD, #(0x20)
+                       1003     ; 
+                       1004               
+                       1005     ; //  SPI_S_ADDR2   = (uint8)((erase_block_adr >> 16)&0xff);
+                       1006               
+                       1007     ;     MOV     A,R0
+00011A E8              1008               MOV     A,R0
+                       1009     ;     MOV     SPI_S_ADDR2, A
+00011B F5AB            1010               MOV     SPI_S_ADDR2, A
+                       1011     ; 
+                       1012               
+                       1013     ; //  SPI_S_ADDR1   = (uint8)((erase_block_adr >> 8)&0xff);
+                       1014               
+                       1015     ;     MOV     A,R1
+00011D E9              1016               MOV     A,R1
+                       1017     ;     MOV     SPI_S_ADDR1,A
+00011E F5AA            1018               MOV     SPI_S_ADDR1,A
+                       1019     ; 
+                       1020               
+                       1021     ; //  SPI_S_ADDR1   = (uint8)((erase_block_adr)&0xff);
+                       1022               
+                       1023     ;     MOV     A,R2
+000120 EA              1024               MOV     A,R2
+                       1025     ;     MOV     SPI_S_ADDR0,A
+000121 F5A9            1026               MOV     SPI_S_ADDR0,A
+                       1027     ; 
+                       1028               
+                       1029     ; //  SPI_CMD_ISSUE = 1;
+                       1030               
+                       1031     ;     SETB    SPI_CMD_ISSUE
+000123 D282            1032               SETB    SPI_CMD_ISSUE
+                       1033     ; 
+                       1034               
+                       1035     ; //  if (op(R5)==SPI_FLASH_OP_ERASE_BLOCKING) __spi_flash_waitRdy();
+                       1036               
+                       1037     ;     MOV     A, R5
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    17
+
+000125 ED              1038               MOV     A, R5
+                       1039     ;     CJNE    A, #(SPI_FLASH_OP_ERASE_BLOCKING), ?000B
+000126 B40403          1040               CJNE    A, #((4)), ?000B
+                       1041     ;     XCALL   __spi_flash_waitRdy
+000129 120000     F    1042                LCALL   __spi_flash_waitRdy
+                       1043     ; ?000B:
+00012C                 1044               ?000B:
+                       1045     ; 
+                       1046               
+                       1047     ; //  __spi_flash_drv_restore_S_mode_reg();
+                       1048               
+                       1049     ;     MOV     R7, #(TRUE)
+00012C 7F01            1050               MOV     R7, #(1)
+                       1051     ;     XJMP    __spi_flash_drv_restore_S_mode_reg
+00012E 020000     F    1052                LJMP    __spi_flash_drv_restore_S_mode_reg
+                       1053     ; #pragma endasm
+                       1054     ; }   // entry
+                       1055                             ; SOURCE LINE # 471
+000131 22              1056             RET     
+                       1057     ; END OF __spi_flash_drv_entry
+                       1058     
+                       1059             END
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    18
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E                                    T Y P E  V A L U E     ATTRIBUTES
+
+?0006 . . . . . . . . . . . . . . . . .    C  ADDR  0051H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0008 . . . . . . . . . . . . . . . . .    C  ADDR  005CH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0009 . . . . . . . . . . . . . . . . .    C  ADDR  0062H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?000A . . . . . . . . . . . . . . . . .    C  ADDR  0075H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?000B . . . . . . . . . . . . . . . . .    C  ADDR  012CH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?000D . . . . . . . . . . . . . . . . .    C  ADDR  007DH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?000E . . . . . . . . . . . . . . . . .    C  ADDR  0095H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0010 . . . . . . . . . . . . . . . . .    C  ADDR  00C3H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0020 . . . . . . . . . . . . . . . . .    C  ADDR  010EH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0021 . . . . . . . . . . . . . . . . .    C  ADDR  00D4H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0022 . . . . . . . . . . . . . . . . .    C  ADDR  00DFH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0030 . . . . . . . . . . . . . . . . .    C  ADDR  0021H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0031 . . . . . . . . . . . . . . . . .    C  ADDR  0027H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0032 . . . . . . . . . . . . . . . . .    C  ADDR  002DH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0033 . . . . . . . . . . . . . . . . .    C  ADDR  003FH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?0034 . . . . . . . . . . . . . . . . .    C  ADDR  0045H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+?C0001. . . . . . . . . . . . . . . . .    C  ADDR  0013H     R   SEG=?PR?__SPI_FLASH_DRV_INIT?SPIFLASHDRV
+?C0003. . . . . . . . . . . . . . . . .    C  ADDR  0025H     R   SEG=?PR?__SPI_FLASH_DRV_INIT?SPIFLASHDRV
+?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV .    C  SEG   000132H       REL=UNIT, ALN=BYTE
+?PR?__SPI_FLASH_DRV_INIT?SPIFLASHDRV. .    C  SEG   00002EH       REL=UNIT, ALN=BYTE
+__SPI_FLASH_DRIVER_ERASE. . . . . . . .    C  ADDR  0111H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_DRIVER_READ . . . . . . . .    C  ADDR  00CBH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_DRIVER_WRITE. . . . . . . .    C  ADDR  007DH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_DRV_ENTRY . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_DRV_INIT. . . . . . . . . .    C  ADDR  0000H     R   SEG=?PR?__SPI_FLASH_DRV_INIT?SPIFLASHDRV
+__SPI_FLASH_DRV_RESTORE_S_MODE_REG. . .    C  ADDR  0047H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_READSR. . . . . . . . . . .    C  ADDR  0051H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_WAITRDY . . . . . . . . . .    C  ADDR  0062H     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+__SPI_FLASH_WAITWEL . . . . . . . . . .    C  ADDR  006AH     R   SEG=?PR?__SPI_FLASH_DRV_ENTRY?SPIFLASHDRV
+AC. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.6   A   
+ACC . . . . . . . . . . . . . . . . . .    D  ADDR  00E0H     A   
+B . . . . . . . . . . . . . . . . . . .    D  ADDR  00F0H     A   
+C_T2. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.1   A   
+CACHE_CLEAN . . . . . . . . . . . . . .    B  ADDR  0080H.1   A   
+CACHE_CRTL. . . . . . . . . . . . . . .    D  ADDR  0080H     A   
+CKCON . . . . . . . . . . . . . . . . .    D  ADDR  008EH     A   
+CODE_BANK . . . . . . . . . . . . . . .    D  ADDR  0096H     A   
+CP_RL2. . . . . . . . . . . . . . . . .    B  ADDR  00C8H.0   A   
+CY. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.7   A   
+DATA_BANK . . . . . . . . . . . . . . .    D  ADDR  0097H     A   
+DPH . . . . . . . . . . . . . . . . . .    D  ADDR  0083H     A   
+DPH1. . . . . . . . . . . . . . . . . .    D  ADDR  0085H     A   
+DPL . . . . . . . . . . . . . . . . . .    D  ADDR  0082H     A   
+DPL1. . . . . . . . . . . . . . . . . .    D  ADDR  0084H     A   
+DPS . . . . . . . . . . . . . . . . . .    D  ADDR  0086H     A   
+EA. . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.7   A   
+EICON . . . . . . . . . . . . . . . . .    D  ADDR  00D8H     A   
+EIE . . . . . . . . . . . . . . . . . .    D  ADDR  00E8H     A   
+EIP . . . . . . . . . . . . . . . . . .    D  ADDR  00F8H     A   
+ES0 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.4   A   
+ES1 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.6   A   
+ET0 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.1   A   
+ET1 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.3   A   
+ET2 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.5   A   
+EWDI. . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.4   A   
+EX0 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.0   A   
+EX1 . . . . . . . . . . . . . . . . . .    B  ADDR  00A8H.2   A   
+EX2 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.0   A   
+EX3 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.1   A   
+EX4 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.2   A   
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    19
+
+EX5 . . . . . . . . . . . . . . . . . .    B  ADDR  00E8H.3   A   
+EXEN2 . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.3   A   
+EXF2. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.6   A   
+EXIF. . . . . . . . . . . . . . . . . .    D  ADDR  0091H     A   
+F0. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.5   A   
+FL. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.1   A   
+FLASH_MSB . . . . . . . . . . . . . . .    D  ADDR  0096H     A   
+GPIO2_E . . . . . . . . . . . . . . . .    D  ADDR  00C4H     A   
+GPIO2_I . . . . . . . . . . . . . . . .    D  ADDR  00C3H     A   
+GPIO2_O . . . . . . . . . . . . . . . .    D  ADDR  00C2H     A   
+GPIO_E. . . . . . . . . . . . . . . . .    D  ADDR  0093H     A   
+GPIO_I. . . . . . . . . . . . . . . . .    D  ADDR  0095H     A   
+GPIO_O. . . . . . . . . . . . . . . . .    D  ADDR  0094H     A   
+IE. . . . . . . . . . . . . . . . . . .    D  ADDR  00A8H     A   
+IE0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.1   A   
+IE1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.3   A   
+INDACC_ADDR_H . . . . . . . . . . . . .    D  ADDR  00A2H     A   
+INDACC_ADDR_L . . . . . . . . . . . . .    D  ADDR  00A3H     A   
+INDACC_CMD. . . . . . . . . . . . . . .    D  ADDR  00A0H     A   
+INDACC_RDATA_H. . . . . . . . . . . . .    D  ADDR  00A6H     A   
+INDACC_RDATA_L. . . . . . . . . . . . .    D  ADDR  00A7H     A   
+INDACC_STATUS . . . . . . . . . . . . .    D  ADDR  00A1H     A   
+INDACC_WDATA_H. . . . . . . . . . . . .    D  ADDR  00A4H     A   
+INDACC_WDATA_L. . . . . . . . . . . . .    D  ADDR  00A5H     A   
+INT0. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.2   A   
+INT1. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.3   A   
+INT2. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.4   A   
+INT3. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.5   A   
+INT4. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.6   A   
+INT5. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.7   A   
+IP. . . . . . . . . . . . . . . . . . .    D  ADDR  00B8H     A   
+IT0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.0   A   
+IT1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.2   A   
+OV. . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.2   A   
+P . . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.0   A   
+P0. . . . . . . . . . . . . . . . . . .    D  ADDR  0080H     A   
+P1. . . . . . . . . . . . . . . . . . .    D  ADDR  0090H     A   
+P2. . . . . . . . . . . . . . . . . . .    D  ADDR  00A0H     A   
+P3. . . . . . . . . . . . . . . . . . .    D  ADDR  00B0H     A   
+PCON. . . . . . . . . . . . . . . . . .    D  ADDR  0087H     A   
+PEDMA_E_ADDR0 . . . . . . . . . . . . .    D  ADDR  00B3H     A   
+PEDMA_E_ADDR1 . . . . . . . . . . . . .    D  ADDR  00B4H     A   
+PEDMA_LEN . . . . . . . . . . . . . . .    D  ADDR  00B7H     A   
+PEDMA_P_ADDR0 . . . . . . . . . . . . .    D  ADDR  00B5H     A   
+PEDMA_P_ADDR1 . . . . . . . . . . . . .    D  ADDR  00B6H     A   
+PS0 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.4   A   
+PS1 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.6   A   
+PSW . . . . . . . . . . . . . . . . . .    D  ADDR  00D0H     A   
+PT0 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.1   A   
+PT1 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.3   A   
+PT2 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.5   A   
+PWDI. . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.4   A   
+PX0 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.0   A   
+PX1 . . . . . . . . . . . . . . . . . .    B  ADDR  00B8H.2   A   
+PX2 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.0   A   
+PX3 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.1   A   
+PX4 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.2   A   
+PX5 . . . . . . . . . . . . . . . . . .    B  ADDR  00F8H.3   A   
+RB8 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.2   A   
+RB81. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.2   A   
+RCAP2H. . . . . . . . . . . . . . . . .    D  ADDR  00CBH     A   
+RCAP2L. . . . . . . . . . . . . . . . .    D  ADDR  00CAH     A   
+RCLK. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.5   A   
+RD. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.7   A   
+REN . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.4   A   
+REN1. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.4   A   
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    20
+
+RI. . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.0   A   
+RI1 . . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.0   A   
+RS0 . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.3   A   
+RS1 . . . . . . . . . . . . . . . . . .    B  ADDR  00D0H.4   A   
+RXD0. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.0   A   
+RXD1. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.2   A   
+SBUF0 . . . . . . . . . . . . . . . . .    D  ADDR  0099H     A   
+SBUF1 . . . . . . . . . . . . . . . . .    D  ADDR  00C1H     A   
+SCON0 . . . . . . . . . . . . . . . . .    D  ADDR  0098H     A   
+SCON1 . . . . . . . . . . . . . . . . .    D  ADDR  00C0H     A   
+SM0 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.7   A   
+SM01. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.7   A   
+SM1 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.6   A   
+SM11. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.6   A   
+SM2 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.5   A   
+SM21. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.5   A   
+SP. . . . . . . . . . . . . . . . . . .    D  ADDR  0081H     A   
+SPC_FNC . . . . . . . . . . . . . . . .    D  ADDR  008FH     A   
+SPI_CMD_ISSUE . . . . . . . . . . . . .    B  ADDR  0080H.2   A   
+SPI_CTRL_BUSY . . . . . . . . . . . . .    B  ADDR  0080H.0   A   
+SPI_DSEL_CYCLE. . . . . . . . . . . . .    D  ADDR  00BCH     A   
+SPI_FLASH_DRIVER_ENTRY. . . . . . . . .    X  ADDR  -------       EXT
+SPI_IO_CONF . . . . . . . . . . . . . .    D  ADDR  009AH     A   
+SPI_RI_CMD. . . . . . . . . . . . . . .    D  ADDR  009CH     A   
+SPI_RI_CONF . . . . . . . . . . . . . .    D  ADDR  009BH     A   
+SPI_S_ACCESS. . . . . . . . . . . . . .    D  ADDR  009EH     A   
+SPI_S_ADDR0 . . . . . . . . . . . . . .    D  ADDR  00A9H     A   
+SPI_S_ADDR1 . . . . . . . . . . . . . .    D  ADDR  00AAH     A   
+SPI_S_ADDR2 . . . . . . . . . . . . . .    D  ADDR  00ABH     A   
+SPI_S_CONF. . . . . . . . . . . . . . .    D  ADDR  009DH     A   
+SPI_S_DATA0 . . . . . . . . . . . . . .    D  ADDR  00ACH     A   
+SPI_S_DATA1 . . . . . . . . . . . . . .    D  ADDR  00ADH     A   
+SPI_S_DATA2 . . . . . . . . . . . . . .    D  ADDR  00AEH     A   
+SPI_S_DATA3 . . . . . . . . . . . . . .    D  ADDR  00AFH     A   
+SPI_S_RCMD. . . . . . . . . . . . . . .    D  ADDR  00B1H     A   
+SPI_S_WCMD. . . . . . . . . . . . . . .    D  ADDR  00B2H     A   
+SPIFLASHDRV . . . . . . . . . . . . . .    -- ----  -------       
+SSIO. . . . . . . . . . . . . . . . . .    D  ADDR  00BBH     A   
+SSPH. . . . . . . . . . . . . . . . . .    D  ADDR  00BAH     A   
+SSPL. . . . . . . . . . . . . . . . . .    D  ADDR  00B9H     A   
+SYNC_CTRL . . . . . . . . . . . . . . .    D  ADDR  008EH     A   
+T0. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.4   A   
+T1. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.5   A   
+T2. . . . . . . . . . . . . . . . . . .    B  ADDR  0090H.0   A   
+T2CON . . . . . . . . . . . . . . . . .    D  ADDR  00C8H     A   
+T2EX. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.1   A   
+TB8 . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.3   A   
+TB81. . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.3   A   
+TCLK. . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.4   A   
+TCON. . . . . . . . . . . . . . . . . .    D  ADDR  0088H     A   
+TF0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.5   A   
+TF1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.7   A   
+TF2 . . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.7   A   
+TH0 . . . . . . . . . . . . . . . . . .    D  ADDR  008CH     A   
+TH1 . . . . . . . . . . . . . . . . . .    D  ADDR  008DH     A   
+TH2 . . . . . . . . . . . . . . . . . .    D  ADDR  00CDH     A   
+TI. . . . . . . . . . . . . . . . . . .    B  ADDR  0098H.1   A   
+TI1 . . . . . . . . . . . . . . . . . .    B  ADDR  00C0H.1   A   
+TL0 . . . . . . . . . . . . . . . . . .    D  ADDR  008AH     A   
+TL1 . . . . . . . . . . . . . . . . . .    D  ADDR  008BH     A   
+TL2 . . . . . . . . . . . . . . . . . .    D  ADDR  00CCH     A   
+TMOD. . . . . . . . . . . . . . . . . .    D  ADDR  0089H     A   
+TR0 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.4   A   
+TR1 . . . . . . . . . . . . . . . . . .    B  ADDR  0088H.6   A   
+TR2 . . . . . . . . . . . . . . . . . .    B  ADDR  00C8H.2   A   
+TXD0. . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.1   A   
+AX51 MACRO ASSEMBLER  SPIFLASHDRV                                                           08/20/25 22:07:53 PAGE    21
+
+TXD1. . . . . . . . . . . . . . . . . .    B  ADDR  0090H.3   A   
+WR. . . . . . . . . . . . . . . . . . .    B  ADDR  00B0H.6   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S).

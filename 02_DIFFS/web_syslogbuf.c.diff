@@ -1,0 +1,96 @@
+--- /home/claude/orig/rtl8367c/src/web/web_syslogbuf.c	2026-11-02 11:29:21.433158720 +0000
++++ rtl8367c/src/web/web_syslogbuf.c	2026-11-02 11:29:44.885705677 +0000
+@@ -574,8 +574,8 @@
+     WEB_BEGIN(pReq);
+     WEB_STATUS(pReq, HTTP_STATUS_OK);
+     WEB_HEADER(pReq, "Content-Type: text/html");
+-    WEB_PRINTF(pReq, "<html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>PDU Rack 8 Outlets Control</title><style>\n");
+-    WEB_PRINTF(pReq, "*{box-sizing:border-box;margin:0;padding:0}"
++    WEB_PUTS(pReq, "<html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1.0\"><title>PDU Rack 8 Outlets Control</title><style>\n");
++    WEB_PUTS(pReq, "*{box-sizing:border-box;margin:0;padding:0}"
+         ":root{--bg1:#eef0f2;--bg2:#f5f6f8;--panel:#fff;--panel2:#fff;--border:#dde1e6;--green:#2f9e44;--green-dark:#1e7e34;--green-light:#d4edda;--red:#e03131;--red-light:#f8d7da;--grey:#868e96;--txt:#1c1f23;--txtdim:#6b7280}"
+         "body{font-family:'Segoe UI',Arial,sans-serif;background:var(--bg1);min-height:100vh;padding:14px;color:var(--txt)}"
+         ".container{max-width:1180px;margin:0 auto}"
+@@ -640,8 +640,8 @@
+         "</style></head>\n");
+ 
+     /* ===== JavaScript ===== */
+-    WEB_PRINTF(pReq, "<script>\n");
+-    WEB_PRINTF(pReq, "let fetchFlag=true,fetchInterval;"
++    WEB_PUTS(pReq, "<script>\n");
++    WEB_PUTS(pReq, "let fetchFlag=true,fetchInterval;"
+         "async function getPduData(){try{let r=await fetch('/get_pdu_status',{cache:'no-store'});"
+         "if(!r.ok)throw new Error(r.status);let d=await r.json(),v=d.v||d.V||0,e=document.getElementById('voltageDisplay');"
+         "if(e)e.textContent=v.toFixed(1)+'V';let p=d.p||d.P||[0,0,0,0,0,0,0,0],i=d.i||d.I||[d.I1||0,d.I2||0,d.I3||0,d.I4||0,d.I5||0,d.I6||0,d.I7||0,d.I8||0],t=0;"
+@@ -685,33 +685,29 @@
+         "if(it)it.classList.remove('pending');b.disabled=false;fetchFlag=true}}"
+         "function startTimer(){fetchInterval=setInterval(()=>{if(fetchFlag)getPduData()},7000)}"
+         "document.addEventListener('DOMContentLoaded',function(){setTimeout(function(){getPduData()},300);loadPortNames();startTimer()});\n");
+-    WEB_PRINTF(pReq, "</script>\n");
++    WEB_PUTS(pReq, "</script>\n");
+ 
+-    WEB_PRINTF(pReq, "<body><div class=\"container\"><div class=\"header\">"
++    WEB_PUTS(pReq, "<body><div class=\"container\"><div class=\"header\">"
+         "<div class=\"page-title\"><span class=\"ico\">&#9889;</span>PDU Rack 8 &mdash; Control Panel</div>"
+         "<div class=\"header-right\">"
+         "<span class=\"header-item\"><span class=\"label\">INPUT VOLTAGE</span><b id=\"voltageDisplay\">0.0V</b></span>"
+         "<span class=\"header-item\"><span class=\"label\">TOTAL CURRENT</span><b id=\"currentDisplay\">0.0A</b></span>"
+         "</div></div><div class=\"port-grid\">\n");
+     for (port = 1; port <= 8; port++) {
+-        WEB_PRINTF(pReq, "<div id=\"port-item-%d\" class=\"port-item off-gray\"><div class=\"port-top\"><div class=\"port-info\">"
+-            "<div class=\"port-label\">Outlet %d</div>"
+-            "<input id=\"port-name-%d\" class=\"port-name\" type=\"text\" maxlength=\"32\" placeholder=\"Name (32 chars)\" value=\"\" oninput=\"setPortName(%d)\" onblur=\"setPortName(%d)\">"
+-            "<div id=\"port-status-%d\" class=\"port-status off\">OFF</div>"
+-            "<div class=\"port-current\">Current: <span id=\"current-display-%d\" class=\"current-value\">0.00A</span></div>"
+-            "</div><div id=\"socket-%d\" class=\"socket-icon off\" data-state=\"off\">"
+-            "<svg viewBox=\"0 0 120 120\">"
+-            "<rect class=\"outline fill\" x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"15\" ry=\"15\"/>"
+-            "<rect class=\"pins\" x=\"43\" y=\"10\" width=\"14\" height=\"30\" rx=\"3\"/>"
+-            "<rect class=\"pins\" x=\"20\" y=\"58\" width=\"16\" height=\"28\" rx=\"3\"/>"
+-            "<rect class=\"pins\" x=\"64\" y=\"58\" width=\"16\" height=\"28\" rx=\"3\"/>"
+-            "</svg></div></div><div class=\"port-controls\">"
+-            "<label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-on-%d\" value=\"1\"> <span>ON</span></label>"
+-            "<label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-off-%d\" value=\"0\" checked> <span>OFF</span></label>"
+-            "</div><button id=\"apply-btn-%d\" class=\"port-apply off-state\" onclick=\"applyPort(%d)\">Apply</button></div>\n",
+-            port, port, port, port, port, port, port, port, port, port, port, port);
++        /* FIX: split into small calls (each < 256 bytes after expansion) and pass
++         * the exact number of %d arguments (original had 14 %d but only 12 args). */
++        WEB_PRINTF(pReq, "<div id=\"port-item-%d\" class=\"port-item off-gray\"><div class=\"port-top\"><div class=\"port-info\">", port);
++        WEB_PRINTF(pReq, "<div class=\"port-label\">Outlet %d</div>", port);
++        WEB_PRINTF(pReq, "<input id=\"port-name-%d\" class=\"port-name\" type=\"text\" maxlength=\"32\" placeholder=\"Name (32 chars)\" value=\"\" oninput=\"setPortName(%d)\" onblur=\"setPortName(%d)\">", port, port, port);
++        WEB_PRINTF(pReq, "<div id=\"port-status-%d\" class=\"port-status off\">OFF</div>", port);
++        WEB_PRINTF(pReq, "<div class=\"port-current\">Current: <span id=\"current-display-%d\" class=\"current-value\">0.00A</span></div>", port);
++        WEB_PRINTF(pReq, "</div><div id=\"socket-%d\" class=\"socket-icon off\" data-state=\"off\">", port);
++        WEB_PUTS(pReq, "<svg viewBox=\"0 0 120 120\">" "<rect class=\"outline fill\" x=\"5\" y=\"5\" width=\"90\" height=\"90\" rx=\"15\" ry=\"15\"/>" "<rect class=\"pins\" x=\"43\" y=\"10\" width=\"14\" height=\"30\" rx=\"3\"/>" "<rect class=\"pins\" x=\"20\" y=\"58\" width=\"16\" height=\"28\" rx=\"3\"/>" "<rect class=\"pins\" x=\"64\" y=\"58\" width=\"16\" height=\"28\" rx=\"3\"/>" "</svg></div></div><div class=\"port-controls\">");
++        WEB_PRINTF(pReq, "<label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-on-%d\" value=\"1\"> <span>ON</span></label>", port, port);
++        WEB_PRINTF(pReq, "<label><input type=\"radio\" name=\"port-%d-state\" id=\"radio-off-%d\" value=\"0\" checked> <span>OFF</span></label>", port, port);
++        WEB_PRINTF(pReq, "</div><button id=\"apply-btn-%d\" class=\"port-apply off-state\" onclick=\"applyPort(%d)\">Apply</button></div>\n", port, port);
+     }
+-    WEB_PRINTF(pReq, "</div></div></body></html>\n");
++    WEB_PUTS(pReq, "</div></div></body></html>\n");
+     WEB_END(pReq);
+     return SUCCESS;
+ }
+@@ -840,6 +836,22 @@
+ //}
+ 
+ /* ==================================================================
++ *  GET /get_pdu_names   (FIX: route + handler were missing; the page calls it on load)
++ *  Returns: {"n":["","","","","","","",""]}
++ *  Names are not persisted yet (set_pdu_name storage code was commented out).
++ * ================================================================== */
++int32 get_pdu_names(struct http_request_s *pReq)
++{
++    WEB_BEGIN(pReq);
++    WEB_STATUS(pReq, HTTP_STATUS_OK);
++    WEB_HEADER(pReq, "Content-Type: application/json");
++    WEB_HEADER(pReq, "Cache-Control: no-cache");
++    WEB_PUTS(pReq, "{\"n\":[\"\",\"\",\"\",\"\",\"\",\"\",\"\",\"\"]}");
++    WEB_END(pReq);
++    return SUCCESS;
++}
++
++/* ==================================================================
+  *  GET /set_pdu_name?port=N&name=xxx
+  *  Stores up to 32 characters for outlet N (1..8).
+  * ================================================================== */

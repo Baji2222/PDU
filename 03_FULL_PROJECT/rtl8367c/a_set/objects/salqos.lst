@@ -1,0 +1,695 @@
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALQOS
+OBJECT MODULE PLACED IN .\objects\salqos.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salqos.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\salqos.lst) TABS(2) OBJECT(.\objects\salqos.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <stdio.h>
+   4          #include <string.h>
+   5          
+   6          #include <salqos.h>
+   7          #include <salerror.h>
+   8          #include <salflash.h>
+   9          #include <saltrunk.h>
+  10          #include <salportmask.h>
+  11          #include <qos.h>
+  12          #include <rtk_error.h>
+  13          #include <rtl8367c_asicdrv.h>
+  14          
+  15          // Sal QoS Config Restore: Restores all QoS settings from flash configuration
+  16          // Restores queue number, port priority, scheduling weights, DSCP remarking, and priority mapping
+  17          int32 sal_qos_config_restore(void)
+  18          {   
+  19   1          uint8          portId, pPortId;
+  20   1          uint8          index;
+  21   1          uint8          qNum;
+  22   1      #if SAL_DSCP_REMARKING
+                  uint8          qid, dscp, enable;
+              #endif
+  25   1          sal_lPortmask_t    lPortMask;
+  26   1          sal_qos_queue_weights_t qweights;
+  27   1          sal_flash_qos_port_table_t qosPortTbl;    
+  28   1      #if defined(INTERNAL_PRIORITY)
+  29   1          sal_flash_qos_pri_selet_t priSel;
+  30   1          sal_dscp_t dscp;
+  31   1          sal_pri_t int_pri;
+  32   1          sal_flash_qos_pri2queue_t pri2queue;
+  33   1      #endif
+  34   1        sal_flash_qos_queueNum_get(0, &qNum);
+  35   1          if (qNum > SAL_MAX_NUM_OF_QUEUE)
+  36   1              qNum = SAL_MAX_NUM_OF_QUEUE;
+  37   1      
+  38   1          _sal_flash_qos_portTable_get(&qosPortTbl);
+  39   1        sal_trunk_logicPort_setAll(&lPortMask); /* Normal port 0~23 */
+  40   1          
+  41   1          for (portId = 0; portId < SAL_PORT_ID_CPU; portId++)
+  42   1          {
+  43   2          if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&lPortMask, portId))
+  44   2            continue;
+  45   2            
+  46   2              sal_trunk_logicId_toPhysicId(&pPortId, portId);
+  47   2      
+  48   2              sal_qos_queueNum_set(portId, qNum);
+  49   2              sal_qos_portPri_set(portId, qosPortTbl.qosPort[pPortId].pri);
+  50   2      
+  51   2              for (index = 0; index < qNum; ++index) 
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 2   
+
+  52   2                  qweights.weights[index] = qosPortTbl.qosPort[pPortId].weight[index];
+  53   2              sal_qos_schedulingQueue_set(portId, &qweights);
+  54   2          }
+  55   1      
+  56   1      #if SAL_DSCP_REMARKING
+                  for(qid = 0; qid < SAL_MAX_NUM_OF_QUEUE; qid++)
+                  {
+                      sal_flash_qos_dscpRemarking_get(qid, &dscp, &enable);
+                      sal_qos_dscpRemarking_set(qid, dscp);
+                  }
+                  sal_qos_dscpRemarkingEnable_set(enable);
+              #endif    
+  64   1          
+  65   1      #if defined(INTERNAL_PRIORITY)
+  66   1          sal_flash_qos_priSel_get(&priSel);
+  67   1          sal_qos_priSel_set((sal_qos_pri_selet_t*)&priSel);
+  68   1      
+  69   1          for(dscp = 0; dscp < SAL_MAX_VALUE_OF_DSCP; dscp++)
+  70   1          {
+  71   2              sal_flash_qos_dscpPriRemap_get(dscp, &int_pri);
+  72   2              sal_qos_dscpPriRemap_set(dscp, int_pri);
+  73   2          }
+  74   1      
+  75   1          sal_qos_queueNum_get(0, &qNum);
+  76   1          sal_flash_qos_priMap_get(&pri2queue);
+  77   1          sal_qos_priMap_set(qNum, (sal_qos_pri2queue_t*)&pri2queue);
+  78   1      #endif
+  79   1          
+  80   1          return SAL_ERR_SUCCESS;
+  81   1      }
+  82          
+  83          // Sal QoS Port Pri Set: Sets the internal priority for a port
+  84          // Configures the default priority for packets received on the specified port
+  85          int32
+  86          sal_qos_portPri_set(sal_port_t port, sal_pri_t intPri)
+  87          {
+  88   1        uint8          portId;
+  89   1      #if defined(LWS_8G_2F) || defined(LWS_5G_1F)
+                  uint8          portIdLogic;
+              #endif
+  92   1        int32          ret;
+  93   1        sal_pPortmask_t pPortMask;
+  94   1        rtk_pri_t       rtk_pri;
+  95   1      
+  96   1        sal_trunk_logicId_toPhysicMask(&pPortMask, port);
+  97   1          rtk_pri = intPri;
+  98   1          
+  99   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId) 
+ 100   1          {
+ 101   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&pPortMask, portId)) 
+ 102   2              {
+ 103   3                  if ((ret = rtk_qos_portPri_set(portId, rtk_pri)) != RT_ERR_OK)
+ 104   3                      return ret;       
+ 105   3                      
+ 106   3      #if defined(LWS_8G_2F)
+                      if(portId == EXT_PORT0)
+                          portIdLogic = 8;
+                      else if(portId == EXT_PORT1)
+                          portIdLogic = 9;
+                      else
+                          portIdLogic = portId;
+                          
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 3   
+
+                      rtl8367c_setAsicRegBits(0x0851+portIdLogic/4, 0x7 << ((portIdLogic%4)*4), intPri);
+              #elif defined(LWS_5G_1F)
+                      if(portId == EXT_PORT0)
+                          portIdLogic = 6;
+                      else
+                          portIdLogic = portId;
+                          
+                      rtl8367c_setAsicRegBits(0x0851+portIdLogic/4, 0x7 << ((portIdLogic%4)*4), intPri);
+              #else
+ 123   3              rtl8367c_setAsicRegBits(0x0851+portId/4, 0x7 << ((portId%4)*4), intPri);
+ 124   3      #endif
+ 125   3          }
+ 126   2        }
+ 127   1      
+ 128   1          return sal_flash_qos_portPri_set(port, intPri);
+ 129   1      }
+ 130          
+ 131          // Sal QoS Port Pri Get: Retrieves the internal priority for a port
+ 132          // Gets the default priority configured for the specified port
+ 133          int32 
+ 134          sal_qos_portPri_get(sal_port_t port, sal_pri_t *pIntPri)
+ 135          {
+ 136   1          int32      ret;
+ 137   1        uint8      portId;
+ 138   1        rtk_pri_t  pri;
+ 139   1      
+ 140   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 141   1            
+ 142   1          if ((ret = rtk_qos_portPri_get(portId, &pri)) != RT_ERR_OK)
+ 143   1              return ret;    
+ 144   1                
+ 145   1          *pIntPri = pri;
+ 146   1          
+ 147   1        return SAL_ERR_SUCCESS;
+ 148   1      }
+ 149          
+ 150          // Sal QoS Pri Map Get: Retrieves the priority to queue mapping table
+ 151          // Gets the mapping of internal priorities to queue IDs
+ 152          int32
+ 153          sal_qos_priMap_get(uint8 qNum, sal_qos_pri2queue_t *pPri2qid)
+ 154          {
+ 155   1          int32 ret;
+ 156   1          rtk_qos_pri2queue_t map;
+ 157   1      
+ 158   1          if (RTK_MAX_NUM_OF_PRIORITY != SAL_MAX_NUM_OF_PRIORITY)
+ 159   1              printf("Macro RTK_MAX_NUM_OF_PRIORITY != SAL_MAX_NUM_OF_PRIORITY");
+ 160   1              
+ 161   1          if ((ret = rtk_qos_priMap_get(qNum, &map)) != SAL_ERR_SUCCESS)
+ 162   1              return ret;
+ 163   1          
+ 164   1          memcpy(pPri2qid, &map, sizeof(rtk_qos_pri2queue_t));        
+ 165   1          
+ 166   1          return SAL_ERR_SUCCESS;
+ 167   1      }
+ 168          
+ 169          // Sal QoS Queue Num Set: Sets the number of queues for a port
+ 170          // Configures how many transmit queues are available on the specified port
+ 171          int32
+ 172          sal_qos_queueNum_set(sal_port_t port, uint8 qNum)
+ 173          {
+ 174   1        uint8          portId;
+ 175   1        int32          ret;
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 4   
+
+ 176   1        sal_pPortmask_t pPortMask;
+ 177   1      
+ 178   1        sal_trunk_logicId_toPhysicMask(&pPortMask, port);
+ 179   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId) 
+ 180   1          {
+ 181   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&pPortMask, portId)) 
+ 182   2              {
+ 183   3            ret = rtk_qos_queueNum_set(portId, qNum);
+ 184   3                  SAL_ERR_CODE(ret, SAL_ERR_PARAMETER);
+ 185   3          }
+ 186   2        }
+ 187   1          return sal_flash_qos_queueNum_set(port, qNum);
+ 188   1      }
+ 189          
+ 190          // Sal QoS Queue Num Get: Retrieves the number of queues for a port
+ 191          // Gets the queue count configured for the specified port
+ 192          int32
+ 193          sal_qos_queueNum_get(sal_port_t port, uint8 *pQnum)
+ 194          {
+ 195   1          int32      ret;
+ 196   1        uint8      portId;
+ 197   1        rtk_queue_num_t queue_num;
+ 198   1      
+ 199   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 200   1      
+ 201   1          if ((ret = rtk_qos_queueNum_get(portId, &queue_num)) != RT_ERR_OK)
+ 202   1              return ret;
+ 203   1              
+ 204   1          *pQnum = queue_num;
+ 205   1      
+ 206   1        return SAL_ERR_SUCCESS;
+ 207   1      }
+ 208          
+ 209          // Sal QoS Scheduling Queue Set: Configures queue scheduling weights for a port
+ 210          // Sets the WRR (Weighted Round Robin) weights for each queue
+ 211          int32
+ 212          sal_qos_schedulingQueue_set(sal_port_t port, sal_qos_queue_weights_t *pQweights)
+ 213          {
+ 214   1        uint8          portId, index;
+ 215   1          int32          ret;
+ 216   1        sal_pPortmask_t pPortMask;
+ 217   1        rtk_qos_queue_weights_t weight;
+ 218   1        
+ 219   1          sal_trunk_logicId_toPhysicMask(&pPortMask, port);
+ 220   1      
+ 221   1          if (RTK_MAX_NUM_OF_QUEUE < SAL_MAX_NUM_OF_QUEUE)
+ 222   1          {
+ 223   2              printf("RTK_MAX_NUM_OF_QUEUE < SAL_MAX_NUM_OF_QUEUE");
+ 224   2              return SAL_ERR_FAILED;
+ 225   2          }     
+ 226   1      
+ 227   1          memset(&weight, 0, sizeof(rtk_qos_queue_weights_t));
+ 228   1          for (index = 0; index < SAL_MAX_NUM_OF_QUEUE; index++)
+ 229   1          {
+ 230   2              weight.weights[index] = pQweights->weights[index];
+ 231   2              
+ 232   2          }
+ 233   1          for (portId = 0; portId < SAL_PORT_ID_CPU; ++portId) 
+ 234   1          {
+ 235   2          if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&pPortMask, portId)) 
+ 236   2              {
+ 237   3                  if ((ret = rtk_qos_schedulingQueue_set(portId, &weight)) != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 5   
+
+ 238   3                      return ret;
+ 239   3          }
+ 240   2        }
+ 241   1          
+ 242   1          return sal_flash_qos_schedulingQueue_set(port, pQweights);                               
+ 243   1      }
+ 244          
+ 245          // Sal QoS Scheduling Queue Get: Retrieves queue scheduling weights for a port
+ 246          // Gets the WRR weights configured for each queue on the specified port
+ 247          int32
+ 248          sal_qos_schedulingQueue_get(sal_port_t port, sal_qos_queue_weights_t *pQweights)
+ 249          {
+ 250   1          int32      ret;
+ 251   1        uint8      portId, index;
+ 252   1        rtk_qos_queue_weights_t weight;
+ 253   1      
+ 254   1          if (RTK_MAX_NUM_OF_QUEUE < SAL_MAX_NUM_OF_QUEUE)
+ 255   1          {
+ 256   2              printf("RTK_MAX_NUM_OF_QUEUE < SAL_MAX_NUM_OF_QUEUE");
+ 257   2              return SAL_ERR_FAILED;
+ 258   2          } 
+ 259   1          
+ 260   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 261   1          if ((ret = rtk_qos_schedulingQueue_get(portId, &weight)) != RT_ERR_OK)
+ 262   1              return ret;
+ 263   1      
+ 264   1          memset(pQweights, 0, sizeof(sal_qos_queue_weights_t));
+ 265   1          for (index = 0; index < SAL_MAX_NUM_OF_QUEUE; index++)
+ 266   1          {
+ 267   2              pQweights->weights[index] = weight.weights[index];    
+ 268   2          }
+ 269   1          
+ 270   1        return SAL_ERR_SUCCESS;
+ 271   1      }
+ 272          
+ 273          #if 0
+              int32 sal_qos_port2queue_set(
+                  uint8 port, 
+                  uint8 queue   // port -> priority -> queue 
+              )
+              {
+                  int32 ret;
+                  uint8 ucQNum;
+                  rtk_qos_pri2queue_t map;
+                  uint8 i;
+              
+                  //printf("Setting Port ID: %bx, queue: %bx!\n", port, queue);
+              
+                  sal_qos_queueNum_get(0, &ucQNum);
+                  if ((ret = rtk_qos_priMap_get(ucQNum, &map)) != RT_ERR_OK)
+                      return ret;
+                  
+                  for (i = 0; i < RTK_MAX_NUM_OF_PRIORITY; i++)
+                  {
+                      //printf("Mapping Table: pri: %bd ==> queue: %bd\n", (uint8)i, (uint8)map.pri2queue[i]);
+                      if (map.pri2queue[i] == queue)
+                      {
+                          //printf("Setting Port ID: %bx, priority: %bx\n", port, i);
+                          if ((ret = sal_qos_portPri_set(port, i)) != SAL_ERR_SUCCESS)
+                              return ret;
+                          
+                          break;
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 6   
+
+                      }
+                  }
+              
+                  return SAL_ERR_SUCCESS;    
+              }
+              #endif
+ 306          
+ 307          #if SAL_DSCP_REMARKING
+              /* Function Name:
+               *      sal_qos_dscpRemarking_set
+               * Description:
+               *      Set queue id to DSCP remarking mapping
+               * Input:
+               *      qid  - queue id
+               *      dscp - remarked DSCP value 
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS 
+               *      SAL_ERR_PARAMETER
+               * Note:
+               *    None
+               */
+              // Sal QoS DSCP Remarking Set: Configures DSCP remarking for a queue
+              // Sets the DSCP value to be used when remarking packets from the specified queue
+              int32 sal_qos_dscpRemarking_set(uint8 qid, uint8 dscp)
+              {
+                  rtk_api_ret_t ret;
+                  uint8         tmp, dscp_enable;
+              
+                  if(qid >= SAL_MAX_NUM_OF_QUEUE || dscp > SAL_MAX_VALUE_OF_DSCP)
+                      return SAL_ERR_PARAMETER;
+              
+                  ret = rtk_qos_dscpRemark_set(qid, dscp);
+                  if(RT_ERR_OK != ret)
+                      return ret;
+              
+                  /* get dscp enable then write back */
+                  sal_flash_qos_dscpRemarking_get(0, &tmp, &dscp_enable);
+              
+                  return sal_flash_qos_dscpRemarking_set(qid, dscp, dscp_enable);
+              }
+              
+              
+              /* Function Name:
+               *      sal_qos_dscpRemarking_get
+               * Description:
+               *      Get queue id to DSCP remarking mapping
+               * Input:
+               *      qid  - queue id
+               * Output:
+               *      pDscp - pointer to remarked DSCP value 
+               * Return:
+               *      SAL_ERR_SUCCESS 
+               *      SAL_ERR_PARAMETER
+               * Note:
+               *    None
+               */
+              // Sal QoS DSCP Remarking Get: Retrieves DSCP remarking value for a queue
+              // Gets the DSCP value configured for remarking packets from the specified queue
+              int32 sal_qos_dscpRemarking_get(uint8 qid, uint8 *pDscp)
+              {
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 7   
+
+                  rtk_dscp_t    dscp;
+                  rtk_api_ret_t ret;
+              
+                  if(qid >= SAL_MAX_NUM_OF_QUEUE)
+                      return SAL_ERR_PARAMETER;
+              
+                  ret = rtk_qos_dscpRemark_get(qid, &dscp);
+                  if(ret)
+                      return ret;
+              
+                  *pDscp = dscp & 0xFF;
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name:
+               *      sal_qos_dscpRemarkingEnable_set
+               * Description:
+               *      Enable/Disable DSCP Remarking function
+               * Input:
+               *      enable - enable/disable DSCP Remarking
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS 
+               *      SAL_ERR_PARAMETER
+               * Note:
+               *    None
+               */
+              // Sal QoS DSCP Remarking Enable Set: Enables or disables DSCP remarking globally
+              // Toggles the DSCP remarking feature for the entire system
+              int32 sal_qos_dscpRemarkingEnable_set(sal_enable_t enable)
+              {
+                  rtk_api_ret_t ret;
+                  uint8         tmp1, tmp2;
+              
+                  if(enable >= SAL_ENABLE_END)
+                      return SAL_ERR_PARAMETER;
+              
+                  ret = rtk_qos_dscpRemarkEnable_set(RTK_WHOLE_SYSTEM, enable);
+                  if(ret)
+                      return ret;
+              
+                  sal_flash_qos_dscpRemarking_get(0, &tmp1, &tmp2);
+              
+                  return sal_flash_qos_dscpRemarking_set(0, tmp1, enable);
+              }
+              
+              /* Function Name:
+               *      sal_qos_dscpRemarkingEnable_get
+               * Description:
+               *      Get DSCP Remarking state
+               * Input:
+               *      None
+               * Output:
+               *      pEnable - Pointer to state of DSCP Remarking state
+               * Return:
+               *      SAL_ERR_SUCCESS 
+               *      SAL_ERR_PARAMETER
+               * Note:
+               *    None
+               */
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 8   
+
+              // Sal QoS DSCP Remarking Enable Get: Retrieves DSCP remarking enable status
+              // Gets whether DSCP remarking is globally enabled or disabled
+              int32 sal_qos_dscpRemarkingEnable_get(sal_enable_t *pEnable)
+              {
+                  rtk_enable_t  enable;
+                  rtk_api_ret_t ret;
+                  
+                  ret = rtk_qos_dscpRemarkEnable_get(RTK_WHOLE_SYSTEM, &enable);
+                if(ret)
+                      return ret;
+                  
+                  *pEnable = enable & 0xFF;
+                  return SAL_ERR_SUCCESS;
+                  
+              }
+              
+              #endif
+ 441          
+ 442          /* Function Name:
+ 443           *      sal_qos_priSel_set
+ 444           * Description:
+ 445           *      set QoS internal priority selection.
+ 446           * Input:
+ 447           *      pPriDec - Priority assign for port, dscp, 802.1p, cvlan, svlan, acl based priority decision.
+ 448           * Output:
+ 449           *      None
+ 450           * Return:
+ 451           *      SAL_ERR_OK              - OK
+ 452           *      SAL_ERR_FAILED          - FAILED
+ 453           * Note:
+ 454           *      ASIC will follow user priority setting of mechanisms to select mapped queue priority for receiving
+             - frame. 
+ 455           *      If two priority mechanisms are the same, the ASIC will chose the highest priority from mechanisms 
+             -to 
+ 456           *      assign queue priority to receiving frame.  
+ 457           *      The priority sources are:
+ 458           *      PRIDEC_PORT
+ 459           *      PRIDEC_ACL
+ 460           *      PRIDEC_DSCP
+ 461           *      PRIDEC_1Q
+ 462           *      PRIDEC_1AD
+ 463           *      PRIDEC_CVLAN
+ 464           *      PRIDEC_DA
+ 465           *      PRIDEC_SA 
+ 466           */
+ 467          // Sal QoS Pri Sel Set: Sets priority selection order for QoS
+ 468          // Configures which priority sources (port, DSCP, 802.1p, etc.) take precedence
+ 469          int32 sal_qos_priSel_set(sal_qos_pri_selet_t *pPriDec)
+ 470          {
+ 471   1          int32 ret;
+ 472   1          rtk_priority_select_t priDec;
+ 473   1          
+ 474   1          priDec.port_pri = pPriDec->port_pri;
+ 475   1          priDec.dot1q_pri = pPriDec->dot1q_pri;
+ 476   1          priDec.acl_pri = pPriDec->acl_pri;
+ 477   1          priDec.dscp_pri = pPriDec->dscp_pri;
+ 478   1          priDec.cvlan_pri = pPriDec->cvlan_pri;
+ 479   1          priDec.svlan_pri = pPriDec->svlan_pri;
+ 480   1          priDec.dmac_pri = pPriDec->dmac_pri;
+ 481   1          priDec.smac_pri = pPriDec->smac_pri;
+ 482   1      
+ 483   1          if (ret = rtk_qos_priSel_set(PRIDECTBL_IDX0, &priDec) != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 9   
+
+ 484   1              return ret;
+ 485   1      #if defined(INTERNAL_PRIORITY)
+ 486   1          return sal_flash_qos_priSel_set((sal_flash_qos_pri_selet_t*)pPriDec);
+ 487   1      #else
+                  return SAL_ERR_SUCCESS;
+              #endif
+ 490   1      }
+ 491          
+ 492          /* Function Name:
+ 493           *      sal_qos_priSel_get
+ 494           * Description:
+ 495           *      Get the priority order configuration among different priority mechanism.
+ 496           * Input:
+ 497           *      None
+ 498           * Output:
+ 499           *      pPriDec - Priority assign for port, dscp, 802.1p, cvlan, svlan, acl based priority decision .
+ 500           * Return:
+ 501           *      SAL_ERR_OK              - OK
+ 502           *      SAL_ERR_FAILED          - FAILED
+ 503           * Note:
+ 504           *      ASIC will follow user priority setting of mechanisms to select mapped queue priority for receiving
+             - frame. 
+ 505           *      If two priority mechanisms are the same, the ASIC will chose the highest priority from mechanisms 
+             -to 
+ 506           *      assign queue priority to receiving frame. 
+ 507           *      The priority sources are:
+ 508           *      PRIDEC_PORT,
+ 509           *      PRIDEC_ACL,
+ 510           *      PRIDEC_DSCP,
+ 511           *      PRIDEC_1Q,
+ 512           *      PRIDEC_1AD,
+ 513           *      PRIDEC_CVLAN,
+ 514           *      PRIDEC_DA,
+ 515           *      PRIDEC_SA,
+ 516           */
+ 517          // Sal QoS Pri Sel Get: Retrieves the priority selection order
+ 518          // Gets the current configuration of which priority sources are enabled
+ 519          int32 sal_qos_priSel_get(sal_qos_pri_selet_t *pPriDec)
+ 520          {
+ 521   1          int32 ret;
+ 522   1          rtk_priority_select_t priDec;
+ 523   1      
+ 524   1          if ((ret = rtk_qos_priSel_get(PRIDECTBL_IDX0, &priDec)) != RT_ERR_OK)
+ 525   1              return ret;
+ 526   1          pPriDec->port_pri = priDec.port_pri;
+ 527   1          pPriDec->dot1q_pri = priDec.dot1q_pri;
+ 528   1          pPriDec->acl_pri = priDec.acl_pri;
+ 529   1          pPriDec->dscp_pri = priDec.dscp_pri;
+ 530   1          pPriDec->cvlan_pri = priDec.cvlan_pri & 0xffff;
+ 531   1          pPriDec->svlan_pri = priDec.svlan_pri;
+ 532   1          pPriDec->dmac_pri = priDec.dmac_pri;
+ 533   1          pPriDec->smac_pri = priDec.smac_pri;
+ 534   1          
+ 535   1          return SAL_ERR_SUCCESS;
+ 536   1      }
+ 537          
+ 538          /* Function Name:
+ 539           *      sal_qos_dscpPriRemap_set
+ 540           * Description:
+ 541           *      Map dscp value to internal priority.
+ 542           * Input:
+ 543           *      dscp - Dscp value of receiving frame
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 10  
+
+ 544           *      int_pri - internal priority value .
+ 545           * Output:
+ 546           *      None
+ 547           * Return:
+ 548           *      SAL_ERR_OK              - OK
+ 549           *      SAL_ERR_FAILED          - FAILED
+ 550           * Note:
+ 551           *      The Differentiated Service Code Point is a selector for router's per-hop behaviors. As a selector,
+             - there is no implication that a numerically 
+ 552           *      greater DSCP implies a better network service. As can be seen, the DSCP totally overlaps the old p
+             -recedence field of TOS. So if values of 
+ 553           *      DSCP are carefully chosen then backward compatibility can be achieved.    
+ 554           */
+ 555          // Sal QoS DSCP Pri Remap Set: Maps DSCP value to internal priority
+ 556          // Configures how incoming DSCP values are translated to internal priority levels
+ 557          int32 sal_qos_dscpPriRemap_set(sal_dscp_t dscp, sal_pri_t int_pri)
+ 558          {
+ 559   1          int32 ret;
+ 560   1      
+ 561   1          if ((ret = rtk_qos_dscpPriRemap_set(dscp,int_pri))!=RT_ERR_OK)
+ 562   1              return ret;
+ 563   1      #if defined(INTERNAL_PRIORITY)
+ 564   1          return sal_flash_qos_dscpPriRemap_set(dscp, int_pri);
+ 565   1      #else
+                  return SAL_ERR_SUCCESS;
+              #endif
+ 568   1      }
+ 569          
+ 570          /* Function Name:
+ 571           *      sal_qos_dscpPriRemap_get
+ 572           * Description:
+ 573           *      Get dscp value to internal priority.
+ 574           * Input:
+ 575           *      dscp - Dscp value of receiving frame
+ 576           * Output:
+ 577           *      pInt_pri - internal priority value. 
+ 578           * Return:
+ 579           *      SAL_ERR_OK              - OK
+ 580           *      SAL_ERR_FAILED          - FAILED
+ 581           * Note:
+ 582           *      The Differentiated Service Code Point is a selector for router's per-hop behaviors. As a selector,
+             - there is no implication that a numerically 
+ 583           *      greater DSCP implies a better network service. As can be seen, the DSCP totally overlaps the old p
+             -recedence field of TOS. So if values of 
+ 584           *      DSCP are carefully chosen then backward compatibility can be achieved.    
+ 585           */
+ 586          // Sal QoS DSCP Pri Remap Get: Retrieves DSCP to internal priority mapping
+ 587          // Gets the internal priority value mapped from the specified DSCP
+ 588          int32 sal_qos_dscpPriRemap_get(sal_dscp_t dscp, sal_pri_t *pInt_pri)
+ 589          {
+ 590   1          rtk_api_ret_t ret;
+ 591   1          rtk_pri_t int_pri;
+ 592   1      
+ 593   1          if ((ret = rtk_qos_dscpPriRemap_get((rtk_dscp_t)dscp, &int_pri)!=RT_ERR_OK))
+ 594   1              return ret;
+ 595   1          *pInt_pri = int_pri & 0xff;
+ 596   1          
+ 597   1          return SAL_ERR_SUCCESS;
+ 598   1      }
+ 599          
+ 600          /* Function Name:
+ 601           *      sal_qos_priMap_set
+C51 COMPILER V9.60.0.0   SALQOS                                                            11/02/2026 17:57:04 PAGE 11  
+
+ 602           * Description:
+ 603           *      Set internal priority to queue id based on different queue number.
+ 604           * Input:
+ 605           *      qNum - Queue number usage.
+ 606           *      pPri2qid - Priority mapping to queue ID.
+ 607           * Output:
+ 608           *      None 
+ 609           * Return:
+ 610           *      SAL_ERR_OK              - OK
+ 611           *      SAL_ERR_FAILED          - FAILED
+ 612           * Note:
+ 613           *      ASIC supports priority mapping to queue with different queue number from 1 to 8.
+ 614           *      For different queue numbers usage, ASIC supports different internal available queue IDs.
+ 615           */
+ 616          // Sal QoS Pri Map Set: Sets the priority to queue mapping table
+ 617          // Configures how internal priorities are mapped to hardware queues
+ 618          int32 sal_qos_priMap_set(uint8 qNum, sal_qos_pri2queue_t *pPri2qid)
+ 619          {
+ 620   1          rtk_api_ret_t ret;
+ 621   1      
+ 622   1          if ((ret = rtk_qos_priMap_set(qNum, pPri2qid)!=RT_ERR_OK))
+*** WARNING C182 IN LINE 622 OF ..\src\sal\salqos.c: pointer to different objects
+ 623   1              return ret;
+ 624   1              
+ 625   1      #if defined(INTERNAL_PRIORITY)
+ 626   1          return sal_flash_qos_priMap_set(pPri2qid); //only save current use queue number to FLASH
+*** WARNING C182 IN LINE 626 OF ..\src\sal\salqos.c: pointer to different objects
+ 627   1      #else
+                  return SAL_ERR_SUCCESS;
+              #endif
+ 630   1          
+ 631   1      }
+*** WARNING C294 IN LINE 159 OF ..\src\sal\salqos.c: unreachable code
+*** WARNING C294 IN LINE 223 OF ..\src\sal\salqos.c: unreachable code
+*** WARNING C294 IN LINE 256 OF ..\src\sal\salqos.c: unreachable code
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1902    ----
+   CONSTANT SIZE    =    101    ----
+   XDATA SIZE       =   ----     418
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =    101    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  5 WARNING(S),  0 ERROR(S)

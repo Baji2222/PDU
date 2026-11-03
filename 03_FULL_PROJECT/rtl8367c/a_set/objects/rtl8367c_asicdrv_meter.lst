@@ -1,0 +1,360 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_METER                                            11/02/2026 17:57:20 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_METER
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_meter.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_meter.c LARGE OMF2 OPTIMIZE(8,SIZE) BROW
+                    -SE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common
+                    -\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,
+                    -RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATI
+                    -BLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_meter.lst) TABS(2) OBJECT(.\objects\rtl8
+                    -367c_asicdrv_meter.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Shared meter related functions
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_meter.h>
+  20          /* Function Name:
+  21           *      rtl8367c_setAsicShareMeter
+  22           * Description:
+  23           *      Set meter configuration
+  24           * Input:
+  25           *      index   - hared meter index (0-31)
+  26           *      rate    - 17-bits rate of share meter, unit is 8Kpbs
+  27           *      ifg     - Including IFG in rate calculation, 1:include 0:exclude
+  28           * Output:
+  29           *      None
+  30           * Return:
+  31           *      RT_ERR_OK               - Success
+  32           *      RT_ERR_SMI              - SMI access error
+  33           *      RT_ERR_FILTER_METER_ID  - Invalid meter
+  34           * Note:
+  35           *      None
+  36           */
+  37          ret_t rtl8367c_setAsicShareMeter(uint32 index, uint32 rate, uint32 ifg)
+  38          {
+  39   1          ret_t retVal;
+  40   1      
+  41   1          if(index > RTL8367C_METERMAX)
+  42   1              return RT_ERR_FILTER_METER_ID;
+  43   1      
+  44   1          if(index < 32)
+  45   1          {
+  46   2          /*19-bits Rate*/
+  47   2              retVal = rtl8367c_setAsicReg(RTL8367C_METER_RATE_REG(index), rate&0xFFFF);
+  48   2              if(retVal != RT_ERR_OK)
+  49   2                  return retVal;
+  50   2      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_METER                                            11/02/2026 17:57:20 PAGE 2   
+
+  51   2              retVal = rtl8367c_setAsicReg(RTL8367C_METER_RATE_REG(index) + 1, (rate &0x70000) >> 16);
+  52   2              if(retVal != RT_ERR_OK)
+  53   2                  return retVal;
+  54   2      
+  55   2              retVal = rtl8367c_setAsicRegBit(RTL8367C_METER_IFG_CTRL_REG(index), RTL8367C_METER_IFG_OFFSET(inde
+             -x), ifg);
+  56   2              if(retVal != RT_ERR_OK)
+  57   2                  return retVal;
+  58   2          }
+  59   1          else
+  60   1          {
+  61   2          /*19-bits Rate*/
+  62   2              retVal = rtl8367c_setAsicReg(RTL8367C_REG_METER32_RATE_CTRL0 + ((index-32) << 1), rate&0xFFFF);
+  63   2              if(retVal != RT_ERR_OK)
+  64   2                  return retVal;
+  65   2      
+  66   2              retVal = rtl8367c_setAsicReg(RTL8367C_REG_METER32_RATE_CTRL0 + ((index-32) << 1) + 1, (rate &0x700
+             -00) >> 16);
+  67   2              if(retVal != RT_ERR_OK)
+  68   2                  return retVal;
+  69   2      
+  70   2              retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_METER_IFG_CTRL2 + ((index-32) >> 4), RTL8367C_METER_I
+             -FG_OFFSET(index), ifg);
+  71   2              if(retVal != RT_ERR_OK)
+  72   2                  return retVal;
+  73   2          }
+  74   1      
+  75   1          return RT_ERR_OK;
+  76   1      }
+  77          /* Function Name:
+  78           *      rtl8367c_getAsicShareMeter
+  79           * Description:
+  80           *      Get meter configuration
+  81           * Input:
+  82           *      index   - hared meter index (0-31)
+  83           *      pRate   - 17-bits rate of share meter, unit is 8Kpbs
+  84           *      pIfg    - Including IFG in rate calculation, 1:include 0:exclude
+  85           * Output:
+  86           *      None
+  87           * Return:
+  88           *      RT_ERR_OK               - Success
+  89           *      RT_ERR_SMI              - SMI access error
+  90           *      RT_ERR_FILTER_METER_ID  - Invalid meter
+  91           * Note:
+  92           *      None
+  93           */
+  94          ret_t rtl8367c_getAsicShareMeter(uint32 index, uint32 *pRate, uint32 *pIfg)
+  95          {
+  96   1          uint32 regData;
+  97   1          uint32 regData2;
+  98   1          ret_t retVal;
+  99   1      
+ 100   1          if(index > RTL8367C_METERMAX)
+ 101   1              return RT_ERR_FILTER_METER_ID;
+ 102   1      
+ 103   1          if(index < 32)
+ 104   1          {
+ 105   2          /*17-bits Rate*/
+ 106   2           retVal = rtl8367c_getAsicReg(RTL8367C_METER_RATE_REG(index), &regData);
+ 107   2              if(retVal != RT_ERR_OK)
+ 108   2                  return retVal;
+ 109   2      
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_METER                                            11/02/2026 17:57:20 PAGE 3   
+
+ 110   2           retVal = rtl8367c_getAsicReg(RTL8367C_METER_RATE_REG(index) + 1, &regData2);
+ 111   2              if(retVal != RT_ERR_OK)
+ 112   2                  return retVal;
+ 113   2      
+ 114   2          *pRate = ((regData2 << 16) & 0x70000) | regData;
+ 115   2          /*IFG*/
+ 116   2          retVal = rtl8367c_getAsicRegBit(RTL8367C_METER_IFG_CTRL_REG(index), RTL8367C_METER_IFG_OFFSET(index), 
+             -pIfg);
+ 117   2      
+ 118   2          return retVal;
+ 119   2          }
+ 120   1          else
+ 121   1          {
+ 122   2          /*17-bits Rate*/
+ 123   2           retVal = rtl8367c_getAsicReg(RTL8367C_REG_METER32_RATE_CTRL0 + ((index-32) << 1), &regData);
+ 124   2              if(retVal != RT_ERR_OK)
+ 125   2                  return retVal;
+ 126   2      
+ 127   2           retVal = rtl8367c_getAsicReg(RTL8367C_REG_METER32_RATE_CTRL0 + ((index-32) << 1) + 1, &regData2);
+ 128   2              if(retVal != RT_ERR_OK)
+ 129   2                  return retVal;
+ 130   2      
+ 131   2          *pRate = ((regData2 << 16) & 0x70000) | regData;
+ 132   2          /*IFG*/
+ 133   2          retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_METER_IFG_CTRL2 + ((index-32) >> 4), RTL8367C_METER_IFG_O
+             -FFSET(index), pIfg);
+ 134   2      
+ 135   2          return retVal;
+ 136   2          }
+ 137   1      }
+ 138          #if 0
+              /* Function Name:
+               *      rtl8367c_setAsicShareMeterBucketSize
+               * Description:
+               *      Set meter related leaky bucket threshold
+               * Input:
+               *      index       - hared meter index (0-31)
+               *      lbthreshold - Leaky bucket threshold of meter
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicShareMeterBucketSize(uint32 index, uint32 lbthreshold)
+              {
+              
+                  if(index > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(index < 32)
+                  return rtl8367c_setAsicReg(RTL8367C_METER_BUCKET_SIZE_REG(index), lbthreshold);
+                  else
+                     return rtl8367c_setAsicReg(RTL8367C_REG_METER32_BUCKET_SIZE + index - 32, lbthreshold);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicShareMeterBucketSize
+               * Description:
+               *      Get meter related leaky bucket threshold
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_METER                                            11/02/2026 17:57:20 PAGE 4   
+
+               * Input:
+               *      index       - hared meter index (0-31)
+               *      pLbthreshold - Leaky bucket threshold of meter
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicShareMeterBucketSize(uint32 index, uint32 *pLbthreshold)
+              {
+                  if(index > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(index < 32)
+                  return rtl8367c_getAsicReg(RTL8367C_METER_BUCKET_SIZE_REG(index), pLbthreshold);
+                  else
+                     return rtl8367c_getAsicReg(RTL8367C_REG_METER32_BUCKET_SIZE + index - 32, pLbthreshold);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicShareMeterType
+               * Description:
+               *      Set meter Type
+               * Input:
+               *      index       - shared meter index (0-31)
+               *      Type        - 0: kbps, 1: pps
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicShareMeterType(uint32 index, uint32 type)
+              {
+                  uint32 reg;
+              
+                  if(index > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(index < 32)
+                      reg = RTL8367C_REG_METER_MODE_SETTING0 + (index / 16);
+                  else
+                      reg = RTL8367C_REG_METER_MODE_SETTING2 + ((index - 32) / 16);
+                  return rtl8367c_setAsicRegBit(reg, index % 16, type);
+              }
+              
+              /* Function Name:
+               *      rtl8367c_getAsicShareMeterType
+               * Description:
+               *      Get meter Type
+               * Input:
+               *      index       - shared meter index (0-31)
+               * Output:
+               *      pType       - 0: kbps, 1: pps
+               * Return:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_METER                                            11/02/2026 17:57:20 PAGE 5   
+
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicShareMeterType(uint32 index, uint32 *pType)
+              {
+                  uint32 reg;
+              
+                  if(index > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(NULL == pType)
+                      return RT_ERR_NULL_POINTER;
+              
+                  if(index < 32)
+                      reg = RTL8367C_REG_METER_MODE_SETTING0 + (index / 16);
+                  else
+                      reg = RTL8367C_REG_METER_MODE_SETTING2 + ((index - 32) / 16);
+                  return rtl8367c_getAsicRegBit(reg, index % 16, pType);
+              }
+              
+              
+              /* Function Name:
+               *      rtl8367c_setAsicMeterExceedStatus
+               * Description:
+               *      Clear shared meter status
+               * Input:
+               *      index       - hared meter index (0-31)
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicMeterExceedStatus(uint32 index)
+              {
+                  if(index > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(index < 32)
+                      return rtl8367c_setAsicRegBit(RTL8367C_METER_OVERRATE_INDICATOR_REG(index), RTL8367C_METER_EXCEED_
+             -OFFSET(index), 1);
+                  else
+                      return rtl8367c_setAsicRegBit(RTL8367C_REG_METER_OVERRATE_INDICATOR2 + ((index - 32) >> 4), RTL836
+             -7C_METER_EXCEED_OFFSET(index), 1);
+              
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicMeterExceedStatus
+               * Description:
+               *      Get shared meter status
+               * Input:
+               *      index   - hared meter index (0-31)
+               *      pStatus     - 0: rate doesn't exceed    1: rate exceeds
+               * Output:
+               *      None
+               * Return:
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_METER                                            11/02/2026 17:57:20 PAGE 6   
+
+               *      RT_ERR_OK               - Success
+               *      RT_ERR_SMI              - SMI access error
+               *      RT_ERR_FILTER_METER_ID  - Invalid meter
+               * Note:
+               *      If rate is over rate*8Kbps of a meter, the state bit of this meter is set to 1.
+               */
+              ret_t rtl8367c_getAsicMeterExceedStatus(uint32 index, uint32* pStatus)
+              {
+                  if(index > RTL8367C_METERMAX)
+                      return RT_ERR_FILTER_METER_ID;
+              
+                  if(index < 32)
+                      return rtl8367c_getAsicRegBit(RTL8367C_METER_OVERRATE_INDICATOR_REG(index), RTL8367C_METER_EXCEED_
+             -OFFSET(index), pStatus);
+                  else
+                      return rtl8367c_getAsicRegBit(RTL8367C_REG_METER_OVERRATE_INDICATOR2 + ((index - 32) >> 4), RTL836
+             -7C_METER_EXCEED_OFFSET(index), pStatus);
+              }
+              #endif
+ 309          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1081    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      34
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,123 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_HSB                                              11/02/2026 17:57:18 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_HSB
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_hsb.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_hsb.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE
+                    - INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\s
+                    -al;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RT
+                    -K_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBL
+                    -E_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_hsb.lst) TABS(2) OBJECT(.\objects\rtl8367c
+                    -_asicdrv_hsb.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 76306 $
+  13           * $Date: 2017-03-08 15:13:58 +0800 (?Ÿæ?ä¸? 08 ä¸‰æ? 2017) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : Field selector related functions
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_hsb.h>
+  20          /* Function Name:
+  21           *      rtl8367c_setAsicFieldSelector
+  22           * Description:
+  23           *      Set user defined field selectors in HSB
+  24           * Input:
+  25           *      index       - index of field selector 0-15
+  26           *      format      - Format of field selector
+  27           *      offset      - Retrieving data offset
+  28           * Output:
+  29           *      None
+  30           * Return:
+  31           *      RT_ERR_OK           - Success
+  32           *      RT_ERR_SMI          - SMI access error
+  33           *      RT_ERR_OUT_OF_RANGE - input parameter out of range
+  34           * Note:
+  35           *      System support 16 user defined field selctors.
+  36           *      Each selector can be enabled or disable. User can defined retrieving 16-bits in many predefiend
+  37           *      standard l2/l3/l4 payload.
+  38           */
+  39          ret_t rtl8367c_setAsicFieldSelector(uint32 index, uint32 format, uint32 offset)
+  40          {
+  41   1          uint32 regData;
+  42   1      
+  43   1          if(index > RTL8367C_FIELDSEL_FORMAT_NUMBER)
+  44   1              return RT_ERR_OUT_OF_RANGE;
+  45   1      
+  46   1          if(format >= FIELDSEL_FORMAT_END)
+  47   1              return RT_ERR_OUT_OF_RANGE;
+  48   1      
+  49   1          regData = (((format << RTL8367C_FIELD_SELECTOR_FORMAT_OFFSET) & RTL8367C_FIELD_SELECTOR_FORMAT_MASK ) 
+             -|
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_HSB                                              11/02/2026 17:57:18 PAGE 2   
+
+  50   1                     ((offset << RTL8367C_FIELD_SELECTOR_OFFSET_OFFSET) & RTL8367C_FIELD_SELECTOR_OFFSET_MASK ))
+             -;
+  51   1      
+  52   1          return rtl8367c_setAsicReg(RTL8367C_FIELD_SELECTOR_REG(index), regData);
+  53   1      }
+  54          #if 0//NOT used
+              /* Function Name:
+               *      rtl8367c_getAsicFieldSelector
+               * Description:
+               *      Get user defined field selectors in HSB
+               * Input:
+               *      index       - index of field selector 0-15
+               *      pFormat     - Format of field selector
+               *      pOffset     - Retrieving data offset
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK           - Success
+               *      RT_ERR_SMI          - SMI access error
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicFieldSelector(uint32 index, uint32* pFormat, uint32* pOffset)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_FIELD_SELECTOR_REG(index), &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  *pFormat    = ((regData & RTL8367C_FIELD_SELECTOR_FORMAT_MASK) >> RTL8367C_FIELD_SELECTOR_FORMAT_OFFSE
+             -T);
+                  *pOffset    = ((regData & RTL8367C_FIELD_SELECTOR_OFFSET_MASK) >> RTL8367C_FIELD_SELECTOR_OFFSET_OFFSE
+             -T);
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    156    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      16
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

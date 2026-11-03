@@ -1,0 +1,583 @@
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALPORTMASK
+OBJECT MODULE PLACED IN .\objects\salportmask.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salportmask.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X
+                    -1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\comm
+                    -on\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SA
+                    -L_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,
+                    -SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salportmask.lst) TABS(2) OBJECT(.\objects\salportmask.obj)
+
+line level    source
+
+   1          #include <salportmask.h>
+   2          
+   3          #if SAL_ENABLE
+   4          extern uint16 phyAllPortMask;
+   5          
+   6          // Sal P Port Mask Add All: Adds all physical ports to the port mask
+   7          // Sets all bits for ports 0 through SAL_PORT_ID_CPU-1
+   8          void
+   9          sal_pPortMask_addAll (
+  10            sal_pPortmask_t *pPPortMask
+  11            )
+  12          {
+  13   1        int i;
+  14   1      
+  15   1        pPPortMask->bits[0] = 0;
+  16   1      
+  17   1        for (i = 0; i < SAL_PORT_ID_CPU; ++i) {
+  18   2          pPPortMask->bits[0] |= (1UL << i);
+  19   2        }
+  20   1      }
+  21          
+  22          // Sal P Port Mask Del All: Clears all ports from the port mask
+  23          // Sets all bits to 0, resulting in an empty mask
+  24          void 
+  25          sal_pPortMask_delAll(
+  26              sal_pPortmask_t *pPPortMask
+  27              )
+  28          {
+  29   1      
+  30   1        pPPortMask->bits[0] = 0;
+  31   1      }
+  32          
+  33          // Sal P Port Mask Add Port: Adds a single port to the port mask
+  34          // Sets the bit corresponding to the specified port number
+  35          void 
+  36          sal_pPortMask_addPort(
+  37              sal_pPortmask_t *pPPortMask, 
+  38              sal_port_t port
+  39              )
+  40          {
+  41   1      //  if (port > SAL_MAX_PHY_N_CPU_PORT - 1) {
+  42   1      //    return;
+  43   1      //  }
+  44   1      
+  45   1        pPPortMask->bits[0] |= (1UL << port);
+  46   1      }
+  47          #if 0
+              void 
+              sal_pPortMask_delPort(
+                  sal_pPortmask_t *pPPortMask, 
+                  sal_port_t port
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 2   
+
+                  )
+              {
+                if (port > SAL_MAX_PHY_N_CPU_PORT - 1) {
+                  return;
+                }
+              
+                pPPortMask->bits[0] &= ~(1UL << port);
+              }
+              #endif
+  61          
+  62          // Sal P Port Mask Add Ports: Adds multiple ports from another mask
+  63          // ORs the source mask bits into the destination mask
+  64          void 
+  65          sal_pPortMask_addPorts(
+  66              sal_pPortmask_t *pPPortMask, 
+  67              sal_pPortmask_t *pPPortMaskPorts
+  68              )
+  69          {
+  70   1      
+  71   1        pPPortMask->bits[0] |= pPPortMaskPorts->bits[0];
+  72   1      }
+  73          
+  74          // Sal P Port Mask Del Ports: Removes multiple ports using another mask
+  75          // ANDs the complement of source mask bits to clear them
+  76          void 
+  77          sal_pPortMask_delPorts(
+  78              sal_pPortmask_t *pPPortMask, 
+  79              sal_pPortmask_t *pPPortMaskPorts
+  80              )
+  81          {
+  82   1      
+  83   1        pPPortMask->bits[0] &= ~(pPPortMaskPorts->bits[0]);
+  84   1      }
+  85          
+  86          // Sal P Port Mask Chk Port: Checks if a specific port is in the mask
+  87          // Returns SAL_ERR_SUCCESS if port bit is set, otherwise SAL_ERR_FAILED
+  88          int32 
+  89          sal_pPortMask_chkPort(
+  90              sal_pPortmask_t *pPPortMask, 
+  91              sal_port_t port
+  92          )
+  93          {
+  94   1      //  if (port > SAL_MAX_PHY_N_CPU_PORT - 1) {
+  95   1      //    return SAL_ERR_FAILED;
+  96   1      //  }
+  97   1      
+  98   1      #if defined(LWS_8G_2F) || defined(LWS_5G_1F)
+                      if(port > SAL_PORT_ID_CPU)
+                          return SAL_ERR_FAILED;
+              #elif defined(LWS_5G) || defined(LWS_8G)
+ 102   1                if (port > SAL_MAX_PHY_PORT) {
+ 103   2                    return SAL_ERR_FAILED;
+ 104   2                }
+ 105   1      #elif defined(LWS_8G)
+              #else
+              #endif
+ 108   1      
+ 109   1        if (pPPortMask->bits[0] & (1UL << port))
+ 110   1        {
+ 111   2          return SAL_ERR_SUCCESS;
+ 112   2        }
+ 113   1        else {
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 3   
+
+ 114   2          return SAL_ERR_FAILED;
+ 115   2        }
+ 116   1      }
+ 117          
+ 118          // Sal P Port Mask Copy: Copies a physical port mask from source to destination
+ 119          // Performs a direct bitwise copy of the mask
+ 120          void 
+ 121          sal_pPortMask_copy(
+ 122              sal_pPortmask_t *pPPortMask, 
+ 123              sal_pPortmask_t *pPPortMaskSrc
+ 124              )
+ 125          {
+ 126   1      
+ 127   1        pPPortMask->bits[0] = pPPortMaskSrc->bits[0];
+ 128   1      }
+ 129          
+ 130          // Sal P Port Mask Copy L Mask: Converts logical port mask to physical port mask
+ 131          // Handles special mapping for EXT ports in 8G/5G configurations
+ 132          void 
+ 133          sal_pPortMask_copyLMask (
+ 134              sal_pPortmask_t *pPPortMask, 
+ 135              sal_lPortmask_t *pLPortMask
+ 136              )
+ 137          {
+ 138   1        int i;
+ 139   1      
+ 140   1        pPPortMask->bits[0] = 0;
+ 141   1      #if defined(LWS_8G_2F)
+                for (i = 0; i < SAL_MAX_PHY_PORT; ++i) {
+                  if (pLPortMask->bits[0] & (1UL << i))
+                  {
+                      if(i == (SAL_MAX_PHY_PORT -2)){
+                          pPPortMask->bits[0] |= (1UL << EXT_PORT0);
+                      }
+                      else if(i == SAL_MAX_PHY_PORT -1){
+                          pPPortMask->bits[0] |= (1UL << EXT_PORT1);
+                      }
+                      else{
+                        pPPortMask->bits[0] |= (1UL << i);
+                    }
+                  }
+                }
+                if (pLPortMask->bits[0] & (1UL << EXT_PORT0))
+                    pPPortMask->bits[0] |= 1UL << EXT_PORT0;
+                    
+                if (pLPortMask->bits[0] & (1UL << EXT_PORT1))
+                    pPPortMask->bits[0] |= 1UL << EXT_PORT1;
+              #elif defined(LWS_5G_1F)
+                for (i = 0; i < SAL_MAX_PHY_PORT; ++i) {
+                  if (pLPortMask->bits[0] & (1UL << i))
+                  {
+                      if(i == 5){
+                          pPPortMask->bits[0] |= (1UL << EXT_PORT0);
+                      }
+                      else{
+                        pPPortMask->bits[0] |= (1UL << i);
+                    }
+                  }
+                }    
+                
+                if (pLPortMask->bits[0] & (1UL << EXT_PORT0))
+                    pPPortMask->bits[0] |= 1UL << EXT_PORT0;
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 4   
+
+              #else
+ 177   1          for (i = 0; i < SAL_MAX_PHY_N_CPU_PORT; ++i) {
+ 178   2              if (pLPortMask->bits[0] & (1UL << i))
+ 179   2              {
+ 180   3                  pPPortMask->bits[0] |= (1UL << i);
+ 181   3              }
+ 182   2          }
+ 183   1      #endif
+ 184   1        
+ 185   1      }
+ 186          #if 0
+              void 
+              sal_pPortMask_copyUL(
+                  sal_pPortmask_t *pPPortMask, 
+                  uint32          *pMask
+                  )   
+              {
+                pPPortMask->bits[0] = *pMask;
+              }
+              
+              #endif
+ 197          
+ 198          // Sal P Port Mask To UL: Converts physical port mask to 32-bit unsigned integer
+ 199          // Extracts the raw bitmask value from the port mask structure
+ 200          void
+ 201          sal_pPortMask_toUL (
+ 202            uint32 *pMask, 
+ 203            sal_pPortmask_t *pPPortMask
+ 204            )
+ 205          {
+ 206   1        *pMask = pPPortMask->bits[0];
+ 207   1      }
+ 208          
+ 209          // Sal P Port Mask And: Performs bitwise AND of two port masks
+ 210          // Result contains ports present in both masks
+ 211          void 
+ 212          sal_pPortMask_and(
+ 213              sal_pPortmask_t *pPPortMask, 
+ 214              sal_pPortmask_t *pPPortMaskA, 
+ 215              sal_pPortmask_t *pPPortMaskB
+ 216              )
+ 217          {
+ 218   1      
+ 219   1        pPPortMask->bits[0] = pPPortMaskA->bits[0] & pPPortMaskB->bits[0];
+ 220   1      }
+ 221          
+ 222          // Sal P Port Mask Or: Performs bitwise OR of two port masks
+ 223          // Result contains ports present in either mask
+ 224          void
+ 225          sal_pPortMask_or (
+ 226            sal_pPortmask_t *pPPortMask, 
+ 227            sal_pPortmask_t *pPPortMaskA, 
+ 228            sal_pPortmask_t *pPPortMaskB
+ 229            )
+ 230          {
+ 231   1      
+ 232   1        pPPortMask->bits[0] = pPPortMaskA->bits[0] | pPPortMaskB->bits[0];
+ 233   1      }
+ 234          
+ 235          #if 0
+              void 
+              sal_pPortMask_xor(
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 5   
+
+                  sal_pPortmask_t *pPPortMask, 
+                  sal_pPortmask_t *pPPortMaskA, 
+                  sal_pPortmask_t *pPPortMaskB
+              )
+              {
+              
+                  pPPortMask->bits[0] = pPPortMaskA->bits[0] ^ pPPortMaskB->bits[0];
+              }
+              
+              int32 
+              sal_pPortMask_cmp(
+                  sal_pPortmask_t *pPPortMaskA, 
+                  sal_pPortmask_t *pPPortMaskB
+                  )
+              {
+              
+                  if (pPPortMaskA->bits[0] != pPPortMaskB->bits[0]) {
+                    return SAL_ERR_FAILED;
+                  }
+              
+                return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 261          
+ 262          // Sal P Port Mask Is Zero: Checks if the physical port mask is empty
+ 263          // Returns SAL_ERR_SUCCESS if no ports set, otherwise SAL_ERR_FAILED
+ 264          int32 
+ 265          sal_pPortMask_isZero (
+ 266              sal_pPortmask_t *pPPortMask
+ 267              )
+ 268          {
+ 269   1      
+ 270   1          if (pPPortMask->bits[0]) {
+ 271   2            return SAL_ERR_FAILED;
+ 272   2          }
+ 273   1      
+ 274   1        return SAL_ERR_SUCCESS;
+ 275   1      }
+ 276          
+ 277          // Sal L Port Mask Add All: Adds all logical ports to the mask
+ 278          // Includes physical ports and EXT ports based on configuration
+ 279          void 
+ 280          sal_lPortMask_addAll(
+ 281              sal_lPortmask_t *pLPortMask
+ 282              )
+ 283          {
+ 284   1        int i;
+ 285   1      
+ 286   1        pLPortMask->bits[0] = 0;
+ 287   1      
+ 288   1      #if defined(LWS_8G_2F)
+                for (i = 0; i < 8; ++i) {
+                  pLPortMask->bits[0] |= (1UL << i);
+                }     
+                pLPortMask->bits[0] |= (1UL << EXT_PORT0);
+                pLPortMask->bits[0] |= (1UL << EXT_PORT1);
+              #elif defined(LWS_5G_1F)
+                for (i = 0; i < 5; ++i) {
+                  pLPortMask->bits[0] |= (1UL << i);
+                }     
+                pLPortMask->bits[0] |= (1UL << EXT_PORT0);      
+              #else
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 6   
+
+ 300   1        for (i = 0; i < SAL_MAX_PHY_PORT; ++i) {
+ 301   2          pLPortMask->bits[0] |= (1UL << i);
+ 302   2        }
+ 303   1      #endif
+ 304   1      }
+ 305          
+ 306          // Sal L Port Mask Del All: Clears all logical ports from the mask
+ 307          // Sets all bits to 0, resulting in an empty mask
+ 308          void 
+ 309          sal_lPortMask_delAll (
+ 310              sal_lPortmask_t *pLPortMask
+ 311              )
+ 312          {
+ 313   1      
+ 314   1        pLPortMask->bits[0] = 0;
+ 315   1      }
+ 316          
+ 317          // Sal L Port Mask Add Port: Adds a single logical port to the mask
+ 318          // Sets the bit corresponding to the specified logical port number
+ 319          void 
+ 320          sal_lPortMask_addPort (
+ 321              sal_lPortmask_t *pLPortMask, 
+ 322              sal_port_t port
+ 323              )
+ 324          {
+ 325   1        if (port > SAL_PORT_ID_CPU - 1) {
+ 326   2          return;
+ 327   2        }
+ 328   1      
+ 329   1        pLPortMask->bits[0] |= (1UL << port);
+ 330   1      }
+ 331          
+ 332          // Sal L Port Mask Del Port: Removes a single logical port from the mask
+ 333          // Clears the bit corresponding to the specified logical port number
+ 334          void 
+ 335          sal_lPortMask_delPort(
+ 336              sal_lPortmask_t *pLPortMask, 
+ 337              sal_port_t port
+ 338              )
+ 339          {
+ 340   1        if (port > SAL_PORT_ID_CPU - 1) {
+ 341   2          return;
+ 342   2        }
+ 343   1      
+ 344   1        pLPortMask->bits[0] &= ~(1UL << port);
+ 345   1      }
+ 346          #if 1
+ 347          // Sal L Port Mask Add Ports: Adds multiple logical ports from another mask
+ 348          // ORs the source mask bits into the destination mask
+ 349          void
+ 350          sal_lPortMask_addPorts (
+ 351            sal_lPortmask_t * pLPortMask,
+ 352            sal_lPortmask_t * pLPortMaskPorts
+ 353            )
+ 354          {
+ 355   1      
+ 356   1        pLPortMask->bits[0] |= pLPortMaskPorts->bits[0];
+ 357   1      }
+ 358          #endif
+ 359          
+ 360          // Sal L Port Mask Del Ports: Removes multiple logical ports using another mask
+ 361          // ANDs the complement of source mask bits to clear them
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 7   
+
+ 362          void 
+ 363          sal_lPortMask_delPorts(
+ 364              sal_lPortmask_t *pLPortMask, 
+ 365              sal_lPortmask_t *pLPortMaskPorts
+ 366              )
+ 367          {
+ 368   1      
+ 369   1        pLPortMask->bits[0] &= ~(pLPortMaskPorts->bits[0]);
+ 370   1      }
+ 371          
+ 372          // Sal L Port Mask Chk Port: Checks if a specific logical port is in the mask
+ 373          // Returns SAL_ERR_SUCCESS if port bit is set, otherwise SAL_ERR_FAILED
+ 374          int32 
+ 375          sal_lPortMask_chkPort(
+ 376              sal_lPortmask_t *pLPortMask, 
+ 377              sal_port_t port
+ 378              )
+ 379          {
+ 380   1      //  if (port > (SAL_MAX_PHY_N_CPU_PORT + SAL_MAX_TRK_PORT) - 1) {
+ 381   1      //    return SAL_ERR_FAILED;
+ 382   1      //  }
+ 383   1      
+ 384   1      #if defined(LWS_8G_2F)
+                  if(port > 17)
+                      return SAL_ERR_FAILED;
+              #elif defined(LWS_5G_1F)
+                  if(port > 16)
+                      return SAL_ERR_FAILED;
+              #elif defined(LWS_5G)
+                    if (port > (SAL_MAX_PHY_N_CPU_PORT + SAL_MAX_TRK_PORT) - 1) {
+                        return SAL_ERR_FAILED;
+                    }
+              #elif defined(LWS_8G)
+ 395   1            if (port > (SAL_MAX_PHY_N_CPU_PORT + SAL_MAX_TRK_PORT) - 1) {
+ 396   2                return SAL_ERR_FAILED;
+ 397   2            }
+ 398   1      #else
+              #endif
+ 400   1      
+ 401   1        if (pLPortMask->bits[0] & (1UL << port))
+ 402   1        {
+ 403   2          return SAL_ERR_SUCCESS;
+ 404   2        }
+ 405   1        else {
+ 406   2          return SAL_ERR_FAILED;
+ 407   2        }
+ 408   1      }
+ 409          
+ 410          #if 0//NOT used
+              void 
+              sal_lPortMask_copy(
+                  sal_lPortmask_t *pLPortMask, 
+                  sal_lPortmask_t *pLPortMaskSrc
+                  )
+              {
+              
+                pLPortMask->bits[0] = pLPortMaskSrc->bits[0];
+              }
+              #endif
+ 421          
+ 422          // Sal L Port Mask Copy P Mask: Copies physical port mask to logical port mask
+ 423          // Converts physical port mask to logical port mask format
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 8   
+
+ 424          void 
+ 425          sal_lPortMask_copyPMask(
+ 426              sal_lPortmask_t *pLPortMask, 
+ 427              sal_pPortmask_t *pPPortMask
+ 428              )
+ 429          {
+ 430   1      
+ 431   1        pLPortMask->bits[0] = pPPortMask->bits[0];
+ 432   1      }
+ 433          
+ 434          // Sal L Port Mask Copy UL: Copies 32-bit value to logical port mask
+ 435          // Directly assigns the unsigned long value to the mask
+ 436          void 
+ 437          sal_lPortMask_copyUL(
+ 438              sal_lPortmask_t *pLPortMask, 
+ 439              uint32 *pMask
+ 440              )
+ 441          {
+ 442   1        pLPortMask->bits[0] = *pMask;
+ 443   1      }
+ 444          
+ 445          #if 0//NOT used
+              
+              void 
+              sal_lPortMask_toUL (
+                  uint32 *pMask, 
+                  sal_lPortmask_t *pLPortMask
+                  )
+              {
+                *pMask = pLPortMask->bits[0];
+              }
+              
+              void 
+              sal_lPortMask_and(
+                  sal_lPortmask_t *pLPortMask, 
+                  sal_lPortmask_t *pLPortMaskA, 
+                  sal_lPortmask_t *pLPortMaskB
+                  )
+              {
+              
+                pLPortMask->bits[0] = pLPortMaskA->bits[0] & pLPortMaskB->bits[0];
+              }
+              
+              void sal_lPortMask_or(
+                  sal_lPortmask_t *pLPortMask, 
+                  sal_lPortmask_t *pLPortMaskA, 
+                  sal_lPortmask_t *pLPortMaskB
+                  )
+              {
+              
+                pLPortMask->bits[0] = pLPortMaskA->bits[0] | pLPortMaskB->bits[0];
+              }
+              
+              void 
+              sal_lPortMask_xor(
+                  sal_lPortmask_t *pLPortMask, 
+                  sal_lPortmask_t *pLPortMaskA, 
+                  sal_lPortmask_t *pLPortMaskB
+                  )
+              {
+              
+                pLPortMask->bits[0] = pLPortMask->bits[0] ^ pLPortMaskB->bits[0];
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 9   
+
+              }
+              #endif
+ 488          /*KevinLee: get result of A deletes B*/
+ 489          
+ 490          #if 0
+              void sal_lPortMask_delPorts2 (
+                sal_lPortmask_t * pLPortMask,
+                sal_lPortmask_t * pLPortMaskA,
+                sal_lPortmask_t * pLPortMaskB
+                )
+              {
+              
+                pLPortMask->bits[0] = pLPortMaskA->bits[0] & (~ pLPortMaskB->bits[0]);
+              }
+              #endif
+ 501          
+ 502          #if 0
+              int32 
+              sal_lPortMask_cmp(
+                  sal_lPortmask_t *pLPortMaskA, 
+                  sal_lPortmask_t *pLPortMaskB
+                  )
+              {
+              
+                if (pLPortMaskA->bits[0] != pLPortMaskB->bits[0]) {
+                  return SAL_ERR_FAILED;
+                }
+              
+                return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 517          
+ 518          // Sal L Port Mask Is Zero: Checks if the logical port mask is empty
+ 519          // Returns SAL_ERR_SUCCESS if no ports set, otherwise SAL_ERR_FAILED
+ 520          int32 
+ 521          sal_lPortMask_isZero(
+ 522              sal_lPortmask_t *pLPortMask
+ 523              )
+ 524          {
+ 525   1      
+ 526   1        if (pLPortMask->bits[0]) {
+ 527   2          return SAL_ERR_FAILED;
+ 528   2        }
+ 529   1      
+ 530   1        return SAL_ERR_SUCCESS;
+ 531   1      }
+ 532          
+ 533          
+ 534          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   1157    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      93
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+C51 COMPILER V9.60.0.0   SALPORTMASK                                                       11/02/2026 17:57:04 PAGE 10  
+
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

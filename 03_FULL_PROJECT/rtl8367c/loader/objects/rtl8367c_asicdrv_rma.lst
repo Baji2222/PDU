@@ -1,0 +1,411 @@
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE RTL8367C_ASICDRV_RMA
+OBJECT MODULE PLACED IN .\objects\rtl8367c_asicdrv_rma.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE ..\src\asicdrv\rtl8367c_asicdrv_rma.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE
+                    - INCDIR(.\include;..\include;.\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\inc
+                    -lude\sal;.\include\local;..\include\asicDrv;..\src\web;..\include\rtk_api) DEFINE(RTK_API_8051,EMBEDDED_SUPPORT,FLASH_MO
+                    -DE_DUAL,DW8051_CLK_625,FLASH_2M,LWS_LOADER,LWS_5G) VARBANKING DEBUG PRINT(.\objects\rtl8367c_asicdrv_rma.lst) TABS(2) OB
+                    -JECT(.\objects\rtl8367c_asicdrv_rma.obj)
+
+line level    source
+
+   1          /*
+   2           * Copyright (C) 2013 Realtek Semiconductor Corp.
+   3           * All Rights Reserved.
+   4           *
+   5           * This program is the proprietary software of Realtek Semiconductor
+   6           * Corporation and/or its licensors, and only be used, duplicated,
+   7           * modified or distributed under the authorized license from Realtek.
+   8           *
+   9           * ANY USE OF THE SOFTWARE OTHER THAN AS AUTHORIZED UNDER
+  10           * THIS LICENSE OR COPYRIGHT LAW IS PROHIBITED.
+  11           *
+  12           * $Revision: 64716 $
+  13           * $Date: 2015-12-31 16:31:55 +0800 (?üÊ??? 31 ?Å‰???2015) $
+  14           *
+  15           * Purpose : RTL8367C switch high-level API for RTL8367C
+  16           * Feature : RMA related functions
+  17           *
+  18           */
+  19          #include <rtl8367c_asicdrv_rma.h>
+  20          /* Function Name:
+  21           *      rtl8367c_setAsicRma
+  22           * Description:
+  23           *      Set reserved multicast address for CPU trapping
+  24           * Input:
+  25           *      index     - reserved multicast LSB byte, 0x00~0x2F is available value
+  26           *      pRmacfg     - type of RMA for trapping frame type setting
+  27           * Output:
+  28           *      None
+  29           * Return:
+  30           *      RT_ERR_OK         - Success
+  31           *      RT_ERR_SMI      - SMI access error
+  32           *      RT_ERR_RMA_ADDR - Invalid RMA address index
+  33           * Note:
+  34           *      None
+  35           */
+  36          ret_t rtl8367c_setAsicRma(uint32 index, rtl8367c_rma_t* pRmacfg)
+  37          {
+  38   1          uint32 regData = 0;
+  39   1          ret_t retVal;
+  40   1      
+  41   1          if(index > RTL8367C_RMAMAX)
+  42   1              return RT_ERR_RMA_ADDR;
+  43   1      
+  44   1          regData |= (pRmacfg->portiso_leaky & 0x0001);
+  45   1          regData |= ((pRmacfg->vlan_leaky & 0x0001) << 1);
+  46   1          regData |= ((pRmacfg->keep_format & 0x0001) << 2);
+  47   1          regData |= ((pRmacfg->trap_priority & 0x0007) << 3);
+  48   1          regData |= ((pRmacfg->discard_storm_filter & 0x0001) << 6);
+  49   1          regData |= ((pRmacfg->operation & 0x0003) << 7);
+  50   1      
+  51   1          if( (index >= 0x4 && index <= 0x7) || (index >= 0x9 && index <= 0x0C) || (0x0F == index))
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 2   
+
+  52   1              index = 0x04;
+  53   1          else if((index >= 0x13 && index <= 0x17) || (0x19 == index) || (index >= 0x1B && index <= 0x1f))
+  54   1              index = 0x13;
+  55   1          else if(index >= 0x22 && index <= 0x2F)
+  56   1              index = 0x22;
+  57   1      
+  58   1          retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, pRmacfg->trap_p
+             -riority);
+  59   1          if(retVal != RT_ERR_OK)
+  60   1              return retVal;
+  61   1      
+  62   1          return rtl8367c_setAsicReg(RTL8367C_REG_RMA_CTRL00+index, regData);
+  63   1      }
+  64          #if 0
+              /* Function Name:
+               *      rtl8367c_getAsicRma
+               * Description:
+               *      Get reserved multicast address for CPU trapping
+               * Input:
+               *      index     - reserved multicast LSB byte, 0x00~0x2F is available value
+               *      rmacfg     - type of RMA for trapping frame type setting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRma(uint32 index, rtl8367c_rma_t* pRmacfg)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+              
+                  if(index > RTL8367C_RMAMAX)
+                      return RT_ERR_RMA_ADDR;
+              
+                  if( (index >= 0x4 && index <= 0x7) || (index >= 0x9 && index <= 0x0C) || (0x0F == index))
+                      index = 0x04;
+                  else if((index >= 0x13 && index <= 0x17) || (0x19 == index) || (index >= 0x1B && index <= 0x1f))
+                      index = 0x13;
+                  else if(index >= 0x22 && index <= 0x2F)
+                      index = 0x22;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_REG_RMA_CTRL00+index, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->operation = ((regData >> 7) & 0x0003);
+                  pRmacfg->discard_storm_filter = ((regData >> 6) & 0x0001);
+                  pRmacfg->trap_priority = ((regData >> 3) & 0x0007);
+                  pRmacfg->keep_format = ((regData >> 2) & 0x0001);
+                  pRmacfg->vlan_leaky = ((regData >> 1) & 0x0001);
+                  pRmacfg->portiso_leaky = (regData & 0x0001);
+              
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->trap_priority = regData;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 3   
+
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicRmaCdp
+               * Description:
+               *      Set CDP(Cisco Discovery Protocol) for CPU trapping
+               * Input:
+               *      pRmacfg     - type of RMA for trapping frame type setting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRmaCdp(rtl8367c_rma_t* pRmacfg)
+              {
+                  uint32 regData = 0;
+                  ret_t retVal;
+              
+                  if(pRmacfg->operation >= RMAOP_END)
+                      return RT_ERR_RMA_ACTION;
+              
+                  if(pRmacfg->trap_priority > RTL8367C_PRIMAX)
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  regData |= (pRmacfg->portiso_leaky & 0x0001);
+                  regData |= ((pRmacfg->vlan_leaky & 0x0001) << 1);
+                  regData |= ((pRmacfg->keep_format & 0x0001) << 2);
+                  regData |= ((pRmacfg->trap_priority & 0x0007) << 3);
+                  regData |= ((pRmacfg->discard_storm_filter & 0x0001) << 6);
+                  regData |= ((pRmacfg->operation & 0x0003) << 7);
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, pRmacfg->trap_p
+             -riority);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_setAsicReg(RTL8367C_REG_RMA_CTRL_CDP, regData);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRmaCdp
+               * Description:
+               *      Get CDP(Cisco Discovery Protocol) for CPU trapping
+               * Input:
+               *      None
+               * Output:
+               *      pRmacfg     - type of RMA for trapping frame type setting
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRmaCdp(rtl8367c_rma_t* pRmacfg)
+              {
+                  ret_t retVal;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 4   
+
+                  uint32 regData;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_REG_RMA_CTRL_CDP, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->operation = ((regData >> 7) & 0x0003);
+                  pRmacfg->discard_storm_filter = ((regData >> 6) & 0x0001);
+                  pRmacfg->trap_priority = ((regData >> 3) & 0x0007);
+                  pRmacfg->keep_format = ((regData >> 2) & 0x0001);
+                  pRmacfg->vlan_leaky = ((regData >> 1) & 0x0001);
+                  pRmacfg->portiso_leaky = (regData & 0x0001);
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->trap_priority = regData;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicRmaCsstp
+               * Description:
+               *      Set CSSTP(Cisco Shared Spanning Tree Protocol) for CPU trapping
+               * Input:
+               *      pRmacfg     - type of RMA for trapping frame type setting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRmaCsstp(rtl8367c_rma_t* pRmacfg)
+              {
+                  uint32 regData = 0;
+                  ret_t retVal;
+              
+                  if(pRmacfg->operation >= RMAOP_END)
+                      return RT_ERR_RMA_ACTION;
+              
+                  if(pRmacfg->trap_priority > RTL8367C_PRIMAX)
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  regData |= (pRmacfg->portiso_leaky & 0x0001);
+                  regData |= ((pRmacfg->vlan_leaky & 0x0001) << 1);
+                  regData |= ((pRmacfg->keep_format & 0x0001) << 2);
+                  regData |= ((pRmacfg->trap_priority & 0x0007) << 3);
+                  regData |= ((pRmacfg->discard_storm_filter & 0x0001) << 6);
+                  regData |= ((pRmacfg->operation & 0x0003) << 7);
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, pRmacfg->trap_p
+             -riority);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_setAsicReg(RTL8367C_REG_RMA_CTRL_CSSTP, regData);
+              }
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 5   
+
+              /* Function Name:
+               *      rtl8367c_getAsicRmaCsstp
+               * Description:
+               *      Get CSSTP(Cisco Shared Spanning Tree Protocol) for CPU trapping
+               * Input:
+               *      None
+               * Output:
+               *      pRmacfg     - type of RMA for trapping frame type setting
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRmaCsstp(rtl8367c_rma_t* pRmacfg)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_REG_RMA_CTRL_CSSTP, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->operation = ((regData >> 7) & 0x0003);
+                  pRmacfg->discard_storm_filter = ((regData >> 6) & 0x0001);
+                  pRmacfg->trap_priority = ((regData >> 3) & 0x0007);
+                  pRmacfg->keep_format = ((regData >> 2) & 0x0001);
+                  pRmacfg->vlan_leaky = ((regData >> 1) & 0x0001);
+                  pRmacfg->portiso_leaky = (regData & 0x0001);
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->trap_priority = regData;
+              
+                  return RT_ERR_OK;
+              }
+              
+              /* Function Name:
+               *      rtl8367c_setAsicRmaLldp
+               * Description:
+               *      Set LLDP for CPU trapping
+               * Input:
+               *      pRmacfg     - type of RMA for trapping frame type setting
+               * Output:
+               *      None
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_setAsicRmaLldp(uint32 enabled, rtl8367c_rma_t* pRmacfg)
+              {
+                  uint32 regData = 0;
+                  ret_t retVal;
+              
+                  if(enabled > 1)
+                      return RT_ERR_ENABLE;
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 6   
+
+              
+                  if(pRmacfg->operation >= RMAOP_END)
+                      return RT_ERR_RMA_ACTION;
+              
+                  if(pRmacfg->trap_priority > RTL8367C_PRIMAX)
+                      return RT_ERR_QOS_INT_PRIORITY;
+              
+                  retVal = rtl8367c_setAsicRegBit(RTL8367C_REG_RMA_LLDP_EN, RTL8367C_RMA_LLDP_EN_OFFSET,enabled);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  regData |= (pRmacfg->portiso_leaky & 0x0001);
+                  regData |= ((pRmacfg->vlan_leaky & 0x0001) << 1);
+                  regData |= ((pRmacfg->keep_format & 0x0001) << 2);
+                  regData |= ((pRmacfg->trap_priority & 0x0007) << 3);
+                  regData |= ((pRmacfg->discard_storm_filter & 0x0001) << 6);
+                  regData |= ((pRmacfg->operation & 0x0003) << 7);
+              
+                  retVal = rtl8367c_setAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, pRmacfg->trap_p
+             -riority);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  return rtl8367c_setAsicReg(RTL8367C_REG_RMA_CTRL_LLDP, regData);
+              }
+              /* Function Name:
+               *      rtl8367c_getAsicRmaLldp
+               * Description:
+               *      Get LLDP for CPU trapping
+               * Input:
+               *      None
+               * Output:
+               *      pRmacfg     - type of RMA for trapping frame type setting
+               * Return:
+               *      RT_ERR_OK         - Success
+               *      RT_ERR_SMI      - SMI access error
+               *      RT_ERR_RMA_ADDR - Invalid RMA address index
+               * Note:
+               *      None
+               */
+              ret_t rtl8367c_getAsicRmaLldp(uint32 *pEnabled, rtl8367c_rma_t* pRmacfg)
+              {
+                  ret_t retVal;
+                  uint32 regData;
+              
+                  retVal = rtl8367c_getAsicRegBit(RTL8367C_REG_RMA_LLDP_EN, RTL8367C_RMA_LLDP_EN_OFFSET,pEnabled);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  retVal = rtl8367c_getAsicReg(RTL8367C_REG_RMA_CTRL_LLDP, &regData);
+                  if(retVal != RT_ERR_OK)
+                      return retVal;
+              
+                  pRmacfg->operation = ((regData >> 7) & 0x0003);
+                  pRmacfg->discard_storm_filter = ((regData >> 6) & 0x0001);
+                  pRmacfg->trap_priority = ((regData >> 3) & 0x0007);
+                  pRmacfg->keep_format = ((regData >> 2) & 0x0001);
+                  pRmacfg->vlan_leaky = ((regData >> 1) & 0x0001);
+                  pRmacfg->portiso_leaky = (regData & 0x0001);
+              
+                  retVal = rtl8367c_getAsicRegBits(RTL8367C_REG_RMA_CTRL00, RTL8367C_TRAP_PRIORITY_MASK, &regData);
+                  if(retVal != RT_ERR_OK)
+C51 COMPILER V9.60.0.0   RTL8367C_ASICDRV_RMA                                              08/20/2025 22:07:57 PAGE 7   
+
+                      return retVal;
+              
+                  pRmacfg->trap_priority = regData;
+              
+                  return RT_ERR_OK;
+              }
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    744    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----      11
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

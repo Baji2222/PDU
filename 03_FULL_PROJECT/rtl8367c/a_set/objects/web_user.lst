@@ -1,0 +1,366 @@
+C51 COMPILER V9.60.0.0   WEB_USER                                                          11/02/2026 17:57:37 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_USER
+OBJECT MODULE PLACED IN .\objects\web_user.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_user.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_user.lst) TABS(2) OBJECT(.\objects\web_user.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to user function
+  10           *
+  11           * Feature : Response the request related to user function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <string.h>
+  19          #include <stdio.h>
+  20          #include <stdlib.h>
+  21          #include <salflash.h>
+  22          #include <salsys.h>
+  23          
+  24          #include <web/web_api.h>
+  25          #include "web_user.h"
+  26          #include <syslog/syslogdefs.h>
+  27          
+  28          uint8 Get_Response[200];   /* FIX: was [75]; UART line can be up to 180 chars */
+  29          /*
+  30           * Symbol Definition
+  31           */
+  32          
+  33          
+  34          /*
+  35           * Data Declaration
+  36           */
+  37          
+  38          /*
+  39           * Function Declaration
+  40           */
+  41          void send_str_web(uint8* tempData);
+  42          void Fetching_Set_Response(char* tempData);
+  43          /*
+  44           * Function: get_user
+  45           * ------------------
+  46           * Displays user account management page for username/password changes.
+  47           * Shows current username and password fields with confirmation.
+  48           * Uses JavaScript to validate password match before submission.
+  49           * Modern clean UI with form styling and validation.
+  50           */
+  51          int32 get_user(struct http_request_s *pReq)
+C51 COMPILER V9.60.0.0   WEB_USER                                                          11/02/2026 17:57:37 PAGE 2   
+
+  52          {
+  53   1          uint8 username[SAL_FLSH_USR_USERNAME_LEN + 1];
+  54   1          uint8 password[SAL_FLSH_USR_PASSWORD_LEN + 1];
+  55   1      
+  56   1          sal_flash_sysAccount_get(username, password);
+  57   1      
+  58   1          WEB_BEGIN(pReq);
+  59   1      
+  60   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  61   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  62   1      
+  63   1          WEB_PRINTF(pReq, "<html>\n");
+  64   1          WEB_PRINTF(pReq, "<head>\n");
+  65   1          WEB_PRINTF(pReq, "<title>User Account Setting</title>\n");
+  66   1          
+  67   1          // Minimal CSS
+  68   1          WEB_PRINTF(pReq, "<style>\n");
+  69   1          WEB_PRINTF(pReq, "body{font-family:Arial,sans-serif;background:#f4f7fa;margin:0;padding:20px;}\n");
+  70   1          WEB_PRINTF(pReq, "h1{text-align:center;color:#333;margin-bottom:20px;}\n");
+  71   1          WEB_PRINTF(pReq, ".card{background:white;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);padding
+             -:20px;max-width:500px;margin:0 auto;}\n");
+  72   1          WEB_PRINTF(pReq, ".form-group{margin-bottom:15px;}\n");
+  73   1          WEB_PRINTF(pReq, "label{display:block;margin-bottom:5px;font-weight:bold;color:#555;}\n");
+  74   1          WEB_PRINTF(pReq, "input[type=text],input[type=password]{width:100%%;padding:8px;border:1px solid #ddd;
+             -border-radius:4px;box-sizing:border-box;}\n");
+  75   1          WEB_PRINTF(pReq, ".btn{background:#1e88e5;color:white;border:none;padding:10px 15px;border-radius:4px;
+             -cursor:pointer;font-size:14px;}\n");
+  76   1          WEB_PRINTF(pReq, ".btn:hover{background:#1565c0;}\n");
+  77   1          WEB_PRINTF(pReq, "</style>\n");
+  78   1          
+  79   1          // Simplified JavaScript validation
+  80   1          WEB_PRINTF(pReq, "<script>\n");
+  81   1          WEB_PRINTF(pReq, "function ConfirmAccount(){\n");
+  82   1          WEB_PRINTF(pReq, "var form=document.accountform;\n");
+  83   1          WEB_PRINTF(pReq, "if(form.mpass.value!=form.mpass2.value){alert(\"Passwords do not match.\");return fa
+             -lse;}\n");
+  84   1          WEB_PRINTF(pReq, "return true;\n");
+  85   1          WEB_PRINTF(pReq, "}\n");
+  86   1          WEB_PRINTF(pReq, "</script>\n");
+  87   1          WEB_PRINTF(pReq, "</head>\n");
+  88   1          
+  89   1          // Modern body
+  90   1          WEB_PRINTF(pReq, "<body>\n");
+  91   1          WEB_PRINTF(pReq, "<h1>User Account Setting</h1>\n");
+  92   1          WEB_PRINTF(pReq, "<div class=\"card\">\n");
+  93   1          WEB_PRINTF(pReq, "<form method=\"post\" name=\"accountform\" action=\"user.cgi\" onSubmit=\"return Con
+             -firmAccount()\">\n");
+  94   1          
+  95   1          // Username field
+  96   1          WEB_PRINTF(pReq, "<div class=\"form-group\">\n");
+  97   1          WEB_PRINTF(pReq, "<label for=\"username\">New Username</label>\n");
+  98   1          WEB_PRINTF(pReq, "<input type=\"text\" id=\"username\" name=\"mname\" maxlength=\"16\" value=\"%s\">\n
+             -", username);
+  99   1          WEB_PRINTF(pReq, "</div>\n");
+ 100   1          
+ 101   1          // Password field
+ 102   1          WEB_PRINTF(pReq, "<div class=\"form-group\">\n");
+ 103   1          WEB_PRINTF(pReq, "<label for=\"password\">New Password</label>\n");
+ 104   1          WEB_PRINTF(pReq, "<input type=\"password\" id=\"password\" name=\"mpass\" maxlength=\"%d\">\n", (uint1
+             -6)SAL_FLSH_USR_PASSWORD_LEN);
+ 105   1          WEB_PRINTF(pReq, "</div>\n");
+ 106   1          
+C51 COMPILER V9.60.0.0   WEB_USER                                                          11/02/2026 17:57:37 PAGE 3   
+
+ 107   1          // Confirm Password field
+ 108   1          WEB_PRINTF(pReq, "<div class=\"form-group\">\n");
+ 109   1          WEB_PRINTF(pReq, "<label for=\"confirmPassword\">Confirm Password</label>\n");
+ 110   1          WEB_PRINTF(pReq, "<input type=\"password\" id=\"confirmPassword\" name=\"mpass2\" maxlength=\"%d\">\n"
+             -, (uint16)SAL_FLSH_USR_PASSWORD_LEN);
+ 111   1          WEB_PRINTF(pReq, "</div>\n");
+ 112   1          
+ 113   1          // Submit button
+ 114   1          WEB_PRINTF(pReq, "<div style=\"text-align:center;margin-top:20px;\">\n");
+ 115   1          WEB_PRINTF(pReq, "<input type=\"submit\" class=\"btn\" value=\"Apply Changes\">\n");
+ 116   1          WEB_PRINTF(pReq, "<input type=\"hidden\" name=\"cmd\" value=\"passwd\">\n");
+ 117   1          WEB_PRINTF(pReq, "</div>\n");
+ 118   1          
+ 119   1          WEB_PRINTF(pReq, "</form>\n");
+ 120   1          WEB_PRINTF(pReq, "</div>\n");
+ 121   1          WEB_PRINTF(pReq, "</body>\n");
+ 122   1          WEB_PRINTF(pReq, "</html>\n");
+ 123   1      
+ 124   1          WEB_END(pReq);
+ 125   1      
+ 126   1          return SUCCESS;
+ 127   1      }
+ 128          
+ 129          
+ 130          /*
+ 131           * Function: post_user
+ 132           * -------------------
+ 133           * Processes user account form submission.
+ 134           * Extracts username and password from POST data.
+ 135           * Calls sal_flash_sysAccount_set() to save credentials.
+ 136           * Logs password change event to syslog.
+ 137           */
+ 138          int32 post_user(struct http_request_s *pReq)
+ 139          {
+ 140   1          uint8  *pValue;
+ 141   1          uint8  username[SAL_FLSH_USR_USERNAME_LEN + 1];
+ 142   1          uint8  password[SAL_FLSH_USR_PASSWORD_LEN + 1];
+ 143   1      
+ 144   1          /* get variables */
+ 145   1          WEB_VAR(pReq, "mname", &pValue);
+ 146   1          if (pValue) {
+ 147   2              //memcpy(username, pValue, SAL_FLSH_USR_USERNAME_LEN);
+ 148   2              strcpy(username, pValue);
+ 149   2          }
+ 150   1          
+ 151   1          WEB_VAR(pReq, "mpass", &pValue);
+ 152   1          if (pValue) {
+ 153   2              //memcpy(password, pValue, SAL_FLSH_USR_PASSWORD_LEN);
+ 154   2              strcpy(password, pValue);
+ 155   2          }
+ 156   1      
+ 157   1          /* Save user account */
+ 158   1          sal_flash_sysAccount_set(username, password);
+ 159   1      
+ 160   1        syslog_add_new_buf_entry(SYSLOG_MSG_PASSWORD_CHANGED, 0);
+ 161   1          
+ 162   1          get_user(pReq);
+ 163   1      
+ 164   1          return SUCCESS;
+ 165   1      }
+ 166          
+ 167          uint8 start_pdu_status = 0;
+C51 COMPILER V9.60.0.0   WEB_USER                                                          11/02/2026 17:57:37 PAGE 4   
+
+ 168          extern uint8 start_rtc_data;
+ 169          extern uint8 start_alarm_data;
+ 170          
+ 171          int32 get_pdu_status(struct http_request_s *pReq)
+ 172          {
+ 173   1          start_alarm_data = 0;
+ 174   1          start_rtc_data = 0;
+ 175   1          start_pdu_status = 1;
+ 176   1          //printf("GET_STATUS\r\n");
+ 177   1          WEB_BEGIN(pReq);
+ 178   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 179   1          WEB_HEADER(pReq, "Content-Type: application/json");
+ 180   1          WEB_PRINTF(pReq, "%s",Get_Response);
+ 181   1          WEB_END(pReq);
+ 182   1          return SUCCESS;
+ 183   1      }
+ 184          /*
+ 185           * Function: send_str_web
+ 186           * ----------------------
+ 187           * Stores string data for web response in global buffer.
+ 188           * Copies tempData to Get_Response for later use.
+ 189           * Called by UART processing to pass data to web interface.
+ 190           */
+ 191          void send_str_web(uint8* tempData)
+ 192          {
+ 193   1          /* FIX: bounded copy (was unbounded strcpy into a 75-byte buffer) */
+ 194   1          strncpy((char*)Get_Response, (char*)tempData, sizeof(Get_Response) - 1);
+ 195   1          Get_Response[sizeof(Get_Response) - 1] = '\0';
+ 196   1      }
+ 197          
+ 198          //void Fetching_Set_Response(char* tempData)
+ 199          //{
+ 200          //    strcpy(Set_Response, tempData);
+ 201          //}
+ 202          
+ 203          
+ 204          /*
+ 205           * Function: set_port_handler
+ 206           * --------------------------
+ 207           * Single handler for all ports (1-8) - extracts port number from URL path
+ 208           */
+ 209          
+ 210          int32 set_port_handler(struct http_request_s *pReq)
+ 211          {
+ 212   1          int state = -1, counts = 0,i=0;
+ 213   1          int port_num = -1;
+ 214   1          char *path = NULL;
+ 215   1          char state_str[8] = {0};
+ 216   1          char *qmark = NULL;
+ 217   1          int retry_count = 0;
+ 218   1          int max_retries = 50; // 50 * 10ms = 500ms timeout
+ 219   1          
+ 220   1          // Get the path - try pPath first, then path array
+ 221   1          if (pReq->pPath) {
+ 222   2              path = (char*)pReq->pPath;
+ 223   2          } else if (pReq->path) {
+ 224   2              path = (char*)pReq->path;
+ 225   2          }
+ 226   1          
+ 227   1          if (!path) {
+ 228   2              WEB_BEGIN(pReq);
+ 229   2              WEB_STATUS(pReq, HTTP_STATUS_BAD_REQUEST);
+C51 COMPILER V9.60.0.0   WEB_USER                                                          11/02/2026 17:57:37 PAGE 5   
+
+ 230   2              WEB_HEADER(pReq, "Content-Type: text/plain");
+ 231   2              WEB_PRINTF(pReq, "Error: No path");
+ 232   2              WEB_END(pReq);
+ 233   2              return FAILED;
+ 234   2          }
+ 235   1          
+ 236   1          // Extract port number from path: /set_portX -> X
+ 237   1          if (strncmp(path, "/set_port", 9) == 0) {
+ 238   2              port_num = atoi(path + 9);
+ 239   2          }
+ 240   1          
+ 241   1          // Method 1: Try parsing from query string in path
+ 242   1          qmark = strchr(path, '?');
+ 243   1          if (qmark) {
+ 244   2              char *state_ptr = strstr(qmark, "state=");
+ 245   2              if (state_ptr) {
+ 246   3                  state = atoi(state_ptr + 6);
+ 247   3              }
+ 248   2          }
+ 249   1          
+ 250   1          // Method 2: Try pVar_Temp (if the server parsed it already)
+ 251   1          if (state == -1 && pReq->pVar_Temp) {
+ 252   2              char *var_buffer = (char*)pReq->pVar_Temp;
+ 253   2              
+ 254   2              for (i = 0; i < pReq->Var_Count; i++) {
+ 255   3                  char *name = var_buffer + pReq->Var[i].name_offset;
+ 256   3                  char *value = var_buffer + pReq->Var[i].value_offset;
+ 257   3                  int value_len = pReq->Var[i].value_length;
+ 258   3                  
+ 259   3                  if (strcmp(name, "state") == 0) {
+ 260   4                      int len = (value_len < 7) ? value_len : 7;
+ 261   4                      strncpy(state_str, value, len);
+ 262   4                      state_str[len] = '\0';
+ 263   4                      state = atoi(state_str);
+ 264   4                      break;
+ 265   4                  }
+ 266   3              }
+ 267   2          }
+ 268   1          
+ 269   1          // Method 3: Try pBody (for POST requests)
+ 270   1          if (state == -1 && pReq->pBody) {
+ 271   2              char *state_ptr = strstr((char*)pReq->pBody, "state=");
+ 272   2              if (state_ptr) {
+ 273   3                  state = atoi(state_ptr + 6);
+ 274   3              }
+ 275   2          }
+ 276   1          
+ 277   1          // Validate state
+ 278   1          if (state != 0 && state != 1) {
+ 279   2              WEB_BEGIN(pReq);
+ 280   2              WEB_STATUS(pReq, HTTP_STATUS_BAD_REQUEST);
+ 281   2              WEB_HEADER(pReq, "Content-Type: application/json");
+ 282   2              WEB_PRINTF(pReq, "{\"error\":\"Invalid state (must be 0 or 1)\",\"received\":%d}", state);
+ 283   2              WEB_END(pReq);
+ 284   2              return FAILED;
+ 285   2          }
+ 286   1          
+ 287   1          // Validate port number
+ 288   1          if (port_num < 1 || port_num > 8) {
+ 289   2              WEB_BEGIN(pReq);
+ 290   2              WEB_STATUS(pReq, HTTP_STATUS_BAD_REQUEST);
+ 291   2              WEB_HEADER(pReq, "Content-Type: application/json");
+C51 COMPILER V9.60.0.0   WEB_USER                                                          11/02/2026 17:57:37 PAGE 6   
+
+ 292   2              WEB_PRINTF(pReq, "{\"error\":\"Invalid port number (must be 1-8)\",\"received\":%d}", port_num);
+ 293   2              WEB_END(pReq);
+ 294   2              return FAILED;
+ 295   2          }
+ 296   1          
+ 297   1          // Send command to MCU
+ 298   1          printf("SET_OUTLET:%d STATE:%d\r\n", port_num, state);
+ 299   1      
+ 300   1      
+ 301   1          WEB_BEGIN(pReq);
+ 302   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 303   1          WEB_HEADER(pReq, "Content-Type: application/json");
+ 304   1          WEB_PRINTF(pReq, "{\"port\":%d,\"state\":%d,\"status\":\"ok\"}\r\n",port_num,state);
+ 305   1          //WEB_PRINTF(pReq, "%s",Set_Response);
+ 306   1          WEB_END(pReq);
+ 307   1      
+ 308   1          
+ 309   1          return SUCCESS;
+ 310   1      }
+ 311          
+ 312          
+ 313          
+ 314          
+ 315          
+ 316          
+ 317          
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2631    ----
+   CONSTANT SIZE    =   1946    ----
+   XDATA SIZE       =    201     141
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1946    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

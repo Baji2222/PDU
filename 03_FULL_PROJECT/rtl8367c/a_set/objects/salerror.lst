@@ -1,0 +1,377 @@
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALERROR
+OBJECT MODULE PLACED IN .\objects\salerror.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salerror.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salerror.lst) TABS(2) OBJECT(.\objects\salerror.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <salerror.h>
+   4          #include <stdio.h>
+   5          #include <string.h>
+   6          #include <rtk_error.h>  
+   7          
+   8          #if SAL_ENABLE
+   9          
+  10          // RTK API Error Message: Returns error message string for RTK error codes
+  11          // Converts Realtek SDK error codes to human-readable descriptive messages
+  12          const char *
+  13          _rtk_api_error_msg(int32 errCode)
+  14          {
+  15   1          char buf[20];
+  16   1          
+  17   1          switch (errCode)
+  18   1          {
+  19   2              case RT_ERR_OK:                     return "Success";
+  20   2              case RT_ERR_INPUT:                  return "invalid input parameter";                             
+             - 
+  21   2              case RT_ERR_UNIT_ID:                return "invalid unit id";                               
+  22   2              case RT_ERR_PORT_ID:                return "invalid port id";                               
+  23   2              case RT_ERR_PORT_MASK:              return "invalid port mask";                                
+  24   2              case RT_ERR_PORT_LINKDOWN:          return "link down port status";                             
+  25   2              case RT_ERR_ENTRY_INDEX:            return "invalid entry index";                               
+  26   2              case RT_ERR_NULL_POINTER:           return "input parameter is null pointer";                     
+             -          
+  27   2              case RT_ERR_QUEUE_ID:               return "invalid queue id";                              
+  28   2              case RT_ERR_QUEUE_NUM:              return "invalid queue number";                               
+  29   2              case RT_ERR_BUSYWAIT_TIMEOUT:       return "busy watting time out";                              
+  30   2              case RT_ERR_MAC:                    return "invalid mac address ";                               
+  31   2              case RT_ERR_OUT_OF_RANGE:           return "input parameter out of range  ";                      
+             -          
+  32   2              case RT_ERR_CHIP_NOT_SUPPORTED:     return "functions not supported by this chip model";          
+             -                
+  33   2              case RT_ERR_SMI:                    return "SMI error ";
+  34   2              case RT_ERR_NOT_INIT:               return "The module is not initial";
+  35   2              case RT_ERR_CHIP_NOT_FOUND:         return "The chip can not found";
+  36   2              case RT_ERR_NOT_ALLOWED:            return "actions not allowed by the function";
+  37   2              case RT_ERR_DRIVER_NOT_FOUND:       return "The driver can not found";
+  38   2              case RT_ERR_SEM_LOCK_FAILED:        return "Failed to lock semaphore";
+  39   2              case RT_ERR_SEM_UNLOCK_FAILED:      return "Failed to unlock semaphore";
+  40   2              case RT_ERR_TBL_FULL:               return "input table full";
+  41   2          
+  42   2              /* Trunk */
+  43   2              case RT_ERR_LA_CPUPORT:             return "CPU port can not be aggregated port";
+  44   2              case RT_ERR_LA_TRUNK_ID:            return "Invalid trunk id";
+  45   2              case RT_ERR_LA_PORTMASK:            return "Invalid port mask ";
+  46   2              case RT_ERR_LA_HASHMASK:            return "Invalid hash mask";
+  47   2              case RT_ERR_LA_DUMB:                return "This API should be used in 802.1ad dumb mode";
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 2   
+
+  48   2              case RT_ERR_LA_PORTNUM_DUMB:        return "It can only aggregate at most four ports when 802.1ad 
+             -dumb mode";
+  49   2              case RT_ERR_LA_PORTNUM_NORMAL:      return "It can only aggregate at most eight ports when 802.1ad
+             - normal mode";
+  50   2              case RT_ERR_LA_MEMBER_OVERLAP:      return "The specified port mask is overlapped with other group
+             -";
+  51   2              case RT_ERR_LA_NOT_MEMBER_PORT:     return "the port is not a member port of the trunk";
+  52   2              case RT_ERR_LA_TRUNK_NOT_EXIST:     return "The trunk doesn't exist";
+  53   2          
+  54   2              /* vlan */
+  55   2              case RT_ERR_VLAN_VID:                   return "invalid vid";
+  56   2              case RT_ERR_VLAN_PRIORITY:              return "invalid 1p priority";
+  57   2              case RT_ERR_VLAN_EMPTY_ENTRY:           return "emtpy entry of vlan table";
+  58   2              case RT_ERR_VLAN_ACCEPT_FRAME_TYPE:     return "invalid accept frame type";
+  59   2              case RT_ERR_VLAN_EXIST:                 return "vlan is exist";
+  60   2              case RT_ERR_VLAN_ENTRY_NOT_FOUND:       return "specified vlan entry not found";
+  61   2              case RT_ERR_VLAN_PORT_MBR_EXIST:        return " member port exist in the specified vlan";
+  62   2              case RT_ERR_VLAN_PROTO_AND_PORT:        return " invalid protocol and port based vlan";
+  63   2          
+  64   2              /* svlan */
+  65   2              case RT_ERR_SVLAN_ENTRY_INDEX:          return " invalid svid entry no";
+  66   2              case RT_ERR_SVLAN_ETHER_TYPE:           return " invalid SVLAN ether type";
+  67   2              case RT_ERR_SVLAN_TABLE_FULL:           return " no empty entry in SVLAN table";
+  68   2              case RT_ERR_SVLAN_ENTRY_NOT_FOUND:      return " specified svlan entry not found";
+  69   2              case RT_ERR_SVLAN_EXIST:                return " SVLAN entry is exist";
+  70   2              case RT_ERR_SVLAN_VID:                  return " invalid svid";
+  71   2          
+  72   2              /* MSTP */
+  73   2              case RT_ERR_MSTI:                       return " invalid msti";
+  74   2              case RT_ERR_MSTP_STATE:                 return " invalid spanning tree status";
+  75   2              case RT_ERR_MSTI_EXIST:                 return " MSTI exist";
+  76   2              case RT_ERR_MSTI_NOT_EXIST:             return " MSTI not exist";
+  77   2          
+  78   2              /* BUCKET*/
+  79   2              case RT_ERR_TIMESLOT:                   return " invalid time slot";
+  80   2              case RT_ERR_TOKEN:                      return " invalid token amount";
+  81   2              case RT_ERR_RATE:                       return " invalid rate";
+  82   2              case RT_ERR_TICK:                       return " invalid tick";
+  83   2              
+  84   2              /* RMA */
+  85   2              case RT_ERR_RMA_ADDR:                   return " invalid rma mac address";
+  86   2              case RT_ERR_RMA_ACTION:                 return " invalid rma action";
+  87   2          
+  88   2              /* L2 */
+  89   2              case RT_ERR_L2_HASH_KEY:                return " invalid L2 Hash key";
+  90   2              case RT_ERR_L2_HASH_INDEX:              return " invalid L2 Hash index";
+  91   2              case RT_ERR_L2_CAM_INDEX:               return " invalid L2 CAM index";
+  92   2              case RT_ERR_L2_ENRTYSEL:                return " invalid EntrySel";
+  93   2              case RT_ERR_L2_INDEXTABLE_INDEX:        return " invalid L2 index table(=portMask table) index";
+  94   2              case RT_ERR_LIMITED_L2ENTRY_NUM:        return " invalid limited L2 entry number";
+  95   2              case RT_ERR_L2_AGGREG_PORT:             return " this aggregated port is not the lowest physical p
+             -ort of its aggregation group";
+  96   2              case RT_ERR_L2_FID:                     return " invalid fid";
+  97   2              case RT_ERR_L2_VID:                     return " invalid cvid";
+  98   2              case RT_ERR_L2_NO_EMPTY_ENTRY:          return " no empty entry in L2 table";
+  99   2              case RT_ERR_L2_ENTRY_NOTFOUND:          return " MAC address cannot be found";
+ 100   2              case RT_ERR_L2_INDEXTBL_FULL:           return " the L2 index table is full";
+ 101   2              case RT_ERR_L2_INVALID_FLOWTYPE:        return " invalid L2 flow type";
+ 102   2              case RT_ERR_L2_L2UNI_PARAM:             return " invalid L2 unicast parameter";
+ 103   2              case RT_ERR_L2_L2MULTI_PARAM:           return " invalid L2 multicast parameter";
+ 104   2              case RT_ERR_L2_IPMULTI_PARAM:           return " invalid L2 ip multicast parameter";
+ 105   2              case RT_ERR_L2_PARTIAL_HASH_KEY:        return " invalid L2 partial Hash key";
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 3   
+
+ 106   2              case RT_ERR_L2_EMPTY_ENTRY:             return " the entry is empty(invalid)";
+ 107   2              case RT_ERR_L2_FLUSH_TYPE:              return " the flush type is invalid";
+ 108   2              case RT_ERR_L2_NO_CPU_PORT:             return " CPU port not exist";
+ 109   2          
+ 110   2              /* FILTER (PIE) */
+ 111   2              case RT_ERR_FILTER_BLOCKNUM:            return " invalid block number";
+ 112   2              case RT_ERR_FILTER_ENTRYIDX:            return " invalid entry index";
+ 113   2              case RT_ERR_FILTER_CUTLINE:             return " invalid cutline value";
+ 114   2              case RT_ERR_FILTER_FLOWTBLBLOCK:        return " block belongs to flow table";
+ 115   2              case RT_ERR_FILTER_INACLBLOCK:          return " block belongs to ingress ACL";
+ 116   2              case RT_ERR_FILTER_ACTION:              return " action doesn't consist to entry type";
+ 117   2              case RT_ERR_FILTER_INACL_RULENUM:       return " invalid ACL rulenum";
+ 118   2              case RT_ERR_FILTER_INACL_TYPE:          return " entry type isn't an ingress ACL rule";
+ 119   2              case RT_ERR_FILTER_INACL_EXIST:         return " ACL entry is already exit";
+ 120   2              case RT_ERR_FILTER_INACL_EMPTY:         return " ACL entry is empty";
+ 121   2              case RT_ERR_FILTER_FLOWTBL_TYPE:        return " entry type isn't an flow table rule";
+ 122   2              case RT_ERR_FILTER_FLOWTBL_RULENUM:     return " invalid flow table rulenum";
+ 123   2              case RT_ERR_FILTER_FLOWTBL_EMPTY:       return " flow table entry is empty";
+ 124   2              case RT_ERR_FILTER_FLOWTBL_EXIST:       return " flow table entry is already exist";
+ 125   2              case RT_ERR_FILTER_METER_ID:            return " invalid metering id";
+ 126   2              case RT_ERR_FILTER_LOG_ID:              return " invalid log id";
+ 127   2              case RT_ERR_FILTER_INACL_ACT_NOT_SUPPORT:    return " rule not support";        
+ 128   2              case RT_ERR_FILTER_INACL_RULE_NOT_SUPPORT:   return " action not support";        
+ 129   2          
+ 130   2              /* storm filter */
+ 131   2              case RT_ERR_SFC_TICK_PERIOD:            return "  invalid SFC tick period";
+ 132   2              case RT_ERR_SFC_UNKNOWN_GROUP:          return "  Unknown Storm filter group";
+ 133   2              
+ 134   2              /* pattern match */
+ 135   2              case RT_ERR_PM_MASK:                    return "  invalid pattern length. Pattern length should be
+             - 8";
+ 136   2              case RT_ERR_PM_LENGTH:                  return "  invalid pattern match mask: first byte must care
+             -";
+ 137   2              case RT_ERR_PM_MODE:                    return "  invalid pattern match mode";
+ 138   2          
+ 139   2              /* input bandwidth control */
+ 140   2              case RT_ERR_INBW_TICK_PERIOD:           return " invalid tick period for input bandwidth control";
+ 141   2              case RT_ERR_INBW_TOKEN_AMOUNT:          return "  invalid amount of token for input bandwidth cont
+             -rol";
+ 142   2              case RT_ERR_INBW_FCON_VALUE:            return "  invalid flow control ON threshold value for inpu
+             -t bandwidth control";
+ 143   2              case RT_ERR_INBW_FCOFF_VALUE:           return "  invalid flow control OFF threshold value for inp
+             -ut bandwidth control";
+ 144   2              case RT_ERR_INBW_FC_ALLOWANCE:          return "  invalid allowance of incomming packet for input 
+             -bandwidth control";
+ 145   2              case RT_ERR_INBW_RATE:                  return "  invalid input bandwidth";
+ 146   2              
+ 147   2              /* QoS */
+ 148   2              case RT_ERR_QOS_1P_PRIORITY:            return "  invalid 802.1P priority";
+ 149   2              case RT_ERR_QOS_DSCP_VALUE:             return "  invalid DSCP value";
+ 150   2              case RT_ERR_QOS_INT_PRIORITY:           return "  invalid internal priority";
+ 151   2              case RT_ERR_QOS_SEL_DSCP_PRI:           return "  invalid DSCP selection priority";
+ 152   2              case RT_ERR_QOS_SEL_PORT_PRI:           return "  invalid port selection priority";
+ 153   2              case RT_ERR_QOS_SEL_IN_ACL_PRI:         return "  invalid ingress ACL selection priority";
+ 154   2              case RT_ERR_QOS_SEL_CLASS_PRI:          return "  invalid classifier selection priority";
+ 155   2              case RT_ERR_QOS_EBW_RATE:               return "  invalid egress bandwidth rate";
+ 156   2              case RT_ERR_QOS_SCHE_TYPE:              return "  invalid QoS scheduling type";
+ 157   2              case RT_ERR_QOS_QUEUE_WEIGHT:           return "  invalid Queue weight";
+ 158   2              case RT_ERR_QOS_SEL_PRI_SOURCE:         return "  invalid selection of priority source";
+ 159   2          
+ 160   2              /* port ability */
+ 161   2              case RT_ERR_PHY_PAGE_ID :               return " invalid PHY page id";
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 4   
+
+ 162   2              case RT_ERR_PHY_REG_ID:                 return "  invalid PHY reg id";
+ 163   2              case RT_ERR_PHY_DATAMASK:               return "  invalid PHY data mask";
+ 164   2              case RT_ERR_PHY_AUTO_NEGO_MODE:         return "  invalid PHY auto-negotiation mode";
+ 165   2              case RT_ERR_PHY_SPEED:                  return "  invalid PHY speed setting";
+ 166   2              case RT_ERR_PHY_DUPLEX:                 return "  invalid PHY duplex setting";
+ 167   2              case RT_ERR_PHY_FORCE_ABILITY:          return "  invalid PHY force mode ability parameter";
+ 168   2              case RT_ERR_PHY_FORCE_1000:             return "  invalid PHY force mode 1G speed setting";
+ 169   2              case RT_ERR_PHY_TXRX:                   return "  invalid PHY tx/rx";
+ 170   2          
+ 171   2              /* mirror */
+ 172   2              case RT_ERR_MIRROR_DIRECTION:           return " invalid error mirror direction";
+ 173   2              case RT_ERR_MIRROR_SESSION_FULL:        return "  mirroring session is full";
+ 174   2              case RT_ERR_MIRROR_SESSION_NOEXIST:     return "  mirroring session not exist";
+ 175   2              case RT_ERR_MIRROR_PORT_EXIST:          return "  mirroring port already exists";
+ 176   2              case RT_ERR_MIRROR_PORT_NOT_EXIST:      return "  mirroring port does not exists";
+ 177   2              case RT_ERR_MIRROR_PORT_FULL:           return "  Exceeds maximum number of supported mirroring po
+             -rt";
+ 178   2          
+ 179   2              /* stat */
+ 180   2              case RT_ERR_STAT_INVALID_GLOBAL_CNTR :  return "  Invalid Global Counter";
+ 181   2              case RT_ERR_STAT_INVALID_PORT_CNTR:     return "  Invalid Port Counter";
+ 182   2              case RT_ERR_STAT_GLOBAL_CNTR_FAIL:      return "  Could not retrieve/reset Global Counter";
+ 183   2              case RT_ERR_STAT_PORT_CNTR_FAIL:        return "  Could not retrieve/reset Port Counter";
+ 184   2          
+ 185   2              /* dot1x */
+ 186   2              case RT_ERR_DOT1X_INVALID_DIRECTION :   return "  Invalid Authentication Direction";
+ 187   2              case RT_ERR_DOT1X_PORTBASEDPNEN:        return "  Port-based enable port error";
+ 188   2              case RT_ERR_DOT1X_PORTBASEDAUTH:        return "  Port-based auth port error";
+ 189   2              case RT_ERR_DOT1X_PORTBASEDOPDIR:       return "  Port-based opdir error";
+ 190   2              case RT_ERR_DOT1X_MACBASEDPNEN:         return "  MAC-based enable port error";
+ 191   2              case RT_ERR_DOT1X_MACBASEDOPDIR:        return "  MAC-based opdir error";
+ 192   2              case RT_ERR_DOT1X_PROC:                 return "  unauthorized behavior error";
+ 193   2              case RT_ERR_DOT1X_GVLANIDX:             return "  guest vlan index error";
+ 194   2              case RT_ERR_DOT1X_GVLANTALK:            return "  guest vlan OPDIR error";
+ 195   2              case RT_ERR_DOT1X_MAC_PORT_MISMATCH:    return "  Auth MAC and port mismatch eror";
+ 196   2          
+ 197   2              default:                            
+ 198   2                  memset(buf, 0, sizeof(buf));
+ 199   2                  sprintf(buf, "Unknown error: %ld", errCode);
+ 200   2                  return buf;
+ 201   2          }
+ 202   1      }
+ 203          
+ 204          // SAL Error Message Get: Returns error message string for SAL error codes
+ 205          // Converts Switch Abstraction Layer error codes to human-readable messages
+ 206          const char *
+ 207          sal_err_msg_get(int32 errCode)
+ 208          {
+ 209   1          switch (errCode)
+ 210   1          {
+ 211   2          case SAL_ERR_FAILED:                    return "Failed";
+ 212   2          case SAL_ERR_SUCCESS:                   return "Success";
+ 213   2      
+ 214   2          /* common error message */
+ 215   2          case SAL_ERR_ENTRY_INDEX:               return "Invalid entry index";
+ 216   2          case SAL_ERR_PORT_RANGE:                return "Invalid port number";
+ 217   2          case SAL_ERR_PORT_MASK:                 return "Invalid port mask";
+ 218   2          case SAL_ERR_NULL_POINTER:              return "NULL pointer";
+ 219   2          case SAL_ERR_INVALID_RATE:              return "Invalid rate";
+ 220   2          case SAL_ERR_PARAMETER:                 return "Invalid parameter";
+ 221   2          case SAL_ERR_NOT_SUPPORT:               return "Action not supported";
+ 222   2      
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 5   
+
+ 223   2          /* MAC Table */    
+ 224   2          case SAL_ERR_MAC_ENTRY_INVALID:         return "Invalid MAC entry";
+ 225   2          case SAL_ERR_MAC_ENTRY_NOT_FOUND:       return "MAC entry not found";
+ 226   2          case SAL_ERR_MAC_ENTRY_ADD_FAILED:      return "MAC entry add failed";
+ 227   2          case SAL_ERR_MAC_ENTRY_DEL_FAILED:      return "MAC entry delete failed";
+ 228   2          case SAL_ERR_FLTR_ENTRY_ADD_FAILED:     return "Filter entry add failed";
+ 229   2          case SAL_ERR_FLTR_ENTRY_DEL_FAILED:     return "Filter entry delete failed";
+ 230   2          case SAL_ERR_NOT_FLTR_ENTRY:            return "Not a filter entry";
+ 231   2          case SAL_ERR_FLTR_ENTRY_NOT_FOUND:      return "Filter entry not found";
+ 232   2      
+ 233   2          /* Port Mirroring */
+ 234   2          case SAL_ERR_MIRROR_GET_FAILED:         return "Failed to get port mirror";
+ 235   2          case SAL_ERR_MIRROR_SET_FAILED:         return "Failed to set port mirror";
+ 236   2          case SAL_ERR_MIRROR_DIRECTION:          return "Mirror direction not supported";
+ 237   2          case SAL_ERR_MIRROR_SAME_EGRESS:        return "Two egress mirror set with the same mirroring port";
+ 238   2          case SAL_ERR_MIRROR_OVERLAP_SET:        return "Two mirror set with the same mirroring port "
+ 239   2                                                      "should put ingress mirroring in set 0 & "
+ 240   2                                                      "egress mirroring in set 1";
+ 241   2      
+ 242   2          /* Storm Control */
+ 243   2          case SAL_ERR_STRM_CTRL_INVALID_RATE:    return "Storm control invalid rate";
+ 244   2          case SAL_ERR_STRM_CTRL_UNKNOWN_FILTER:  return "Unknown storm control filter";
+ 245   2      
+ 246   2          /* Trunk */
+ 247   2          case SAL_ERR_TRUNK_PORT_USED_BY_TRK:    return "Port already used by another trunk";
+ 248   2          case SAL_ERR_TRUNK_PORT_VLAN_CONFLICT:  return "Joined VLAN of trunk member ports should be the same";
+ 249   2          case SAL_ERR_TRUNK_PORT_IN_MIRROR:      return "Mirroring port cannot be a trunk member port";
+ 250   2          case SAL_ERR_TRUNK_PORT_RATE_LIMITED:   return "Port with ingress/egress rate limiting cannot be a tru
+             -nk member port";
+ 251   2          case SAL_ERR_TRUNK_PORT_NEGO:           return "Trunk member ports must all have the same negotiation 
+             -mode";
+ 252   2          case SAL_ERR_TRUNK_PORT_SPEED:          return "Trunk member ports must all have the same speed";
+ 253   2          case SAL_ERR_TRUNK_PORT_DUPLEX:         return "Trunk member ports must all be full duplex";
+ 254   2          case SAL_ERR_TRUNK_TRK_NO_EXIST:        return "Trunk does not exist";
+ 255   2          case SAL_ERR_TRUNK_TRK_RANGE:           return "Wrong trunk ID";
+ 256   2          case SAL_ERR_TRUNK_NOT_MEMBER_PORT:     return "The port is not a member port of the trunk";
+ 257   2          case SAL_ERR_TRUNK_LESS_THAN_2_PORTS:   return "2 trunk member ports at least";
+ 258   2          case SAL_ERR_TRUNK_MORE_THAN_4_PORTS:   return "4 trunk member ports at most";
+ 259   2          case SAL_ERR_TRUNK_PORT_IN_TRUNK:       return "This is link aggregation member port";
+ 260   2          case SAL_ERR_TRUNK_PORT_NUM_TOO_LOW:    return "At least two ports should be added";    
+ 261   2          case SAL_ERR_TRUNK_PORT_NUM_TOO_HIGH:   return "The number of selected ports exceeds limit";
+ 262   2          
+ 263   2          /*VLAN*/
+ 264   2          case SAL_ERR_INPUT_STR_LEN:             return "Input string length error";
+ 265   2          case SAL_ERR_DUPLICATE_NAME:            return "The name is already existed";
+ 266   2          case SAL_ERR_VLAN_DISABLE:              return "VLAN is disabled";
+ 267   2          case SAL_ERR_VLAN_ID_INVALID:           return "Invalid VLAN ID";
+ 268   2          case SAL_ERR_VLAN_ENTRY_INDEX:          return "VLAN table index error";
+ 269   2          case SAL_ERR_VLAN_FULL:                 return "VLAN table is full";
+ 270   2          case SAL_ERR_VLAN_EXIST_PVID:           return "Port-based VLAN ID is existed";
+ 271   2          case SAL_ERR_VLAN_EXIST:                return "VLAN is existed";
+ 272   2          case SAL_ERR_VLAN_NOT_EXIST:            return "VLAN is not existed";
+ 273   2          case SAL_ERR_VLAN_INS_VLAN_ENTRY:       return "Insert VLAN entry error";
+ 274   2          case SAL_ERR_VLAN_DEL_VLAN_ENTRY:       return "Delete VLAN entry error";
+ 275   2          case SAL_ERR_VLAN_DEL_DEFAULT_VLAN:     return "Default VLAN can not be deleted";
+ 276   2          case SAL_ERR_VLAN_ENTRY_INVALID:        return "Invalid VLAN entry, check whether it is an empty entry
+             -";
+ 277   2          case SAL_ERR_VLAN_ENTRY_DUPLICATE:      return "There exists another entry with the same vid";
+ 278   2              
+ 279   2          /*SVLAN*/
+ 280   2          case SAL_ERR_SVLAN_ENTRY_INDEX:         return "Invalid svid entry NO.";                              
+             -         
+C51 COMPILER V9.60.0.0   SALERROR                                                          11/02/2026 17:57:06 PAGE 6   
+
+ 281   2          case SAL_ERR_SVLAN_ETHER_TYPE:          return "Invalid SVLAN ether type";                            
+             -            
+ 282   2          case SAL_ERR_SVLAN_TABLE_FULL:          return "No empty entry in SVLAN table";                       
+             -             
+ 283   2          case SAL_ERR_SVLAN_ENTRY_NOT_FOUND:     return "Specified svlan entry not found";                     
+             -            
+ 284   2          case SAL_ERR_SVLAN_EXIST:               return "SVLAN entry is exist";
+ 285   2          case SAL_ERR_SVLAN_VID:                 return "Invalid S-VLAN ID";
+ 286   2          case SAL_ERR_SVLAN_ENTRY_INVALID:       return "Invalid S-VLAN entry, check whether it is an empty ent
+             -ry"; 
+ 287   2          case SAL_ERR_SVLAN_ENTRY_DUPLICATE:     return "There exists another entry with the same svid";
+ 288   2          case SAL_ERR_SVLAN_ENTRY_NULL:          return "The operation will cause svlan entry to be null";
+ 289   2          
+ 290   2          /* Jumbo frame */
+ 291   2          case SAL_ERR_JUMBO_FRAME_SIZE:          return "Jumbo frame size not supported";
+ 292   2          case SAL_ERR_JUMBO_FRAME_GET:           return "Failed to get jumbo frame size";
+ 293   2      
+ 294   2          /* Port Isolation */
+ 295   2          case SAL_ERR_PORT_ISOLATION_SET:        return "Failed to set port isolation";
+ 296   2          case SAL_ERR_PORT_ISOLATION_GET:        return "Failed to get port isolation";
+ 297   2      
+ 298   2          case SAL_ERR_UNKNOWN:
+ 299   2          default:                                return _rtk_api_error_msg(errCode);
+ 300   2          }
+ 301   1      }
+ 302          
+ 303          #if 0
+              // SAL Error Print Message: Prints error code and message to console
+              // Convenience function for debugging error conditions
+              void
+              SalErrPrintMsg(int32 errCode)
+              {
+                  printf("Error #%d: %s\n", errCode, SalErrGetMsg(errCode));
+              }
+              #endif
+ 312          
+ 313          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2852    ----
+   CONSTANT SIZE    =   6271    ----
+   XDATA SIZE       =   ----      28
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   6271    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

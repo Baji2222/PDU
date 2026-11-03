@@ -1,0 +1,1069 @@
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE HTML_API
+OBJECT MODULE PLACED IN .\objects\html_api.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\html_api.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X100
+                    -0) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\
+                    -include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_R
+                    -EPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCA
+                    -N_LED_MODE) VARBANKING DEBUG PRINT(.\objects\html_api.lst) TABS(2) OBJECT(.\objects\html_api.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          
+   3          /*
+   4           * Copyright c                  Realtek Semiconductor Corporation, 2009
+   5           * All rights reserved.
+   6           *
+   7           * Abstract :
+   8           *$Id:
+   9           */
+  10          #include <string.h>
+  11          #include <stdio.h>
+  12          
+  13          #include <local/web_config.h>
+  14          #include <sal/salsys.h>
+  15          
+  16          #include <web/web_api.h>
+  17          #include "html_api.h"
+  18          #include "html_unauth.h"
+  19          #include "web_index.h"
+  20          #include "web_menu.h"
+  21          #include "web_panel.h"
+  22          #include "web_info.h"
+  23          #include "web_image.h"
+  24          #include "web_hidden.h"
+  25          #include "web_file.h"
+  26          #include "web_trunk.h"
+  27          #include "web_snmpsec.h"
+  28          #include "web_syslogsec.h"
+  29          #include "web_syslogbuf.h"
+  30          #include "web_port.h"
+  31          #include "web_vlan.h"
+  32          #include "web_qos.h"
+  33          #include "web_ip.h"
+  34          #include "web_user.h"
+  35          #include "web_fwd.h"
+  36          #include "web_mac.h"
+  37          #include "web_sys.h"
+  38          #include "web_loop.h"
+  39          #if __WEB_IGMP__
+  40          #include "web_igmp.h"
+  41          #endif
+  42          #include "web_eee.h"
+  43          #if __WEB_CFG_BACKUP__
+  44          #include "web_cfg.h"
+  45          #endif
+  46          
+  47          #if __WEB_UPLOAD__
+  48          #include "web_fwug.h"
+  49          #endif
+  50          
+  51          #if __WEB_GREENETH__
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 2   
+
+  52          #include "web_greeneth.h"
+  53          #endif
+  54          
+  55          #include "sal/salflash.h"
+  56          //extern int32 set_port1(struct http_request_s *pReq);
+  57          extern int32 set_port_handler(struct http_request_s *pReq);
+  58          //extern int32 set_port3(struct http_request_s *pReq);
+  59          //extern int32 set_port4(struct http_request_s *pReq);
+  60          //extern int32 set_port5(struct http_request_s *pReq);
+  61          //extern int32 set_port6(struct http_request_s *pReq);
+  62          //extern int32 set_port7(struct http_request_s *pReq);
+  63          //extern int32 set_port8(struct http_request_s *pReq);
+  64          extern int32 set_port(struct http_request_s *pReq);
+  65          extern int32 get_pdu_status(struct http_request_s *pReq);
+  66          extern int32 get_pdu_names(struct http_request_s *pReq);   /* FIX: route was missing */
+  67          extern int32 set_pdu_name(struct http_request_s *pReq);    /* FIX: route was missing */
+  68          extern int32 get_pdu(struct http_request_s *pReq);
+  69          extern int32 get_mac_setup(struct http_request_s *pReq);
+  70          extern int32 get_rtc_data(struct http_request_s *pReq);
+  71          extern int32 get_rtc(struct http_request_s *pReq);
+  72          extern int32 set_rtc_alarm(struct http_request_s *pReq);
+  73          extern int32 set_rtc_time_date(struct http_request_s *pReq);
+  74          extern int32 get_rtc_time(struct http_request_s *pReq);
+  75          extern int32 get_alarms(struct http_request_s *pReq);
+  76          extern int32 set_rtc_time_handler(struct http_request_s *pReq);
+  77          extern int32 set_alarm_handler(struct http_request_s *pReq, int alarm_idx);
+  78          /*
+  79           * Function: set_mac
+  80           * Description: Handles setting MAC address if current MAC is the default one (01:02:03:04:05:06)
+  81           */
+  82          // Set MAC: Handles MAC address configuration via web interface
+  83          // Parses MAC string from POST data and updates system MAC if default
+  84          int32 set_mac(struct http_request_s *pReq)
+  85          {
+  86   1          uint8 *pValue;
+  87   1          sal_mac_t current_mac;
+  88   1          sal_mac_t new_mac;
+  89   1          uint8 mac_str[18];
+  90   1          uint8 i, j, val;
+  91   1          uint8 is_default_mac = TRUE;
+  92   1          
+  93   1          /* Get current MAC address */
+  94   1          sal_sys_mac_get(&current_mac);
+  95   1          
+  96   1          /* Check if current MAC is the default MAC (01:02:03:04:05:06) */
+  97   1          if (!(current_mac.octet[0] == 0xA4 && 
+  98   1                current_mac.octet[1] == 0xDA && 
+  99   1                current_mac.octet[2] == 0x22 && 
+ 100   1                current_mac.octet[3] == 0x52 && 
+ 101   1                current_mac.octet[4] == 0x00 && 
+ 102   1                current_mac.octet[5] == 0x00)) {
+ 103   2              is_default_mac = FALSE;
+ 104   2          }
+ 105   1          
+ 106   1          /* Handle POST request */
+ 107   1          WEB_VAR(pReq, "mac", &pValue);
+ 108   1          
+ 109   1          if (pValue && is_default_mac) {
+ 110   2              /* Convert MAC string (format: XX:XX:XX:XX:XX:XX) to bytes */
+ 111   2              memset(mac_str, 0, sizeof(mac_str));
+ 112   2              strncpy(mac_str, pValue, sizeof(mac_str) - 1);
+ 113   2              
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 3   
+
+ 114   2              /* Parse MAC address */
+ 115   2              for (i = 0, j = 0; i < 6; i++, j += 3) {
+ 116   3                  if ((mac_str[j] >= '0') && (mac_str[j] <= '9'))
+ 117   3                      val = (mac_str[j] - '0') << 4;
+ 118   3                  else if ((mac_str[j] >= 'a') && (mac_str[j] <= 'f'))
+ 119   3                      val = (mac_str[j] - 'a' + 10) << 4;
+ 120   3                  else if ((mac_str[j] >= 'A') && (mac_str[j] <= 'F'))
+ 121   3                      val = (mac_str[j] - 'A' + 10) << 4;
+ 122   3                  else
+ 123   3                      val = 0;
+ 124   3                  
+ 125   3                  if ((mac_str[j+1] >= '0') && (mac_str[j+1] <= '9'))
+ 126   3                      val |= (mac_str[j+1] - '0');
+ 127   3                  else if ((mac_str[j+1] >= 'a') && (mac_str[j+1] <= 'f'))
+ 128   3                      val |= (mac_str[j+1] - 'a' + 10);
+ 129   3                  else if ((mac_str[j+1] >= 'A') && (mac_str[j+1] <= 'F'))
+ 130   3                      val |= (mac_str[j+1] - 'A' + 10);
+ 131   3                  
+ 132   3                  new_mac.octet[i] = val;
+ 133   3              }
+ 134   2              
+ 135   2              /* Set the new MAC address */
+ 136   2              sal_sys_mac_set(&new_mac);
+ 137   2              sal_flash_sysMac_set(&new_mac);
+ 138   2              
+ 139   2              /* Return success response */
+ 140   2              WEB_BEGIN(pReq);
+ 141   2              WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 142   2              WEB_HEADER(pReq, "Content-Type: text/plain");
+ 143   2              WEB_HEADER(pReq, "Access-Control-Allow-Origin: *");
+ 144   2              WEB_HEADER(pReq, "Access-Control-Allow-Methods: GET, POST, OPTIONS");
+ 145   2              WEB_HEADER(pReq, "Access-Control-Allow-Headers: Content-Type");
+ 146   2              WEB_PRINTF(pReq, "MAC_SET_SUCCESS");
+ 147   2              WEB_END(pReq);
+ 148   2              
+ 149   2              return SUCCESS;
+ 150   2          } else {
+ 151   2              /* Return error response */
+ 152   2              WEB_BEGIN(pReq);
+ 153   2              WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 154   2              WEB_HEADER(pReq, "Content-Type: text/plain");
+ 155   2              WEB_HEADER(pReq, "Access-Control-Allow-Origin: *");
+ 156   2              WEB_HEADER(pReq, "Access-Control-Allow-Methods: GET, POST, OPTIONS");
+ 157   2              WEB_HEADER(pReq, "Access-Control-Allow-Headers: Content-Type");
+ 158   2              WEB_PRINTF(pReq, "MAC_SET_NOT_ALLOWED");
+ 159   2              WEB_END(pReq);
+ 160   2              
+ 161   2              return SUCCESS;
+ 162   2          }
+ 163   1      }
+ 164          
+ 165          // Default Reply ASP Send: Routes HTTP requests to appropriate handlers
+ 166          // Dispatches GET and POST requests to specific page handler functions
+ 167          int8 default_reply_asp_send(struct http_request_s *pReq, uint8 *pPath)
+ 168          {
+ 169   1          uint8 *pValue = NULL;
+ 170   1      
+ 171   1          if (pReq == NULL || pPath == NULL)
+ 172   1              return FAILED;
+ 173   1      
+ 174   1          switch (pReq->method)
+ 175   1          {
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 4   
+
+ 176   2          case HTTP_METHOD_GET:
+ 177   2              if ((strcmp(pPath, "Unauth") == 0))
+ 178   2              {
+ 179   3                  return get_unauth(pReq);
+ 180   3              }
+ 181   2              else if ((strcmp(pReq->path, "/") == 0) || (strcmp(pPath, "/index.cgi") == 0))
+ 182   2              {
+ 183   3                  return get_index(pReq);
+ 184   3              }
+ 185   2              else if (strcmp(pReq->path, "/hidden.cgi") == 0)
+ 186   2              {
+ 187   3                  return get_hidden(pReq);
+ 188   3              }
+ 189   2              else if (strcmp(pReq->path, "/goback.cgi") == 0)
+ 190   2              {
+ 191   3                  return get_goback(pReq);
+ 192   3              }
+ 193   2              else if (strcmp(pReq->path, "/alert.cgi") == 0)
+ 194   2              {
+ 195   3                  WEB_VAR(pReq, "alertmsg", &pValue);
+ 196   3      
+ 197   3                  return get_alert(pReq, (uint8 *)pValue);
+ 198   3              }
+ 199   2              /* MAC Address Setup Page */
+ 200   2              else if (strcmp(pReq->path, "/mac-setup") == 0 || strcmp(pReq->path, "/mac-setup.html") == 0)
+ 201   2              {
+ 202   3                  return get_mac_setup(pReq);
+ 203   3              }
+ 204   2              /* images */
+ 205   2              else if (strcmp(pReq->path, "/logo.png") == 0)
+ 206   2              {
+ 207   3                  return get_image(pReq, WEB_IMAGE_LOGO_PNG);
+ 208   3              }
+ 209   2              else if (strcmp(pReq->path, "/RJ45_up_1.png") == 0)
+ 210   2              {
+ 211   3                  return get_image(pReq, WEB_IMAGE_RJ45_UP_1_PNG);
+ 212   3              }
+ 213   2              else if (strcmp(pReq->path, "/RJ45_up_0.png") == 0)
+ 214   2              {
+ 215   3                  return get_image(pReq, WEB_IMAGE_RJ45_UP_0_PNG);
+ 216   3              }
+ 217   2              else if (strcmp(pReq->path, "/RJ45_down_1.png") == 0)
+ 218   2              {
+ 219   3                  return get_image(pReq, WEB_IMAGE_RJ45_DOWN_1_PNG);
+ 220   3              }
+ 221   2              else if (strcmp(pReq->path, "/RJ45_down_0.png") == 0)
+ 222   2              {
+ 223   3                  return get_image(pReq, WEB_IMAGE_RJ45_DOWN_0_PNG);
+ 224   3              }
+ 225   2              else if (strcmp(pReq->path, "/RJ45_loop_rldp_up.png") == 0)
+ 226   2              {
+ 227   3                  return get_image(pReq, WEB_IMAGE_RJ45_LOOP_RLDP_UP_PNG);
+ 228   3              }
+ 229   2              else if (strcmp(pReq->path, "/RJ45_loop_rlpp_up.png") == 0)
+ 230   2              {
+ 231   3                  return get_image(pReq, WEB_IMAGE_RJ45_LOOP_RLPP_UP_PNG);
+ 232   3              }
+ 233   2              else if (strcmp(pReq->path, "/document.gif") == 0)
+ 234   2              {
+ 235   3                  return get_image(pReq, WEB_IMAGE_DOCUMENT_GIF);
+ 236   3              }
+ 237   2              else if (strcmp(pReq->path, "/folder_opened.gif") == 0)
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 5   
+
+ 238   2              {
+ 239   3                  return get_image(pReq, WEB_IMAGE_FOLDER_OPENED_GIF);
+ 240   3              }
+ 241   2              else if (strcmp(pReq->path, "/folder_closed.gif") == 0)
+ 242   2              {
+ 243   3                  return get_image(pReq, WEB_IMAGE_FOLDER_CLOSED_GIF);
+ 244   3              }
+ 245   2              else if (strcmp(pReq->path, "/plus.gif") == 0)
+ 246   2              {
+ 247   3                  return get_image(pReq, WEB_IMAGE_PLUS_GIF);
+ 248   3              }
+ 249   2              else if (strcmp(pReq->path, "/minus.gif") == 0)
+ 250   2              {
+ 251   3                  return get_image(pReq, WEB_IMAGE_MINUS_GIF);
+ 252   3              }
+ 253   2              else if (strcmp(pReq->path, "/transparent.gif") == 0)
+ 254   2              {
+ 255   3                  return get_image(pReq, WEB_IMAGE_TRANSPARENT_GIF);
+ 256   3              }
+ 257   2              /* files */
+ 258   2              else if (strcmp(pReq->path, "/style.css") == 0)
+ 259   2              {
+ 260   3                  return get_file(pReq, WEB_FILE_STYLE_CSS);
+ 261   3              }
+ 262   2              else if (strcmp(pReq->path, "/xp_progress.js") == 0)
+ 263   2              {
+ 264   3                  return get_file(pReq, WEB_FILE_XP_PROGRESS_JS);
+ 265   3              }
+ 266   2              else if (strcmp(pReq->path, "/tree.js") == 0)
+ 267   2              {
+ 268   3                  return get_file(pReq, WEB_FILE_TREE_JS);
+ 269   3              }
+ 270   2              /* menu.cgi */
+ 271   2              else if (strcmp(pReq->path, "/menu.cgi") == 0)
+ 272   2              {
+ 273   3                  return get_menu(pReq);
+ 274   3              }
+ 275   2              /* panel.cgi */
+ 276   2              else if (strcmp(pReq->path, "/panel.cgi") == 0)
+ 277   2              {
+ 278   3                  return get_panel(pReq);
+ 279   3              }
+ 280   2              /* info.cgi */
+ 281   2              else if (strcmp(pPath, "/info.cgi") == 0)
+ 282   2              {
+ 283   3                  WEB_VAR(pReq, "page", &pValue);
+ 284   3                  /* Cable Diagnostic */
+ 285   3                  if (pValue && strcmp("cable_diag", pValue) == 0)
+ 286   3                  {
+ 287   4      #if __WEB_CABLE_DIAGNOSTIC__
+ 288   4                      return get_cable_diag(pReq);
+ 289   4      #else
+                              return SUCCESS;
+              #endif
+ 292   4                  }
+ 293   3                  /* Information */
+ 294   3                  else
+ 295   3                  {
+ 296   4                      return get_info(pReq);
+ 297   4                  }
+ 298   3              }
+ 299   2              /* ip.cgi */
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 6   
+
+ 300   2              else if (strcmp(pReq->path, "/ip.cgi") == 0)
+ 301   2              {
+ 302   3                  return get_ip(pReq);
+ 303   3              }
+ 304   2      #if __WEB_EEE_ENABLE__
+ 305   2              /* eee.cgi */
+ 306   2              else if (strcmp(pReq->path, "/eee.cgi") == 0)
+ 307   2              {
+ 308   3                  return get_eee(pReq);
+ 309   3              }
+ 310   2      #endif
+ 311   2      
+ 312   2      #if __WEB_GREENETH__
+ 313   2              /* greeneth.cgi */
+ 314   2              else if (strcmp(pReq->path, "/greeneth.cgi") == 0)
+ 315   2              {
+ 316   3                  return get_greeneth(pReq);
+ 317   3              }
+ 318   2      #endif
+ 319   2      
+ 320   2              /* user.cgi - Complete routing */
+ 321   2              else if (strcmp(pReq->path, "/user.cgi") == 0)
+ 322   2              {
+ 323   3                  return get_user(pReq);
+ 324   3              }
+ 325   2              else if (strcmp(pReq->path, "/poe.cgi") == 0)
+ 326   2              {
+ 327   3                  return get_pdu(pReq);
+ 328   3              }
+ 329   2              else if (strcmp(pReq->path, "/get_pdu_status") == 0)
+ 330   2              {
+ 331   3                  return get_pdu_status(pReq);
+ 332   3              }
+ 333   2              else if (strcmp(pReq->path, "/get_pdu_names") == 0)
+ 334   2              {
+ 335   3                  return get_pdu_names(pReq);
+ 336   3              }
+ 337   2              else if (strcmp(pReq->path, "/set_pdu_name") == 0)
+ 338   2              {
+ 339   3                  return set_pdu_name(pReq);
+ 340   3              }
+ 341   2              
+ 342   2              else if (strcmp(pReq->path, "/set_port1") == 0)
+ 343   2              {
+ 344   3                  return set_port_handler(pReq);
+ 345   3              }
+ 346   2              else if (strcmp(pReq->path, "/set_port2") == 0)
+ 347   2              {
+ 348   3                  return set_port_handler(pReq);
+ 349   3              }
+ 350   2              else if (strcmp(pReq->path, "/set_port3") == 0)
+ 351   2              {
+ 352   3                  return set_port_handler(pReq);
+ 353   3              }
+ 354   2              else if (strcmp(pReq->path, "/set_port4") == 0)
+ 355   2              {
+ 356   3                  return set_port_handler(pReq);
+ 357   3              }
+ 358   2              else if (strcmp(pReq->path, "/set_port5") == 0)
+ 359   2              {
+ 360   3                  return set_port_handler(pReq);
+ 361   3              }
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 7   
+
+ 362   2              else if (strcmp(pReq->path, "/set_port6") == 0)
+ 363   2              {
+ 364   3                  return set_port_handler(pReq);
+ 365   3              }
+ 366   2              else if (strcmp(pReq->path, "/set_port7") == 0)
+ 367   2              {
+ 368   3                  return set_port_handler(pReq);
+ 369   3              }
+ 370   2              else if (strcmp(pReq->path, "/set_port8") == 0)
+ 371   2              {
+ 372   3                  return set_port_handler(pReq);
+ 373   3              }
+ 374   2      
+ 375   2              /* ============================================================
+ 376   2               * RTC endpoints - used by JS fetch() on the RTC page
+ 377   2               * ============================================================ */
+ 378   2      
+ 379   2              /* --- GET /get_rtc_time  ->  {"h","m","s","d","mo","y"} --- */
+ 380   2              else if (strcmp(pReq->path, "/get_rtc_time") == 0 ||
+ 381   2                       strcmp(pPath,       "/get_rtc_time") == 0)
+ 382   2              {
+ 383   3                  return get_rtc_time(pReq);
+ 384   3              }
+ 385   2      
+ 386   2              /* --- GET /get_alarms  ->  {"a1h","a1m","a2h","a2m","a3h","a3m"} --- */
+ 387   2              else if (strcmp(pReq->path, "/get_alarms") == 0 ||
+ 388   2                       strcmp(pPath,       "/get_alarms") == 0)
+ 389   2              {
+ 390   3                  return get_alarms(pReq);
+ 391   3              }
+ 392   2      
+ 393   2              /* --- POST /set_rtc_time --- */
+ 394   2              else if (strcmp(pReq->path, "/set_rtc_time") == 0 ||
+ 395   2                       strcmp(pPath,       "/set_rtc_time") == 0)
+ 396   2              {
+ 397   3                  return set_rtc_time_handler(pReq);
+ 398   3              }
+ 399   2      
+ 400   2              /* --- POST /set_alarm1 --- */
+ 401   2              else if (strcmp(pReq->path, "/set_alarm1") == 0 ||
+ 402   2                       strcmp(pPath,       "/set_alarm1") == 0)
+ 403   2              {
+ 404   3                  return set_alarm_handler(pReq, 1);
+ 405   3              }
+ 406   2      
+ 407   2              /* --- POST /set_alarm2 --- */
+ 408   2              else if (strcmp(pReq->path, "/set_alarm2") == 0 ||
+ 409   2                       strcmp(pPath,       "/set_alarm2") == 0)
+ 410   2              {
+ 411   3                  return set_alarm_handler(pReq, 2);
+ 412   3              }
+ 413   2      
+ 414   2              /* --- POST /set_alarm3 --- */
+ 415   2              else if (strcmp(pReq->path, "/set_alarm3") == 0 ||
+ 416   2                       strcmp(pPath,       "/set_alarm3") == 0)
+ 417   2              {
+ 418   3                  return set_alarm_handler(pReq, 3);
+ 419   3              }
+ 420   2              
+ 421   2              /* port.cgi */
+ 422   2              else if (strcmp(pReq->path, "/port.cgi") == 0)
+ 423   2              {
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 8   
+
+ 424   3                  WEB_VAR(pReq, "page", &pValue);
+ 425   3      
+ 426   3                  /* Bandwidth Control */
+ 427   3                  if (pValue && strcmp("bw_ctrl", pValue) == 0)
+ 428   3                  {
+ 429   4                      return get_port_bandwidthcontrol(pReq);
+ 430   4                  }
+ 431   3                  /* Port Statictics */
+ 432   3                  else if (pValue && strcmp("stats", pValue) == 0)
+ 433   3                  {
+ 434   4                      return get_port_statistics(pReq);
+ 435   4                  }
+ 436   3                  /* Port Mirroring */
+ 437   3                  else if (pValue && strcmp("mirroring", pValue) == 0)
+ 438   3                  {
+ 439   4                      return get_port_mirroring(pReq);
+ 440   4                  }
+ 441   3                  /* Port Isolation */
+ 442   3                  else if (pValue && strcmp("isolation", pValue) == 0)
+ 443   3                  {
+ 444   4                      return get_port_isolation(pReq);
+ 445   4                  }
+ 446   3                  else
+ 447   3                  {
+ 448   4                      return get_port(pReq);
+ 449   4                  }
+ 450   3              }
+ 451   2      #if __WEB_SNMP__
+ 452   2              else if (strcmp(pReq->path, "/snmpsecurity.cgi") == 0)
+ 453   2              {
+ 454   3                  u8_t ret = SUCCESS;
+ 455   3                  WEB_VAR(pReq, "page", &pValue);
+ 456   3      
+ 457   3                  ret = get_snmpsec(pReq);
+ 458   3                  return SUCCESS;
+ 459   3              }
+ 460   2      #endif
+ 461   2      #if 1
+ 462   2              /* syslog.cgi */
+ 463   2              else if (strcmp(pReq->path, "/syslog.cgi") == 0)
+ 464   2              {
+ 465   3                  u8_t ret = SUCCESS;
+ 466   3      
+ 467   3                  WEB_VAR(pReq, "page", &pValue);
+ 468   3                  ret = get_syslogsec(pReq);
+ 469   3                  return SUCCESS;
+ 470   3              }
+ 471   2      #endif
+ 472   2      #if 1
+ 473   2              /* syslogbuf.cgi */
+ 474   2              else if (strcmp(pReq->path, "/syslogbuf.cgi") == 0)
+ 475   2              {
+ 476   3                  u8_t ret = SUCCESS;
+ 477   3      
+ 478   3                  WEB_VAR(pReq, "page", &pValue);
+ 479   3                  ret = get_syslogbufsec(pReq);
+ 480   3                  return SUCCESS;
+ 481   3              }
+ 482   2      #endif
+ 483   2      
+ 484   2              else if (strcmp(pReq->path, "/trunk.cgi") == 0)
+ 485   2              {
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 9   
+
+ 486   3                  WEB_VAR(pReq, "page", &pValue);
+ 487   3      
+ 488   3                  return get_trunk(pReq);
+ 489   3              }
+ 490   2              /* fwd.cgi */
+ 491   2              else if (strcmp(pReq->path, "/fwd.cgi") == 0)
+ 492   2              {
+ 493   3                  WEB_VAR(pReq, "page", &pValue);
+ 494   3      
+ 495   3                  /* Jumboframe */
+ 496   3                  if (pValue && strcmp("jumboframe", pValue) == 0)
+ 497   3                  {
+ 498   4                      return get_fwd_jumboframe(pReq);
+ 499   4                  }
+ 500   3                  /* Storm Control */
+ 501   3                  else if (pValue && strcmp("storm_ctrl", pValue) == 0)
+ 502   3                  {
+ 503   4                      return get_fwd_stormcontrol(pReq);
+ 504   4                  }
+ 505   3                  else
+ 506   3                  {
+ 507   4                      return get_fwd(pReq);
+ 508   4                  }
+ 509   3              }
+ 510   2      #if __WEB_LOOP__
+ 511   2              else if (strcmp(pReq->path, "/loop.cgi") == 0)
+ 512   2              {
+ 513   3                  return get_loop(pReq);
+ 514   3              }
+ 515   2      #endif
+ 516   2              else if (strcmp(pReq->path, "/vlan.cgi") == 0)
+ 517   2              {
+ 518   3                  WEB_VAR(pReq, "page", &pValue);
+ 519   3      
+ 520   3                  if (pValue && strcmp("get_rtc_config", pValue) == 0)
+ 521   3                  {
+ 522   4                      return get_rtc(pReq);//get_vlan_static(pReq, 0);
+ 523   4                  }
+ 524   3                  
+ 525   3                  else if (pValue && strcmp("set_rtc_alarm", pValue) == 0)
+ 526   3                  {
+ 527   4                      return set_rtc_alarm(pReq);//get_vlan_portbased(pReq);
+ 528   4                  }
+ 529   3                  else if (pValue && strcmp("set_rtc_data_alarm", pValue) == 0)
+ 530   3                  {
+ 531   4                      return set_rtc_time_date(pReq);//get_vlan_ip(pReq);
+ 532   4                  }
+ 533   3              }
+ 534   2              
+ 535   2      #if __WEB_IGMP__
+ 536   2              else if (strcmp(pReq->path, "/igmp.cgi") == 0)
+ 537   2              {
+ 538   3                  WEB_VAR(pReq, "page", &pValue);
+ 539   3                  if (pValue && strcmp("dump", pValue) == 0)
+ 540   3                  {
+ 541   4                      return get_igmp_dump(pReq);
+ 542   4                  }
+ 543   3              }
+ 544   2      #endif
+ 545   2      
+ 546   2              /* mac.cgi */
+ 547   2              else if (strcmp(pReq->path, "/mac.cgi") == 0)
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 10  
+
+ 548   2              {
+ 549   3                  WEB_VAR(pReq, "page", &pValue);
+ 550   3      
+ 551   3                  /* MAC Forwarding Table */
+ 552   3                  if (pValue && strcmp("fwd_tbl", pValue) == 0)
+ 553   3                  {
+ 554   4                      return get_mac_forwardingtable(pReq);
+ 555   4                  }
+ 556   3                  /* Static MAC */
+ 557   3                  else if (pValue && strcmp("static", pValue) == 0)
+ 558   3                  {
+ 559   4                      return get_mac_staticmac(pReq);
+ 560   4                  }
+ 561   3                  /* MAC address searching */
+ 562   3                  else if (pValue && strcmp("search", pValue) == 0)
+ 563   3                  {
+ 564   4                      return get_mac_search(pReq);
+ 565   4                  }
+ 566   3                  else
+ 567   3                  {
+ 568   4                      return get_mac(pReq);
+ 569   4                  }
+ 570   3              }
+ 571   2              else if (strcmp(pReq->path, "/mac_constraint.cgi") == 0)
+ 572   2              {
+ 573   3                  return get_mac_constraint(pReq);
+ 574   3              }
+ 575   2              /* qos.cgi */
+ 576   2              else if (strcmp(pReq->path, "/qos.cgi") == 0)
+ 577   2              {
+ 578   3                  WEB_VAR(pReq, "page", &pValue);
+ 579   3      
+ 580   3                  /* Port-based Priority */
+ 581   3                  if (pValue && strcmp("port_pri", pValue) == 0)
+ 582   3                  {
+ 583   4                      return get_qos_portbasedpriority(pReq);
+ 584   4                  }
+ 585   3                  /* Packet Scheduling */
+ 586   3                  else if (pValue && strcmp("pkt_sch", pValue) == 0)
+ 587   3                  {
+ 588   4                      return get_qos_packetscheduling(pReq);
+ 589   4                  }
+ 590   3                  /* QoS internal priority selection */
+ 591   3                  else if (pValue && strcmp("qos_int_pri", pValue) == 0)
+ 592   3                  {
+ 593   4                      return get_qos_internalPriority(pReq);
+ 594   4                  }
+ 595   3                  /* QoS dscp remapping */
+ 596   3                  else if (pValue && strcmp("dscp_remap", pValue) == 0)
+ 597   3                  {
+ 598   4                      return get_qos_dscpremapping(pReq);
+ 599   4                  }
+ 600   3                  /* QoS priority to queue id mapping */
+ 601   3                  else if (pValue && strcmp("pri_to_queueid", pValue) == 0)
+ 602   3                  {
+ 603   4                      return get_qos_pri2queueid(pReq);
+ 604   4                  }
+ 605   3                  else
+ 606   3                  {
+ 607   4                      return get_qos(pReq);
+ 608   4                  }
+ 609   3              }
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 11  
+
+ 610   2      
+ 611   2      #if __WEB_TFTP_UPGRADE__
+                      /* tftp.cgi */
+                      else if (strcmp(pReq->path, "/tftp.cgi") == 0)
+                      {
+                          WEB_VAR(pReq, "cmd", &pValue);
+              
+                          /* tftp_fwupg_process */
+                          if (pValue && strcmp("fwupg_status", pValue) == 0)
+                          {
+                              return get_tftp_fwupg_status(pReq);
+                          }
+                          else
+                          {
+                              return get_tftp(pReq);
+                          }
+                      }
+              #endif
+ 628   2      #if __WEB_HTTP_UPGRADE__
+                      /* httpupg.cgi */
+                      else if (strcmp(pReq->path, "/httpupg.cgi") == 0)
+                      {
+                          return get_httpupg(pReq);
+                      }
+              #endif
+ 635   2      
+ 636   2      #if (!__WEB_HTTP_UPGRADE__ && !__WEB_HTTP_UPGRADE__)
+ 637   2              /* fwug.cgi */
+ 638   2              else if (strcmp(pReq->path, "/fwug.cgi") == 0)
+ 639   2              {
+ 640   3                  return get_fwug(pReq);
+ 641   3              }
+ 642   2      #endif
+ 643   2      
+ 644   2      #if __WEB_CFG_BACKUP__
+ 645   2              /* config_back.cgi */
+ 646   2              else if (strcmp(pReq->path, "/config_back.cgi") == 0)
+ 647   2              {
+ 648   3                  return get_http_config(pReq);
+ 649   3              }
+ 650   2      #endif
+ 651   2              /* reset.cgi */
+ 652   2              else if (strcmp(pReq->path, "/reset.cgi") == 0)
+ 653   2              {
+ 654   3                  return get_reset(pReq);
+ 655   3              }
+ 656   2              /* save.cgi */
+ 657   2              else if (strcmp(pReq->path, "/save.cgi") == 0)
+ 658   2              {
+ 659   3                  return get_save(pReq);
+ 660   3              }
+ 661   2              /* reboot.cgi */
+ 662   2              else if (strcmp(pReq->path, "/reboot.cgi") == 0)
+ 663   2              {
+ 664   3                  return get_reboot(pReq);
+ 665   3              }
+ 666   2              else
+ 667   2              {
+ 668   3                  WEB_BEGIN(pReq);
+ 669   3                  WEB_STATUS(pReq, HTTP_STATUS_NOT_FOUND);
+ 670   3                  WEB_HEADER(pReq, "");
+ 671   3                  WEB_END(pReq);
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 12  
+
+ 672   3              }
+ 673   2              break;
+ 674   2          case HTTP_METHOD_POST:
+ 675   2              /* trunk.cgi */
+ 676   2              if (strcmp(pReq->path, "/trunk.cgi") == 0)
+ 677   2              {
+ 678   3                  WEB_VAR(pReq, "page", &pValue);
+ 679   3      
+ 680   3                  /* Trunk Group Setting */
+ 681   3                  if (pValue && strcmp("group", pValue) == 0)
+ 682   3                  {
+ 683   4                      return post_trunk(pReq);
+ 684   4                  }
+ 685   3                  else if (pValue && strcmp("group_remove", pValue) == 0)
+ 686   3                  {
+ 687   4                      return post_trunk_remove(pReq);
+ 688   4                  }
+ 689   3              }
+ 690   2              else if (strcmp(pReq->path, "/set_mac") == 0)
+ 691   2              {
+ 692   3                  return set_mac(pReq);
+ 693   3              }
+ 694   2              else if (strcmp(pReq->path, "/ip.cgi") == 0)
+ 695   2      
+ 696   2              {
+ 697   3                  printf("IP Address changed : \n");
+ 698   3                  return post_ip(pReq);
+ 699   3              }
+ 700   2      #if SAL_SNMP
+ 701   2              else if (strcmp(pReq->path, "/snmpsecurity.cgi") == 0)
+ 702   2              {
+ 703   3                  return post_snmpsec(pReq);
+ 704   3              }
+ 705   2      #endif
+ 706   2      #if 1
+ 707   2              else if (strcmp(pReq->path, "/syslog.cgi") == 0)
+ 708   2              {
+ 709   3                  return post_syslogsec(pReq);
+ 710   3              }
+ 711   2      #endif
+ 712   2      #if 1
+ 713   2              else if (strcmp(pReq->path, "/syslogbuf.cgi") == 0)
+ 714   2              {
+ 715   3                  return post_syslogbufsec(pReq);
+ 716   3              }
+ 717   2      #endif
+ 718   2      #if __WEB_EEE_ENABLE__
+ 719   2              else if (strcmp(pReq->path, "/eee.cgi") == 0)
+ 720   2              {
+ 721   3                  return post_eee(pReq);
+ 722   3              }
+ 723   2      #endif
+ 724   2      
+ 725   2      #if __WEB_GREENETH__
+ 726   2              else if (strcmp(pReq->path, "/greeneth.cgi") == 0)
+ 727   2              {
+ 728   3                  return post_greeneth(pReq);
+ 729   3              }
+ 730   2      #endif
+ 731   2      
+ 732   2              /* user.cgi */
+ 733   2              else if (strcmp(pReq->path, "/user.cgi") == 0)
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 13  
+
+ 734   2              {
+ 735   3                  return post_user(pReq);
+ 736   3              }
+ 737   2              else if (strcmp(pReq->path, "/user.cgi") == 0)
+ 738   2              {
+ 739   3                  return post_user(pReq);
+ 740   3                  
+ 741   3              }
+ 742   2              else if (strcmp(pReq->path, "/port.cgi") == 0)
+ 743   2              {
+ 744   3                  WEB_VAR(pReq, "page", &pValue);
+ 745   3      
+ 746   3                  /* Bandwidth Control */
+ 747   3                  if (pValue && strcmp("bwctrl", pValue) == 0)
+ 748   3                  {
+ 749   4                      return post_bandwidthcontrol(pReq);
+ 750   4                  }
+ 751   3                  /* Port Isolation */
+ 752   3                  else if (pValue && strcmp("isolation", pValue) == 0)
+ 753   3                  {
+ 754   4                      return post_port_isolation(pReq);
+ 755   4                  }
+ 756   3                  /* Port Mirroring */
+ 757   3                  else if (pValue && strcmp("mirroring", pValue) == 0)
+ 758   3                  {
+ 759   4                      return post_port_mirroring(pReq);
+ 760   4                  }
+ 761   3                  else if (pValue && strcmp("delete_mirror", pValue) == 0)
+ 762   3                  {
+ 763   4                      return post_port_mirroring_delete(pReq);
+ 764   4                  }
+ 765   3                  else if (pValue && strcmp("stats", pValue) == 0)
+ 766   3                  {
+ 767   4                      return post_port_statistics_clear(pReq);
+ 768   4                  }
+ 769   3      #if __WEB_RMON_COUNTER_QUERY__
+                          else if (pValue && strcmp("stat_rmon", pValue) == 0)
+                          {
+                              return post_port_statistics_rmonQuery(pReq);
+                          }
+              #endif
+ 775   3                  else
+ 776   3                  {
+ 777   4                      return post_port(pReq);
+ 778   4                  }
+ 779   3              }
+ 780   2              /* fwd.cgi */
+ 781   2              else if (strcmp(pReq->path, "/fwd.cgi") == 0)
+ 782   2              {
+ 783   3                  WEB_VAR(pReq, "page", &pValue);
+ 784   3      
+ 785   3                  /* Bandwidth Control */
+ 786   3                  if (pValue && strcmp("jumboframe", pValue) == 0)
+ 787   3                  {
+ 788   4                      return post_fwd_jumboframe(pReq);
+ 789   4                  }
+ 790   3                  /* Storm Control */
+ 791   3                  else if (pValue && strcmp("storm_ctrl", pValue) == 0)
+ 792   3                  {
+ 793   4                      return post_fwd_stormcontrol(pReq);
+ 794   4                  }
+ 795   3              }
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 14  
+
+ 796   2      #if __WEB_LOOP__
+ 797   2              else if (strcmp(pReq->path, "/loop.cgi") == 0)
+ 798   2              {
+ 799   3                  return post_loop(pReq);
+ 800   3              }
+ 801   2              else if (strcmp(pReq->path, "/loop_port.cgi") == 0)
+ 802   2              {
+ 803   3                  return post_loop_port(pReq);
+ 804   3              }
+ 805   2      #endif
+ 806   2              /* vlan.cgi */
+ 807   2              else if (strcmp(pReq->path, "/vlan.cgi") == 0)
+ 808   2              {
+ 809   3                  WEB_VAR(pReq, "page", &pValue);
+ 810   3                  /* Static VLAN */
+ 811   3                  if (pValue && strcmp("static", pValue) == 0)
+ 812   3                  {
+ 813   4                      return post_vlan_static(pReq);
+ 814   4                  }
+ 815   3                  /* Port-based VLAN */
+ 816   3                  else if (pValue && strcmp("port_based", pValue) == 0)
+ 817   3                  {
+ 818   4                      return post_vlan_portbased(pReq);
+ 819   4                  }
+ 820   3                  else if (pValue && strcmp("getRmvVlanEntry", pValue) == 0)
+ 821   3                  {
+ 822   4                      return post_vlanstaticDelEntry(pReq);
+ 823   4                  }
+ 824   3                  else if (pValue && strcmp("vlan_ip", pValue) == 0)
+ 825   3                  {
+ 826   4                      return post_vlan_ip(pReq);
+ 827   4                  }
+ 828   3              }
+ 829   2      #if __WEB_IGMP__
+ 830   2              else if (strcmp(pReq->path, "/igmp.cgi") == 0)
+ 831   2              {
+ 832   3                  WEB_VAR(pReq, "page", &pValue);
+ 833   3                  if (pValue && strcmp("enable_igmp", pValue) == 0)
+ 834   3                  {
+ 835   4                      return post_igmp_state(pReq);
+ 836   4                  }
+ 837   3                  else if (pValue && strcmp("igmp_static_router", pValue) == 0)
+ 838   3                  {
+ 839   4                      return post_igmp_static_router(pReq);
+ 840   4                  }
+ 841   3              }
+ 842   2      #endif
+ 843   2              /* mac.cgi */
+ 844   2              else if (strcmp(pReq->path, "/mac.cgi") == 0)
+ 845   2              {
+ 846   3                  WEB_VAR(pReq, "page", &pValue);
+ 847   3      
+ 848   3                  if (pValue && strcmp("static", pValue) == 0)
+ 849   3                  {
+ 850   4                      return post_mac_add(pReq);
+ 851   4                  }
+ 852   3                  else if (pValue && strcmp("staticdel", pValue) == 0)
+ 853   3                  {
+ 854   4                      return post_mac_del(pReq);
+ 855   4                  }
+ 856   3                  else if (pValue && strcmp("fwd_tbl", pValue) == 0)
+ 857   3                  {
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 15  
+
+ 858   4                      return post_mac_tblclear(pReq);
+ 859   4                  }
+ 860   3                  else if (pValue && strcmp("search", pValue) == 0)
+ 861   3                  {
+ 862   4                      return post_mac_search(pReq);
+ 863   4                  }
+ 864   3              }
+ 865   2              else if (strcmp(pReq->path, "/mac_constraint.cgi") == 0)
+ 866   2              {
+ 867   3                  WEB_VAR(pReq, "page", &pValue);
+ 868   3                  if (pValue && strcmp("set_action", pValue) == 0)
+ 869   3                  {
+ 870   4                      return post_mac_constraint_action(pReq);
+ 871   4                  }
+ 872   3                  else
+ 873   3                  {
+ 874   4                      return post_mac_constraint(pReq);
+ 875   4                  }
+ 876   3              }
+ 877   2              /* qos.cgi */
+ 878   2              else if (strcmp(pReq->path, "/qos.cgi") == 0)
+ 879   2              {
+ 880   3                  WEB_VAR(pReq, "page", &pValue);
+ 881   3      
+ 882   3                  /* Port-based Priority */
+ 883   3                  if (pValue && strcmp("port_pri", pValue) == 0)
+ 884   3                  {
+ 885   4                      return post_qos_portbasedpriority(pReq);
+ 886   4                  }
+ 887   3                  /* Packet Scheduling */
+ 888   3                  else if (pValue && strcmp("pkt_sch", pValue) == 0)
+ 889   3                  {
+ 890   4                      // ret = post_qos_packetscheduling(pReq);
+ 891   4                  }
+ 892   3                  /* QoS internal priority selection */
+ 893   3                  else if (pValue && strcmp("qos_int_pri", pValue) == 0)
+ 894   3                  {
+ 895   4                      return post_qos_internalPriority(pReq);
+ 896   4                  }
+ 897   3                  /* QoS dscp remapping */
+ 898   3                  else if (pValue && strcmp("dscp_remap", pValue) == 0)
+ 899   3                  {
+ 900   4                      return post_qos_dscpremapping(pReq);
+ 901   4                  }
+ 902   3                  /* QoS priority to queue id mapping */
+ 903   3                  else if (pValue && strcmp("pri_to_queueid", pValue) == 0)
+ 904   3                  {
+ 905   4                      return post_qos_pri2queueid(pReq);
+ 906   4                  }
+ 907   3                  else if (pValue && strcmp("que_weight", pValue) == 0)
+ 908   3                  {
+ 909   4                      return post_qos_queueweight(pReq);
+ 910   4                  }
+ 911   3              }
+ 912   2      #if __WEB_TFTP_UPGRADE__
+                      /* tftp.cgi */
+                      else if (strcmp(pReq->path, "/tftp.cgi") == 0)
+                      {
+                          WEB_VAR(pReq, "cmd", &pValue);
+              
+                          if (pValue && strcmp("fwupg", pValue) == 0)
+                          {
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 16  
+
+                              return post_tftp_fwupg(pReq);
+                          }
+                      }
+              #endif
+ 924   2      #if __WEB_HTTP_UPGRADE__
+                      else if (strcmp(pReq->path, "/httpupg.cgi") == 0)
+                      {
+                          WEB_VAR(pReq, "cmd", &pValue);
+              
+                          if (pValue && (0 == strcmp(pValue, "fw_upgrade")))
+                          {
+                              return post_http_firmupdate(pReq);
+                          }
+                          else
+                          {
+                              WEB_BEGIN(pReq);
+              
+                              WEB_STATUS(pReq, HTTP_STATUS_NOT_FOUND);
+              
+                              WEB_END(pReq);
+                          }
+                      }
+              #endif
+ 943   2      
+ 944   2      #if (!__WEB_HTTP_UPGRADE__ && !__WEB_HTTP_UPGRADE__)
+ 945   2              /* fwug.cgi */
+ 946   2              else if (strcmp(pReq->path, "/fwug.cgi") == 0)
+ 947   2              {
+ 948   3                  return post_fwug(pReq);
+ 949   3              }
+ 950   2      #endif
+ 951   2      
+ 952   2      #if __WEB_CFG_BACKUP__
+ 953   2              /* config_back.cgi */
+ 954   2              else if (strcmp(pReq->path, "/config_back.cgi") == 0)
+ 955   2              {
+ 956   3                  WEB_VAR(pReq, "cmd", &pValue);
+ 957   3      
+ 958   3                  if (pValue && (0 == strcmp(pValue, "conf_restore")))
+ 959   3                  {
+ 960   4                      return post_http_restore(pReq);
+ 961   4                  }
+ 962   3                  else
+ 963   3                  {
+ 964   4                      WEB_BEGIN(pReq);
+ 965   4      
+ 966   4                      WEB_STATUS(pReq, HTTP_STATUS_NOT_FOUND);
+ 967   4      
+ 968   4                      WEB_END(pReq);
+ 969   4                  }
+ 970   3              }
+ 971   2      #endif
+ 972   2              /* reset.cgi */
+ 973   2              else if (strcmp(pReq->path, "/reset.cgi") == 0)
+ 974   2              {
+ 975   3                  return post_factdefault_load(pReq);
+ 976   3              }
+ 977   2              /* save.cgi */
+ 978   2              else if (strcmp(pReq->path, "/save.cgi") == 0)
+ 979   2              {
+ 980   3                  // return post_save(pReq);
+ 981   3              }
+C51 COMPILER V9.60.0.0   HTML_API                                                          11/02/2026 17:57:30 PAGE 17  
+
+ 982   2              /* reboot.cgi */
+ 983   2              else if (strcmp(pReq->path, "/reboot.cgi") == 0)
+ 984   2              {
+ 985   3                  return post_reboot(pReq);
+ 986   3              }
+ 987   2              /* NOT FOUND */
+ 988   2              else
+ 989   2              {
+ 990   3                  WEB_BEGIN(pReq);
+ 991   3                  WEB_STATUS(pReq, HTTP_STATUS_NOT_FOUND);
+ 992   3                  WEB_HEADER(pReq, "");
+ 993   3                  WEB_END(pReq);
+ 994   3              }
+ 995   2              break;
+ 996   2      
+ 997   2          default:
+ 998   2              WEB_BEGIN(pReq);
+ 999   2              WEB_STATUS(pReq, HTTP_STATUS_NOT_IMPLEMENTED);
+1000   2              WEB_HEADER(pReq, "");
+1001   2              WEB_END(pReq);
+1002   2              break;
+1003   2          }
+1004   1      
+1005   1          return FAILED;
+1006   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   7501    ----
+   CONSTANT SIZE    =   1423    ----
+   XDATA SIZE       =   ----      48
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1423    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

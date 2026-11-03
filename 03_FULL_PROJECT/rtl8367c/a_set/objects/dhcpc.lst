@@ -1,0 +1,789 @@
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE DHCPC
+OBJECT MODULE PLACED IN .\objects\dhcpc.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\dhcpc\dhcpc.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE IN
+                    -TVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;
+                    -..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_A
+                    -PI_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_8
+                    -2l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\dhcpc.lst) TABS(2) OBJECT(.\objects\dhcpc.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          /*
+   3           *  DHCP Client for LwPS
+   4           */
+   5          
+   6          
+   7          /*
+   8           * Include Files
+   9           */
+  10          #include <common_types.h>
+  11          #include <lwps/lwps_api.h>
+  12          #include <local/flash_config.h>
+  13          #include <salsys.h>
+  14          #include <dhcpc/dhcpc.h>
+  15          
+  16          #define DBG_PRINT
+  17          #define INIT_IP_ADDR    0
+  18          
+  19          #define IPARR_TO_IPVAR(ip_32t, ip_array)  do { \
+  20              ip_32t = ((uint32)ip_array[0] << 24) | \
+  21                       ((uint32)ip_array[1] << 16) | \
+  22                       ((uint32)ip_array[2] << 8) | \
+  23                       ((uint32)ip_array[3]); \
+  24              } while(0)
+  25          
+  26          /*
+  27           * Symbol Definition
+  28           */
+  29           typedef enum dhcpc_flag_e {
+  30              DHCPC_FLAG_NONE                = 0x00000000,
+  31              DHCPC_FLAG_SERVER_IP_BROADCAST = 0x00000001,
+  32              DHCPC_FLAG_WITH_OPTION54       = 0x00000002,
+  33          } dhcpc_flag_t;
+  34          typedef enum dhcpc_state_e {
+  35              DHCPC_STATE_NONE = 0,
+  36              DHCPC_STATE_INITIALIZING,
+  37              DHCPC_STATE_SELECTING,
+  38              DHCPC_STATE_REQUESTING,
+  39              DHCPC_STATE_BOUND,
+  40              DHCPC_STATE_RENEWING,
+  41              DHCPC_STATE_REBINDING,
+  42          } tftpc_state_t;
+  43          typedef enum dhcpc_status_e {
+  44              DHCPC_STATUS_NONE       = 0x00000000,
+  45              DHCPC_STATUS_RUNNING    = 0x00000001,
+  46              DHCPC_STATUS_TIMEOUT    = 0x00000002,   
+  47              DHCPC_STATUS_RETRY      = 0x00000004, /* retry will be dec 1 if timeout reset */
+  48              DHCPC_STATUS_BOUND      = 0x00000010,
+  49              DHCPC_STATUS_RENEW      = 0x00000020,
+  50              DHCPC_STATUS_REBIND     = 0x00000040,
+  51              DHCPC_STATUS_COMPLETED  = 0x00000080, /* mission completed */
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 2   
+
+  52          } tftpc_status_t;
+  53          typedef struct dhcpc_slot_s {
+  54              int32  socket_id;
+  55              int32  state;
+  56              int32  status;
+  57              uint32 transaction_id;
+  58          
+  59              uint32 sec_uptime;
+  60              uint16 sec_elapsed;
+  61              int8   timeout;
+  62              int8   retries;
+  63          
+  64              uint32 left_time;
+  65              uint32 max_time;
+  66          
+  67              /* Bound */
+  68              ip_addr_t server_ip;         /* DHCP deamon IP */
+  69              ip_addr_t serverid;         /* Server Identifier */
+  70              ip_addr_t clientid;         /* Client Identifier */
+  71              ip_addr_t netmask;          /* Subnet Mask */
+  72              ip_addr_t gateway;          /* Router */
+  73              uint32 ipaddr_lease_time;  /* IP Address Lease Time (Unit: Secound) */
+  74              uint32 renewal_time;       /* Renewal(T1) Time (Unit: Secound) */
+  75              uint32 rebinding_time;     /* Rebinding(T2) Time (Unit: Secound) */
+  76              uint32 offer_times;
+  77          
+  78              /* default IP */
+  79              sal_ipaddr_t def_ipaddr;
+  80              sal_ipaddr_t def_netmask;
+  81              sal_ipaddr_t def_gateway;
+  82          } dhcpc_slot_t;
+  83          
+  84          /*
+  85           * Data Declaration
+  86           */
+  87          static dhcpc_slot_t dhcpc_slot;
+  88          
+  89          
+  90          /*
+  91           * Function Declaration
+  92           */
+  93          
+  94          // DHCP Header Dump: Prints formatted DHCP header and options for debugging
+  95          // Displays all DHCP fields including op, htype, xid, addresses, and options
+  96          static void dhcp_hdr_dump(dhcp_hdr_t *pDhcpHdr)
+  97          {
+  98   1      #if 0
+                  uint8 *pData;
+                  uint8 type, len;
+                  int32 i;
+              #endif
+ 103   1          DBG_PRINT(2, "-- [DHCP HDR dump] ----------------------------\n");
+ 104   1          DBG_PRINT(2, "         OP: 0x%02X (%d)\n", pDhcpHdr->op, pDhcpHdr->op);
+ 105   1          DBG_PRINT(2, "      HTYPE: 0x%02X (%d)\n", pDhcpHdr->htype, pDhcpHdr->htype);
+ 106   1          DBG_PRINT(2, "       HLEN: 0x%02X (%d)\n", pDhcpHdr->hlen, pDhcpHdr->hlen);
+ 107   1          DBG_PRINT(2, "       HOPS: 0x%02X (%d)\n", pDhcpHdr->hops, pDhcpHdr->hops);
+ 108   1          DBG_PRINT(2, "        XID: 0x%08X (%d)\n", pDhcpHdr->xid, pDhcpHdr->xid);
+ 109   1          DBG_PRINT(2, "       SECS: 0x%04X (%d)\n", pDhcpHdr->secs, pDhcpHdr->secs);
+ 110   1          DBG_PRINT(2, "      FLAGS: 0x%04X\n", pDhcpHdr->flags);
+ 111   1          DBG_PRINT(2, "     CIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->ciaddr), \
+ 112   1              pDhcpHdr->ciaddr[0], pDhcpHdr->ciaddr[1], pDhcpHdr->ciaddr[2], pDhcpHdr->ciaddr[3]);
+ 113   1          DBG_PRINT(2, "     YIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->yiaddr), \
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 3   
+
+ 114   1              pDhcpHdr->yiaddr[0], pDhcpHdr->yiaddr[1], pDhcpHdr->yiaddr[2], pDhcpHdr->yiaddr[3]);
+ 115   1          DBG_PRINT(2, "     SIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->siaddr), \
+ 116   1              pDhcpHdr->siaddr[0], pDhcpHdr->siaddr[1], pDhcpHdr->siaddr[2], pDhcpHdr->siaddr[3]);
+ 117   1          DBG_PRINT(2, "     GIADDR: 0x%08X (%d.%d.%d.%d)\n", *(uint32 *)(pDhcpHdr->giaddr), \
+ 118   1              pDhcpHdr->giaddr[0], pDhcpHdr->giaddr[1], pDhcpHdr->giaddr[2], pDhcpHdr->giaddr[3]);
+ 119   1          DBG_PRINT(2, "     CHADDR: 0x%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X%02X\n", \
+ 120   1              pDhcpHdr->chaddr[0], pDhcpHdr->chaddr[1], pDhcpHdr->chaddr[2], pDhcpHdr->chaddr[3],
+ 121   1              pDhcpHdr->chaddr[4], pDhcpHdr->chaddr[5], pDhcpHdr->chaddr[6], pDhcpHdr->chaddr[7],
+ 122   1              pDhcpHdr->chaddr[8], pDhcpHdr->chaddr[9], pDhcpHdr->chaddr[10], pDhcpHdr->chaddr[11],
+ 123   1              pDhcpHdr->chaddr[12], pDhcpHdr->chaddr[13], pDhcpHdr->chaddr[14], pDhcpHdr->chaddr[15]);
+ 124   1          DBG_PRINT(2, "  ... (192 octets of 0's. BOOTP legacy) ...\n");
+ 125   1          DBG_PRINT(2, "MagicCookie: 0x%08X\n", pDhcpHdr->magic_cookie);
+ 126   1      #if 0
+                  DBG_PRINT(0, "***********************************************\n");
+                  pData = (uint8 *)&pDhcpHdr->op + sizeof(dhcp_hdr_t);
+                  do {
+                      type = *pData;
+                      if (type == DHCP_OPT_END) {
+                          len = 0;
+                      } else {
+                          len = *(pData + 1);
+                      }
+                      DBG_PRINT(0, "DHCP Option: (t=%03d, l=%03d) \n", type, len);
+                      for (i=0; i<len; i++) {
+                          if ((i & 0xF) == 0) DBG_PRINT(0, "[%02X] ");
+                          DBG_PRINT(0, "%02X ", *(pData + i));
+                          if ((i & 0xF) == 0xF) DBG_PRINT(0, "\n");
+                      }
+                      DBG_PRINT(0, "\n");
+                      pData += (2 + len);
+                  } while (type != DHCP_OPT_END);
+              #endif
+ 146   1          DBG_PRINT(2, "-----------------------------------------------\n");
+ 147   1      }
+ 148          
+ 149          // DHCP Send Discover: Sends DHCP DISCOVER message to find available DHCP servers
+ 150          // Builds and transmits DHCPDISCOVER packet with client MAC address and options
+ 151          static int32 dhcpc_send_dhcpdiscover(void)
+ 152          {
+ 153   1          uint8 buf[384];
+ 154   1          dhcp_hdr_t *pDhcpHdr = (dhcp_hdr_t *)&buf[0];
+ 155   1          ip_addr_t dst_ipaddr;
+ 156   1        sal_mac_t mac;
+ 157   1      
+ 158   1          /* DHCP Header */
+ 159   1          memset(buf, 0, sizeof(buf));
+ 160   1          pDhcpHdr->op = DHCP_OP_BOOTREQUEST;
+ 161   1          pDhcpHdr->htype = DHCP_HTYPE_ETH;
+ 162   1          pDhcpHdr->hlen = 6; /* length of Ethernet MAC address */
+ 163   1          pDhcpHdr->hops = 0;
+ 164   1          pDhcpHdr->xid = dhcpc_slot.transaction_id;
+ 165   1          pDhcpHdr->secs = dhcpc_slot.sec_elapsed;
+ 166   1          pDhcpHdr->flags = 0x8000;   /* broadcast flag */
+ 167   1          //memset(pDhcpHdr->ciaddr, 0, sizeof(pDhcpHdr->ciaddr));  /* 0.0.0.0 */
+ 168   1          //memset(pDhcpHdr->yiaddr, 0, sizeof(pDhcpHdr->yiaddr));  /* 0.0.0.0 */
+ 169   1          //memset(pDhcpHdr->siaddr, 0, sizeof(pDhcpHdr->siaddr));  /* 0.0.0.0 */
+ 170   1          //memset(pDhcpHdr->giaddr, 0, sizeof(pDhcpHdr->giaddr));  /* 0.0.0.0 */
+ 171   1        sal_sys_mac_get(&mac);
+ 172   1          memcpy(pDhcpHdr->chaddr, mac.octet, ETH_HWADDR_LEN);
+ 173   1          pDhcpHdr->magic_cookie = DHCP_MAGIC_COOKIE_VALUE;
+ 174   1      
+ 175   1          /* Options */
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 4   
+
+ 176   1          /* Option: (t=53,l=1) DHCP Message Type = DHCP Discover */
+ 177   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t), "\x35\x01\x01", 3);
+ 178   1          //*(uint8 *)(&buf[0] + sizeof(dhcp_hdr_t)) = DHCP_OPT_END;  
+ 179   1          /* Options */
+ 180   1          /* Option: (t=55,l=2) DHCP Message Type = DHCP Discover */
+ 181   1          /* End Option */
+ 182   1          memcpy(&buf[3] + sizeof(dhcp_hdr_t), "\x37\x02\x01\x03\xff", 5);
+ 183   1          dhcp_hdr_dump(pDhcpHdr);
+ 184   1      
+ 185   1          dst_ipaddr.addr[0] = 255;
+ 186   1          dst_ipaddr.addr[1] = 255;
+ 187   1          dst_ipaddr.addr[2] = 255;
+ 188   1          dst_ipaddr.addr[3] = 255;
+ 189   1          if (LWPS_OK != lwps_sendto(dhcpc_slot.socket_id, (uint8 *)pDhcpHdr, sizeof(dhcp_hdr_t) + 8, dst_ipaddr
+             -, UDP_PORT_DHCP_SERVER))
+ 190   1          {
+ 191   2              OSAL_PRINTF("%s():%d lwps_sendto failed!\n", __FILE__, (uint16)__LINE__);
+ 192   2              return FAILED;
+ 193   2          }
+ 194   1      
+ 195   1          return SUCCESS;
+ 196   1      }
+ 197          
+ 198          // DHCP Send Request: Sends DHCP REQUEST message to request offered IP address
+ 199          // Builds and transmits DHCPREQUEST with server identifier and requested IP options
+ 200          static int32 dhcpc_send_dhcprequest(dhcpc_flag_t flag)
+ 201          {
+ 202   1          uint8 buf[384];
+ 203   1          dhcp_hdr_t *pDhcpHdr = (dhcp_hdr_t *)&buf[0];
+ 204   1          ip_addr_t dst_ipaddr;
+ 205   1        sal_mac_t mac;
+ 206   1          uint16 opt_len;     /* Length of Options */
+ 207   1      
+ 208   1          /* DHCP Header */
+ 209   1          memset(buf, 0, sizeof(buf));
+ 210   1          pDhcpHdr->op = DHCP_OP_BOOTREQUEST;
+ 211   1          pDhcpHdr->htype = DHCP_HTYPE_ETH;
+ 212   1          pDhcpHdr->hlen = 6; /* length of Ethernet MAC address */
+ 213   1          pDhcpHdr->hops = 0;
+ 214   1          pDhcpHdr->xid = dhcpc_slot.transaction_id;
+ 215   1          pDhcpHdr->secs = dhcpc_slot.sec_elapsed;
+ 216   1          pDhcpHdr->flags = 0x8000;   /* broadcast flag */
+ 217   1          //memset(pDhcpHdr->ciaddr, 0, sizeof(pDhcpHdr->ciaddr));  /* 0.0.0.0 */
+ 218   1          //memset(pDhcpHdr->yiaddr, 0, sizeof(pDhcpHdr->yiaddr));  /* 0.0.0.0 */
+ 219   1          //memset(pDhcpHdr->siaddr, 0, sizeof(pDhcpHdr->siaddr));  /* 0.0.0.0 */
+ 220   1          //memset(pDhcpHdr->giaddr, 0, sizeof(pDhcpHdr->giaddr));  /* 0.0.0.0 */
+ 221   1        sal_sys_mac_get(&mac);
+ 222   1          memcpy(pDhcpHdr->chaddr, mac.octet, ETH_HWADDR_LEN);
+ 223   1          pDhcpHdr->magic_cookie = DHCP_MAGIC_COOKIE_VALUE;
+ 224   1      
+ 225   1          /* Options */
+ 226   1          opt_len = 0;
+ 227   1      
+ 228   1          /* Option: (t=53,l=1) DHCP Message Type = DHCPREQUEST (3) */
+ 229   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t), "\x35\x01\x03", 3);
+ 230   1          opt_len += 3;
+ 231   1      
+ 232   1          /* Option: (t=54,l=4) Server Identifier = xxx.xxx.xxx.xxx */
+ 233   1          if (flag & DHCPC_FLAG_WITH_OPTION54)
+ 234   1          {
+ 235   2              memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len, "\x36\x04", 2);
+ 236   2              memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len + 2, dhcpc_slot.serverid.addr, IP_ADDR_LEN);
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 5   
+
+ 237   2              opt_len += (2 + IP_ADDR_LEN);
+ 238   2          }
+ 239   1      
+ 240   1          /* Option: (t=50,l=4) Requested IP Address = xxx.xxx.xxx.xxx */
+ 241   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len , "\x32\x04", 2);
+ 242   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len + 2, dhcpc_slot.clientid.addr, IP_ADDR_LEN);
+ 243   1          opt_len += (2 + IP_ADDR_LEN);
+ 244   1      
+ 245   1          /* Option: (t=55,l=2) Parameter Request List => request option 1 (Subnet Mask) and 3 (Router) */
+ 246   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len, "\x37\x02\x01\x03", 4);
+ 247   1          opt_len += 4;
+ 248   1      
+ 249   1          /* End Option */
+ 250   1          memcpy(&buf[0] + sizeof(dhcp_hdr_t) + opt_len, "\xff", 1);
+ 251   1          opt_len += 1;
+ 252   1      
+ 253   1          dhcp_hdr_dump(pDhcpHdr);
+ 254   1      
+ 255   1          if(flag & DHCPC_FLAG_SERVER_IP_BROADCAST)
+ 256   1          {
+ 257   2          dst_ipaddr.addr[0] = 255;
+ 258   2          dst_ipaddr.addr[1] = 255;
+ 259   2          dst_ipaddr.addr[2] = 255;
+ 260   2          dst_ipaddr.addr[3] = 255;
+ 261   2          }
+ 262   1          else
+ 263   1          {
+ 264   2              dst_ipaddr.addr[0] = dhcpc_slot.server_ip.addr[0];
+ 265   2              dst_ipaddr.addr[1] = dhcpc_slot.server_ip.addr[1];
+ 266   2              dst_ipaddr.addr[2] = dhcpc_slot.server_ip.addr[2];
+ 267   2              dst_ipaddr.addr[3] = dhcpc_slot.server_ip.addr[3];
+ 268   2          }
+ 269   1          if (LWPS_OK != lwps_sendto(dhcpc_slot.socket_id, (uint8 *)pDhcpHdr, sizeof(dhcp_hdr_t) + (opt_len), ds
+             -t_ipaddr, UDP_PORT_DHCP_SERVER))
+ 270   1          {
+ 271   2              OSAL_PRINTF("%s():%d lwps_sendto failed!\n", __FILE__, (uint16)__LINE__);
+ 272   2              return FAILED;
+ 273   2          }
+ 274   1      
+ 275   1          return SUCCESS;
+ 276   1      }
+ 277          
+ 278          // DHCP State Update: Manages DHCP state machine transitions and timeouts
+ 279          // Handles INITIALIZING, SELECTING, REQUESTING, BOUND, RENEWING, REBINDING states
+ 280          static int32 dhcpc_state_update(void)
+ 281          {
+ 282   1          if (!(dhcpc_slot.status & DHCPC_STATUS_RUNNING))
+ 283   1          {
+ 284   2              return SUCCESS;
+ 285   2          }
+ 286   1      
+ 287   1          /* Timeout? */
+ 288   1          if (dhcpc_slot.timeout == 0)
+ 289   1          {
+ 290   2              /* retry? */
+ 291   2              if (dhcpc_slot.retries > 0) {
+ 292   3                  dhcpc_slot.timeout = DHCPC_TIMEOUT;
+ 293   3                  //dhcpc_slot.retries -= 1;  /* always retry */
+ 294   3                  dhcpc_slot.status |= DHCPC_STATUS_RETRY;
+ 295   3              } else {
+ 296   3                  /* really timeout */
+ 297   3                  dhcpc_slot.status |= DHCPC_STATUS_TIMEOUT;
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 6   
+
+ 298   3                  //dhcpc_slot.status |= DHCPC_STATUS_FAILED;
+ 299   3                  dhcpc_slot.status |= DHCPC_STATUS_COMPLETED;
+ 300   3                  dhcpc_slot.status &= ~(DHCPC_STATUS_RUNNING);
+ 301   3                  return FAILED;
+ 302   3              }
+ 303   2          }
+ 304   1          if (dhcpc_slot.left_time == 0UL)
+ 305   1          {
+ 306   2              /* really timeout */
+ 307   2              dhcpc_slot.status |= DHCPC_STATUS_TIMEOUT;
+ 308   2              //dhcpc_slot.status |= DHCPC_STATUS_FAILED;
+ 309   2              dhcpc_slot.status |= DHCPC_STATUS_COMPLETED;
+ 310   2              dhcpc_slot.status &= ~(DHCPC_STATUS_RUNNING);
+ 311   2              return FAILED;
+ 312   2          }
+ 313   1      
+ 314   1          switch (dhcpc_slot.state)
+ 315   1          {
+ 316   2          case DHCPC_STATE_INITIALIZING:
+ 317   2              {
+ 318   3                  sal_sys_ip_set(INIT_IP_ADDR, INIT_IP_ADDR);
+ 319   3                  sal_sys_gateway_set(INIT_IP_ADDR);
+ 320   3      
+ 321   3                  dhcpc_slot.retries = DHCPC_RETRIES; /* always retry */
+ 322   3                  dhcpc_slot.transaction_id += 1UL;
+ 323   3                  dhcpc_slot.sec_uptime = 0UL;
+ 324   3                  dhcpc_slot.sec_elapsed = 0;
+ 325   3                  dhcpc_slot.offer_times = 0UL;
+ 326   3      
+ 327   3                  if (SUCCESS == dhcpc_send_dhcpdiscover())
+ 328   3                  {
+ 329   4                      dhcpc_slot.timeout = DHCPC_TIMEOUT;
+ 330   4                      dhcpc_slot.state = DHCPC_STATE_SELECTING;
+ 331   4                  }
+ 332   3              }
+ 333   2              break;
+ 334   2          
+ 335   2          case DHCPC_STATE_SELECTING:
+ 336   2              {
+ 337   3                  if (dhcpc_slot.status & DHCPC_STATUS_RETRY)
+ 338   3                  {
+ 339   4                      dhcpc_slot.state = DHCPC_STATE_INITIALIZING;
+ 340   4                  }
+ 341   3      
+ 342   3                  if (dhcpc_slot.offer_times > 0UL)
+ 343   3                  {
+ 344   4                      if (SUCCESS == dhcpc_send_dhcprequest(DHCPC_FLAG_SERVER_IP_BROADCAST | DHCPC_FLAG_WITH_OPT
+             -ION54))
+*** WARNING C259 IN LINE 344 OF ..\..\common\src\app\dhcpc\dhcpc.c: 'parameter 1': different enumeration types
+ 345   4                      {
+ 346   5                          dhcpc_slot.state = DHCPC_STATE_REQUESTING;
+ 347   5                          dhcpc_slot.timeout = DHCPC_TIMEOUT;
+ 348   5                      }
+ 349   4                  }
+ 350   3              }
+ 351   2              break;
+ 352   2          
+ 353   2          case DHCPC_STATE_REQUESTING:
+ 354   2              {
+ 355   3                  if (dhcpc_slot.status & DHCPC_STATUS_RETRY)
+ 356   3                  {
+ 357   4                      dhcpc_slot.state = DHCPC_STATE_SELECTING;
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 7   
+
+ 358   4                  }
+ 359   3              }
+ 360   2              break;
+ 361   2      
+ 362   2          case DHCPC_STATE_BOUND:
+ 363   2              {
+ 364   3                  /* disable timeout to keep-alive */
+ 365   3                  dhcpc_slot.timeout = -1;
+ 366   3      
+ 367   3                  /* Lease time 50% expired */
+ 368   3                  if (dhcpc_slot.sec_uptime >= (dhcpc_slot.ipaddr_lease_time >> 1))
+ 369   3                  {
+ 370   4                      dhcpc_slot.transaction_id += 1UL;
+ 371   4                      dhcpc_slot.sec_elapsed = 0;
+ 372   4      
+ 373   4                      if (SUCCESS == dhcpc_send_dhcprequest(DHCPC_FLAG_NONE))
+ 374   4                      {
+ 375   5                          dhcpc_slot.state = DHCPC_STATE_RENEWING;
+ 376   5                      }
+ 377   4                  }
+ 378   3      
+ 379   3                  /* Update IP address */
+ 380   3                  if (dhcpc_slot.status & (DHCPC_STATUS_BOUND | DHCPC_STATUS_RENEW | DHCPC_STATUS_REBIND))
+ 381   3                  {
+ 382   4                      sal_ipaddr_t ip_addr;
+ 383   4                      sal_ipaddr_t ip_netmask;
+ 384   4                      sal_ipaddr_t ip_gateway;                
+ 385   4                      
+ 386   4                      IPARR_TO_IPVAR(ip_addr, dhcpc_slot.clientid.addr);
+ 387   4                      IPARR_TO_IPVAR(ip_netmask, dhcpc_slot.netmask.addr);                
+ 388   4                      sal_sys_ip_set(ip_addr, ip_netmask);
+ 389   4                      IPARR_TO_IPVAR(ip_gateway, dhcpc_slot.gateway.addr);
+ 390   4                      sal_sys_gateway_set(ip_gateway);
+ 391   4      
+ 392   4                      dhcpc_slot.status &= ~(DHCPC_STATUS_BOUND | DHCPC_STATUS_RENEW | DHCPC_STATUS_REBIND);
+ 393   4                  }
+ 394   3              }
+ 395   2              break;
+ 396   2      
+ 397   2          case DHCPC_STATE_RENEWING:
+ 398   2              {
+ 399   3                  /* Lease time 87.5% expired */
+ 400   3                  if (dhcpc_slot.sec_uptime >= ((dhcpc_slot.ipaddr_lease_time * 7) >> 3))
+ 401   3                  {
+ 402   4                      dhcpc_slot.transaction_id += 1UL;
+ 403   4                      dhcpc_slot.sec_elapsed = 0;
+ 404   4      
+ 405   4                      if (SUCCESS == dhcpc_send_dhcprequest(DHCPC_FLAG_SERVER_IP_BROADCAST))
+ 406   4                      {
+ 407   5                          dhcpc_slot.state = DHCPC_STATE_REBINDING;
+ 408   5                      }
+ 409   4                  }
+ 410   3              }
+ 411   2              break;
+ 412   2      
+ 413   2          case DHCPC_STATE_REBINDING:
+ 414   2              {
+ 415   3                  /* Lease time expired */
+ 416   3                  if (dhcpc_slot.sec_uptime >= dhcpc_slot.ipaddr_lease_time)
+ 417   3                  {
+ 418   4                      dhcpc_slot.state = DHCPC_STATE_INITIALIZING;
+ 419   4                      dhcpc_slot.left_time = dhcpc_slot.max_time;
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 8   
+
+ 420   4                  }
+ 421   3              }
+ 422   2              break;
+ 423   2      
+ 424   2          default:
+ 425   2              break;
+ 426   2          }
+ 427   1      
+ 428   1          /* update status */
+ 429   1          dhcpc_slot.status &= ~(DHCPC_STATUS_RETRY);
+ 430   1      
+ 431   1          return SUCCESS;
+ 432   1      }
+ 433          
+ 434          // LWPS DHCP Receive From: Processes incoming DHCP responses from server
+ 435          // Handles DHCPOFFER, DHCPACK messages and updates client state accordingly
+ 436          void lwps_dhcpc_recvfrom(int32 socketId, uint8 *pData, uint32 length, ip_addr_t ip, uint16 port) reentrant
+ 437          {
+ 438   1          //tftpc_session_t *pSlot = (tftpc_session_t *)lwps_socket_getCookie(socketId);
+ 439   1          dhcp_hdr_t *pDhcpHdr = (dhcp_hdr_t *)pData;
+ 440   1          uint8 *pBuf;
+ 441   1          uint8 type, len;
+ 442   1          //int32 i;
+ 443   1          uint8 msgtype = 0;
+ 444   1      
+ 445   1          DBG_PRINT(2, "%s():%d socketId = %d\n", __FILE__, (uint16)__LINE__, socketId);
+ 446   1          DBG_PRINT(2, "%s():%d remove_host = %d.%d.%d.%d:%d\n", __FILE__, (uint16)__LINE__, 
+ 447   1              ip.addr[0], ip.addr[1], ip.addr[2], ip.addr[3], port);
+ 448   1      
+ 449   1          memcpy(dhcpc_slot.server_ip.addr, &ip, IP_ADDR_LEN);
+ 450   1      
+ 451   1      //    DBG_PRINT(2, "%s():%d lwps_socket_getCookie(socketId = %d) = pSlot = %p\n", __FILE__, (uint16)__LINE
+             -__, socketId, pSlot);
+ 452   1      
+ 453   1          DBG_PRINT(2, "%s():%d DHCP Rx dump\n", __FILE__, (uint16)__LINE__);
+ 454   1          dhcp_hdr_dump(pDhcpHdr);
+ 455   1      
+ 456   1          /* Parse the Header */
+ 457   1          if ((pDhcpHdr->op != DHCP_OP_BOOTREPLY) ||
+ 458   1              (pDhcpHdr->xid != dhcpc_slot.transaction_id))
+ 459   1          {
+ 460   2              OSAL_PRINTF("%s():%d DHCP OP != DHCP_OP_BOOTREPLY\n", __FILE__, (uint16)__LINE__);
+ 461   2              return;
+ 462   2          }
+ 463   1          memcpy(dhcpc_slot.clientid.addr, pDhcpHdr->yiaddr, IP_ADDR_LEN);
+ 464   1      
+ 465   1          /* Parse the Options */
+ 466   1          pBuf = (uint8 *)&pDhcpHdr->op + sizeof(dhcp_hdr_t);
+ 467   1          do {
+ 468   2              type = *pBuf;
+ 469   2              if (type == DHCP_OPT_END) {
+ 470   3                  len = 0;
+ 471   3              } else {
+ 472   3                  len = *(pBuf + 1);
+ 473   3              }
+ 474   2              DBG_PRINT(2, "DHCP Option: (t=%03d, l=%03d) \n", type, len);
+ 475   2              switch (type)
+ 476   2              {
+ 477   3              case DHCP_OPT_SUBNETMASK:
+ 478   3                  if ((len % IP_ADDR_LEN) == 0)
+ 479   3                  {
+ 480   4                      memcpy(dhcpc_slot.netmask.addr, (pBuf + 2), IP_ADDR_LEN);
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 9   
+
+ 481   4                  }
+ 482   3                  break;
+ 483   3      
+ 484   3              case DHCP_OPT_ROUTER:
+ 485   3                  if ((len % IP_ADDR_LEN) == 0)
+ 486   3                  {
+ 487   4                      memcpy(dhcpc_slot.gateway.addr, (pBuf + 2), IP_ADDR_LEN);
+ 488   4                  }
+ 489   3                  break;
+ 490   3      
+ 491   3              case DHCP_OPT_IPADDRLEASETIME:
+ 492   3                  if (len == sizeof(uint32))
+ 493   3                  {
+ 494   4                      memcpy(&dhcpc_slot.ipaddr_lease_time, (pBuf + 2), sizeof(uint32));
+ 495   4                  }
+ 496   3                  break;
+ 497   3      
+ 498   3              case DHCP_OPT_MESSAGETYPE:
+ 499   3                  if (len == sizeof(uint8))
+ 500   3                  {
+ 501   4                      memcpy(&msgtype, (pBuf + 2), sizeof(uint8));
+ 502   4                  }
+ 503   3                  break;
+ 504   3      
+ 505   3              case DHCP_OPT_SERVERID:
+ 506   3                  if ((len % IP_ADDR_LEN) == 0)
+ 507   3                  {
+ 508   4                      memcpy(dhcpc_slot.serverid.addr, (pBuf + 2), IP_ADDR_LEN);
+ 509   4                  }
+ 510   3                  break;
+ 511   3      
+ 512   3              default:
+ 513   3                  break;
+ 514   3              }
+ 515   2      
+ 516   2              pBuf += (2 + len);
+ 517   2          } while ((type != DHCP_OPT_END) && (pBuf <= (pData + length)));
+ 518   1      
+ 519   1          /* Process */
+ 520   1          if (dhcpc_slot.status & DHCPC_STATUS_RUNNING)
+ 521   1          {
+ 522   2              switch (dhcpc_slot.state)
+ 523   2              {
+ 524   3              case DHCPC_STATE_SELECTING:
+ 525   3                  if (msgtype == DHCP_MSGTYPE_OFFER)
+ 526   3                  {
+ 527   4                      dhcpc_slot.offer_times += 1UL;
+ 528   4                  }
+ 529   3                  break;
+ 530   3      
+ 531   3              case DHCPC_STATE_REQUESTING:
+ 532   3                  if (msgtype == DHCP_MSGTYPE_ACK)
+ 533   3                  {
+ 534   4                      OSAL_PRINTF("DHCPC is updated. (lease time = %lu sec)\n", dhcpc_slot.ipaddr_lease_time);
+ 535   4                      dhcpc_slot.status |= DHCPC_STATUS_BOUND;
+ 536   4                      dhcpc_slot.sec_uptime = 0UL;
+ 537   4                      dhcpc_slot.sec_elapsed = 0;
+ 538   4                      dhcpc_slot.state = DHCPC_STATE_BOUND;
+ 539   4                  }
+ 540   3                  break;
+ 541   3      
+ 542   3              case DHCPC_STATE_RENEWING:
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 10  
+
+ 543   3                  if (msgtype == DHCP_MSGTYPE_ACK)
+ 544   3                  {
+ 545   4                      OSAL_PRINTF("DHCPC is renewed.\n");
+ 546   4                      dhcpc_slot.status |= DHCPC_STATUS_RENEW;
+ 547   4                      dhcpc_slot.sec_uptime = 0UL;
+ 548   4                      dhcpc_slot.sec_elapsed = 0;
+ 549   4                      dhcpc_slot.state = DHCPC_STATE_BOUND;
+ 550   4                  }
+ 551   3                  break;
+ 552   3      
+ 553   3              case DHCPC_STATE_REBINDING:
+ 554   3                  if (msgtype == DHCP_MSGTYPE_ACK)
+ 555   3                  {
+ 556   4                      OSAL_PRINTF("DHCPC is rebinded.\n");
+ 557   4                      dhcpc_slot.status |= DHCPC_STATUS_REBIND;
+ 558   4                      dhcpc_slot.sec_uptime = 0UL;
+ 559   4                      dhcpc_slot.sec_elapsed = 0;
+ 560   4                      dhcpc_slot.state = DHCPC_STATE_BOUND;
+ 561   4                  }
+ 562   3                  break;
+ 563   3      
+ 564   3              default:
+ 565   3                  break;
+ 566   3              }
+ 567   2          }
+ 568   1      
+ 569   1      }
+ 570          
+ 571          // DHCP Client Init: Initializes DHCP client data structures
+ 572          // Sets default values for transaction ID, timeout, and default IP configuration
+ 573          int32 dhcpc_init(void)
+ 574          {
+ 575   1          DBG_PRINT(1, "%s():%d\n", __FILE__, (uint16)__LINE__);
+ 576   1      
+ 577   1          dhcpc_slot.socket_id = -1;
+ 578   1          dhcpc_slot.state = DHCPC_STATE_NONE;
+ 579   1          dhcpc_slot.transaction_id = 0x0c265401;
+ 580   1          dhcpc_slot.max_time = DHCPC_MAXTIME;
+ 581   1          dhcpc_slot.def_ipaddr = DFLT_SYS_IP_IP;
+ 582   1          dhcpc_slot.def_netmask = DFLT_SYS_IP_NETMASK;
+ 583   1          dhcpc_slot.def_gateway = DFLT_SYS_IP_GATEWAY;
+ 584   1      
+ 585   1          return SUCCESS;
+ 586   1      }
+ 587          
+ 588          // DHCP Client Routine: Main processing loop for DHCP client
+ 589          // Creates socket, binds to DHCP client port, and executes state machine
+ 590          int32 dhcpc_routine(void)
+ 591          {
+ 592   1          lwps_handler_t dhcpcHandler;
+ 593   1          ip_addr_t empty_ip;
+ 594   1      
+ 595   1          DBG_PRINT(3, "%s():%d\n", __FILE__, (uint16)__LINE__);
+ 596   1      
+ 597   1          if (dhcpc_slot.status & DHCPC_STATUS_RUNNING)
+ 598   1          {
+ 599   2              if (dhcpc_slot.socket_id < 0)
+ 600   2              {
+ 601   3                  /* Alloc a socket for DHCP client */
+ 602   3                  dhcpcHandler.event_connect    = NULL;
+ 603   3                  dhcpcHandler.event_disconnect = NULL;
+ 604   3                  dhcpcHandler.event_recvfrom   = lwps_dhcpc_recvfrom;
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 11  
+
+ 605   3      
+ 606   3                  dhcpc_slot.socket_id = lwps_socket(LWPS_L3TYPE_IP, LWPS_L4TYPE_UDP, dhcpcHandler);
+ 607   3                  if (dhcpc_slot.socket_id < 0)
+ 608   3                  {
+ 609   4                      OSAL_PRINTF("DHCPC: Error - alloc socket failed!\n");
+ 610   4                      return FAILED;
+ 611   4                  }
+ 612   3      
+ 613   3                  empty_ip.addr[0] = 0;
+ 614   3                  empty_ip.addr[1] = 0;
+ 615   3                  empty_ip.addr[2] = 0;
+ 616   3                  empty_ip.addr[3] = 0;
+ 617   3                  if (LWPS_OK != lwps_bind(dhcpc_slot.socket_id, empty_ip, UDP_PORT_DHCP_CLIENT))
+ 618   3                  {
+ 619   4                      OSAL_PRINTF("DHCPC: Error - bind socket failed!\n");
+ 620   4                      return FAILED;
+ 621   4                  }
+ 622   3      
+ 623   3              }
+ 624   2          }
+ 625   1          else
+ 626   1          {
+ 627   2              /* release socket */
+ 628   2              if (dhcpc_slot.socket_id >= 0)
+ 629   2              {
+ 630   3                  lwps_close(dhcpc_slot.socket_id);
+ 631   3                  dhcpc_slot.socket_id = -1;
+ 632   3              }
+ 633   2          }
+ 634   1      
+ 635   1          /* failed handling */
+ 636   1          if (SUCCESS != dhcpc_state_update())
+ 637   1          {
+ 638   2              DBG_PRINT(0, "%s():%d using the default IP address\n", __FILE__, (uint16)__LINE__);
+ 639   2              sal_sys_ip_set(dhcpc_slot.def_ipaddr, dhcpc_slot.def_netmask);
+ 640   2              sal_sys_gateway_set(dhcpc_slot.def_gateway);
+ 641   2           }
+ 642   1      
+ 643   1          return SUCCESS;
+ 644   1      }
+ 645          
+ 646          // DHCP Client Timer: Periodic timer for DHCP client operations
+ 647          // Updates elapsed time and manages timeout counters for DHCP state machine
+ 648          void dhcpc_timer(uint32 milli_second)
+ 649          {
+ 650   1          static uint32 timer_cnt_1sec = 0;  /* unit: millisecond */
+ 651   1      
+ 652   1          DBG_PRINT(3, "%s():%d milli_second = %d\n", __FILE__, (uint16)__LINE__, milli_second);
+ 653   1      
+ 654   1          /* update counter */
+ 655   1          timer_cnt_1sec += milli_second;
+ 656   1      
+ 657   1          /* one second */
+ 658   1          if (timer_cnt_1sec >= 1000UL) {
+ 659   2              timer_cnt_1sec -= 1000UL;
+ 660   2      
+ 661   2              if (dhcpc_slot.status & DHCPC_STATUS_RUNNING)
+ 662   2              {
+ 663   3                  dhcpc_slot.sec_uptime += 1UL;
+ 664   3                  dhcpc_slot.sec_elapsed += 1;
+ 665   3                  DBG_PRINT(3, "dhcpc_slot.ipaddr_lease_time = %d, dhcpc_slot.sec_elapsed = %lu\n", \
+ 666   3                      dhcpc_slot.ipaddr_lease_time, dhcpc_slot.sec_elapsed);
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 12  
+
+ 667   3      
+ 668   3                  if (dhcpc_slot.timeout > 0)
+ 669   3                  {
+ 670   4                      dhcpc_slot.timeout -= 1;
+ 671   4                      dhcpc_slot.left_time -= 1UL;
+ 672   4                      DBG_PRINT(2, "dhcpc[0] timeout = %d\n", dhcpc_slot.timeout);
+ 673   4                  }
+ 674   3              }
+ 675   2          }
+ 676   1      }
+ 677          
+ 678          // DHCP Client Enable: Enables DHCP client functionality
+ 679          // Starts DHCP process by setting initial state and running flag
+ 680          static int32 dhcpc_enable(void)
+ 681          {
+ 682   1          dhcpc_slot.timeout = DHCPC_TIMEOUT;
+ 683   1          dhcpc_slot.retries = DHCPC_RETRIES;
+ 684   1          dhcpc_slot.state = DHCPC_STATE_INITIALIZING;
+ 685   1          dhcpc_slot.status |= DHCPC_STATUS_RUNNING;
+ 686   1          dhcpc_slot.left_time = dhcpc_slot.max_time;
+ 687   1      
+ 688   1          return SUCCESS;
+ 689   1      }
+ 690          
+ 691          // DHCP Client Disable: Disables DHCP client functionality
+ 692          // Stops DHCP process by clearing running flag
+ 693          static int32 dhcpc_disable(void)
+ 694          {
+ 695   1          dhcpc_slot.status &= ~(DHCPC_STATUS_RUNNING);
+ 696   1      
+ 697   1          return SUCCESS;
+ 698   1      }
+ 699          
+ 700          // DHCP Client Set Enable: Enables or disables DHCP client
+ 701          // Public API to start or stop DHCP client operation
+ 702          int32 dhcpc_setEnable(bool bEnable)
+ 703          {
+ 704   1          if (ENABLE == bEnable)
+ 705   1          {
+ 706   2              OSAL_PRINTF("DHCPC is enabled.\n");
+ 707   2              dhcpc_enable();
+ 708   2          }
+ 709   1          else
+ 710   1          {
+ 711   2              OSAL_PRINTF("DHCPC is disabled.\n");
+ 712   2              dhcpc_disable();
+ 713   2          }
+ 714   1      
+ 715   1          return SUCCESS;
+ 716   1      }
+ 717          #if 0//NOT used
+              // DHCP Client Set Timeout: Sets timeout and default IP configuration
+              // Configures DHCP client timeout and fallback IP settings
+              int32 dhcpc_setTimeout(uint32 timeout, sal_ipaddr_t ipaddr, sal_ipaddr_t netmask, sal_ipaddr_t gateway)
+              {
+                  dhcpc_slot.max_time = timeout;
+                  dhcpc_slot.def_ipaddr = ipaddr;
+                  dhcpc_slot.def_netmask = netmask;
+                  dhcpc_slot.def_gateway = gateway;
+                  
+                  return SUCCESS;
+              }
+C51 COMPILER V9.60.0.0   DHCPC                                                             11/02/2026 17:57:29 PAGE 13  
+
+              #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   3633    ----
+   CONSTANT SIZE    =   1161    ----
+   XDATA SIZE       =     84     832
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   1161    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

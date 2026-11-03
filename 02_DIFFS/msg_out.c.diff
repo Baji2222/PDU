@@ -1,0 +1,11 @@
+--- /home/claude/orig/common/src/app/snmp/msg_out.c	2026-11-02 11:29:21.450394946 +0000
++++ common/src/app/snmp/msg_out.c	2026-11-02 11:29:51.590658855 +0000
+@@ -60,7 +60,7 @@
+ 
+ #define INVALID_U8_VALUE 255
+ 
+-extern uint8 Get_Response[75];
++extern uint8 Get_Response[200];   /* FIX: must match web_user.c */
+ u32_t linkChangeTime[COMBO_PORT_NUM] = {0, };
+ u8_t snmp_authfail_trap_enable = TRUE;
+ 

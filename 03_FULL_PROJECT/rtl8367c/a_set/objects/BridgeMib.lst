@@ -1,0 +1,326 @@
+C51 COMPILER V9.60.0.0   BRIDGEMIB                                                         11/02/2026 17:57:43 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE BRIDGEMIB
+OBJECT MODULE PLACED IN .\objects\BridgeMib.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\..\common\src\app\snmp\mib\BridgeMib.c LARGE OMF2 OPTIMIZE(8,SIZE) BR
+                    -OWSE INTVECTOR(0X1000) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\comm
+                    -on\sal;..\..\common\include\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPOR
+                    -T,RTK_API_LWPS,SAL_REPLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPA
+                    -TIBLE_82l,LWS_8G,SCAN_LED_MODE) VARBANKING DEBUG PRINT(.\objects\BridgeMib.lst) TABS(2) OBJECT(.\objects\BridgeMib.obj)
+
+line level    source
+
+   1          /*
+   2          * Copyright (c)                  Realtek Semiconductor Corporation, 2008  
+   3          * All rights reserved.
+   4          * 
+   5          * Abstract : RTL8213M Media Converter,  rfc2863
+   6          * 
+   7          *$Id: rfc2863.c,v 1.1 2008/06/20 08:53:35 caroline_liu Exp $
+   8          */
+   9          #pragma STRING(far)
+  10          #include "local/config.h"
+  11          #include "snmp/mib/BridgeMib.h"
+  12          #include "snmp/mib/mib.h"
+  13          #include "snmp/snmp_debug.h"
+  14          
+  15          #if !defined(SAL_REPLACE)
+              #include <local/rtk_sal_mib.h>
+              #else
+  18          #include <snmp/mib_glue.h>
+*** WARNING C322 IN LINE 165 OF ..\..\common\include\snmp/mib_glue.h: unknown identifier
+  19          #endif
+  20          
+  21          #if LWPS_SNMP
+  22          
+  23          #if LWPS_SNMP_BRIDGE_MIB
+  24          #if 0
+              /* ifMIB.bridgeMIBObjects.bridgeXTable.bridgeXEntry .1.3.6.1.2.1.17.4.4.1 */
+              struct mib_list_rootnode xdata bridgeXTable_root = {
+                &bridgeXTable_get_object_def,
+                &bridgeXTable_get_value,
+                &bridgeXTable_set_test,
+                &bridgeXTable_set_value,
+                MIB_NODE_LR,
+                0,
+                NULL,
+                NULL,
+                0
+              };
+              #endif
+  38          /* ifMIB.bridgeMIBObjects.bridgeXTable.bridgeXEntry .1.3.6.1.2.1.17.4.4.1 */
+  39          struct mib_list_rootnode  xdata bridgeXTable_root = {
+  40            &bridgeXTable_get_object_def,
+  41            &bridgeXTable_get_value,
+  42            &noleafs_set_test,
+  43            &noleafs_set_value,
+  44            MIB_NODE_LR,
+  45            0,
+  46            NULL,
+  47            NULL,
+  48            0
+  49          };
+  50          
+C51 COMPILER V9.60.0.0   BRIDGEMIB                                                         11/02/2026 17:57:43 PAGE 2   
+
+  51          
+  52          far const s32_t bridgeXentry_ids[5] = {
+  53            1,2, 3, 4, 5
+  54          };
+  55          far struct mib_node *const bridgeXentry_nodes[5] = {
+  56            (struct mib_node *) &bridgeXTable_root,
+  57            (struct mib_node *) &bridgeXTable_root,
+  58            (struct mib_node *) &bridgeXTable_root,
+  59            (struct mib_node *) &bridgeXTable_root,
+  60            (struct mib_node *) &bridgeXTable_root
+  61          };
+  62          far const struct mib_array_node bridgeXentry = {
+  63            &noleafs_get_object_def,
+  64            &noleafs_get_value,
+  65            &noleafs_set_test,
+  66            &noleafs_set_value,
+  67            MIB_NODE_AR,
+  68            5,
+  69            bridgeXentry_ids,
+  70            bridgeXentry_nodes
+  71          };
+  72          
+  73          /* bridgeMIB.bridgeMIBObjects.bridgeXTable .1.3.6.1.2.1.17.4.4 */
+  74          far const s32_t bridgeXTable_ids[1] =  {1};
+  75          far struct mib_node *const bridgeXTable_nodes[1] = {
+  76            (struct mib_node * const) &bridgeXentry
+  77          };
+  78          struct mib_ram_array_node xdata bridgeXTable = {
+  79            &noleafs_get_object_def,
+  80            &noleafs_get_value,
+  81            &noleafs_set_test,
+  82            &noleafs_set_value,
+  83            MIB_NODE_RA,
+  84            1,
+  85            bridgeXTable_ids,
+  86            bridgeXTable_nodes
+  87          };
+  88          
+  89          
+  90          /* bridgeMIB.bridgeMIBObjects .1.3.6.1.2.1.17.4 */
+  91          /* 6 subitems for RFC2863, only support 1 */
+  92          far const s32_t bridgeMIBObjects_ids[1] = { 4};
+  93          far struct mib_node *const bridgeMIBObjects_nodes[1] = {
+  94            (struct mib_node *) &bridgeXTable,
+  95          };
+  96          
+  97          
+  98          far const struct mib_array_node bridgeMIBObjects = {
+  99            &noleafs_get_object_def,
+ 100            &noleafs_get_value,
+ 101            &noleafs_set_test,
+ 102            &noleafs_set_value,
+ 103            MIB_NODE_AR,
+ 104            1, /*4 for RFC2863 */
+ 105            bridgeMIBObjects_ids,
+ 106            bridgeMIBObjects_nodes
+ 107          };
+ 108          
+ 109          
+ 110          /* bridgeMIB .1.3.6.1.2.1.17 */
+ 111          far const s32_t bridgeMIB_ids[1] = { 4 };
+ 112          far struct mib_node *const bridgeMIB_nodes[1] = {
+C51 COMPILER V9.60.0.0   BRIDGEMIB                                                         11/02/2026 17:57:43 PAGE 3   
+
+ 113            (struct mib_node *) &bridgeMIBObjects
+ 114          };
+ 115          struct mib_array_node bridgeMIB = {
+ 116            &noleafs_get_object_def,
+ 117            &noleafs_get_value,
+ 118            &noleafs_set_test,
+ 119            &noleafs_set_value,
+ 120            MIB_NODE_AR,
+ 121            1,
+ 122            bridgeMIB_ids,
+ 123            bridgeMIB_nodes
+ 124          };
+ 125          
+ 126          /*
+ 127           * Function: snmp_inc_bridgeXTable
+ 128           * -------------------------------
+ 129           * Inserts a node into the bridgeXTable list for SNMP traversal.
+ 130           * Adds one entry with count+1 as object ID.
+ 131           * Enables getnext traversal on the bridgeXTable.
+ 132           */
+ 133          void snmp_inc_bridgeXTable(void)
+ 134          {
+ 135   1          struct mib_list_node *bridge_node = NULL;
+ 136   1        
+ 137   1         snmp_mib_node_insert(&bridgeXTable_root, bridgeXTable_root.count + 1, &bridge_node) ;
+ 138   1          /* enable getnext traversal on filled table */
+ 139   1          bridgeXTable.maxlength = 1;
+ 140   1      
+ 141   1      }
+ 142          
+ 143          /*
+ 144           * Function: bridgeXTable_get_object_def
+ 145           * -------------------------------------
+ 146           * Defines bridgeXTable entry objects for SNMP MIB.
+ 147           * Handles bridgeXPort, bridgeXPortMtu, and bridgeXPort counters.
+ 148           * Sets ASN.1 types and access rights for each OID.
+ 149           */
+ 150          void bridgeXTable_get_object_def(u8_t ident_len, s32_t * ident, struct obj_def *od) reentrant
+ 151          {
+ 152   1             u8_t xdata id;
+ 153   1        u8_t xdata index;
+ 154   1      
+ 155   1        DBG_SNMP_PRINTF(("[%s][%d]\n", __FILE__, (uint16)__LINE__));
+ 156   1      
+ 157   1        index = od->id_inst_ptr[1];
+ 158   1        
+ 159   1          /* return to object name, adding index depth (1) */
+ 160   1          ident_len += 1;
+ 161   1          ident -= 1;
+ 162   1          if (ident_len == 2)
+ 163   1          {
+ 164   2              od->id_inst_len = ident_len;
+ 165   2              od->id_inst_ptr = ident;
+ 166   2      
+ 167   2              id = ident[0];
+ 168   2      
+ 169   2              DBG_SNMP_PRINTF(("bridgeXTable_get_object_def %" U16_F "\n", (u16_t) id));
+ 170   2              switch (id)
+ 171   2              {
+ 172   3              case 1:
+ 173   3              case 2:
+ 174   3                  od->instance = MIB_OBJECT_TAB;
+C51 COMPILER V9.60.0.0   BRIDGEMIB                                                         11/02/2026 17:57:43 PAGE 4   
+
+ 175   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 176   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_INTEG);
+ 177   3                  od->v_len = sizeof(u32_t);
+ 178   3                  break;
+ 179   3              case 3:
+ 180   3              case 4:
+ 181   3              case 5:
+ 182   3                  od->instance = MIB_OBJECT_TAB;
+ 183   3                  od->access = MIB_OBJECT_READ_ONLY;
+ 184   3                  od->asn_type = (SNMP_ASN1_APPLIC | SNMP_ASN1_PRIMIT | SNMP_ASN1_COUNTER);
+ 185   3                  od->v_len = sizeof(u32_t);
+ 186   3                  break;
+ 187   3             
+ 188   3      
+ 189   3              default:
+ 190   3                  DBG_SNMP_PRINTF(("bridgeXTable_get_object_def: no such object\n"));
+ 191   3                  od->instance = MIB_OBJECT_NONE;
+ 192   3                  break;
+ 193   3      
+ 194   3      
+ 195   3              }
+ 196   2      
+ 197   2          }
+ 198   1          else
+ 199   1          {
+ 200   2              DBG_SNMP_PRINTF(("bridgeXTable_get_object_def: no scalar\n"));
+ 201   2              od->instance = MIB_OBJECT_NONE;
+ 202   2          }
+ 203   1      }
+ 204          
+ 205          /*
+ 206           * Function: bridgeXTable_get_value
+ 207           * --------------------------------
+ 208           * Retrieves bridgeXTable entry values for each interface.
+ 209           * Returns bridgeXPort (index), bridgeXPortMtu, and bridgeXPort counters.
+ 210           * Uses GET_DOT1D macros to retrieve bridge statistics.
+ 211           */
+ 212          void bridgeXTable_get_value(struct obj_def *od, u16_t len, void *value) reentrant
+ 213          {
+ 214   1          u8_t xdata index;
+ 215   1          u8_t xdata id;
+ 216   1      
+ 217   1          /*kill keil warning */
+ 218   1          if (len)
+ 219   1          {
+ 220   2          }
+ 221   1      
+ 222   1          index = od->id_inst_ptr[1];
+ 223   1          id = od->id_inst_ptr[0];
+ 224   1      
+ 225   1          switch (id)
+ 226   1          {
+ 227   2          case 1:
+ 228   2              {
+ 229   3                 s32_t *xdata int_ptr = value;
+ 230   3            *int_ptr = index;
+ 231   3              }
+ 232   2              break;
+ 233   2          case 2:
+ 234   2             {
+ 235   3                  u32_t *xdata uint_ptr = value;
+ 236   3                  *uint_ptr = P_BUFFER_SIZE;
+C51 COMPILER V9.60.0.0   BRIDGEMIB                                                         11/02/2026 17:57:43 PAGE 5   
+
+ 237   3                  break;
+ 238   3              }
+ 239   2          case 3:
+ 240   2              {
+ 241   3                  /*Dot1dTpHCPortInFrames */
+ 242   3                  u32_t *xdata uint_ptr = value;
+ 243   3                  GET_DOT1D_TPHCPORT_IN_FRAMES(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 244   3      
+ 245   3              }
+ 246   2              break;
+ 247   2      
+ 248   2      
+ 249   2          case 4:
+ 250   2              {
+ 251   3                 u32_t *xdata uint_ptr = value;
+ 252   3                  /*Dot1dTpHCPortOutFrames */
+ 253   3             GET_DOT1D_TPHCPORT_OUT_FRAMES(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 254   3              }
+ 255   2              break;
+ 256   2      
+ 257   2          case 5:
+ 258   2              {
+ 259   3                  u32_t *xdata uint_ptr = value;
+ 260   3                  /*Dot1dTpHCPortInDiscards */
+ 261   3            GET_DOT1D_TPHCPORT_IN_DISCARDS(((u8_t)index-1), ((u8_t)sizeof(u32_t)), ((u8_t*)uint_ptr));
+ 262   3              }
+ 263   2              break;
+ 264   2      
+ 265   2          }
+ 266   1      
+ 267   1      
+ 268   1      }
+ 269          #if 0
+              u8_t bridgeXTable_set_test(struct obj_def *od, u16_t len, void *value) reentrant
+              {
+              
+                  return 1;
+              }
+              
+              
+              void bridgeXTable_set_value(struct obj_def *od, u16_t len, void *value) reentrant
+              {
+                return;
+              }
+              #endif
+ 282          #endif /* end of LWPS_SNMP_BRIDGE_MIB */
+ 283          
+ 284          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    634    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =     65       3
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     98    ----
+C51 COMPILER V9.60.0.0   BRIDGEMIB                                                         11/02/2026 17:57:43 PAGE 6   
+
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  1 WARNING(S),  0 ERROR(S)

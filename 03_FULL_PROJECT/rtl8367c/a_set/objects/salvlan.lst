@@ -1,0 +1,1050 @@
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE SALVLAN
+OBJECT MODULE PLACED IN .\objects\salvlan.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\sal\salvlan.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\salvlan.lst) TABS(2) OBJECT(.\objects\salvlan.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          
+   3          #include <string.h>
+   4          #include <stdio.h>
+   5          
+   6          #include <salvlan.h>        
+   7          #include <salflash.h>
+   8          #include <saltrunk.h>
+   9          #include <salerror.h>
+  10          #include <salportmask.h>
+  11          #include <rtl8367c_asicdrv_vlan.h>
+  12          #include <vlan.h>
+  13          
+  14          
+  15          #if SAL_ENABLE
+  16          #if 0//Not used
+              void sal_vlan_dbg_dump(void)
+              {
+                  sal_flash_vlanEntry_t   entry;
+                  sal_flash_vlanDb_t      vlanDb;
+                int16 i;
+              
+                  printf("Dump VLAN:\n");
+                  printf("Sidx is the member sortedSlot in the sorted-index-database\n");
+                  printf("The value of Sidx means sorted entry number. \n");
+                  printf("SVid is sorted VID in a direct view\n");
+                  printf("      Data Base                 Static Entries      \n");
+                  printf("Entry SIdx Vid(DB) SVid Valid Vid  Member tag      Name\n");
+                sal_flash_vlan_db_get(&vlanDb);
+              
+                for (i = 0; i < SAL_MAX_STATIC_VLAN; ++i) {
+                    printf("%02d   | %02d | %04d | %04d |", \
+                        (int16)i, (int16)vlanDb.sortedSlot[i], (int16)vlanDb.slotVid[i], \
+                          vlanDb.sortedSlot[i] < 0 ? (int16)-1 : (int16)vlanDb.slotVid[vlanDb.sortedSlot[i]]);
+              
+                      sal_flash_vlan_sttcEntry_get(i, &entry);
+                      printf(" %1d | %04d | %02lx | %02lx | %s\n", \
+                         (int16)entry.valid, entry.vlan_id, entry.p_portMask.bits[0], \
+                        entry.p_tagMask.bits[0], entry.name);
+                }
+              }
+              #endif
+  43          
+  44          // Sal VLAN Entry Insert: Inserts a VLAN entry into hardware with member and tag port masks
+  45          // Converts logical masks to physical and configures VLAN in ASIC
+  46          int32
+  47          sal_vlan_entry_insert (
+  48            sal_vlan_t vlan_id, 
+  49            sal_lPortmask_t *pPortMask, 
+  50            sal_lPortmask_t *pTagMask
+  51            )
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 2   
+
+  52          {
+  53   1          int32           ret;
+  54   1          sal_pPortmask_t p_PortMask, p_tagMask;
+  55   1          uint32  max_portmask;
+  56   1          rtk_vlan_cfg_t vlanCfg;
+  57   1      
+  58   1          //if (vlan_id != 1)
+  59   1          //    max_portmask = ((uint32)1 << SAL_PORT_SKIP_START) - 1;
+  60   1          //else
+  61   1      #if defined(LWS_8G_2F)
+                  max_portmask = 0xff | (1UL << SAL_PORT_ID_CPU) | (1UL << EXT_PORT0) | (1UL << EXT_PORT1);
+              #elif defined(LWS_5G_1F) 
+                  max_portmask = 0x1f | (1UL << SAL_PORT_ID_CPU) | (1UL << EXT_PORT0);
+              #else
+  66   1          max_portmask = ((1UL << SAL_MAX_PHY_PORT) - 1) | (1UL << SAL_PORT_ID_CPU);
+  67   1      #endif
+  68   1          sal_trunk_logicMask_toPhysicMask(&p_PortMask, pPortMask);
+  69   1          sal_trunk_logicMask_toPhysicMask(&p_tagMask, pTagMask);
+  70   1          
+  71   1          //if (vlan_id == 1)
+  72   1          p_PortMask.bits[0] |= 1UL << SAL_PORT_ID_CPU;  /* add CPU port */  
+  73   1          
+  74   1          memset(&vlanCfg, 0, sizeof(vlanCfg));
+  75   1          vlanCfg.mbr.bits[0] = (p_PortMask.bits[0]/* & max_portmask*/);
+  76   1          vlanCfg.untag.bits[0]  = (~(p_tagMask.bits[0] | (1UL << SAL_PORT_ID_CPU)) & max_portmask);
+  77   1          vlanCfg.ivl_en = 1;
+  78   1          if ((ret = rtk_vlan_set(vlan_id, &vlanCfg)) != RT_ERR_OK)
+  79   1              return ret;
+  80   1          
+  81   1        return SAL_ERR_SUCCESS; 
+  82   1      }
+  83          
+  84          // Sal VLAN Entry Remove: Removes a VLAN entry from hardware
+  85          // Clears VLAN configuration from ASIC for specified VLAN ID
+  86          int32
+  87          sal_vlan_entry_remove (uint16 usVlanId)
+  88          {
+  89   1        int32           ret;
+  90   1          rtk_vlan_cfg_t vlanCfg;
+  91   1      
+  92   1          memset(&vlanCfg, 0, sizeof(vlanCfg));
+  93   1      
+  94   1          if ((ret = rtk_vlan_set(usVlanId, &vlanCfg)) != RT_ERR_OK)
+  95   1              return ret;
+  96   1      
+  97   1        return SAL_ERR_SUCCESS;
+  98   1      }
+  99          #if 0//Not used
+              int32 sal_vlan_entry_get(
+                  sal_vlan_t vlan_id, 
+                  sal_lPortmask_t *pLPortMask, 
+                  sal_lPortmask_t *pLTagMask, 
+                  sal_fid_t *pFId, 
+                  sal_stg_t *pMsti)
+              {
+                int32           ret;   
+                  sal_pPortmask_t portmask;
+                sal_pPortmask_t tagmask;
+                  rtk_fid_t       fid;
+                  uint32          max_portmask;
+                  rtk_vlan_cfg_t vlanCfg;
+              
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 3   
+
+                  memset(&vlanCfg, 0, sizeof(vlanCfg));
+                  if ((ret = rtk_vlan_get(vlan_id, &vlanCfg)) != RT_ERR_OK)
+                      return ret;
+              
+                  memset(&portmask, 0, sizeof(sal_pPortmask_t));
+                  portmask.bits[0] = vlanCfg.mbr.bits[0];
+              
+                  if (vlan_id != 1)
+                      max_portmask = ((uint32)1 << SAL_PORT_SKIP_START) - 1;
+                  else
+                      max_portmask = (((uint32)1 << SAL_PORT_SKIP_START) - 1) | ((uint32)1 << SAL_PORT_ID_CPU);
+                  
+                  memset(&tagmask, 0, sizeof(sal_pPortmask_t));
+                  tagmask.bits[0] = (~vlanCfg.untag.bits[0]) & max_portmask;     
+              
+                  sal_trunk_physicMask_toLogicMask(pLPortMask, &portmask);
+                  sal_trunk_physicMask_toLogicMask(pLTagMask, &tagmask);
+              
+                  *pFId = fid;
+                  *pMsti = 0; // not used;
+                  
+                return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 138          
+ 139          // VLAN PVID Exist: Checks if any port has the specified VLAN as its PVID
+ 140          // Returns TRUE if PVID exists on any port, FALSE otherwise
+ 141          static int32 _sal_vlan_pvid_exist (sal_vlan_t  vlan_id)
+ 142          {
+ 143   1          sal_lPortmask_t portmask;
+ 144   1          sal_vlan_t      pvid;
+ 145   1          sal_port_t      port;
+ 146   1          rtk_vlan_cfg_t vlanCfg;
+ 147   1          
+ 148   1          
+ 149   1          memset(&vlanCfg, 0, sizeof(vlanCfg));
+ 150   1          rtk_vlan_get(vlan_id, &vlanCfg);
+ 151   1          vlanCfg.mbr.bits[0] &= ~ (1<<SAL_PORT_ID_CPU);
+ 152   1          portmask.bits[0] = vlanCfg.mbr.bits[0];
+ 153   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 154   2              if (!SAL_ERR_SUCCESS == sal_lPortMask_chkPort(&portmask, port)) {
+ 155   3                  continue;
+ 156   3              }
+ 157   2      
+ 158   2              sal_vlan_portPvid_get(port, &pvid);
+ 159   2              if (pvid == vlan_id) {
+ 160   3                  return TRUE;
+ 161   3              }
+ 162   2          }
+ 163   1          return FALSE;
+ 164   1      }
+ 165          
+ 166          // Sal VLAN Config Restore: Restores all VLAN configuration from flash
+ 167          // Restores VLAN enable, entries, PVID, tag mode, and accept frame type
+ 168          int32 sal_vlan_config_restore(void)
+ 169          {
+ 170   1          sal_flash_vlanDb_t          flashVlanDb;
+ 171   1          sal_flash_vlanEntry_t       flshVlanEntry;
+ 172   1      
+ 173   1          sal_vlan_t                  vlan_id;
+ 174   1          sal_lPortmask_t             portmask;
+ 175   1          sal_lPortmask_t             tagmask;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 4   
+
+ 176   1          sal_vlan_acceptFrameType_t  type;
+ 177   1          sal_vlan_tagMode_t          vlanMode;
+ 178   1            
+ 179   1          sal_enable_t    enable;
+ 180   1          sal_port_t      port;
+ 181   1          uint16          i;
+ 182   1          
+ 183   1          sal_flash_vlan_enable_get(&enable);
+ 184   1          sal_vlan_enable_set(enable);
+ 185   1          if (enable)
+ 186   1          {
+ 187   2              sal_flash_vlan_db_get(&flashVlanDb);
+ 188   2              for (i = 0; ((i < SAL_MAX_STATIC_VLAN) && (flashVlanDb.sortedSlot[i] >= 0)); ++i)
+ 189   2              {
+ 190   3                  sal_flash_vlan_sttcEntry_get(flashVlanDb.sortedSlot[i], &flshVlanEntry);
+ 191   3                  sal_trunk_physicMask_toLogicMask(&portmask, &flshVlanEntry.p_portMask);
+ 192   3                  sal_trunk_physicMask_toLogicMask(&tagmask, &flshVlanEntry.p_tagMask);
+ 193   3                  sal_vlan_sttcEntry_add(flshVlanEntry.vlan_id, flshVlanEntry.name, &portmask, &tagmask);
+ 194   3                  
+ 195   3              }
+ 196   2          
+ 197   2              /* set PVID, mode and accept frame type configurations */
+ 198   2              sal_trunk_logicPort_setAll(&portmask);
+ 199   2              for (port = 0; port < SAL_PORT_ID_CPU; ++port) {
+ 200   3                  if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&portmask, port)) {
+ 201   4                      continue;
+ 202   4                  }
+ 203   3          
+ 204   3                  sal_flash_vlan_portPvid_get(port, &vlan_id);
+ 205   3            sal_vlan_portPvid_set(port, vlan_id);
+ 206   3          
+ 207   3                  /*Configure tag/untag mode*/
+ 208   3                  sal_flash_vlan_tagMode_get(port, &vlanMode);
+ 209   3                  sal_vlan_tagMode_set(port, vlanMode);
+ 210   3          
+ 211   3                  /*add init about accept type*/
+ 212   3                  sal_flash_vlan_portAcceptFrameType_get(port, &type);
+ 213   3                  sal_vlan_port_AcceptFrameType_set(port, type);
+ 214   3              }
+ 215   2          }
+ 216   1          
+ 217   1          return SAL_ERR_SUCCESS;
+ 218   1      }
+ 219          
+ 220          // Sal VLAN Enable Set: Enables or disables VLAN functionality
+ 221          // Initializes VLAN hardware and saves enable state to flash
+ 222          int32 sal_vlan_enable_set(sal_enable_t enable)
+ 223          {    
+ 224   1          rtk_vlan_init();
+ 225   1             
+ 226   1          return sal_flash_vlan_enable_set(enable);
+ 227   1      }
+ 228          
+ 229          // Sal VLAN Enable Get: Retrieves VLAN enable status
+ 230          // Returns current VLAN enable/disable state from flash
+ 231          int32 sal_vlan_enable_get(sal_enable_t *pEnable)
+ 232          {
+ 233   1          sal_flash_vlan_enable_get(pEnable);
+ 234   1          return SAL_ERR_SUCCESS;
+ 235   1      }
+ 236          
+ 237          #if 0
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 5   
+
+              int32 sal_vlan_exist(sal_vlan_t vlan_id)
+              {
+                  uint16          usSortedSlotIndex;
+                  uint16          usSlotVidIndex;
+                  
+                  return sal_vlan_db_search(vlan_id, &usSortedSlotIndex, &usSlotVidIndex);
+              }
+              
+              int32 sal_vlan_sttcEntry_create(sal_vlan_t vlan_id, int8 *pName)
+              {
+                  sal_enable_t    enable;
+                bool            bFound;
+                uint16          sortedSlotIndex;
+                uint16          slotVidIndex;
+                sal_lPortmask_t portMask;
+                sal_lPortmask_t tagMask;
+                sal_flash_vlanEntry_t   newEntry;
+              
+                  if(strlen(pName) >= SAL_MAX_VLAN_NAME_LEN)
+                      return SAL_ERR_INPUT_STR_LEN;
+               
+                sal_vlan_enable_get(&enable);
+              
+                if (enable == DISABLE) {
+                  return SAL_ERR_VLAN_DISABLE;
+                }
+              
+                if ( (!vlan_id) || (vlan_id > 4094)) {
+                  return SAL_ERR_VLAN_ID_INVALID;
+                }
+              
+                bFound = sal_vlan_db_search(vlan_id, &sortedSlotIndex, &slotVidIndex);
+              
+                if (sortedSlotIndex > SAL_MAX_STATIC_VLAN - 1) {
+                  return SAL_ERR_VLAN_FULL;
+                }
+              
+                if (bFound)
+                  return SAL_ERR_VLAN_EXIST;
+              
+              
+                newEntry.vlan_id = vlan_id;
+                strncpy(newEntry.name, pName, SAL_MAX_VLAN_NAME_LEN - 1);
+                newEntry.name[SAL_MAX_VLAN_NAME_LEN-1] = '\0';
+              
+                sal_lPortMask_delAll(&portMask);
+                sal_lPortMask_delAll(&tagMask);
+                  sal_pPortMask_delAll(&newEntry.p_portMask);
+                sal_pPortMask_delAll(&newEntry.p_tagMask);
+              
+                if (enable == ENABLE) {
+                  /* insert */
+                  if (sal_vlan_entry_insert(vlan_id, &portMask, &tagMask) != SAL_ERR_SUCCESS) {
+                    return SAL_ERR_VLAN_INS_VLAN_ENTRY;
+                  }
+                }
+              
+                /* write to flash */
+                sal_vlan_db_insert(vlan_id, sortedSlotIndex, slotVidIndex);
+                sal_flash_vlan_sttcEntry_create(slotVidIndex, &newEntry);
+              
+                  return SAL_ERR_SUCCESS;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 6   
+
+              }
+              
+              int32 sal_vlan_sttcEntry_set(sal_vlan_t vlan_id, sal_lPortmask_t *pPortMask, sal_lPortmask_t *pTagMask)
+              {
+                sal_enable_t    enable;
+                bool    found;
+                uint16  sortedSlotIndex;
+                uint16  slotVidIndex;
+              
+                sal_flash_vlanEntry_t   newEntry;
+              
+              
+                sal_vlan_enable_get(&enable);
+                if (enable == DISABLE) {
+                  return SAL_ERR_VLAN_DISABLE;
+                }
+              
+                if ( (!vlan_id) || (vlan_id > 4094)) {
+                  return SAL_ERR_VLAN_ID_INVALID;
+                }
+              
+                found = sal_vlan_db_search(vlan_id, &sortedSlotIndex, &slotVidIndex);
+              
+                if (sortedSlotIndex > SAL_MAX_STATIC_VLAN - 1) {
+                  return SAL_ERR_VLAN_FULL;
+                }
+              
+                if (!found)
+                  return SAL_ERR_VLAN_NOT_EXIST;
+              
+                newEntry.vlan_id = vlan_id;
+                if (vlan_id == 1)
+                  sal_lPortMask_addPort(pPortMask, SAL_PORT_ID_CPU);/* add CPU port */
+              
+                if (enable == ENABLE) {
+                  if (sal_vlan_entry_insert(vlan_id, pPortMask, pTagMask) != SAL_ERR_SUCCESS) {
+                    return SAL_ERR_VLAN_INS_VLAN_ENTRY;
+                  }
+                }
+              
+                /* write to flash */
+                  sal_trunk_logicMask_toPhysicMask(&newEntry.p_portMask, pPortMask);
+                  sal_trunk_logicMask_toPhysicMask(&newEntry.p_tagMask, pTagMask);
+                sal_flash_vlan_sttcEntry_set(slotVidIndex, &newEntry);
+              
+                return SAL_ERR_SUCCESS;
+              }
+              
+              int32 sal_vlan_name_change(sal_vlan_t vlan_id, int8 *pName)
+              {
+                sal_flash_vlanEntry_t   oldEntry;
+                  sal_lPortmask_t portMask;
+                  sal_lPortmask_t tagMask;
+                  sal_enable_t    enable;
+                uint16          sortedSlotIndex;
+                uint16          slotVidIndex;
+                uint8           found;
+                
+                sal_vlan_enable_get(&enable);
+                if (enable == DISABLE) {
+                  return SAL_ERR_VLAN_DISABLE;
+                }
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 7   
+
+              
+                if ( (!vlan_id) || (vlan_id > 4094)) {
+                  return SAL_ERR_VLAN_ID_INVALID;
+                }
+              
+                found = sal_vlan_db_search(vlan_id, &sortedSlotIndex, &slotVidIndex);
+              
+                if (sortedSlotIndex > SAL_MAX_STATIC_VLAN-1) {
+                  return SAL_ERR_VLAN_FULL;
+                }
+              
+                if (!found)
+                  return SAL_ERR_VLAN_NOT_EXIST;
+              
+                oldEntry.vlan_id = vlan_id;
+                sal_vlan_sttcEntry_get(vlan_id, &portMask, &tagMask);
+                strncpy(oldEntry.name, pName, SAL_MAX_VLAN_NAME_LEN);
+                oldEntry.name[SAL_MAX_VLAN_NAME_LEN] = '\0';
+              
+                /* write to flash */
+                sal_flash_vlan_sttcEntry_create (slotVidIndex, &oldEntry);
+              
+                return SAL_ERR_SUCCESS;
+              }
+              
+              int32 sal_vlan_sttcEntry_get(sal_vlan_t vlan_id, sal_lPortmask_t *pPortMask, sal_lPortmask_t *pTagMask)
+              {
+                  sal_flash_vlanEntry_t   entry;
+                  uint16  sortedSlotIndex;
+                  uint16  slotVidIndex;
+                  
+                  if (!(sal_vlan_db_search(vlan_id, &sortedSlotIndex, &slotVidIndex))) {
+                      return SAL_ERR_VLAN_NOT_EXIST;
+                  }
+              
+                  sal_flash_vlan_sttcEntry_get(slotVidIndex, &entry);
+              
+                  sal_trunk_physicMask_toLogicMask(pPortMask, &entry.p_portMask);
+                  sal_trunk_physicMask_toLogicMask(pTagMask, &entry.p_tagMask);
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 404          
+ 405          // Sal VLAN Static Entry Remove: Removes a static VLAN entry
+ 406          // Checks if VLAN is used as PVID, removes from hardware and flash database
+ 407          int32 sal_vlan_sttcEntry_remove(sal_vlan_t vlan_id)
+ 408          {
+ 409   1          uint16  sortedSlotIndex;
+ 410   1        uint16  slotVidIndex;
+ 411   1        sal_enable_t    enable;
+ 412   1      
+ 413   1        sal_vlan_enable_get(&enable);
+ 414   1        if (enable == DISABLE) {
+ 415   2          return SAL_ERR_VLAN_DISABLE;
+ 416   2        }
+ 417   1      
+ 418   1        if (_sal_vlan_pvid_exist(vlan_id)) {
+ 419   2          return SAL_ERR_VLAN_EXIST_PVID;
+ 420   2        }
+ 421   1      
+ 422   1        if (!(sal_vlan_db_search(vlan_id, &sortedSlotIndex, &slotVidIndex))) {
+ 423   2          return SAL_ERR_VLAN_NOT_EXIST;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 8   
+
+ 424   2        }
+ 425   1        
+ 426   1          /* set hardware */
+ 427   1          if (sal_vlan_entry_remove(vlan_id) != SAL_ERR_SUCCESS) {
+ 428   2              return SAL_ERR_VLAN_DEL_VLAN_ENTRY;
+ 429   2        }
+ 430   1      
+ 431   1        /* write to flash */
+ 432   1        sal_vlan_db_del(sortedSlotIndex);
+ 433   1        sal_flash_vlan_sttcEntry_remove(slotVidIndex);
+ 434   1          
+ 435   1        return SAL_ERR_SUCCESS;
+ 436   1      }
+ 437          
+ 438          // Sal VLAN DB Insert: Inserts a VLAN entry into the sorted index database
+ 439          // Updates the sorted database with new VLAN entry at the correct position
+ 440          void sal_vlan_db_insert(sal_vlan_t vlan_id, uint16 sorted_slot_idx, uint16 slot_idx)
+ 441          {
+ 442   1        sal_flash_vlanDb_t  flashVlanDb;
+ 443   1        int16   i;
+ 444   1         
+ 445   1        sal_flash_vlan_db_get(&flashVlanDb);
+ 446   1        for (i = 0; ((i < SAL_MAX_STATIC_VLAN) && (flashVlanDb.sortedSlot[i] >= 0)); ++i) {
+ 447   2        }
+ 448   1        
+ 449   1        for (; i > sorted_slot_idx; --i) {
+ 450   2          flashVlanDb.sortedSlot[i] = flashVlanDb.sortedSlot[i-1];
+ 451   2        }
+ 452   1        
+ 453   1          flashVlanDb.slotVid[slot_idx] = vlan_id;
+ 454   1        flashVlanDb.sortedSlot[i] = slot_idx; 
+ 455   1        
+ 456   1        sal_flash_vlan_db_set(&flashVlanDb);
+ 457   1      }
+ 458          
+ 459          // Sal VLAN DB Search: Searches for a VLAN ID in the sorted index database
+ 460          // Returns TRUE with indices if found, FALSE with insertion position if not
+ 461          int32 sal_vlan_db_search(sal_vlan_t vlan_id, uint16 *pSorted_slot_idx, uint16 *pSlot_idx)
+ 462          {
+ 463   1        sal_flash_vlanDb_t  vlanDb;
+ 464   1        int16   i;
+ 465   1        int16   j;
+ 466   1      
+ 467   1        sal_flash_vlan_db_get(&vlanDb);
+ 468   1        for (i = 0; i < SAL_MAX_STATIC_VLAN; ++i) {
+ 469   2          if ((vlanDb.sortedSlot[i] < 0) || (vlanDb.slotVid[vlanDb.sortedSlot[i]] > vlan_id)) {
+ 470   3            /* not found */
+ 471   3            *pSorted_slot_idx = i;
+ 472   3            for (j = 0; ((j < SAL_MAX_STATIC_VLAN) && (vlanDb.slotVid[j] >= 0)); ++j) {
+ 473   4            }
+ 474   3            if (j >= SAL_MAX_STATIC_VLAN) {
+ 475   4              *pSorted_slot_idx = SAL_MAX_STATIC_VLAN; /* no vacancy return value */
+ 476   4            }
+ 477   3            *pSlot_idx = j;
+ 478   3            return FALSE;
+ 479   3          }
+ 480   2      
+ 481   2          if (vlanDb.slotVid[vlanDb.sortedSlot[i]] == vlan_id) {
+ 482   3            /* found */
+ 483   3            *pSorted_slot_idx = i;
+ 484   3            *pSlot_idx = vlanDb.sortedSlot[i];
+ 485   3            return TRUE;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 9   
+
+ 486   3          }
+ 487   2        }
+ 488   1        /* end of all slots, not found */
+ 489   1        *pSorted_slot_idx = SAL_MAX_STATIC_VLAN; /* no vacancy return value */
+ 490   1        *pSlot_idx = SAL_MAX_STATIC_VLAN; /* no vacancy return value */
+ 491   1        return FALSE;
+ 492   1      }
+ 493          
+ 494          // Sal VLAN DB Delete: Deletes a VLAN entry from the sorted index database
+ 495          // Removes entry and shifts subsequent entries to fill the gap
+ 496          void
+ 497          sal_vlan_db_del (
+ 498            uint16  usSortedSlotIndex
+ 499            )
+ 500          {
+ 501   1        sal_flash_vlanDb_t  flashVlanDb;
+ 502   1        int16   i;
+ 503   1      
+ 504   1        sal_flash_vlan_db_get(&flashVlanDb);
+ 505   1        //printf("slotVid index is: %d\n", flashVlanDb.sortedSlot[usSortedSlotIndex]);
+ 506   1        flashVlanDb.slotVid[flashVlanDb.sortedSlot[usSortedSlotIndex]] = -1;
+ 507   1        for (i = usSortedSlotIndex; ((i < SAL_MAX_STATIC_VLAN-1) && (flashVlanDb.sortedSlot[i+1] >= 0)); ++i)
+ 508   1          {
+ 509   2          flashVlanDb.sortedSlot[i] = flashVlanDb.sortedSlot[i+1];
+ 510   2        }
+ 511   1        flashVlanDb.sortedSlot[i] = -1;
+ 512   1        sal_flash_vlan_db_set(&flashVlanDb);
+ 513   1      }
+ 514          
+ 515          // Sal VLAN Port PVID Set: Sets the Port VLAN ID (PVID) for a port
+ 516          // Configures default VLAN for untagged frames received on the port
+ 517          int32 sal_vlan_portPvid_set(sal_port_t port, sal_vlan_t vlan_id)
+ 518          {
+ 519   1          int32   ret;
+ 520   1          uint8   portId;
+ 521   1          sal_pPortmask_t portmask;
+ 522   1          sal_pri_t intPri;
+ 523   1      
+ 524   1          sal_trunk_logicId_toPhysicMask(&portmask, port);
+ 525   1          for (portId = 0; portId <= SAL_PORT_ID_CPU; ++portId)
+ 526   1          {
+ 527   2              if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&portmask, portId))
+ 528   2              {
+ 529   3                  sal_qos_portPri_get(portId, &intPri);
+ 530   3                if ((ret = rtk_vlan_portPvid_set(portId, vlan_id, intPri)) != RT_ERR_OK)
+ 531   3                  {
+ 532   4                      SAL_PRINT("Error in setting pvid: %lx", ret);
+ 533   4                      return ret;
+ 534   4                  }
+ 535   3                  
+ 536   3              }
+ 537   2          }
+ 538   1      
+ 539   1          return sal_flash_vlan_portPvid_set(port, vlan_id);
+ 540   1      }
+ 541          
+ 542          // Sal VLAN Port PVID Get: Retrieves the Port VLAN ID (PVID) for a port
+ 543          // Gets the default VLAN ID configured for untagged frames on the port
+ 544          int32 sal_vlan_portPvid_get(sal_port_t port, sal_vlan_t *pVlan_id)
+ 545          {
+ 546   1          int32       ret;
+ 547   1          uint32      vlan_tmp;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 10  
+
+ 548   1          sal_port_t  portId;
+ 549   1          uint32      pri;
+ 550   1      
+ 551   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 552   1          if ((ret = rtk_vlan_portPvid_get(portId, &vlan_tmp, &pri)) != RT_ERR_OK)
+ 553   1          {
+ 554   2               printf("Error in getting pvid: %lx", ret);
+ 555   2               return ret;
+ 556   2          }
+ 557   1      
+ 558   1          *pVlan_id = vlan_tmp;
+ 559   1      
+ 560   1        return SAL_ERR_SUCCESS;
+ 561   1      }
+ 562          
+ 563          // Sal VLAN Tag Mode Set: Sets the VLAN tag processing mode for a port
+ 564          // Configures how VLAN tags are handled: original, keep format, or priority only
+ 565          int32 sal_vlan_tagMode_set(sal_port_t port, sal_vlan_tagMode_t mode)
+ 566          {
+ 567   1          int32              ret;
+ 568   1          rtk_vlan_tagMode_t rtk_tag_mode;
+ 569   1          sal_pPortmask_t    portmask;
+ 570   1          uint8              portId;    
+ 571   1      
+ 572   1          switch(mode)
+ 573   1          {  
+ 574   2          case SAL_VLAN_TAG_MODE_ORIGINAL:
+ 575   2              rtk_tag_mode = VLAN_TAG_MODE_ORIGINAL;
+ 576   2              break;
+ 577   2          case SAL_VLAN_TAG_MODE_KEEP_FORMAT:
+ 578   2              rtk_tag_mode = VLAN_TAG_MODE_REAL_KEEP_FORMAT;
+ 579   2              break;
+ 580   2          case SAL_VLAN_TAG_MODE_PRI:
+ 581   2              rtk_tag_mode = VLAN_TAG_MODE_PRI;
+ 582   2              break;
+ 583   2          default:
+ 584   2              SAL_PRINT("unknown mode!\n");
+ 585   2              return RT_ERR_FAILED;
+ 586   2          }
+ 587   1          
+ 588   1          sal_trunk_logicId_toPhysicMask(&portmask, port);
+ 589   1          
+ 590   1          for (portId = 0; portId <= SAL_PORT_ID_CPU; ++portId)
+ 591   1          {
+ 592   2              if (SAL_ERR_SUCCESS == sal_pPortMask_chkPort(&portmask, portId))
+ 593   2              {
+ 594   3                  if ((ret = rtk_vlan_tagMode_set(portId, rtk_tag_mode)) != SAL_ERR_SUCCESS)
+ 595   3                  {
+ 596   4                      SAL_PRINT("Set vlan tag mode fail\n");
+ 597   4                      return ret;            
+ 598   4                  }
+ 599   3              }
+ 600   2          }
+ 601   1          return sal_flash_vlan_tagMode_set(port, mode);
+ 602   1      
+ 603   1      }
+ 604          #if 0//Not used
+              int32 sal_vlan_tagMode_get(sal_port_t port, sal_vlan_tagMode_t *pMode)
+              {
+                  int32               ret;
+                  rtk_vlan_tagMode_t  vlan_tag_mode;
+                  uint8               portId;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 11  
+
+                  
+                  sal_trunk_logicId_toPhysicId(&portId, port);
+                  if ((ret = rtk_vlan_tagMode_get(portId, &vlan_tag_mode)) != RT_ERR_OK)
+                  {
+                       SAL_PRINT("Error: %lx", ret);
+                       return ret;
+                  }
+              
+                  switch(vlan_tag_mode)
+                  {
+                  case VLAN_TAG_MODE_ORIGINAL:
+                      *pMode = SAL_VLAN_TAG_MODE_ORIGINAL;
+                      break;
+                  case VLAN_TAG_MODE_KEEP_FORMAT:
+                  case VLAN_TAG_MODE_REAL_KEEP_FORMAT:
+                      *pMode = SAL_VLAN_TAG_MODE_KEEP_FORMAT;
+                      break;
+                  case VLAN_TAG_MODE_PRI:
+                      *pMode = SAL_VLAN_TAG_MODE_PRI;
+                     break;
+                  default:
+                      SAL_PRINT("Get vlan tag mode error\n");
+                      return SAL_ERR_FAILED;
+                  }
+               
+                  return SAL_ERR_SUCCESS;
+              }
+              #endif
+ 638          
+ 639          // Sal VLAN Port Accept Frame Type Set: Sets the acceptable frame types for a port
+ 640          // Configures whether the port accepts tagged, untagged, or all frames
+ 641          int32 sal_vlan_port_AcceptFrameType_set(sal_port_t port, sal_vlan_acceptFrameType_t type)
+ 642          {
+ 643   1          int32           ret;
+ 644   1          sal_pPortmask_t stPPortMask;
+ 645   1          uint8           portId;    
+ 646   1      
+ 647   1          sal_trunk_logicId_toPhysicMask(&stPPortMask, port);
+ 648   1          for (portId = 0; portId <= SAL_PORT_ID_CPU; ++portId)
+ 649   1          {
+ 650   2              if (SAL_ERR_SUCCESS  == sal_pPortMask_chkPort(&stPPortMask, portId))
+ 651   2              {
+ 652   3                  //printf("AcceptFrameType set: port: %d, type: %d\n", (uint16)portId, (uint16)type);
+ 653   3                  ret = rtk_vlan_portAcceptFrameType_set(portId, type);
+ 654   3                  SAL_ERR_CODE(ret, SAL_ERR_PARAMETER);
+ 655   3              }
+ 656   2          }
+ 657   1          return sal_flash_vlan_portAcceptFrameType_set(port, type);
+ 658   1      }
+ 659          
+ 660          // Sal VLAN Port Accept Frame Type Get: Retrieves the acceptable frame types for a port
+ 661          // Gets whether the port accepts tagged, untagged, or all frames
+ 662          int32 sal_vlan_port_AcceptFrameType_get(sal_port_t port, sal_vlan_acceptFrameType_t *pType)
+ 663          {
+ 664   1          rtk_vlan_acceptFrameType_t type;
+ 665   1          int32      ret;
+ 666   1          uint8      portId;
+ 667   1          
+ 668   1          sal_trunk_logicId_toPhysicId(&portId, port);
+ 669   1          ret = rtk_vlan_portAcceptFrameType_get(portId, &type);
+ 670   1          *pType = type;
+ 671   1      
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 12  
+
+ 672   1          SAL_ERR_CODE(ret, SAL_ERR_PARAMETER);
+ 673   1          return SAL_ERR_SUCCESS;
+ 674   1      
+ 675   1      }
+ 676          
+ 677          /* Function Name:
+ 678           *      sal_vlan_sttcEntry_add
+ 679           * Description:
+ 680           *      Add an static vlan entries 
+ 681           * Input:
+ 682           *      vlan_id - VLAN ID
+ 683           *      pName  - string of VLAN name
+ 684           *      pPortMask - Member port mask
+ 685           *      pTagMask  - tag mask
+ 686           * Output:
+ 687           *      No
+ 688           * Return:
+ 689           *      SAL_ERR_SUCCESS
+ 690           *      SAL_ERR_VLAN_FULL
+ 691           * Note:
+ 692           *      If an entry with the same vid exists, update the fields in the entry.
+ 693           *      Otherwise, a new static entry and one corresponding index entry 
+ 694           *      in the sorted-index-database are created. 
+ 695           */
+ 696          // Sal VLAN Static Entry Add: Adds or updates a static VLAN entry
+ 697          // Creates new VLAN or updates existing, writes to hardware and flash database
+ 698          int32 sal_vlan_sttcEntry_add(
+ 699              sal_vlan_t vlan_id, 
+ 700              int8       *pName, 
+ 701              sal_lPortmask_t *pPortMask, 
+ 702              sal_lPortmask_t *pTagMask
+ 703              ) 
+ 704          {
+ 705   1          int32   ret;
+ 706   1        sal_flash_vlanEntry_t entry; /* one static entrie                   */
+ 707   1        uint16  entry_index;          /* The entry index range from 0 ~ 31   */
+ 708   1        uint16  sorted_idx;           /* Index in the sorted database        */
+ 709   1          bool    found;
+ 710   1          if ( (!vlan_id) || (vlan_id > 4094)) {
+ 711   2          return SAL_ERR_VLAN_ID_INVALID;
+ 712   2        }
+ 713   1        
+ 714   1        found = sal_vlan_db_search(vlan_id, &sorted_idx, &entry_index);
+ 715   1        
+ 716   1        if (entry_index == SAL_MAX_STATIC_VLAN) {
+ 717   2          return SAL_ERR_VLAN_FULL;
+ 718   2        }
+ 719   1          /* Set the asic */
+ 720   1          if ((ret = sal_vlan_entry_insert(vlan_id, pPortMask, pTagMask)) != SAL_ERR_SUCCESS) {
+ 721   2          return ret;
+ 722   2          }
+ 723   1           /* update the entry in the 32 static VLAN entries no matter 
+ 724   1              the vlan id is exist previously */
+ 725   1        entry.vlan_id = vlan_id;
+ 726   1        strncpy(entry.name, pName, SAL_MAX_VLAN_NAME_LEN - 1);
+ 727   1        entry.name[SAL_MAX_VLAN_NAME_LEN-1] = '\0';
+ 728   1          entry.valid = 1;
+ 729   1          
+ 730   1          sal_trunk_logicMask_toPhysicMask(&entry.p_portMask, pPortMask);
+ 731   1          sal_trunk_logicMask_toPhysicMask(&entry.p_tagMask, pTagMask);
+ 732   1      
+ 733   1        sal_flash_vlan_sttcEntry_set(entry_index, &entry);
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 13  
+
+ 734   1      
+ 735   1          /* If the vlan id doesn't exist, create a new entry in the index 
+ 736   1              database which points to the entry in the 32 static VLAN entries */
+ 737   1          if (found == FALSE)
+ 738   1            sal_vlan_db_insert(vlan_id, sorted_idx, entry_index);
+ 739   1      
+ 740   1          return SAL_ERR_SUCCESS;
+ 741   1      }
+ 742          #if 0
+              /* Function Name:
+               *      _sal_clear_entry
+               * Description:
+               *      Check whether there exists another entry with the same vid
+               * Input:
+               *      index - static vlan entry index, range from 0 ~ 31
+               *      vlan_id - vlan id
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_VLAN_ENTRY_DUPLICATE
+               *      SAL_ERR_SUCCESS
+               * Note:
+               *      None
+               */
+              static int32 _sal_duplicated_entry_check(int16 index, sal_vlan_t vlan_id)
+              {
+                  sal_flash_vlanEntry_t entry;
+                  int16   i;
+              
+                  for (i = 0; i < SAL_MAX_STATIC_VLAN; i++)
+                  {
+                      sal_flash_vlan_sttcEntry_get(i, &entry);
+              
+                      if (i != index && entry.vlan_id == vlan_id)
+                      {
+                          printf("duplicated entry!\n");
+                          return SAL_ERR_VLAN_ENTRY_DUPLICATE;
+                      }
+                  }    
+              
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              /* Function Name:
+               *      _sal_clear_entry
+               * Description:
+               *      Clear static vlan entry. First check whether the static entry is referenced 
+               *      in the index-database. If found, delete it from database, entry and hardware. 
+               *      Otherwise, delete it from entry.
+               * Input:
+               *      index - static vlan entry index, range from 0 ~ 31
+               * Output:
+               *      None
+               * Return:
+               *      SAL_ERR_SUCCESS
+               * Note:
+               *      None
+               */
+              static int32 _sal_clear_entry(int16 index)
+              {
+                  sal_flash_vlanDb_t      vlanDb;
+                  sal_flash_vlanEntry_t   entry;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 14  
+
+                  sal_vlan_t  vlan_id;
+                int16       i;
+                  bool        found;
+              
+                sal_flash_vlan_db_get(&vlanDb);
+              
+                found = FALSE;
+                for (i = 0; i < SAL_MAX_STATIC_VLAN; ++i) 
+                {
+                    if (vlanDb.sortedSlot[i] < 0)
+                        break;
+              
+                    if (vlanDb.sortedSlot[i] == index)
+                    {
+                        found = TRUE;  /* referenced */
+                        vlan_id = vlanDb.slotVid[index];
+                    }
+                  }
+                  
+                  if (found == TRUE)  /* an valid entry */
+                  {
+                      return sal_vlan_sttcEntry_remove(vlan_id);
+                  }
+                  else    /* an invalid entry, an invalid entry won't be set into the hardware */
+                  {
+                      sal_vlan_index_entry_get(index, (sal_vlan_entry_t*)&entry);
+                      if (entry.valid == 1)
+                      {
+                          printf("Shouldn't be here, valid entry will be found in the database in the previous look up!"
+             -);
+                          return SAL_ERR_FAILED;
+                      }
+              
+                      sal_flash_vlan_sttcEntry_remove(index);
+                  }
+              
+                  return SAL_ERR_SUCCESS; 
+              }
+              
+              /* Function Name:
+               *      _sal_vlan_index_entry_set_validate
+               * Description:
+               *      Validate an VLAN entry. If pEntry equals NULL, load the indexed content
+               *      into hardware, else save pEntry into the indexed entry and set the hardware.
+               * Input:
+               *      index - static vlan entry index, range from 0 ~ 31
+               *      pEntry - vlan entry content
+               * Output:
+               *      No
+               * Return:
+               *      SAL_ERR_SUCCESS
+               * Note:
+               */
+              static int32 _sal_vlan_index_entry_set_validate(int16 index, sal_flash_vlanEntry_t *pEntry)
+              {
+                  int32   ret;
+                  sal_flash_vlanEntry_t entry;
+                  sal_lPortmask_t portmask;
+                  sal_lPortmask_t tagmask; 
+                  uint16  entry_index;          /* The entry index range from 0 ~ 31   */
+                  uint16  sorted_idx;           /* Index in the sorted database        */
+                  bool    found;
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 15  
+
+                     
+                  if (pEntry == NULL) /* Load the indexed content into hardware*/
+                  {
+                      if ((ret = sal_flash_vlan_sttcEntry_get(index, &entry)) != SAL_ERR_SUCCESS)
+                          return ret;
+              
+                      if ((!entry.vlan_id) || (entry.vlan_id > 4094)) 
+                      return SAL_ERR_VLAN_ENTRY_INVALID;
+                
+                      sal_trunk_physicMask_toLogicMask(&portmask, &entry.p_portMask);
+                      sal_trunk_physicMask_toLogicMask(&tagmask, &entry.p_tagMask);
+              
+                      if ((ret = sal_vlan_entry_insert(entry.vlan_id, &portmask, &tagmask)) != SAL_ERR_SUCCESS) 
+                        return ret;
+              
+                      /* Valid the entry if it is an invalid entry */
+                    if (entry.valid == 0)
+                      {
+                          entry.valid = 1;
+                        sal_flash_vlan_sttcEntry_set(index, &entry);          
+                    }
+                  }
+                  else    /* Save pEntry into the indexed entry and set the hardware*/
+                  {
+                      /* Check whether it will cause a duplicated one */
+                      if (_sal_duplicated_entry_check(index, pEntry->vlan_id) == SAL_ERR_VLAN_ENTRY_DUPLICATE)
+                          return SAL_ERR_VLAN_ENTRY_DUPLICATE;
+                      
+                      if ((ret = _sal_clear_entry(index)) != SAL_ERR_SUCCESS) 
+                        return ret;
+              
+                      /* Write the hardware and entry */
+                      sal_trunk_physicMask_toLogicMask(&portmask, &pEntry->p_portMask);
+                      sal_trunk_physicMask_toLogicMask(&tagmask, &pEntry->p_tagMask);
+              
+                      if ((ret = sal_vlan_entry_insert(pEntry->vlan_id, &portmask, &tagmask)) != SAL_ERR_SUCCESS) 
+                        return ret;
+              
+                      pEntry->valid = 1;
+                      sal_flash_vlan_sttcEntry_set(index, pEntry);
+                      
+                    /* Update sorted index-database */
+                    found = sal_vlan_db_search(pEntry->vlan_id, &sorted_idx, &entry_index);
+                      if (found)
+                      {
+                          printf("Shouldn't found the same vlan id in the database!\n");
+                          return SAL_ERR_FAILED;
+                      }
+              
+                      sal_vlan_db_insert(pEntry->vlan_id, sorted_idx, index);   
+                  }
+                      
+                  return SAL_ERR_SUCCESS; 
+              }
+              
+              /* Function Name:
+               *      _sal_vlan_index_entry_set_keep
+               * Description:
+               *      If the entry is valid, save pEntry into the indexed entry and set the hardware.
+               *      Otherwise, save pEntry into the indexed entry and don't set the hardware.
+               * Input:
+               *      index - static vlan entry index, range from 0 ~ 31
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 16  
+
+               *      pEntry - vlan entry content
+               * Output:
+               *      No
+               * Return:
+               *      SAL_ERR_SUCCESS
+               * Note:
+               */
+              static int32 _sal_vlan_index_entry_set_keep(int16 index, sal_flash_vlanEntry_t *pEntry)
+              {
+                  int32 ret;
+                  sal_flash_vlanEntry_t entry;
+              
+                  if (_sal_duplicated_entry_check(index, pEntry->vlan_id) == SAL_ERR_VLAN_ENTRY_DUPLICATE)
+                      return SAL_ERR_VLAN_ENTRY_DUPLICATE;
+              
+                  if ((ret = sal_vlan_index_entry_get(index, (sal_vlan_entry_t*)&entry)) != SAL_ERR_SUCCESS)
+                      return ret;
+              
+                  if (entry.valid == 1)
+                  {
+                      _sal_vlan_index_entry_set_validate(index, pEntry);
+                  }
+                  else
+                  {   
+                      /* Update Entry */
+                      pEntry->valid = 0; /* Keep valid status*/
+                      sal_flash_vlan_sttcEntry_set(index, pEntry);
+                  }
+                      
+                  return SAL_ERR_SUCCESS;        
+              }
+              int32 sal_vlan_index_entry_set(int16 index, sal_vlan_entry_t *pEntry, sal_entry_action_t action) 
+              {
+                  int32 ret;
+              
+                  if (index >= SAL_MAX_STATIC_VLAN) 
+                  return SAL_ERR_ENTRY_INDEX;
+                
+                  switch(action)
+                  {
+                      case SAL_ENTRY_ACT_VALID:
+                          if ((ret = _sal_vlan_index_entry_set_validate(index, (sal_flash_vlanEntry_t*)pEntry)) != SAL_E
+             -RR_SUCCESS)
+                              return ret;                
+                          break;
+                      case SAL_ENTRY_ACT_INVALID:
+                          if ((ret = _sal_clear_entry(index)) != SAL_ERR_SUCCESS)
+                              return ret;
+                          break;
+                      case SAL_ENTRY_ACT_KEEP:
+                          if ((ret = _sal_vlan_index_entry_set_keep(index, (sal_flash_vlanEntry_t*)pEntry)) != SAL_ERR_S
+             -UCCESS)
+                              return ret;  
+                          break;
+                      default:
+                          return SAL_ERR_PARAMETER;
+                  }
+                      
+                  return SAL_ERR_SUCCESS;
+              }
+              
+              int32 sal_vlan_index_entry_get(int16 index, sal_vlan_entry_t *pEntry)
+C51 COMPILER V9.60.0.0   SALVLAN                                                           11/02/2026 17:57:05 PAGE 17  
+
+              {
+                  return sal_flash_vlan_sttcEntry_get(index, (sal_flash_vlanEntry_t*)pEntry);
+              }
+              #endif
+ 983          
+ 984          #endif
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   2795    ----
+   CONSTANT SIZE    =     93    ----
+   XDATA SIZE       =   ----     798
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =     93    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

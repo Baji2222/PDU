@@ -1,0 +1,572 @@
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_FWD
+OBJECT MODULE PLACED IN .\objects\web_fwd.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_fwd.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000
+                    -) INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\i
+                    -nclude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_RE
+                    -PLACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN
+                    -_LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_fwd.lst) TABS(2) OBJECT(.\objects\web_fwd.obj)
+
+line level    source
+
+   1          #pragma STRING(far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to forwarding function
+  10           *
+  11           * Feature : Response the related request of forwarding function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <stdio.h>
+  19          #include <string.h>
+  20          #include <stdlib.h>
+  21          
+  22          #include <salrate.h>
+  23          #include <salerror.h>
+  24          #include <saltrunk.h>
+  25          #include <salportmask.h>
+  26          #include <salsys.h>
+  27          #include <web/web_api.h>
+  28          #include "web_fwd.h"
+  29          #include "web_util.h"
+  30          
+  31          
+  32          
+  33          /*
+  34           * Symbol Definition
+  35           */
+  36          
+  37          
+  38          /*
+  39           * Data Declaration
+  40           */
+  41          
+  42          
+  43          /*
+  44           * Function Declaration
+  45           */
+  46          
+  47          /*
+  48           * Function: jumboframe_get_actual_size
+  49           * ------------------------------------
+  50           * Converts jumbo frame code to actual byte size.
+  51           * Maps SAL_JUMBO_FRAME_* constants to physical sizes.
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 2   
+
+  52           * Returns 0 if frameCode is invalid or unknown.
+  53           */
+  54          uint32
+  55          jumboframe_get_actual_size(uint32 frameCode)
+  56          {
+  57   1          uint32 frameSize = 0;
+  58   1      
+  59   1          if(SAL_JUMBO_FRAME_1522 == frameCode)
+  60   1          {
+  61   2              frameSize = 1522;
+  62   2          }
+  63   1          else
+  64   1          if(SAL_JUMBO_FRAME_1536 == frameCode)
+  65   1          {
+  66   2              frameSize = 1536;
+  67   2          }
+  68   1          else
+  69   1          if(SAL_JUMBO_FRAME_1552 == frameCode)
+  70   1          {
+  71   2              frameSize = 1552;
+  72   2          }
+  73   1          else
+  74   1          if(SAL_JUMBO_FRAME_16k == frameCode)
+  75   1          {
+  76   2              frameSize = 16383;
+  77   2          }
+  78   1      
+  79   1          return frameSize;
+  80   1      }
+  81          
+  82          /*
+  83           * Function: get_fwd
+  84           * -----------------
+  85           * Placeholder handler for forwarding page.
+  86           * Currently displays simple text response.
+  87           * Can be extended for main forwarding configuration.
+  88           */
+  89          int32 get_fwd(struct http_request_s *pReq)
+  90          {
+  91   1          WEB_BEGIN(pReq);
+  92   1      
+  93   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  94   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  95   1      
+  96   1          WEB_PRINTF(pReq, "<html>\n");
+  97   1          WEB_PRINTF(pReq, "This is fwd.cgi");
+  98   1          WEB_PRINTF(pReq, "</html>\n");
+  99   1      
+ 100   1          WEB_END(pReq);
+ 101   1      
+ 102   1          return SUCCESS;
+ 103   1      }
+ 104          
+ 105          /*
+ 106           * Function: get_fwd_jumboframe
+ 107           * ----------------------------
+ 108           * Displays Jumbo Frame configuration page.
+ 109           * Reads current frame size setting from driver.
+ 110           * Renders dropdown with all available frame sizes.
+ 111           * Highlights currently selected size in dropdown.
+ 112           */
+ 113          int32 get_fwd_jumboframe(struct http_request_s *pReq)
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 3   
+
+ 114          {
+ 115   1          uint32 frameCode;
+ 116   1          uint32 i;
+ 117   1      
+ 118   1          frameCode = 0;
+ 119   1          sal_rate_maxFrameSize_get(&frameCode);
+ 120   1      
+ 121   1          WEB_BEGIN(pReq);
+ 122   1      
+ 123   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 124   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 125   1      
+ 126   1          WEB_PRINTF(pReq, "<html>\n");
+ 127   1          WEB_PRINTF(pReq, "<head>\n");
+ 128   1          WEB_PRINTF(pReq, "<title>Jumbo Frame Setting</title>\n");
+ 129   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 130   1          WEB_PRINTF(pReq, "</head>\n");
+ 131   1          WEB_PRINTF(pReq, "\n");
+ 132   1          WEB_PRINTF(pReq, "<body>\n");
+ 133   1          WEB_PRINTF(pReq, "<center>\n");
+ 134   1          WEB_PRINTF(pReq, "\n");
+ 135   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 136   1          WEB_PRINTF(pReq, "<legend>Jumbo Frame Setting</legend>\n");
+ 137   1          WEB_PRINTF(pReq, "<form method=\"post\" name=\"jumboframe\" action=\"/fwd.cgi?page=jumboframe\">\n");
+ 138   1      
+ 139   1          WEB_PRINTF(pReq, "<br>\n");
+ 140   1          WEB_PRINTF(pReq, "<table border=\"1\">\n");
+ 141   1          WEB_PRINTF(pReq, "  <tr>\n");
+ 142   1          WEB_PRINTF(pReq, "    <th width=\"200\">Jumbo Frame (Bytes)</th>\n");
+ 143   1      
+ 144   1          WEB_PRINTF(pReq, "      <td>\n");
+ 145   1          WEB_PRINTF(pReq, "        <select name=\"jumboframe\">\n");
+ 146   1      
+ 147   1          for (i = SAL_JUMBO_FRAME_1522; i <= SAL_JUMBO_FRAME_16k; i++)
+ 148   1          {
+ 149   2              if (i == frameCode)
+ 150   2              {
+ 151   3                  WEB_PRINTF(pReq, "          <option value=\"%d\" selected>%d\n", (uint16)i,
+ 152   3                      (uint16)jumboframe_get_actual_size(i));
+ 153   3              }
+ 154   2              else
+ 155   2              {
+ 156   3                  WEB_PRINTF(pReq, "          <option value=\"%d\">%d\n", (uint16)i,
+ 157   3                      (uint16)jumboframe_get_actual_size(i));
+ 158   3              }
+ 159   2          }
+ 160   1      
+ 161   1          WEB_PRINTF(pReq, "        </select>\n");
+ 162   1          WEB_PRINTF(pReq, "      </td>\n");
+ 163   1      
+ 164   1          WEB_PRINTF(pReq, "  </tr>\n");
+ 165   1          WEB_PRINTF(pReq, "</table>\n");
+ 166   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 167   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\"   Apply   \">\n");
+ 168   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"jumboframe\">\n");
+ 169   1          WEB_PRINTF(pReq, "</form>\n");
+ 170   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 171   1          WEB_PRINTF(pReq, "</center>\n");
+ 172   1          WEB_PRINTF(pReq, "</body>\n");
+ 173   1          WEB_PRINTF(pReq, "</html>\n");
+ 174   1      
+ 175   1          WEB_END(pReq);
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 4   
+
+ 176   1      
+ 177   1          return SUCCESS;
+ 178   1      }
+ 179          
+ 180          /*
+ 181           * Function: get_fwd_stormcontrol
+ 182           * ------------------------------
+ 183           * Displays Storm Control configuration page.
+ 184           * Shows current storm rates for all ports.
+ 185           * Provides form to set storm type, port, and rate.
+ 186           * Uses JavaScript to enable/disable rate input field.
+ 187           */
+ 188           int32 get_fwd_stormcontrol(struct http_request_s *pReq)
+ 189          {
+ 190   1          uint32   i;
+ 191   1          uint8    logicPortStr[MAX_LOGIC_ID_LEN];
+ 192   1          uint8    port, buf[128];
+ 193   1          uint32   rate; /* Rate in packet per second */
+ 194   1          uint32   rate1; /* Rate in packet per second */
+ 195   1          uint32   rate2; /* Rate in packet per second */
+ 196   1          uint32   rate3; /* Rate in packet per second */
+ 197   1          sal_lPortmask_t portmask;
+ 198   1      
+ 199   1          /* init */
+ 200   1          i = 0;
+ 201   1          memset(buf, sizeof(buf), 0);
+ 202   1      
+ 203   1          WEB_BEGIN(pReq);
+ 204   1      
+ 205   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+ 206   1          WEB_HEADER(pReq, "Content-Type: text/html");
+ 207   1      
+ 208   1          WEB_PRINTF(pReq, "<html>\n");
+ 209   1          WEB_PRINTF(pReq, "\n");
+ 210   1          WEB_PRINTF(pReq, "<head>\n");
+ 211   1          WEB_PRINTF(pReq, "<title>Storm Control</title>\n");
+ 212   1          WEB_PRINTF(pReq, "<link rel=\"stylesheet\" type=\"text/css\" href=\"/style.css\">\n");
+ 213   1      
+ 214   1          WEB_PRINTF(pReq, "<script type=\"text/javascript\">\n");
+ 215   1          WEB_PRINTF(pReq, "function chkEnable(value)\n");
+ 216   1          WEB_PRINTF(pReq, "{\n");
+ 217   1          WEB_PRINTF(pReq, "  if ( value == '0' ) {\n");
+ 218   1          WEB_PRINTF(pReq, "      document.getElementById('rate').value = \'\';\n");
+ 219   1          WEB_PRINTF(pReq, "      document.getElementById('rate').disabled = true;\n");
+ 220   1          WEB_PRINTF(pReq, "  }\n");
+ 221   1          WEB_PRINTF(pReq, "  else { \n");
+ 222   1          WEB_PRINTF(pReq, "      document.getElementById('rate').value = \'\';\n");
+ 223   1          WEB_PRINTF(pReq, "      document.getElementById('rate').disabled = false;\n");
+ 224   1          WEB_PRINTF(pReq, "  }\n");
+ 225   1          WEB_PRINTF(pReq, "}\n");
+ 226   1          WEB_PRINTF(pReq, "</script>\n");
+ 227   1      
+ 228   1      
+ 229   1          WEB_PRINTF(pReq, "</head>\n");
+ 230   1          WEB_PRINTF(pReq, "\n");
+ 231   1          WEB_PRINTF(pReq, "<body>\n");
+ 232   1          WEB_PRINTF(pReq, "<center>\n");
+ 233   1          WEB_PRINTF(pReq, "\n");
+ 234   1      
+ 235   1          WEB_PRINTF(pReq, "<fieldset>\n");
+ 236   1          WEB_PRINTF(pReq, "<legend>Storm Control Setting</legend>\n");
+ 237   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"/fwd.cgi?page=storm_ctrl\">\n");
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 5   
+
+ 238   1      
+ 239   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+ 240   1      
+ 241   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 242   1          WEB_PRINTF(pReq, "      <th align=\"center\">Storm Type</th>\n");
+ 243   1          WEB_PRINTF(pReq, "      <th align=\"center\">Port</th>\n");
+ 244   1          WEB_PRINTF(pReq, "      <th align=\"center\">State</th>\n");
+ 245   1          WEB_PRINTF(pReq, "      <th align=\"center\">Rate (kbps)</th>\n");
+ 246   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 247   1      
+ 248   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 249   1          WEB_PRINTF(pReq, "      <td>\n");
+ 250   1          WEB_PRINTF(pReq, "        <select name=\"storm_filter\" style=\"width:150px;\">\n");
+ 251   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Broadcast\n", (uint16)SAL_STORM_TYPE_BCAST);
+ 252   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Multicast\n", (uint16)SAL_STORM_TYPE_MCAST);
+ 253   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Unknown Unicast\n", (uint16)SAL_STORM_TYPE_UNKNOWN_UC
+             -AST);
+ 254   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Unknown Multicast\n", (uint16)SAL_STORM_TYPE_UNKNOWN_
+             -MCAST);
+ 255   1          WEB_PRINTF(pReq, "        </select>\n");
+ 256   1          WEB_PRINTF(pReq, "      </td>\n");
+ 257   1      
+ 258   1          WEB_PRINTF(pReq, "      <td align=\"center\">\n");
+ 259   1          WEB_PRINTF(pReq, "        <select name=\"portid\" multiple size=\"6\">\n");
+ 260   1      
+ 261   1          for (i = 0; i < SAL_PORT_ID_CPU; ++i)
+ 262   1          {
+ 263   2              if (!(sal_trunk_logicId_exist(i)))
+ 264   2              {
+ 265   3                  continue;
+ 266   3              }
+ 267   2      
+ 268   2              sal_trunk_logicId_toStr(logicPortStr, i);
+ 269   2              WEB_PRINTF(pReq, "          <option value=\"%s\">%s\n", logicPortStr, logicPortStr);
+ 270   2          }
+ 271   1      
+ 272   1          WEB_PRINTF(pReq, "        </select>\n");
+ 273   1          WEB_PRINTF(pReq, "      </td>\n");
+ 274   1      
+ 275   1          WEB_PRINTF(pReq, "      <td>\n");
+ 276   1          WEB_PRINTF(pReq, "        <select name=\"action\" onchange=\"chkEnable(this.value)\" style=\"width:80p
+             -x;\">\n");
+ 277   1          WEB_PRINTF(pReq, "          <option value=\"%d\">Off\n", (uint16)FALSE);
+ 278   1          WEB_PRINTF(pReq, "          <option value=\"%d\">On\n", (uint16)TRUE);
+ 279   1          WEB_PRINTF(pReq, "        </select>\n");
+ 280   1          WEB_PRINTF(pReq, "      </td>\n");
+ 281   1      
+ 282   1          WEB_PRINTF(pReq, "      <td align=\"center\"><input type=\"text\" name=\"rate\" id=\"rate\" value = \'
+             -\' disabled = true> (8-1000000)</td>\n");
+ 283   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 284   1      
+ 285   1          WEB_PRINTF(pReq, "  </table>\n");
+ 286   1          WEB_PRINTF(pReq, "  <br style=\"line-height:50%%\">\n");
+ 287   1          WEB_PRINTF(pReq, "  <input type=\"submit\" value=\" Apply \">\n");
+ 288   1          WEB_PRINTF(pReq, "  <input type=\"hidden\" name=\"cmd\" value=\"storm\">\n");
+ 289   1      
+ 290   1          WEB_PRINTF(pReq, "</form>\n");
+ 291   1      
+ 292   1          WEB_PRINTF(pReq, "  <hr>\n");
+ 293   1          WEB_PRINTF(pReq, "  <br>\n");
+ 294   1      
+ 295   1          WEB_PRINTF(pReq, "  <table border=\"1\">\n");
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 6   
+
+ 296   1          WEB_PRINTF(pReq, "    <tr>\n");
+ 297   1          WEB_PRINTF(pReq, "    <th align=\"center\" style=\"width:80px;\"> Port </th>\n");
+ 298   1          WEB_PRINTF(pReq, "    <th align=\"center\" >Broadcast (kbps)</th>\n");
+ 299   1          WEB_PRINTF(pReq, "    <th align=\"center\" >Multicast (kbps)</th>\n");
+ 300   1          WEB_PRINTF(pReq, "    <th align=\"center\" >Unknown Unicast (kbps)</th>\n");
+ 301   1          WEB_PRINTF(pReq, "    <th align=\"center\" >Unknown Multicast (kbps)</th>\n");
+ 302   1          WEB_PRINTF(pReq, "    </tr>\n");
+ 303   1      
+ 304   1          sal_trunk_logicPort_setAll(&portmask);
+ 305   1      
+ 306   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port)
+ 307   1          {
+ 308   2              if (SAL_ERR_FAILED == sal_lPortMask_chkPort(&portmask, port)) {
+ 309   3                  continue; /* logical port not selected */
+ 310   3              }
+ 311   2      
+ 312   2              if (!(sal_trunk_logicId_exist(port))) {
+ 313   3                  continue; /* logical port not exist */
+ 314   3              }
+ 315   2      
+ 316   2              /* Print port info */
+ 317   2              sal_trunk_logicId_toStr(logicPortStr, port);
+ 318   2      
+ 319   2              WEB_PRINTF(pReq, "    <tr>\n");
+ 320   2      
+ 321   2              sprintf(buf, "%s", logicPortStr);
+ 322   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 323   2      
+ 324   2      
+ 325   2              sal_rate_stormControl_get(port, SAL_STORM_TYPE_BCAST, &rate);
+ 326   2              sal_rate_stormControl_get(port, SAL_STORM_TYPE_MCAST, &rate1);
+ 327   2              sal_rate_stormControl_get(port, SAL_STORM_TYPE_UNKNOWN_UCAST, &rate2);
+ 328   2              sal_rate_stormControl_get(port, SAL_STORM_TYPE_UNKNOWN_MCAST, &rate3);
+ 329   2      
+ 330   2              if (STRM_CTRL_OFF == rate || 0 == rate)
+ 331   2                  sprintf(buf, "%s", "Off");
+ 332   2              else
+ 333   2                  sprintf(buf, "%ld", (uint32)rate);
+ 334   2      
+ 335   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 336   2      
+ 337   2              if (STRM_CTRL_OFF == rate1 || 0 == rate1)
+ 338   2                  sprintf(buf, "%s", "Off");
+ 339   2              else
+ 340   2                  sprintf(buf, "%ld", (uint32)rate1);
+ 341   2      
+ 342   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 343   2      
+ 344   2              if (STRM_CTRL_OFF == rate2 || 0 == rate2)
+ 345   2                  sprintf(buf, "%s", "Off");
+ 346   2              else
+ 347   2                  sprintf(buf, "%ld", (uint32)rate2);
+ 348   2      
+ 349   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 350   2      
+ 351   2              if (STRM_CTRL_OFF == rate3 || 0 == rate3)
+ 352   2                  sprintf(buf, "%s", "Off");
+ 353   2              else
+ 354   2                  sprintf(buf, "%ld", (uint32)rate3);
+ 355   2      
+ 356   2              WEB_PRINTF(pReq, "      <td align=\"center\">%s</td>\n", buf);
+ 357   2              WEB_PRINTF(pReq, "    </tr>\n");
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 7   
+
+ 358   2      }
+ 359   1      
+ 360   1          WEB_PRINTF(pReq, "  </table>\n");
+ 361   1          WEB_PRINTF(pReq, "  <br>\n");
+ 362   1      
+ 363   1          WEB_PRINTF(pReq, "</fieldset>\n");
+ 364   1          WEB_PRINTF(pReq, "</center>\n");
+ 365   1          WEB_PRINTF(pReq, "</body>\n");
+ 366   1          WEB_PRINTF(pReq, "</html>\n");
+ 367   1      
+ 368   1          WEB_END(pReq);
+ 369   1      
+ 370   1          return SUCCESS;
+ 371   1      }
+ 372           
+ 373          /*
+ 374           * Function: post_fwd_jumboframe
+ 375           * -----------------------------
+ 376           * Processes Jumbo Frame configuration form submission.
+ 377           * Extracts selected frame size from POST data.
+ 378           * Calls sal_rate_maxFrameSize_set() to apply change.
+ 379           * Redirects back to GET handler to refresh the page.
+ 380           */
+ 381          int32 post_fwd_jumboframe(struct http_request_s *pReq)
+ 382          {
+ 383   1          int32 ret;
+ 384   1          uint8  *pValue;
+ 385   1          uint32 frameCode;
+ 386   1      
+ 387   1          frameCode = 0;
+ 388   1      
+ 389   1          WEB_VAR(pReq, "jumboframe", &pValue);
+ 390   1          if (pValue) {
+ 391   2              frameCode = atoi(pValue);
+ 392   2          }
+ 393   1      
+ 394   1          if ((ret =  sal_rate_maxFrameSize_set(frameCode)) != SAL_ERR_SUCCESS) 
+ 395   1          {
+ 396   2              printerr(pReq, ret);
+ 397   2              return SUCCESS;
+ 398   2          }
+ 399   1          
+ 400   1          get_fwd_jumboframe(pReq);
+ 401   1          return SUCCESS;
+ 402   1      }
+ 403          
+ 404          /*
+ 405           * Function: post_fwd_stormcontrol
+ 406           * -------------------------------
+ 407           * Processes Storm Control configuration form submission.
+ 408           * Parses storm type, port selection, enable/off, and rate.
+ 409           * Validates rate range (8-1000000 kbps).
+ 410           * Applies setting to all selected ports via sal_rate_stormControl_set().
+ 411           */
+ 412           int32
+ 413          post_fwd_stormcontrol(struct http_request_s *pReq)
+ 414          {
+ 415   1          uint8           port;
+ 416   1          uint8           enable_storm;
+ 417   1          uint8           *pValue;    
+ 418   1          sal_pPortmask_t portmask, tmp;
+ 419   1          int32 ret;
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 8   
+
+ 420   1          int32           iValue, stormType;
+ 421   1          uint32          rate;
+ 422   1          
+ 423   1      
+ 424   1          /* init */
+ 425   1          iValue = 0;
+ 426   1          stormType = 0;
+ 427   1          rate = 0;
+ 428   1          port = 0;
+ 429   1      
+ 430   1          WEB_VAR(pReq, "storm_filter", &pValue);
+ 431   1          if (pValue) {
+ 432   2              stormType = atoi(pValue);
+ 433   2          }
+ 434   1      
+ 435   1          WEB_VAR(pReq, "action", &pValue);
+ 436   1          if (pValue) {
+ 437   2              iValue = atoi(pValue);
+ 438   2              if (FALSE == iValue)
+ 439   2              {
+ 440   3                  enable_storm = FALSE;
+ 441   3              }
+ 442   2              else
+ 443   2              if (TRUE == iValue)
+ 444   2              {
+ 445   3                  enable_storm = TRUE;
+ 446   3              }
+ 447   2          }
+ 448   1      
+ 449   1          if(TRUE == enable_storm)
+ 450   1          {
+ 451   2              WEB_VAR(pReq, "rate", &pValue);
+ 452   2              if (pValue) 
+ 453   2              {
+ 454   3                  iValue = atol(pValue);
+ 455   3      
+ 456   3                  if (iValue < 8 || iValue > 1000000)
+ 457   3                  {
+ 458   4                      printmsg(pReq, "Invalid Storm Control rate !!");
+ 459   4                      return SUCCESS;
+ 460   4                  }
+ 461   3      
+ 462   3                  rate = iValue;
+ 463   3              }        
+ 464   2          }
+ 465   1          else
+ 466   1          {
+ 467   2              rate = SAL_RATE_DISABLE;
+ 468   2          }
+ 469   1      
+ 470   1          sal_pPortMask_delAll(&portmask);
+ 471   1      
+ 472   1          WEB_VAR(pReq, "portid", &pValue);
+ 473   1          if (pValue) {
+ 474   2              if (strncmp(pValue, "Port", 4) == 0)
+ 475   2              {
+ 476   3                  sal_pPortMask_addPort(&portmask, atoi(pValue + 5) - 1);
+ 477   3              }
+ 478   2              else
+ 479   2              if (strncmp(pValue, "Trunk", 5) == 0)
+ 480   2              {
+ 481   3                  sal_trunk_port_get(atoi(pValue + 5) - 1, NULL, &portmask, NULL);
+C51 COMPILER V9.60.0.0   WEB_FWD                                                           11/02/2026 17:57:32 PAGE 9   
+
+ 482   3              }
+ 483   2          }
+ 484   1      
+ 485   1          while(pValue != NULL)
+ 486   1          {
+ 487   2              WEB_VAR(pReq, NULL, &pValue);
+ 488   2              if (pValue) {
+ 489   3                  sal_pPortMask_delAll(&tmp);
+ 490   3                  if (strncmp(pValue, "Port", 4) == 0)
+ 491   3                  {
+ 492   4                      sal_pPortMask_addPort(&tmp, atoi(pValue + 5) - 1);
+ 493   4                  }
+ 494   3                  else
+ 495   3                  if (strncmp(pValue, "Trunk", 5) == 0)
+ 496   3                  {
+ 497   4                      sal_trunk_port_get(atoi(pValue + 5) - 1, NULL, &tmp, NULL);
+ 498   4                  }
+ 499   3      
+ 500   3                  sal_pPortMask_or(&portmask, &portmask, &tmp);
+ 501   3              }
+ 502   2          }
+ 503   1      
+ 504   1          for (port = 0; port < SAL_PORT_ID_CPU; ++port)
+ 505   1          {
+ 506   2              if (SAL_ERR_FAILED == sal_pPortMask_chkPort(&portmask, port)) 
+ 507   2              {
+ 508   3                  continue; /* physical port not selected */
+ 509   3              }
+ 510   2              
+ 511   2              if ((ret = sal_rate_stormControl_set(port, stormType, rate)) != SAL_ERR_SUCCESS) 
+ 512   2              {
+ 513   3                  printerr(pReq, ret);
+ 514   3                  return SUCCESS;
+ 515   3              }
+ 516   2          }
+ 517   1      
+ 518   1      
+ 519   1          get_fwd_stormcontrol(pReq);
+ 520   1          return SUCCESS;
+ 521   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =   4833    ----
+   CONSTANT SIZE    =   2464    ----
+   XDATA SIZE       =   ----     232
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   2464    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,273 @@
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 1   
+
+
+C51 COMPILER V9.60.0.0, COMPILATION OF MODULE WEB_IP
+OBJECT MODULE PLACED IN .\objects\web_ip.obj
+COMPILER INVOKED BY: D:\Keil_v5\C51\BIN\C51.EXE ..\src\web\web_ip.c LARGE OMF2 OPTIMIZE(8,SIZE) BROWSE INTVECTOR(0X1000)
+                    - INCDIR(.\include;..\include;..\include\asicdrv;..\include\rtk_api;..\..\common\include;..\..\common\sal;..\..\common\in
+                    -clude\sal;.\include\local;..\..\common\include\rtk_proto\rrcpv3;..\src\web) DEFINE(EMBEDDED_SUPPORT,RTK_API_LWPS,SAL_REP
+                    -LACE,LWS_A_SET,EEE_ENABLE,FLASH_MODE_DUAL,DW8051_CLK_208,FLASH_2M,RTL8367C,INTERNAL_PRIORITY,COMPATIBLE_82l,LWS_8G,SCAN_
+                    -LED_MODE) VARBANKING DEBUG PRINT(.\objects\web_ip.lst) TABS(2) OBJECT(.\objects\web_ip.obj)
+
+line level    source
+
+   1          #pragma STRING (far)
+   2          /*
+   3           * Copyright(c) Realtek Semiconductor Corporation, 2009
+   4           * All rights reserved.
+   5           *
+   6           * $Revision$
+   7           * $Date$
+   8           *
+   9           * Purpose : The handler of HTTP request to IP function
+  10           *
+  11           * Feature : Response the request related to IP function
+  12           *
+  13           */
+  14          
+  15          /*
+  16           * Include Files
+  17           */
+  18          #include <string.h>
+  19          
+  20          #include <salutil.h>
+  21          #include <salsys.h>
+  22          #include <salflash.h>
+  23          
+  24          #include <web/web_api.h>
+  25          #include "web_ip.h"
+  26          #include "web_util.h"
+  27          #include <syslog/syslogdefs.h>
+  28          
+  29          /*
+  30           * Symbol Definition
+  31           */
+  32          
+  33          
+  34          /*
+  35           * Data Declaration
+  36           */
+  37          
+  38          /*
+  39           * Function Declaration
+  40           */
+  41           
+  42          
+  43          /*
+  44           * Function: get_ip
+  45           * ----------------
+  46           * Displays IP configuration page with DHCP and static settings.
+  47           * Retrieves current IP, netmask, gateway from system.
+  48           * Shows DHCP state and pre-fills IP fields accordingly.
+  49           * Uses JavaScript to enable/disable IP fields based on DHCP selection.
+  50           * Displays warning confirmation when changing IP addresses.
+  51           */
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 2   
+
+  52          int32 get_ip(struct http_request_s *pReq)
+  53          {
+  54   1          sal_ipaddr_t    ip = 0;
+  55   1          sal_ipaddr_t    netmask = 0;
+  56   1          sal_ipaddr_t    gateway = 0;
+  57   1          uint8           ipStr[16];
+  58   1          uint8           netmaskStr[16];
+  59   1          uint8           gatewayStr[16];
+  60   1          sal_enable_t    dhcp_state;
+  61   1      
+  62   1          ipStr[0] = '\0';
+  63   1          netmaskStr[0] = '\0';
+  64   1          gatewayStr[0] = '\0';
+  65   1      
+  66   1          sal_sys_ip_get(&ip, &netmask);
+  67   1          
+  68   1          ip_to_str(ipStr, (uint8 *)&ip);
+  69   1          ip_to_str(netmaskStr, (uint8 *)&netmask);
+  70   1      
+  71   1          sal_sys_gateway_get(&gateway);
+  72   1              
+  73   1          ip_to_str(gatewayStr, (uint8 *)&gateway);
+  74   1      
+  75   1          sal_sys_dhcp_get(&dhcp_state);
+  76   1      
+  77   1          WEB_BEGIN(pReq);
+  78   1      
+  79   1          WEB_STATUS(pReq, HTTP_STATUS_OK);
+  80   1          WEB_HEADER(pReq, "Content-Type: text/html");
+  81   1      
+  82   1          // Replace with minimal modern styling
+  83   1          WEB_PRINTF(pReq, "<html>\n");
+  84   1          WEB_PRINTF(pReq, "<head>\n");
+  85   1          WEB_PRINTF(pReq, "<title>IP Address Setting</title>\n");
+  86   1          WEB_PRINTF(pReq, "<style>\n");
+  87   1          WEB_PRINTF(pReq, "body{font-family:Arial,sans-serif;background:#f4f7fa;margin:0;padding:20px;}\n");
+  88   1          WEB_PRINTF(pReq, "h1{text-align:center;color:#333;}\n");
+  89   1          WEB_PRINTF(pReq, ".card{background:white;border-radius:8px;box-shadow:0 2px 4px rgba(0,0,0,.1);padding
+             -:20px;max-width:600px;margin:0 auto;}\n");
+  90   1          WEB_PRINTF(pReq, "label{display:block;margin:8px 0;font-weight:bold;}\n");
+  91   1          WEB_PRINTF(pReq, "input,select{width:100%%;padding:8px;margin-bottom:15px;border:1px solid #ddd;border
+             --radius:4px;box-sizing:border-box;}\n");
+  92   1          WEB_PRINTF(pReq, "input:disabled{background:#f5f5f5;}\n");
+  93   1          WEB_PRINTF(pReq, ".btn{background:#1e88e5;color:white;border:none;padding:10px;border-radius:4px;curso
+             -r:pointer;width:100%%;}\n");
+  94   1          WEB_PRINTF(pReq, "</style>\n");
+  95   1          
+  96   1          // Simplified JavaScript
+  97   1          WEB_PRINTF(pReq, "<script>\n");
+  98   1          WEB_PRINTF(pReq, "function chkEnable(value){\n");
+  99   1          WEB_PRINTF(pReq, "var d=(value=='1');\n");
+ 100   1          WEB_PRINTF(pReq, "document.getElementById('ip').disabled=d;\n");
+ 101   1          WEB_PRINTF(pReq, "document.getElementById('netmask').disabled=d;\n");
+ 102   1          WEB_PRINTF(pReq, "document.getElementById('gateway').disabled=d;\n");
+ 103   1          WEB_PRINTF(pReq, "}\n");
+ 104   1          WEB_PRINTF(pReq, "function ConfirmBox(){return confirm('Change IP address will lose connection, contin
+             -ue?');}\n");
+ 105   1          WEB_PRINTF(pReq, "</script>\n");
+ 106   1          WEB_PRINTF(pReq, "</head>\n");
+ 107   1          
+ 108   1          // Minimal HTML structure
+ 109   1          WEB_PRINTF(pReq, "<body onload=\"chkEnable(document.getElementById('dhcp').value)\">\n");
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 3   
+
+ 110   1          WEB_PRINTF(pReq, "<h1>IP Address Setting</h1>\n");
+ 111   1          WEB_PRINTF(pReq, "<div class=\"card\">\n");
+ 112   1          WEB_PRINTF(pReq, "<form method=\"post\" action=\"ip.cgi\" onSubmit=\"return ConfirmBox()\">\n");
+ 113   1          
+ 114   1          WEB_PRINTF(pReq, "<label>DHCP Client:</label>\n");
+ 115   1          WEB_PRINTF(pReq, "<select name=\"dhcp_state\" id=\"dhcp\" onchange=\"chkEnable(this.value)\">\n");
+ 116   1          if(TRUE == dhcp_state)    
+ 117   1          {
+ 118   2              WEB_PRINTF(pReq, "<option value=\"0\">Disable</option>\n");
+ 119   2              WEB_PRINTF(pReq, "<option value=\"1\" selected>Enable</option>\n");
+ 120   2          }
+ 121   1          else
+ 122   1          {
+ 123   2              WEB_PRINTF(pReq, "<option value=\"0\" selected>Disable</option>\n");
+ 124   2              WEB_PRINTF(pReq, "<option value=\"1\">Enable</option>\n");
+ 125   2          }
+ 126   1          WEB_PRINTF(pReq, "</select>\n");
+ 127   1          
+ 128   1          WEB_PRINTF(pReq, "<label for=\"ip\">IP Address:</label>\n");
+ 129   1          WEB_PRINTF(pReq, "<input type=\"text\" name=\"ip\" id=\"ip\" value=\"%s\" maxlength=\"15\" %s>\n", 
+ 130   1                     ipStr, (TRUE == dhcp_state) ? "disabled" : "");
+ 131   1          
+ 132   1          WEB_PRINTF(pReq, "<label for=\"netmask\">Subnet Mask:</label>\n");
+ 133   1          WEB_PRINTF(pReq, "<input type=\"text\" name=\"netmask\" id=\"netmask\" value=\"%s\" maxlength=\"15\" %
+             -s>\n", 
+ 134   1                     netmaskStr, (TRUE == dhcp_state) ? "disabled" : "");
+ 135   1          
+ 136   1          WEB_PRINTF(pReq, "<label for=\"gateway\">Default Gateway:</label>\n");
+ 137   1          WEB_PRINTF(pReq, "<input type=\"text\" name=\"gateway\" id=\"gateway\" value=\"%s\" maxlength=\"15\" %
+             -s>\n", 
+ 138   1                     gatewayStr, (TRUE == dhcp_state) ? "disabled" : "");
+ 139   1          
+ 140   1          WEB_PRINTF(pReq, "<input type=\"submit\" class=\"btn\" value=\"Apply Changes\">\n");
+ 141   1          WEB_PRINTF(pReq, "<input type=\"hidden\" name=\"cmd\" value=\"ip\">\n");
+ 142   1          
+ 143   1          WEB_PRINTF(pReq, "</form>\n");
+ 144   1          WEB_PRINTF(pReq, "</div>\n");
+ 145   1          WEB_PRINTF(pReq, "</body>\n");
+ 146   1          WEB_PRINTF(pReq, "</html>\n");
+ 147   1      
+ 148   1          WEB_END(pReq);
+ 149   1      
+ 150   1          return SUCCESS;
+ 151   1      }
+ 152          
+ 153          /*
+ 154           * Function: post_ip
+ 155           * -----------------
+ 156           * Processes IP configuration form submission.
+ 157           * Extracts DHCP state, IP, netmask, gateway from POST data.
+ 158           * Validates IP format using str_to_ip() function.
+ 159           * Checks that gateway is in same subnet as IP address.
+ 160           * Logs IP change event to syslog and applies new settings.
+ 161           */
+ 162          int32 post_ip(struct http_request_s *pReq)
+ 163          {
+ 164   1          uint8   *pValue;
+ 165   1          uint32  ip = 0;
+ 166   1          uint32  netmask = 0;
+ 167   1          uint32  gateway = 0;
+ 168   1          uint8   ipStr[16];
+ 169   1          uint8   netmaskStr[16];
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 4   
+
+ 170   1          uint8   gatewayStr[16];
+ 171   1          uint8   dhcp_state;
+ 172   1      
+ 173   1          WEB_VAR(pReq, "dhcp_state", &pValue);
+ 174   1          if (pValue) 
+ 175   1          {
+ 176   2              dhcp_state = atoi(pValue);
+ 177   2              sal_sys_dhcp_set(dhcp_state);
+ 178   2          }
+ 179   1          
+ 180   1          if(FALSE == dhcp_state)
+ 181   1          {
+ 182   2              memset(ipStr, 0, sizeof(ipStr));
+ 183   2              WEB_VAR(pReq, "ip", &pValue);
+ 184   2              if (pValue) {
+ 185   3                  memcpy(ipStr, pValue, sizeof(ipStr));
+ 186   3              }
+ 187   2              memset(netmaskStr, 0, sizeof(netmaskStr));
+ 188   2              WEB_VAR(pReq, "netmask", &pValue);
+ 189   2              if (pValue) {
+ 190   3                  memcpy(netmaskStr, pValue, sizeof(netmaskStr));
+ 191   3              }
+ 192   2              
+ 193   2              if (str_to_ip(&ip, ipStr) != 0) {
+ 194   3                  printmsg(pReq, "Invalid IP Address.");
+ 195   3                  return SUCCESS;
+ 196   3              }
+ 197   2              if (str_to_ip(&netmask, netmaskStr) != 0) {
+ 198   3                  printmsg(pReq, "Invalid Netmask.");
+ 199   3                  return SUCCESS;
+ 200   3              }
+ 201   2      
+ 202   2              memset(gatewayStr, 0, sizeof(gatewayStr));
+ 203   2              WEB_VAR(pReq, "gateway", &pValue);
+ 204   2              if (pValue) {
+ 205   3                  memcpy(gatewayStr, pValue, sizeof(gatewayStr));
+ 206   3                  if (str_to_ip(&gateway, gatewayStr) != 0) {
+ 207   4                      printmsg(pReq, "Invalid Gateway.");
+ 208   4                  return SUCCESS;
+ 209   4              }
+ 210   3              if(gateway != 0)
+ 211   3              {
+ 212   4              if ((gateway & netmask) != (ip & netmask)) {
+ 213   5                  printmsg(pReq, "IP and Gateway address must be in the same subnet.");
+ 214   5                  return SUCCESS;
+ 215   5                  }
+ 216   4              }
+ 217   3              }
+ 218   2          syslog_add_new_buf_entry(SYSLOG_MSG_MANAGEMENT_IP_CHANGED, 0);
+ 219   2      
+ 220   2              sal_sys_ip_set(ip, netmask);
+ 221   2              sal_sys_gateway_set(gateway);
+ 222   2        
+ 223   2          
+ 224   2          }
+ 225   1          get_ip(pReq);
+ 226   1      
+ 227   1          return SUCCESS;
+ 228   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+C51 COMPILER V9.60.0.0   WEB_IP                                                            11/02/2026 17:57:34 PAGE 5   
+
+   CODE SIZE        =   1864    ----
+   CONSTANT SIZE    =   2052    ----
+   XDATA SIZE       =   ----     131
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+   EDATA SIZE       =   ----    ----
+   HDATA SIZE       =   ----    ----
+   XDATA CONST SIZE =   ----    ----
+   FAR CONST SIZE   =   2052    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)
